@@ -1,0 +1,468 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:mcp="http://www.mulesoft.org/schema/mule/mcp"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd 
+	http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+	http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+	http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+	http://www.mulesoft.org/schema/mule/mcp http://www.mulesoft.org/schema/mule/mcp/current/mule-mcp.xsd">
+
+	<!-- Database Initialization Flow - Runs on startup -->
+	<flow name="db-initialization">
+		<logger level="INFO" message="Starting database initialization..." />
+		<try doc:name="Try PostgreSQL">
+			<db:execute-script config-ref="postgres-config">
+				<db:sql><![CDATA[SELECT COUNT(*) as init_check FROM information_schema.tables WHERE table_name = 'departments';]]></db:sql>
+			</db:execute-script>
+			
+			<choice>
+				<when expression="#[payload[0].init_check == 0]">
+					<logger level="INFO" message="Initializing PostgreSQL database..." />
+					<db:execute-script config-ref="postgres-config">
+						<db:sql><![CDATA[
+-- Employee Onboarding MCP Server Database Initialization
+-- Drop tables if they exist (for clean restart)
+DROP TABLE IF EXISTS employee_documents CASCADE;
+DROP TABLE IF EXISTS employees CASCADE;
+DROP TABLE IF EXISTS departments CASCADE;
+
+-- Create departments table
+CREATE TABLE departments (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(255),
+    manager_name VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create employees table
+CREATE TABLE employees (
+    id SERIAL PRIMARY KEY,
+    employee_id VARCHAR(20) UNIQUE NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    phone VARCHAR(20),
+    department_id INTEGER REFERENCES departments(id),
+    position VARCHAR(100),
+    hire_date DATE,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    salary DECIMAL(10,2),
+    manager_id INTEGER REFERENCES employees(id),
+    address TEXT,
+    emergency_contact_name VARCHAR(100),
+    emergency_contact_phone VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create employee_documents table
+CREATE TABLE employee_documents (
+    id SERIAL PRIMARY KEY,
+    employee_id INTEGER REFERENCES employees(id),
+    document_type VARCHAR(50) NOT NULL,
+    document_name VARCHAR(100) NOT NULL,
+    document_path VARCHAR(255),
+    document_status VARCHAR(20) DEFAULT 'PENDING',
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    verified_at TIMESTAMP NULL,
+    verified_by VARCHAR(100)
+);
+
+-- Insert sample departments
+INSERT INTO departments (name, description, manager_name) VALUES
+('Human Resources', 'Employee management and relations', 'Sarah Johnson'),
+('Engineering', 'Software development and technical operations', 'Michael Chen'),
+('Marketing', 'Brand promotion and customer engagement', 'Emily Rodriguez'),
+('Finance', 'Financial planning and accounting', 'David Kim'),
+('Operations', 'Business operations and logistics', 'Lisa Thompson');
+
+-- Insert completion marker
+INSERT INTO departments (name, description) VALUES ('_INIT_COMPLETE_', 'Database initialization completed successfully');
+						]]></db:sql>
+					</db:execute-script>
+					<logger level="INFO" message="PostgreSQL database initialized successfully" />
+				</when>
+				<otherwise>
+					<logger level="INFO" message="PostgreSQL database already initialized" />
+				</otherwise>
+			</choice>
+			
+			<set-variable variableName="activeDatabase" value="postgres" />
+			<error-handler>
+				<on-error-continue type="DB:CONNECTIVITY">
+					<logger level="WARN" message="PostgreSQL connection failed. Falling back to H2 database..." />
+					<try doc:name="Try H2">
+						<db:execute-script config-ref="h2-config">
+							<db:sql><![CDATA[
+-- Employee Onboarding MCP Server Database Initialization
+-- Drop tables if they exist (for clean restart)
+DROP TABLE IF EXISTS employee_documents;
+DROP TABLE IF EXISTS employees;
+DROP TABLE IF EXISTS departments;
+
+-- Create departments table
+CREATE TABLE departments (
+    id IDENTITY PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(255),
+    manager_name VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create employees table
+CREATE TABLE employees (
+    id IDENTITY PRIMARY KEY,
+    employee_id VARCHAR(20) UNIQUE NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    phone VARCHAR(20),
+    department_id INTEGER,
+    position VARCHAR(100),
+    hire_date DATE,
+    status VARCHAR(20) DEFAULT 'PENDING',
+    salary DECIMAL(10,2),
+    manager_id INTEGER,
+    address CLOB,
+    emergency_contact_name VARCHAR(100),
+    emergency_contact_phone VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create employee_documents table
+CREATE TABLE employee_documents (
+    id IDENTITY PRIMARY KEY,
+    employee_id INTEGER,
+    document_type VARCHAR(50) NOT NULL,
+    document_name VARCHAR(100) NOT NULL,
+    document_path VARCHAR(255),
+    document_status VARCHAR(20) DEFAULT 'PENDING',
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    verified_at TIMESTAMP NULL,
+    verified_by VARCHAR(100)
+);
+
+-- Insert sample departments
+INSERT INTO departments (name, description, manager_name) VALUES
+('Human Resources', 'Employee management and relations', 'Sarah Johnson'),
+('Engineering', 'Software development and technical operations', 'Michael Chen'),
+('Marketing', 'Brand promotion and customer engagement', 'Emily Rodriguez'),
+('Finance', 'Financial planning and accounting', 'David Kim'),
+('Operations', 'Business operations and logistics', 'Lisa Thompson');
+
+-- Insert completion marker
+INSERT INTO departments (name, description) VALUES ('_INIT_COMPLETE_', 'Database initialization completed successfully');
+							]]></db:sql>
+						</db:execute-script>
+						<logger level="INFO" message="H2 database initialized successfully" />
+						<set-variable variableName="activeDatabase" value="h2" />
+						<error-handler>
+							<on-error-propagate type="ANY">
+								<logger level="ERROR" message="Failed to initialize H2 database: #[error.description]" />
+							</on-error-propagate>
+						</error-handler>
+					</try>
+				</on-error-continue>
+				<on-error-propagate type="ANY">
+					<logger level="ERROR" message="Database initialization failed: #[error.description]" />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- Health Check Endpoint -->
+	<flow name="health-check">
+		<http:listener config-ref="http-config" path="/health" doc:name="Health Check Listener">
+		</http:listener>
+		<set-payload
+			value="#[{'status': 'UP', 'service': 'MCP Employee Onboarding Server', 'activeDatabase': vars.activeDatabase default 'unknown', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+			mimeType="application/json" />
+		<logger level="INFO" message="Health check requested" />
+	</flow>
+
+	<!-- MCP Server Info Endpoint -->
+	<flow name="mcp-server-info">
+		<http:listener config-ref="http-config" path="/mcp/info" doc:name="MCP Info Listener">
+		</http:listener>
+		<set-payload
+			value="#[{'name': 'Employee Onboarding MCP Server', 'version': '1.0.0', 'description': 'MCP Server for Employee Database Operations with PostgreSQL/H2 Fallback', 'tools': [{'name': 'create-employee', 'description': 'Creates new employee records', 'endpoint': '/mcp/tools/create-employee'}, {'name': 'get-employee', 'description': 'Retrieves employee information', 'endpoint': '/mcp/tools/get-employee'}, {'name': 'update-employee-status', 'description': 'Updates employee onboarding status', 'endpoint': '/mcp/tools/update-status'}, {'name': 'list-employees', 'description': 'Lists all employees', 'endpoint': '/mcp/tools/list-employees'}]}]"
+			mimeType="application/json" />
+		<logger level="INFO" message="MCP Server info requested" />
+	</flow>
+
+	<!-- MCP Tool: Create Employee -->
+	<flow name="create-employee">
+		<http:listener config-ref="http-config" path="/mcp/tools/create-employee" doc:name="Create Employee Listener">
+		</http:listener>
+
+		<logger level="INFO" message="Creating employee: #[payload]" />
+
+		<set-variable value="#['EMP' ++ (randomInt(999999) + 100000) as String]" variableName="employeeId" />
+
+		<try doc:name="Try PostgreSQL Create">
+			<db:insert config-ref="postgres-config">
+				<db:sql>INSERT INTO employees (employee_id, first_name, last_name, email, phone, department_id, position, hire_date, status, salary, address, emergency_contact_name, emergency_contact_phone) 
+				VALUES (:empId, :firstName, :lastName, :email, :phone, :deptId, :position, :hireDate, 'PENDING', :salary, :address, :emergencyName, :emergencyPhone)</db:sql>
+				<db:input-parameters>#[{
+					'empId': vars.employeeId, 
+					'firstName': payload.firstName, 
+					'lastName': payload.lastName,
+					'email': payload.email,
+					'phone': payload.phone default null,
+					'deptId': payload.departmentId default 1,
+					'position': payload.position default 'Employee',
+					'hireDate': payload.hireDate default now() as Date,
+					'salary': payload.salary default 50000.00,
+					'address': payload.address default null,
+					'emergencyName': payload.emergencyContactName default null,
+					'emergencyPhone': payload.emergencyContactPhone default null
+				}]</db:input-parameters>
+			</db:insert>
+
+			<set-payload
+				value="#[{'status': 'success', 'message': 'Employee created successfully', 'employeeId': vars.employeeId, 'database': 'PostgreSQL', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+				mimeType="application/json" />
+			<logger level="INFO" message="Employee created in PostgreSQL: #[vars.employeeId]" />
+			<error-handler>
+				<on-error-continue type="DB:CONNECTIVITY">
+					<logger level="WARN" message="PostgreSQL unavailable, trying H2..." />
+					<try doc:name="Try H2 Create">
+						<db:insert config-ref="h2-config">
+							<db:sql>INSERT INTO employees (employee_id, first_name, last_name, email, phone, department_id, position, hire_date, status, salary, address, emergency_contact_name, emergency_contact_phone) 
+							VALUES (:empId, :firstName, :lastName, :email, :phone, :deptId, :position, :hireDate, 'PENDING', :salary, :address, :emergencyName, :emergencyPhone)</db:sql>
+							<db:input-parameters>#[{
+								'empId': vars.employeeId, 
+								'firstName': payload.firstName, 
+								'lastName': payload.lastName,
+								'email': payload.email,
+								'phone': payload.phone default null,
+								'deptId': payload.departmentId default 1,
+								'position': payload.position default 'Employee',
+								'hireDate': payload.hireDate default now() as Date,
+								'salary': payload.salary default 50000.00,
+								'address': payload.address default null,
+								'emergencyName': payload.emergencyContactName default null,
+								'emergencyPhone': payload.emergencyContactPhone default null
+							}]</db:input-parameters>
+						</db:insert>
+						<set-payload
+							value="#[{'status': 'success', 'message': 'Employee created successfully (H2 fallback)', 'employeeId': vars.employeeId, 'database': 'H2', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+							mimeType="application/json" />
+						<logger level="INFO" message="Employee created in H2: #[vars.employeeId]" />
+						<error-handler>
+							<on-error-continue type="ANY">
+								<set-payload
+									value="#[{'error': 'Service Unavailable', 'message': 'Both databases unavailable - using mock data', 'mockEmployeeId': vars.employeeId, 'mockName': payload.firstName ++ ' ' ++ payload.lastName, 'mockEmail': payload.email, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+									mimeType="application/json" />
+								<logger level="WARN" message="Both databases unavailable - Returning mock response" />
+							</on-error-continue>
+						</error-handler>
+					</try>
+				</on-error-continue>
+				<on-error-propagate type="DB:*">
+					<choice>
+						<when expression="#[error.description contains 'duplicate' or error.description contains 'unique']">
+							<set-payload
+								value="#[{'error': 'Conflict', 'message': 'Employee email already exists'}]"
+								mimeType="application/json" />
+						</when>
+						<otherwise>
+							<set-payload
+								value="#[{'error': 'Database Error', 'message': error.description}]"
+								mimeType="application/json" />
+						</otherwise>
+					</choice>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- MCP Tool: Get Employee -->
+	<flow name="get-employee">
+		<http:listener config-ref="http-config" path="/mcp/tools/get-employee" doc:name="Get Employee Listener">
+		</http:listener>
+
+		<logger level="INFO" message="Getting employee: #[attributes.queryParams.empId default payload.empId]" />
+
+		<try doc:name="Try PostgreSQL Get">
+			<db:select config-ref="postgres-config">
+				<db:sql>SELECT * FROM employees WHERE employee_id = :empId OR email = :email LIMIT 1</db:sql>
+				<db:input-parameters>#[{'empId': attributes.queryParams.empId default payload.empId, 'email': attributes.queryParams.email default payload.email}]</db:input-parameters>
+			</db:select>
+
+			<choice>
+				<when expression="#[sizeOf(payload) > 0]">
+					<set-payload
+						value="#[{'status': 'success', 'employee': payload[0], 'database': 'PostgreSQL', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+						mimeType="application/json" />
+				</when>
+				<otherwise>
+					<set-payload
+						value="#[{'error': 'Not Found', 'message': 'Employee not found in PostgreSQL', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+						mimeType="application/json" />
+					<set-variable value="404" variableName="httpStatus" />
+				</otherwise>
+			</choice>
+			<error-handler>
+				<on-error-continue type="DB:CONNECTIVITY">
+					<logger level="WARN" message="PostgreSQL unavailable, trying H2..." />
+					<try doc:name="Try H2 Get">
+						<db:select config-ref="h2-config">
+							<db:sql>SELECT * FROM employees WHERE employee_id = :empId OR email = :email LIMIT 1</db:sql>
+							<db:input-parameters>#[{'empId': attributes.queryParams.empId default payload.empId, 'email': attributes.queryParams.email default payload.email}]</db:input-parameters>
+						</db:select>
+
+						<choice>
+							<when expression="#[sizeOf(payload) > 0]">
+								<set-payload
+									value="#[{'status': 'success', 'employee': payload[0], 'database': 'H2', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+									mimeType="application/json" />
+							</when>
+							<otherwise>
+								<set-payload
+									value="#[{'error': 'Not Found', 'message': 'Employee not found in H2', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+									mimeType="application/json" />
+								<set-variable value="404" variableName="httpStatus" />
+							</otherwise>
+						</choice>
+						<error-handler>
+							<on-error-continue type="ANY">
+								<set-payload
+									value="#[{'error': 'Service Unavailable', 'message': 'Both databases unavailable - mock response', 'mockEmployee': {'employee_id': 'EMP-MOCK-123', 'first_name': 'Mock', 'last_name': 'User', 'email': 'mock@example.com', 'status': 'ACTIVE'}, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+									mimeType="application/json" />
+								<logger level="WARN" message="Both databases unavailable - Returning mock employee data" />
+							</on-error-continue>
+						</error-handler>
+					</try>
+				</on-error-continue>
+				<on-error-propagate type="DB:*">
+					<set-payload
+						value="#[{'error': 'Database Error', 'message': error.description}]"
+						mimeType="application/json" />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- MCP Tool: Update Employee Status -->
+	<flow name="update-employee-status">
+		<http:listener config-ref="http-config" path="/mcp/tools/update-status" doc:name="Update Status Listener">
+		</http:listener>
+
+		<logger level="INFO" message="Updating status: #[payload]" />
+
+		<try doc:name="Try PostgreSQL Update">
+			<db:update config-ref="postgres-config">
+				<db:sql>UPDATE employees SET status = :status, updated_at = CURRENT_TIMESTAMP WHERE employee_id = :empId</db:sql>
+				<db:input-parameters>#[{'empId': payload.empId, 'status': payload.status default 'ACTIVE'}]</db:input-parameters>
+			</db:update>
+
+			<choice>
+				<when expression="#[payload > 0]">
+					<set-payload
+						value="#[{'status': 'success', 'message': 'Status updated in PostgreSQL', 'employeeId': payload.empId, 'newStatus': payload.status, 'database': 'PostgreSQL', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+						mimeType="application/json" />
+				</when>
+				<otherwise>
+					<set-payload
+						value="#[{'error': 'Not Found', 'message': 'Employee not found in PostgreSQL', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+						mimeType="application/json" />
+					<set-variable value="404" variableName="httpStatus" />
+				</otherwise>
+			</choice>
+			<error-handler>
+				<on-error-continue type="DB:CONNECTIVITY">
+					<logger level="WARN" message="PostgreSQL unavailable, trying H2..." />
+					<try doc:name="Try H2 Update">
+						<db:update config-ref="h2-config">
+							<db:sql>UPDATE employees SET status = :status, updated_at = CURRENT_TIMESTAMP WHERE employee_id = :empId</db:sql>
+							<db:input-parameters>#[{'empId': payload.empId, 'status': payload.status default 'ACTIVE'}]</db:input-parameters>
+						</db:update>
+
+						<choice>
+							<when expression="#[payload > 0]">
+								<set-payload
+									value="#[{'status': 'success', 'message': 'Status updated in H2', 'employeeId': payload.empId, 'newStatus': payload.status, 'database': 'H2', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+									mimeType="application/json" />
+							</when>
+							<otherwise>
+								<set-payload
+									value="#[{'error': 'Not Found', 'message': 'Employee not found in H2', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+									mimeType="application/json" />
+								<set-variable value="404" variableName="httpStatus" />
+							</otherwise>
+						</choice>
+						<error-handler>
+							<on-error-continue type="ANY">
+								<set-payload
+									value="#[{'status': 'success-mock', 'message': 'Status updated (mock - both databases unavailable)', 'employeeId': payload.empId, 'newStatus': payload.status default 'ACTIVE', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+									mimeType="application/json" />
+								<logger level="WARN" message="Both databases unavailable - Mock status update" />
+							</on-error-continue>
+						</error-handler>
+					</try>
+				</on-error-continue>
+				<on-error-propagate type="DB:*">
+					<set-payload
+						value="#[{'error': 'Database Error', 'message': error.description}]"
+						mimeType="application/json" />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- MCP Tool: List Employees -->
+	<flow name="list-employees">
+		<http:listener config-ref="http-config" path="/mcp/tools/list-employees" doc:name="List Employees Listener">
+		</http:listener>
+
+		<logger level="INFO" message="Listing employees" />
+
+		<try doc:name="Try PostgreSQL List">
+			<db:select config-ref="postgres-config">
+				<db:sql>SELECT employee_id, first_name, last_name, email, department_id, position, status, hire_date FROM employees ORDER BY created_at DESC LIMIT 50</db:sql>
+			</db:select>
+
+			<set-payload
+				value="#[{'status': 'success', 'employees': payload, 'count': sizeOf(payload), 'database': 'PostgreSQL', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+				mimeType="application/json" />
+			<error-handler>
+				<on-error-continue type="DB:CONNECTIVITY">
+					<logger level="WARN" message="PostgreSQL unavailable, trying H2..." />
+					<try doc:name="Try H2 List">
+						<db:select config-ref="h2-config">
+							<db:sql>SELECT employee_id, first_name, last_name, email, department_id, position, status, hire_date FROM employees ORDER BY created_at DESC LIMIT 50</db:sql>
+						</db:select>
+
+						<set-payload
+							value="#[{'status': 'success', 'employees': payload, 'count': sizeOf(payload), 'database': 'H2', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+							mimeType="application/json" />
+						<error-handler>
+							<on-error-continue type="ANY">
+								<set-payload
+									value="#[{'error': 'Service Unavailable', 'message': 'Both databases unavailable - mock response', 'mockEmployees': [{'employee_id': 'EMP-MOCK-001', 'first_name': 'John', 'last_name': 'Doe', 'email': 'john.doe@example.com', 'status': 'ACTIVE'}], 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+									mimeType="application/json" />
+								<logger level="WARN" message="Both databases unavailable - Returning mock employee list" />
+							</on-error-continue>
+						</error-handler>
+					</try>
+				</on-error-continue>
+				<on-error-propagate type="DB:*">
+					<set-payload
+						value="#[{'error': 'Database Error', 'message': error.description}]"
+						mimeType="application/json" />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+
+</mule>
