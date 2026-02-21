@@ -1,0 +1,18 @@
+{
+  "minMuleVersion": "4.11.1",
+  "secureProperties": [],
+  "bundleDescriptorLoader": {
+    "id": "mule",
+    "attributes": {}
+  },
+  "classLoaderModelLoaderDescriptor": {
+    "id": "mule",
+    "attributes": {
+      "exportedResources": []
+    }
+  },
+  "configs": [
+    "asset-allocation-mcp-server.xml",
+    "global.xml"
+  ]
+}

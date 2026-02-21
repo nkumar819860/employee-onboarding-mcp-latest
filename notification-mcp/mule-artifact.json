@@ -1,0 +1,21 @@
+{
+  "minMuleVersion": "4.11.1",
+  "secureProperties": [
+    "gmail.username",
+    "gmail.password"
+  ],
+  "bundleDescriptorLoader": {
+    "id": "mule",
+    "attributes": {}
+  },
+  "classLoaderModelLoaderDescriptor": {
+    "id": "mule",
+    "attributes": {
+      "exportedResources": []
+    }
+  },
+  "configs": [
+    "notification-mcp-server.xml",
+    "global.xml"
+  ]
+}

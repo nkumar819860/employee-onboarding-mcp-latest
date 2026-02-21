@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" 
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" 
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" 
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" 
+	xmlns:email="http://www.mulesoft.org/schema/mule/email" 
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" 
+	xmlns:mcp="http://www.mulesoft.org/schema/mule/mcp" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd 
+	http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+	http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+	http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd 
+	http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+	http://www.mulesoft.org/schema/mule/mcp http://www.mulesoft.org/schema/mule/mcp/current/mule-mcp.xsd">
+    
+    <configuration-properties file="config.properties" doc:name="Configuration properties"/>
+    
+    <!-- HTTP Listener Configuration -->
+    <http:listener-config doc:name="HTTP Config" name="http-config">
+        <http:listener-connection host="${http.host}" port="${http.port}" />
+    </http:listener-config>
+    
+    <!-- Primary PostgreSQL Database Configuration -->
+    <db:config doc:name="PostgreSQL Config" name="postgres-config">
+        <db:generic-connection driverClassName="${db.postgres.driverClassName}" 
+            url="${db.postgres.url}" 
+            user="${db.postgres.username}" 
+            password="${db.postgres.password}">
+        </db:generic-connection>
+    </db:config>
+    
+    <!-- H2 Database Configuration (Fallback for CloudHub) -->
+    <db:config doc:name="H2 Config" name="h2-config">
+        <db:generic-connection driverClassName="${db.h2.driverClassName}" 
+            url="${db.h2.url}" 
+            user="${db.h2.username}" 
+            password="${db.h2.password}">
+        </db:generic-connection>
+    </db:config>
+    
+    <!-- Dynamic Database Configuration (Primary) -->
+    <db:config doc:name="Database Config" name="database-config">
+        <db:generic-connection driverClassName="${db.driverClassName}" 
+            url="${db.url}" 
+            user="${db.username}" 
+            password="${db.password}">
+        </db:generic-connection>
+    </db:config>
+    
+    <!-- Gmail SMTP Configuration -->
+    <email:smtp-config name="gmail-smtp-config" doc:name="Gmail SMTP Config">
+        <email:smtp-connection host="${gmail.smtp.host}" 
+            port="${gmail.smtp.port}" 
+            user="${gmail.smtp.username}" 
+            password="${gmail.smtp.password}">
+            <email:properties>
+                <email:property key="mail.smtp.starttls.enable" value="${gmail.smtp.startTlsEnabled}"/>
+                <email:property key="mail.smtp.auth" value="${gmail.smtp.auth}"/>
+                <email:property key="mail.smtp.ssl.trust" value="${gmail.smtp.host}"/>
+            </email:properties>
+        </email:smtp-connection>
+    </email:smtp-config>
+    
+    <!-- MCP Server Configuration -->
+    <mcp:server-config name="Mcp_Config" doc:name="Mcp Config" 
+        serverName="${mcp.serverName}" 
+        serverVersion="${mcp.serverVersion}">
+        <mcp:streamable-http-server-connection listenerConfig="http-config">
+            <mcp:session-handling />
+        </mcp:streamable-http-server-connection>
+    </mcp:server-config>
+    
+</mule>

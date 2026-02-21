@@ -1,0 +1,164 @@
+# Flex Gateway Configuration for Employee Onboarding System
+# Gateway Name: employee-onboarding-gateway
+
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: Configuration
+metadata:
+  name: employee-onboarding-gateway
+  namespace: default
+spec:
+  # API Management Configuration
+  apis:
+    # Employee Onboarding Broker API
+    - name: employee-onboarding-broker-api
+      spec:
+        upstream:
+          service:
+            address: "https://employee-onboarding-agent-broker.sandbox.anypoint.mulesoft.com"
+            port: 443
+            protocol: https
+        routes:
+          - match:
+              path:
+                prefix: "/broker"
+            route:
+              upstream_path_rewrite: "/"
+        policies:
+          - policyRef:
+              name: http-basic-authentication-flex
+              namespace: default
+          - policyRef:
+              name: rate-limiting-flex
+              namespace: default
+            config:
+              rateLimits:
+                - maximumRequests: 1000
+                  timePeriod: 1m
+                  keySelector: "#[attributes.headers['client-id']]"
+          - policyRef:
+              name: cors-flex
+              namespace: default
+            config:
+              allowedOrigins:
+                - "*"
+              allowedMethods:
+                - "GET"
+                - "POST"
+                - "PUT"
+                - "DELETE"
+                - "OPTIONS"
+              allowedHeaders:
+                - "*"
+
+    # Employee Management MCP API
+    - name: employee-onboarding-mcp-api
+      spec:
+        upstream:
+          service:
+            address: "https://employee-onboarding-mcp-server.sandbox.anypoint.mulesoft.com"
+            port: 443
+            protocol: https
+        routes:
+          - match:
+              path:
+                prefix: "/employee"
+            route:
+              upstream_path_rewrite: "/"
+        policies:
+          - policyRef:
+              name: http-basic-authentication-flex
+              namespace: default
+          - policyRef:
+              name: rate-limiting-flex
+              namespace: default
+            config:
+              rateLimits:
+                - maximumRequests: 500
+                  timePeriod: 1m
+                  keySelector: "#[attributes.headers['client-id']]"
+
+    # Asset Allocation MCP API
+    - name: asset-allocation-mcp-api
+      spec:
+        upstream:
+          service:
+            address: "https://asset-allocation-mcp-server.sandbox.anypoint.mulesoft.com"
+            port: 443
+            protocol: https
+        routes:
+          - match:
+              path:
+                prefix: "/assets"
+            route:
+              upstream_path_rewrite: "/"
+        policies:
+          - policyRef:
+              name: http-basic-authentication-flex
+              namespace: default
+          - policyRef:
+              name: rate-limiting-flex
+              namespace: default
+            config:
+              rateLimits:
+                - maximumRequests: 300
+                  timePeriod: 1m
+                  keySelector: "#[attributes.headers['client-id']]"
+
+    # Notification MCP API
+    - name: notification-mcp-api
+      spec:
+        upstream:
+          service:
+            address: "https://notification-mcp-server.sandbox.anypoint.mulesoft.com"
+            port: 443
+            protocol: https
+        routes:
+          - match:
+              path:
+                prefix: "/notifications"
+            route:
+              upstream_path_rewrite: "/"
+        policies:
+          - policyRef:
+              name: http-basic-authentication-flex
+              namespace: default
+          - policyRef:
+              name: rate-limiting-flex
+              namespace: default
+            config:
+              rateLimits:
+                - maximumRequests: 200
+                  timePeriod: 1m
+                  keySelector: "#[attributes.headers['client-id']]"
+
+  # Health Check Configuration
+  healthCheck:
+    enabled: true
+    path: "/health"
+    interval: "30s"
+    timeout: "5s"
+    unhealthyThreshold: 3
+    healthyThreshold: 2
+
+  # TLS Configuration
+  tls:
+    certificateRef:
+      name: employee-onboarding-tls-cert
+      namespace: default
+    minVersion: "1.2"
+    ciphers:
+      - "ECDHE-RSA-AES256-GCM-SHA384"
+      - "ECDHE-RSA-AES128-GCM-SHA256"
+
+  # Monitoring and Observability
+  observability:
+    metrics:
+      enabled: true
+      path: "/metrics"
+    tracing:
+      enabled: true
+      sampling:
+        rate: 0.1
+    logging:
+      level: INFO
+      format: json

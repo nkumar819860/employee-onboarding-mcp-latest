@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:mcp="http://www.mulesoft.org/schema/mule/mcp"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+	http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+	http://www.mulesoft.org/schema/mule/mcp http://www.mulesoft.org/schema/mule/mcp/current/mule-mcp.xsd">
+
+	<!-- Global Configuration Properties -->
+	<configuration-properties file="config.properties" doc:name="Configuration properties"/>
+
+	<!-- HTTP Listener Configuration -->
+	<http:listener-config name="http-config" doc:name="HTTP Listener config">
+		<http:listener-connection host="${http.host}" port="${http.port}"/>
+	</http:listener-config>
+
+	<!-- HTTP Request Configurations for MCP Servers -->
+	<http:request-config name="employee-onboarding-mcp-config" doc:name="Employee Onboarding MCP Config">
+		<http:request-connection host="localhost" port="8081"/>
+	</http:request-config>
+
+	<http:request-config name="asset-allocation-mcp-config" doc:name="Asset Allocation MCP Config">
+		<http:request-connection host="localhost" port="8082"/>
+	</http:request-config>
+
+	<http:request-config name="notification-mcp-config" doc:name="Notification MCP Config">
+		<http:request-connection host="localhost" port="8083"/>
+	</http:request-config>
+
+	<!-- MCP Server Configuration -->
+	<mcp:server-config name="mcp-server-config" doc:name="MCP Server Config" 
+		serverName="${mcp.serverName}" 
+		serverVersion="${mcp.serverVersion}">
+		<mcp:streamable-http-server-connection listenerConfig="http-config">
+			<mcp:session-handling />
+		</mcp:streamable-http-server-connection>
+	</mcp:server-config>
+
+	<!-- Global Error Handler -->
+	<error-handler name="global-error-handler" doc:name="Global Error Handler">
+		<on-error-propagate type="HTTP:CONNECTIVITY">
+			<set-payload value="#[{'error': 'Connection Error', 'message': 'Unable to connect to MCP server', 'details': error.description, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]" mimeType="application/json"/>
+			<set-variable value="503" variableName="httpStatus"/>
+		</on-error-propagate>
+		<on-error-propagate type="HTTP:TIMEOUT">
+			<set-payload value="#[{'error': 'Timeout Error', 'message': 'Request to MCP server timed out', 'details': error.description, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]" mimeType="application/json"/>
+			<set-variable value="504" variableName="httpStatus"/>
+		</on-error-propagate>
+		<on-error-propagate type="ANY">
+			<set-payload value="#[{'error': 'Agent Broker Error', 'message': 'Unexpected error in agent broker', 'details': error.description, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]" mimeType="application/json"/>
+			<set-variable value="500" variableName="httpStatus"/>
+		</on-error-propagate>
+	</error-handler>
+
+</mule>

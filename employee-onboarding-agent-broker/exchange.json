@@ -1,0 +1,12 @@
+{
+  "name": "Employee Onboarding Agent Broker",
+  "description": "Agent Broker MCP Server for Employee Onboarding Process Orchestration - coordinates employee onboarding, asset allocation, and notifications",
+  "version": "1.0.0",
+  "groupId": "com.mulesoft.mcp",
+  "assetId": "employee-onboarding-agent-broker",
+  "classifier": "mule-application",
+  "tags": ["mcp", "agent", "broker", "onboarding", "orchestration"],
+  "categories": ["Integration", "Process Automation", "Agent Network"],
+  "contactName": "MCP Development Team",
+  "contactEmail": "mcp-dev@company.com"
+}

@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:mcp="http://www.mulesoft.org/schema/mule/mcp"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd 
+	http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+	http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+	http://www.mulesoft.org/schema/mule/mcp http://www.mulesoft.org/schema/mule/mcp/current/mule-mcp.xsd">
+
+	<!-- Health Check Endpoint -->
+	<flow name="health-check">
+		<http:listener config-ref="http-config" path="/health" doc:name="Health Check Listener">
+		</http:listener>
+		<set-payload
+			value="#[{'status': 'UP', 'service': 'Employee Onboarding Agent Broker', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}, 'orchestrationEnabled': ${agent.broker.orchestration.enabled} as String}]"
+			mimeType="application/json" />
+		<logger level="INFO" message="Health check requested for Agent Broker" />
+	</flow>
+
+	<!-- MCP Server Info Endpoint -->
+	<flow name="mcp-server-info">
+		<http:listener config-ref="http-config" path="/mcp/info" doc:name="MCP Info Listener">
+		</http:listener>
+		<set-payload
+			value="#[{'name': 'Employee Onboarding Agent Broker', 'version': '1.0.0', 'description': 'Agent Broker MCP Server for Employee Onboarding Process Orchestration', 'tools': [{'name': 'orchestrate-employee-onboarding', 'description': 'Complete employee onboarding process orchestration', 'endpoint': '/mcp/tools/orchestrate-employee-onboarding'}, {'name': 'get-onboarding-status', 'description': 'Get employee onboarding process status', 'endpoint': '/mcp/tools/get-onboarding-status'}, {'name': 'retry-failed-step', 'description': 'Retry a failed onboarding step', 'endpoint': '/mcp/tools/retry-failed-step'}]}]"
+			mimeType="application/json" />
+		<logger level="INFO" message="Agent Broker MCP Server info requested" />
+	</flow>
+
+	<!-- Main MCP Tool: Orchestrate Complete Employee Onboarding -->
+	<flow name="orchestrate-employee-onboarding">
+		<http:listener config-ref="http-config" path="/mcp/tools/orchestrate-employee-onboarding" doc:name="Orchestrate Employee Onboarding Listener">
+		</http:listener>
+
+		<logger level="INFO" message="Starting complete employee onboarding orchestration for: #[payload.email]" />
+
+		<set-variable variableName="onboardingStartTime" value="#[now()]" />
+		<set-variable variableName="employeeData" value="#[payload]" />
+		<set-variable variableName="orchestrationResults" value="#[{}]" />
+
+		<try doc:name="Try Complete Onboarding Orchestration">
+
+			<!-- Step 1: Create Employee Profile -->
+			<logger level="INFO" message="Step 1: Creating employee profile for #[vars.employeeData.email]" />
+			<http:request method="POST" config-ref="employee-onboarding-mcp-config" path="/mcp/tools/create-employee" doc:name="Create Employee Profile">
+				<http:body>#[vars.employeeData]</http:body>
+				<http:headers>#[{"Content-Type": "application/json"}]</http:headers>
+			</http:request>
+			
+			<set-variable variableName="employeeCreationResult" value="#[payload]" />
+			<logger level="INFO" message="Employee profile created successfully: #[vars.employeeCreationResult.employeeId]" />
+
+			<!-- Step 2: Allocate Assets -->
+			<logger level="INFO" message="Step 2: Allocating assets for employee #[vars.employeeCreationResult.employeeId]" />
+			<ee:transform doc:name="Prepare Asset Allocation Request">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	employeeId: vars.employeeCreationResult.employeeId,
+	firstName: vars.employeeData.firstName,
+	lastName: vars.employeeData.lastName,
+	email: vars.employeeData.email,
+	department: vars.employeeData.department,
+	position: vars.employeeData.position,
+	startDate: vars.employeeData.startDate,
+	assets: vars.employeeData.assets default []
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+
+			<http:request method="POST" config-ref="asset-allocation-mcp-config" path="/mcp/tools/allocate-assets" doc:name="Allocate Assets">
+				<http:body>#[payload]</http:body>
+				<http:headers>#[{"Content-Type": "application/json"}]</http:headers>
+			</http:request>
+			
+			<set-variable variableName="assetAllocationResult" value="#[payload]" />
+			<logger level="INFO" message="Assets allocated successfully: #[sizeOf(vars.assetAllocationResult.allocatedAssets default [])] assets allocated" />
+
+			<!-- Step 3: Send Welcome Email -->
+			<logger level="INFO" message="Step 3: Sending welcome email to #[vars.employeeData.email]" />
+			<ee:transform doc:name="Prepare Welcome Email Request">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	firstName: vars.employeeData.firstName,
+	lastName: vars.employeeData.lastName,
+	employeeId: vars.employeeCreationResult.employeeId,
+	email: vars.employeeData.email,
+	department: vars.employeeData.department,
+	position: vars.employeeData.position,
+	startDate: vars.employeeData.startDate,
+	manager: vars.employeeData.manager,
+	orientationDate: vars.employeeData.orientationDate,
+	companyName: vars.employeeData.companyName default "Our Company"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+
+			<http:request method="POST" config-ref="notification-mcp-config" path="/mcp/tools/send-welcome-email" doc:name="Send Welcome Email">
+				<http:body>#[payload]</http:body>
+				<http:headers>#[{"Content-Type": "application/json"}]</http:headers>
+			</http:request>
+			
+			<set-variable variableName="welcomeEmailResult" value="#[payload]" />
+			<logger level="INFO" message="Welcome email sent successfully" />
+
+			<!-- Step 4: Send Asset Allocation Notification -->
+			<logger level="INFO" message="Step 4: Sending asset allocation notification" />
+			<ee:transform doc:name="Prepare Asset Notification Request">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	firstName: vars.employeeData.firstName,
+	lastName: vars.employeeData.lastName,
+	employeeId: vars.employeeCreationResult.employeeId,
+	email: vars.employeeData.email,
+	assets: vars.assetAllocationResult.allocatedAssets default [],
+	allocationDate: now() as String {format: 'yyyy-MM-dd'},
+	approvedBy: "Agent Broker System",
+	allocationStatus: "ALLOCATED",
+	companyName: vars.employeeData.companyName default "Our Company"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+
+			<http:request method="POST" config-ref="notification-mcp-config" path="/mcp/tools/send-asset-notification" doc:name="Send Asset Notification">
+				<http:body>#[payload]</http:body>
+				<http:headers>#[{"Content-Type": "application/json"}]</http:headers>
+			</http:request>
+			
+			<set-variable variableName="assetNotificationResult" value="#[payload]" />
+			<logger level="INFO" message="Asset allocation notification sent successfully" />
+
+			<!-- Step 5: Send Onboarding Complete Notification -->
+			<logger level="INFO" message="Step 5: Sending onboarding complete notification" />
+			<ee:transform doc:name="Prepare Onboarding Complete Request">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	firstName: vars.employeeData.firstName,
+	lastName: vars.employeeData.lastName,
+	employeeId: vars.employeeCreationResult.employeeId,
+	email: vars.employeeData.email,
+	department: vars.employeeData.department,
+	position: vars.employeeData.position,
+	startDate: vars.employeeData.startDate,
+	assets: vars.assetAllocationResult.allocatedAssets default [],
+	managerName: vars.employeeData.managerName,
+	managerEmail: vars.employeeData.managerEmail,
+	companyName: vars.employeeData.companyName default "Our Company"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+
+			<http:request method="POST" config-ref="notification-mcp-config" path="/mcp/tools/send-onboarding-complete" doc:name="Send Onboarding Complete">
+				<http:body>#[payload]</http:body>
+				<http:headers>#[{"Content-Type": "application/json"}]</http:headers>
+			</http:request>
+			
+			<set-variable variableName="onboardingCompleteResult" value="#[payload]" />
+			<logger level="INFO" message="Onboarding complete notification sent successfully" />
+
+			<!-- Final Success Response -->
+			<ee:transform doc:name="Prepare Success Response">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "success",
+	message: "Employee onboarding orchestration completed successfully",
+	employeeId: vars.employeeCreationResult.employeeId,
+	employeeName: vars.employeeData.firstName ++ " " ++ vars.employeeData.lastName,
+	email: vars.employeeData.email,
+	onboardingSteps: {
+		profileCreation: {
+			status: "completed",
+			result: vars.employeeCreationResult
+		},
+		assetAllocation: {
+			status: "completed",
+			assetsAllocated: sizeOf(vars.assetAllocationResult.allocatedAssets default []),
+			result: vars.assetAllocationResult
+		},
+		welcomeEmail: {
+			status: "completed",
+			result: vars.welcomeEmailResult
+		},
+		assetNotification: {
+			status: "completed",
+			result: vars.assetNotificationResult
+		},
+		onboardingComplete: {
+			status: "completed",
+			result: vars.onboardingCompleteResult
+		}
+	},
+	startTime: vars.onboardingStartTime as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	completionTime: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	totalDuration: (now() - vars.onboardingStartTime) as String,
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+
+			<logger level="INFO" message="Employee onboarding orchestration completed successfully for: #[vars.employeeData.email]" />
+
+			<error-handler>
+				<on-error-propagate type="HTTP:*">
+					<ee:transform doc:name="Prepare Error Response">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "error",
+	message: "Employee onboarding orchestration failed",
+	error: error.description,
+	employeeEmail: vars.employeeData.email,
+	failedAt: "HTTP Request to MCP Server",
+	startTime: vars.onboardingStartTime as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	errorTime: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<set-variable value="500" variableName="httpStatus" />
+					<logger level="ERROR" message="Onboarding orchestration failed: #[error.description]" />
+				</on-error-propagate>
+				<on-error-propagate type="ANY">
+					<ee:transform doc:name="Prepare Generic Error Response">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "error",
+	message: "Unexpected error during employee onboarding orchestration",
+	error: error.description,
+	employeeEmail: vars.employeeData.email default "unknown",
+	startTime: vars.onboardingStartTime as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	errorTime: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<set-variable value="500" variableName="httpStatus" />
+					<logger level="ERROR" message="Unexpected onboarding orchestration error: #[error.description]" />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- MCP Tool: Get Onboarding Status -->
+	<flow name="get-onboarding-status">
+		<http:listener config-ref="http-config" path="/mcp/tools/get-onboarding-status" doc:name="Get Onboarding Status Listener">
+		</http:listener>
+
+		<logger level="INFO" message="Getting onboarding status for employee: #[payload.employeeId]" />
+
+		<try doc:name="Try Get Status">
+			<http:request method="GET" config-ref="employee-onboarding-mcp-config" path="/mcp/tools/get-employee/{employeeId}" doc:name="Get Employee Status">
+				<http:uri-params>#[{"employeeId": payload.employeeId}]</http:uri-params>
+			</http:request>
+
+			<set-payload
+				value="#[{'status': 'success', 'message': 'Employee status retrieved', 'employeeData': payload, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+				mimeType="application/json" />
+			<logger level="INFO" message="Employee status retrieved successfully" />
+
+			<error-handler>
+				<on-error-propagate type="ANY">
+					<set-payload
+						value="#[{'status': 'error', 'message': 'Failed to get employee status', 'error': error.description, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+						mimeType="application/json" />
+					<set-variable value="500" variableName="httpStatus" />
+					<logger level="ERROR" message="Failed to get employee status: #[error.description]" />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- MCP Tool: Retry Failed Step -->
+	<flow name="retry-failed-step">
+		<http:listener config-ref="http-config" path="/mcp/tools/retry-failed-step" doc:name="Retry Failed Step Listener">
+		</http:listener>
+
+		<logger level="INFO" message="Retrying failed step: #[payload.step] for employee: #[payload.employeeId]" />
+
+		<set-payload
+			value="#[{'status': 'success', 'message': 'Retry functionality is under development', 'step': payload.step, 'employeeId': payload.employeeId, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
+			mimeType="application/json" />
+		<logger level="INFO" message="Retry step response sent (feature under development)" />
+	</flow>
+
+</mule>

@@ -1,0 +1,270 @@
+# Employee Onboarding Agent Network Configuration
+# This configuration defines the complete agent network for employee onboarding process
+
+name: employee-onboarding-network
+version: "1.0.0"
+description: "Complete agent network for employee onboarding process orchestration using MCP servers"
+
+# LLM Configuration - Using Groq
+llm:
+  provider: groq
+  model: llama3-8b-8192
+  api_key: "${GROQ_API_KEY}"
+  base_url: "https://api.groq.com/openai/v1"
+  temperature: 0.7
+  max_tokens: 4096
+  timeout: 30
+
+# Agent Network Configuration
+agents:
+  # Main Orchestrator Agent
+  - name: onboarding-orchestrator
+    description: "Main orchestrator agent that coordinates the entire employee onboarding process"
+    type: orchestrator
+    capabilities:
+      - employee_onboarding_coordination
+      - process_management
+      - error_handling
+      - status_tracking
+    tools:
+      - orchestrate-employee-onboarding
+      - get-onboarding-status
+      - retry-failed-step
+    mcp_servers:
+      - employee-onboarding-broker
+    skills:
+      - "Coordinate complex multi-step processes"
+      - "Handle errors and retries gracefully"
+      - "Provide detailed status updates"
+      - "Manage dependencies between services"
+
+  # Employee Management Agent
+  - name: employee-manager
+    description: "Handles employee profile creation and management"
+    type: specialist
+    capabilities:
+      - employee_profile_management
+      - data_validation
+      - database_operations
+    tools:
+      - create-employee
+      - update-employee
+      - get-employee
+      - list-employees
+    mcp_servers:
+      - employee-onboarding-mcp
+    skills:
+      - "Create and manage employee profiles"
+      - "Validate employee data"
+      - "Perform database operations"
+      - "Handle employee information securely"
+
+  # Asset Management Agent
+  - name: asset-allocator
+    description: "Manages asset allocation and tracking for new employees"
+    type: specialist
+    capabilities:
+      - asset_allocation
+      - inventory_management
+      - tracking_assignment
+    tools:
+      - allocate-assets
+      - track-assets
+      - update-asset-status
+      - get-asset-availability
+    mcp_servers:
+      - asset-allocation-mcp
+    skills:
+      - "Allocate appropriate assets based on role and department"
+      - "Track asset inventory and availability"
+      - "Manage asset lifecycle and assignment"
+      - "Ensure compliance with asset policies"
+
+  # Notification Agent
+  - name: notification-sender
+    description: "Handles all email notifications throughout the onboarding process"
+    type: specialist
+    capabilities:
+      - email_notifications
+      - template_management
+      - delivery_tracking
+    tools:
+      - send-welcome-email
+      - send-asset-notification
+      - send-onboarding-complete
+      - test-email-config
+    mcp_servers:
+      - notification-mcp
+    skills:
+      - "Send personalized email notifications"
+      - "Manage email templates and content"
+      - "Track email delivery status"
+      - "Handle email configuration and troubleshooting"
+
+# MCP Servers Configuration - CloudHub Deployment with Flex Gateway
+mcp_servers:
+  - name: employee-onboarding-broker
+    description: "Agent broker MCP server for orchestrating the complete onboarding process"
+    url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/broker"
+    cloudhub_url: "https://employee-onboarding-agent-broker.sandbox.anypoint.mulesoft.com"
+    flex_gateway_url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/broker"
+    timeout: 30000
+    retry_attempts: 3
+    health_check: "/health"
+    tools_endpoint: "/mcp/tools"
+    info_endpoint: "/mcp/info"
+
+  - name: employee-onboarding-mcp
+    description: "Employee management MCP server"
+    url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/employee"
+    cloudhub_url: "https://employee-onboarding-mcp-server.sandbox.anypoint.mulesoft.com"
+    flex_gateway_url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/employee"
+    timeout: 30000
+    retry_attempts: 3
+    health_check: "/health"
+    tools_endpoint: "/mcp/tools"
+    info_endpoint: "/mcp/info"
+
+  - name: asset-allocation-mcp
+    description: "Asset allocation MCP server"
+    url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/assets"
+    cloudhub_url: "https://asset-allocation-mcp-server.sandbox.anypoint.mulesoft.com"
+    flex_gateway_url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/assets"
+    timeout: 30000
+    retry_attempts: 3
+    health_check: "/health"
+    tools_endpoint: "/mcp/tools"
+    info_endpoint: "/mcp/info"
+
+  - name: notification-mcp
+    description: "Notification MCP server"
+    url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/notifications"
+    cloudhub_url: "https://notification-mcp-server.sandbox.anypoint.mulesoft.com"
+    flex_gateway_url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/notifications"
+    timeout: 30000
+    retry_attempts: 3
+    health_check: "/health"
+    tools_endpoint: "/mcp/tools"
+    info_endpoint: "/mcp/info"
+
+# Broker Configuration
+brokers:
+  - name: main-broker
+    description: "Primary broker for employee onboarding orchestration"
+    agents:
+      - onboarding-orchestrator
+      - employee-manager
+      - asset-allocator
+      - notification-sender
+    mcp_server: employee-onboarding-broker
+    capabilities:
+      - process_orchestration
+      - agent_coordination
+      - error_recovery
+      - status_monitoring
+    skills:
+      - "Orchestrate multi-agent workflows"
+      - "Coordinate between different specialist agents"
+      - "Handle complex business processes"
+      - "Provide comprehensive monitoring and reporting"
+
+# Workflows Configuration
+workflows:
+  - name: complete-employee-onboarding
+    description: "Complete employee onboarding process from start to finish"
+    trigger: employee_onboarding_request
+    steps:
+      - name: validate_employee_data
+        agent: employee-manager
+        tool: create-employee
+        description: "Validate and create employee profile"
+        
+      - name: allocate_assets
+        agent: asset-allocator
+        tool: allocate-assets
+        description: "Allocate required assets for the new employee"
+        depends_on: [validate_employee_data]
+        
+      - name: send_welcome_email
+        agent: notification-sender
+        tool: send-welcome-email
+        description: "Send welcome email to the new employee"
+        depends_on: [validate_employee_data]
+        
+      - name: send_asset_notification
+        agent: notification-sender
+        tool: send-asset-notification
+        description: "Send asset allocation notification"
+        depends_on: [allocate_assets]
+        
+      - name: send_completion_notification
+        agent: notification-sender
+        tool: send-onboarding-complete
+        description: "Send onboarding completion notification"
+        depends_on: [send_welcome_email, send_asset_notification]
+
+# Policies Configuration
+policies:
+  - name: data_validation_policy
+    description: "Ensure all employee data is validated before processing"
+    type: validation
+    rules:
+      - required_fields: [firstName, lastName, email, department, position]
+      - email_format: valid_email
+      - start_date: future_or_current_date
+
+  - name: asset_allocation_policy
+    description: "Define asset allocation rules based on role and department"
+    type: business_rule
+    rules:
+      - developer_assets: [laptop, monitor, keyboard, mouse]
+      - manager_assets: [laptop, monitor, phone]
+      - default_assets: [laptop, mouse]
+
+  - name: notification_policy
+    description: "Define notification delivery requirements"
+    type: communication
+    rules:
+      - welcome_email: immediate
+      - asset_notification: after_allocation
+      - completion_notification: after_all_steps
+      - cc_recipients: [hr@company.com, manager@company.com]
+
+# Monitoring and Logging
+monitoring:
+  enabled: true
+  log_level: INFO
+  metrics:
+    - workflow_completion_time
+    - step_success_rate
+    - error_count
+    - agent_response_time
+  alerts:
+    - failed_workflows
+    - timeout_errors
+    - agent_unavailable
+
+# Security Configuration
+security:
+  authentication:
+    type: api_key
+    required: true
+  authorization:
+    roles:
+      - admin: all_permissions
+      - hr_user: onboarding_permissions
+      - it_user: asset_permissions
+  encryption:
+    data_in_transit: true
+    sensitive_fields: [email, phone, ssn]
+
+# Environment Configuration
+environment:
+  name: development
+  variables:
+    GROQ_API_KEY: "${GROQ_API_KEY}"
+    DATABASE_URL: "${DATABASE_URL}"
+    EMAIL_FROM_ADDRESS: "${EMAIL_FROM_ADDRESS}"
+    EMAIL_PASSWORD: "${EMAIL_PASSWORD}"
+    NOTIFICATION_CC_HR: "${NOTIFICATION_CC_HR}"
+    NOTIFICATION_CC_IT: "${NOTIFICATION_CC_IT}"
