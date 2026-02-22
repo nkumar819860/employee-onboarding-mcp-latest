@@ -1,0 +1,513 @@
+openapi: 3.0.3
+info:
+  title: Notification MCP Server API
+  description: |
+    MCP Server for Email Notifications - Employee Onboarding & Asset Allocation confirmations using Gmail SMTP.
+    
+    This service provides automated email notification capabilities for HR and IT processes including:
+    - Employee welcome emails with professional onboarding templates
+    - Asset allocation notifications with detailed equipment confirmations
+    - Onboarding completion messages with comprehensive summaries
+    - Gmail SMTP integration with secure email delivery
+    
+    ## Key Features
+    - Professional HTML email templates with responsive design
+    - Secure Gmail SMTP integration with TLS encryption
+    - Dynamic content replacement with employee and asset information
+    - Comprehensive error handling and delivery confirmations
+    - Configuration testing capabilities
+    
+    ## Security
+    - Secure property handling for Gmail credentials
+    - TLS encryption for SMTP connections
+    - Input validation and sanitization
+    - Error handling without credential exposure
+  version: 1.0.0
+  contact:
+    name: MuleSoft Notification Team
+    email: mcp-dev@company.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8082
+    description: Local development server
+  - url: https://notification-mcp.cloudhub.io
+    description: Production CloudHub server
+
+tags:
+  - name: Health
+    description: Service health and status endpoints
+  - name: MCP Info
+    description: MCP server information and capabilities
+  - name: Email Notifications
+    description: Email notification operations
+  - name: Configuration
+    description: Email configuration and testing
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check endpoint
+      description: Returns the current health status of the notification service
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [UP, DOWN]
+                    example: UP
+                  service:
+                    type: string
+                    example: Notification MCP Server
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15 10:30:45"
+                  emailEnabled:
+                    type: string
+                    example: "true"
+
+  /mcp/info:
+    get:
+      tags:
+        - MCP Info
+      summary: Get MCP server information
+      description: Returns comprehensive information about the notification MCP server capabilities
+      operationId: getMcpInfo
+      responses:
+        '200':
+          description: MCP server information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: Notification MCP Server
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  description:
+                    type: string
+                    example: MCP Server for Email Notifications (Employee Onboarding and Asset Allocation)
+                  tools:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        endpoint:
+                          type: string
+                    example:
+                      - name: send-welcome-email
+                        description: Send employee welcome email
+                        endpoint: /mcp/tools/send-welcome-email
+                      - name: send-asset-notification
+                        description: Send asset allocation notification
+                        endpoint: /mcp/tools/send-asset-notification
+
+  /mcp/tools/send-welcome-email:
+    post:
+      tags:
+        - Email Notifications
+      summary: Send employee welcome email
+      description: |
+        Sends a professional welcome email to new employees with personalized content including:
+        - Employee details (name, ID, department, position)
+        - Company information and welcome message
+        - Start date and orientation details
+        - Manager information
+        
+        Uses HTML template with dynamic content replacement.
+      operationId: sendWelcomeEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - email
+                - employeeId
+              properties:
+                firstName:
+                  type: string
+                  description: Employee's first name
+                  example: John
+                lastName:
+                  type: string
+                  description: Employee's last name
+                  example: Smith
+                email:
+                  type: string
+                  format: email
+                  description: Employee's email address
+                  example: john.smith@company.com
+                employeeId:
+                  type: string
+                  description: Unique employee identifier
+                  example: EMP001
+                department:
+                  type: string
+                  description: Employee's department
+                  example: Engineering
+                position:
+                  type: string
+                  description: Employee's job position
+                  example: Senior Software Engineer
+                startDate:
+                  type: string
+                  format: date
+                  description: Employee's start date
+                  example: "2024-01-15"
+                manager:
+                  type: string
+                  description: Employee's manager name
+                  example: Sarah Johnson
+                orientationDate:
+                  type: string
+                  format: date
+                  description: Orientation date
+                  example: "2024-01-16"
+                companyName:
+                  type: string
+                  description: Company name for personalization
+                  example: TechCorp Inc
+      responses:
+        '200':
+          description: Welcome email sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailSuccessResponse'
+        '500':
+          description: Email sending failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailErrorResponse'
+
+  /mcp/tools/send-asset-notification:
+    post:
+      tags:
+        - Email Notifications
+      summary: Send asset allocation notification
+      description: |
+        Sends asset allocation confirmation email with detailed equipment information including:
+        - Employee information
+        - Allocated assets with specifications
+        - Asset tags and serial numbers
+        - Allocation date and approver
+        - Care instructions and policies
+      operationId: sendAssetNotification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - email
+                - employeeId
+              properties:
+                firstName:
+                  type: string
+                  example: John
+                lastName:
+                  type: string
+                  example: Smith
+                email:
+                  type: string
+                  format: email
+                  example: john.smith@company.com
+                employeeId:
+                  type: string
+                  example: EMP001
+                allocationDate:
+                  type: string
+                  format: date
+                  example: "2024-01-15"
+                approvedBy:
+                  type: string
+                  example: IT Manager
+                allocationStatus:
+                  type: string
+                  enum: [ALLOCATED, PENDING, CANCELLED]
+                  example: ALLOCATED
+                companyName:
+                  type: string
+                  example: TechCorp Inc
+                assets:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/AssetInfo'
+      responses:
+        '200':
+          description: Asset notification sent successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/EmailSuccessResponse'
+                  - type: object
+                    properties:
+                      assetCount:
+                        type: integer
+                        example: 3
+        '500':
+          description: Email sending failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailErrorResponse'
+
+  /mcp/tools/send-onboarding-complete:
+    post:
+      tags:
+        - Email Notifications
+      summary: Send onboarding completion notification
+      description: |
+        Sends comprehensive onboarding completion email including:
+        - Complete employee profile summary
+        - Asset allocation summary with all assigned equipment
+        - Welcome message and next steps
+        - Manager contact information
+        - Company policies and resources
+      operationId: sendOnboardingComplete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - email
+                - employeeId
+              properties:
+                firstName:
+                  type: string
+                  example: John
+                lastName:
+                  type: string
+                  example: Smith
+                email:
+                  type: string
+                  format: email
+                  example: john.smith@company.com
+                employeeId:
+                  type: string
+                  example: EMP001
+                department:
+                  type: string
+                  example: Engineering
+                position:
+                  type: string
+                  example: Senior Software Engineer
+                startDate:
+                  type: string
+                  format: date
+                  example: "2024-01-15"
+                managerName:
+                  type: string
+                  example: Sarah Johnson
+                managerEmail:
+                  type: string
+                  format: email
+                  example: sarah.johnson@company.com
+                companyName:
+                  type: string
+                  example: TechCorp Inc
+                assets:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/AssetInfo'
+      responses:
+        '200':
+          description: Onboarding complete notification sent successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/EmailSuccessResponse'
+                  - type: object
+                    properties:
+                      assetCount:
+                        type: integer
+                        example: 3
+        '500':
+          description: Email sending failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailErrorResponse'
+
+  /mcp/tools/test-email-config:
+    post:
+      tags:
+        - Configuration
+      summary: Test email configuration
+      description: |
+        Tests the Gmail SMTP configuration by sending a test email.
+        Useful for validating email settings during setup and troubleshooting.
+      operationId: testEmailConfig
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                testEmail:
+                  type: string
+                  format: email
+                  description: Email address to send test email to (defaults to configured from address)
+                  example: test@company.com
+      responses:
+        '200':
+          description: Test email sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Test email sent successfully
+                  recipient:
+                    type: string
+                    example: test@company.com
+                  timestamp:
+                    type: string
+                    format: date-time
+        '500':
+          description: Email configuration test failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Email Configuration Error
+                  message:
+                    type: string
+                    example: Authentication failed - check Gmail credentials
+                  suggestion:
+                    type: string
+                    example: Check Gmail SMTP settings, username, password, and app password configuration
+                  timestamp:
+                    type: string
+                    format: date-time
+
+components:
+  schemas:
+    AssetInfo:
+      type: object
+      properties:
+        assetName:
+          type: string
+          description: Name of the asset
+          example: MacBook Pro 16"
+        assetTag:
+          type: string
+          description: Unique asset tag identifier
+          example: LAPTOP-001
+        category:
+          type: string
+          description: Asset category
+          example: LAPTOP
+        brand:
+          type: string
+          example: Apple
+        model:
+          type: string
+          example: MacBook Pro 16" M2
+        serialNumber:
+          type: string
+          example: ABC123456789
+        condition:
+          type: string
+          enum: [NEW, GOOD, FAIR, POOR]
+          example: NEW
+        specifications:
+          type: string
+          description: Detailed asset specifications
+          example: 16GB RAM, 512GB SSD, M2 Chip
+        location:
+          type: string
+          example: IT Storage Room
+
+    EmailSuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        message:
+          type: string
+          example: Email sent successfully
+        recipient:
+          type: string
+          format: email
+          example: john.smith@company.com
+        employeeName:
+          type: string
+          example: John Smith
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15 10:30:45"
+
+    EmailErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Email Send Failed
+        message:
+          type: string
+          example: SMTP authentication failed
+        recipient:
+          type: string
+          format: email
+          example: john.smith@company.com
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15 10:30:45"
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+security:
+  - ApiKeyAuth: []
+
+externalDocs:
+  description: Notification MCP Server Documentation
+  url: https://github.com/mulesoft/notification-mcp/blob/main/README.md
