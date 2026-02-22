@@ -1,415 +1,333 @@
-# Employee Onboarding Agent Fabric
+# Employee Onboarding System with NLP Processing
 
-## 🚀 Overview
-
-A comprehensive **Mule Agent Fabric** implementation for automating the complete employee onboarding process. This standardized agent fabric orchestrates multiple MCP (Model Context Protocol) servers using intelligent agents to streamline HR operations, asset allocation, and communication workflows.
-
-## ✨ Features
-
-- **🤖 Intelligent Agent Orchestration**: Coordinated multi-agent workflows with LLM integration
-- **🔧 MCP Server Architecture**: Standardized microservices using Model Context Protocol  
-- **🌐 Flex Gateway Integration**: API management and routing with security policies
-- **📋 Complete Onboarding Workflow**: End-to-end employee onboarding automation
-- **💼 Asset Management**: Automated asset allocation and tracking
-- **📧 Smart Notifications**: Personalized email communications with templates
-- **🏥 Health Monitoring**: Comprehensive monitoring and alerting system
-- **🔄 Automated Deployment**: One-click deployment with rollback capabilities
+A comprehensive, dockerized employee onboarding system featuring natural language processing capabilities, built with React frontend and MuleSoft MCP (Model Context Protocol) servers.
 
 ## 🏗️ Architecture
 
-```mermaid
-graph TB
-    subgraph "Agent Fabric Gateway (Flex Gateway)"
-        GW[Gateway Router]
-    end
-    
-    subgraph "Agent Orchestration Layer"
-        AB[Agent Broker MCP]
-        AN[Agent Network Config]
-    end
-    
-    subgraph "Core MCP Servers"
-        EM[Employee Onboarding MCP]
-        AM[Asset Allocation MCP]  
-        NM[Notification MCP]
-    end
-    
-    subgraph "Shared Resources"
-        Templates[Email Templates]
-        Schemas[Data Schemas]
-        Policies[Security Policies]
-    end
-    
-    GW --> AB
-    GW --> EM
-    GW --> AM
-    GW --> NM
-    
-    AB --> EM
-    AB --> AM
-    AB --> NM
-    
-    AN --> AB
-    Templates --> NM
-    Schemas --> EM
-    Policies --> GW
+### Components
+- **React NLP Client** (Port 3000) - Modern web interface with natural language processing
+- **Agent Broker MCP** (Port 8080) - Main orchestration service
+- **Employee Onboarding MCP** (Port 8081) - Employee management service  
+- **Asset Allocation MCP** (Port 8082) - Asset and inventory management
+- **Notification MCP** (Port 8083) - Email and notification service
+- **PostgreSQL Database** (Port 5432) - Persistent data storage
+
+### Technology Stack
+- **Frontend**: React 18, Material-UI, NLP libraries (compromise.js, sentiment analysis)
+- **Backend**: MuleSoft Mule Runtime, Java 17
+- **Database**: PostgreSQL 15
+- **Containerization**: Docker & Docker Compose
+- **NLP**: compromise.js, Natural.js, Sentiment analysis, Speech recognition
+
+## 🚀 Features
+
+### Natural Language Processing
+- **Intent Recognition**: Automatically detects user intentions from natural language
+- **Entity Extraction**: Identifies people, employee IDs, assets, and other entities
+- **Sentiment Analysis**: Analyzes emotional tone of user inputs  
+- **Speech Recognition**: Voice-to-text input capability
+- **Multi-language Support**: Extensible NLP pipeline
+
+### Core Functionality
+- **Employee Management**: Create, track, and manage employee onboarding
+- **Asset Allocation**: Manage laptops, phones, ID cards, and other equipment
+- **Automated Notifications**: Send welcome emails, reminders, and alerts
+- **Real-time Analytics**: Dashboard with metrics and insights
+- **Health Monitoring**: Service status and performance tracking
+
+### Supported NLP Commands
+```
+"Create new employee John Smith"
+"Allocate laptop to employee EMP001"  
+"Show me all available assets"
+"Get employee onboarding status"
+"Send notification to new employees"
+"What assets are allocated to EMP002?"
 ```
 
-## 📁 Project Structure
+## 📋 Prerequisites
 
-```
-employee-onboarding-agent-fabric/
-├── fabric-config/              # Central fabric configuration
-│   ├── agent-network.yaml      # Agent network and LLM settings
-│   ├── gateway-config.yaml     # Flex Gateway configuration
-│   └── deployment-config.yaml  # Deployment orchestration
-├── mcp-servers/                # MCP server implementations
-│   ├── employee-onboarding-mcp/# Employee management services
-│   ├── asset-allocation-mcp/   # Asset allocation services
-│   ├── notification-mcp/       # Email notification services
-│   └── agent-broker-mcp/       # Agent orchestration broker
-├── shared-resources/           # Shared fabric resources
-│   ├── templates/              # Email templates
-│   ├── schemas/                # Data validation schemas
-│   ├── policies/               # Security and governance policies
-│   └── global-configs/         # Shared configurations
-├── deployment/                 # Deployment automation
-│   ├── scripts/                # Automated deployment scripts
-│   ├── environments/           # Environment-specific configs
-│   └── monitoring/             # Health check and monitoring
-├── docs/                       # Documentation
-│   └── deployment-guide.md     # Comprehensive deployment guide
-└── tests/                      # Testing framework
-    ├── integration/            # End-to-end tests
-    └── health-checks/          # Health validation
-```
+- Docker Desktop 4.0+
+- Docker Compose 2.0+
+- 8GB+ RAM available
+- Ports 3000, 8080-8083, 5432 available
 
-## 🚀 Quick Start
+## 🎯 Quick Start
 
-### Prerequisites
-
-- **Java 17+** (Mule Runtime)
-- **Maven 3.6+** (Build automation)  
-- **Python 3.8+** (Deployment scripts)
-- **Anypoint Platform Account** (CloudHub deployment)
-
-### 1. Setup Environment
-
+### 1. Clone and Navigate
 ```bash
-# Clone the repository
 git clone <repository-url>
 cd employee-onboarding-agent-fabric
-
-# Configure environment
-cp .env.template .env
-# Edit .env with your settings
-
-# Install dependencies
-pip install requests groq urllib3
 ```
 
-### 2. Deploy Agent Fabric
-
+### 2. Deploy Everything
 ```bash
-# Deploy to development environment
-.\deployment\scripts\deploy-agent-fabric.bat development
+# Windows
+test-e2e-deployment.bat
 
-# Verify deployment
-.\deployment\scripts\health-check-all.bat development
+# Linux/Mac  
+chmod +x test-e2e-deployment.sh
+./test-e2e-deployment.sh
 ```
 
 ### 3. Access the System
+- **Main Application**: http://localhost:3000
+- **NLP Chat Interface**: http://localhost:3000/chat
+- **API Documentation**: http://localhost:8080/console
 
-- **Agent Fabric Gateway**: `https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com`
-- **Agent Broker**: `https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/broker`
-- **Employee Management**: `https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/employee`
-- **Asset Allocation**: `https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/assets`
-- **Notifications**: `https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/notifications`
+## 🗄️ Database Schema
+
+### Key Tables
+- `employees` - Employee records and status
+- `assets` - Equipment and inventory
+- `asset_allocations` - Asset assignments
+- `asset_categories` - Asset types and policies
+- `departments` - Organizational structure
+
+### Sample Data
+The system includes pre-loaded sample data:
+- 8 employees across multiple departments
+- 20+ assets (laptops, phones, ID cards)
+- Asset allocation history
+- Department and category configurations
 
 ## 🔧 Configuration
 
 ### Environment Variables
-
-Create a `.env` file with the following configuration:
-
 ```env
-# Anypoint Platform
-ANYPOINT_USERNAME=your-username
-ANYPOINT_PASSWORD=your-password
-ANYPOINT_ORG_ID=your-org-id
-ANYPOINT_ENV_ID=your-env-id
-
-# LLM Configuration (Groq)
-GROQ_API_KEY=your-groq-api-key
+# React Client
+REACT_APP_API_BASE_URL=http://localhost:8080
+REACT_APP_EMPLOYEE_API_URL=http://localhost:8081
+REACT_APP_ASSET_API_URL=http://localhost:8082
+REACT_APP_NOTIFICATION_API_URL=http://localhost:8083
 
 # Database
-DATABASE_URL=your-database-url
-
-# Email Settings
-EMAIL_FROM_ADDRESS=noreply@yourcompany.com
-EMAIL_PASSWORD=your-email-password
-
-# Notifications
-NOTIFICATION_CC_HR=hr@yourcompany.com
-NOTIFICATION_CC_IT=it@yourcompany.com
-
-# Monitoring
-ALERT_WEBHOOK_URL=your-webhook-url
-ALERT_EMAIL=alerts@yourcompany.com
-SLACK_WEBHOOK_URL=your-slack-webhook
+POSTGRES_DB=postgres
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres_pass
 ```
 
-### Agent Network Configuration
+### Service Configuration
+Each MCP server can be configured via environment variables in `docker-compose.yml`:
+- Memory allocation (JAVA_OPTS)
+- Database connections
+- Service-specific settings
 
-Edit `fabric-config/agent-network.yaml` to customize:
+## 🧪 Testing
 
-- **LLM Provider**: Configure Groq, OpenAI, or other providers
-- **Agent Capabilities**: Define agent skills and tools
-- **MCP Server Endpoints**: Configure server URLs and timeouts
-- **Workflow Orchestration**: Define process steps and dependencies
+### Manual Testing
+1. Start the system: `docker-compose up -d`
+2. Visit http://localhost:3000/chat
+3. Try NLP commands:
+   - "Create employee Sarah Johnson"
+   - "Allocate laptop to EMP001"
+   - "Show available assets"
+
+### API Testing
+```bash
+# Health checks
+curl http://localhost:8080/health
+curl http://localhost:8081/health  
+curl http://localhost:8082/health
+curl http://localhost:8083/health
+
+# Database check
+docker-compose exec postgres psql -U postgres -c "\l"
+```
+
+### NLP Testing
+The NLP engine supports various input patterns:
+- **Formal**: "Please create a new employee named John Doe"
+- **Casual**: "Add John Doe as an employee"  
+- **Commands**: "Create employee John Doe"
+- **Questions**: "Can you show me available laptops?"
+
+## 🔍 Monitoring
+
+### Service Logs
+```bash
+# All services
+docker-compose logs -f
+
+# Specific service
+docker-compose logs -f react-nlp-client
+docker-compose logs -f agent-broker-mcp
+docker-compose logs -f postgres
+```
+
+### Health Monitoring
+- Dashboard shows real-time service status
+- Built-in health checks for all components
+- Database connection monitoring
+- Performance metrics tracking
 
 ## 🛠️ Development
 
-### Building MCP Servers
-
+### Local Development Setup
 ```bash
-# Build all MCP servers
-.\deployment\scripts\build-all.bat
+# Start only backend services
+docker-compose up -d postgres employee-onboarding-mcp asset-allocation-mcp
 
-# Build specific server
-cd mcp-servers\employee-onboarding-mcp
-mvn clean package -DskipTests
+# Run React client locally
+cd react-client
+npm install
+npm start
 ```
 
-### Local Development
+### Adding New NLP Intents
+1. Edit `react-client/src/services/nlpService.js`
+2. Add intent patterns and keywords
+3. Update entity recognition rules
+4. Implement action handlers in `NLPChat.js`
 
+### Database Migrations
+```sql
+-- Connect to database
+docker-compose exec postgres psql -U postgres -d asset_allocation
+
+-- Run custom migrations
+\i /path/to/migration.sql
+```
+
+## 🐳 Docker Services
+
+### Service Dependencies
+```
+react-nlp-client
+├── agent-broker-mcp
+├── employee-onboarding-mcp  
+├── asset-allocation-mcp
+└── notification-mcp
+
+agent-broker-mcp
+└── notification-mcp
+
+employee-onboarding-mcp
+└── postgres
+
+asset-allocation-mcp  
+└── postgres
+```
+
+### Volume Mounts
+- `postgres_data` - Database persistence
+- `mule-logs` - Application logs
+- Init SQL scripts mounted read-only
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+**Services won't start**
 ```bash
-# Start individual MCP server locally
-cd mcp-servers\employee-onboarding-mcp
-mvn mule:run
+# Check Docker resources
+docker system df
+docker system prune -f
 
-# Run health checks
-.\deployment\scripts\health-check-all.bat development
+# Restart with fresh build
+docker-compose down --volumes
+docker-compose up --build
 ```
 
-### Testing
-
+**Database connection errors**
 ```bash
-# Run integration tests
-.\deployment\scripts\run-integration-tests.bat development
+# Check PostgreSQL status
+docker-compose exec postgres pg_isready -U postgres
 
-# Test specific workflow
-python tests\integration\test-employee-onboarding.py
+# View database logs
+docker-compose logs postgres
 ```
 
-## 📊 Monitoring
-
-### Health Monitoring
-
-The fabric includes comprehensive health monitoring:
-
+**React client build fails**
 ```bash
-# Run health checks
-.\deployment\scripts\health-check-all.bat development
-
-# View health logs
-type deployment\monitoring\health-check-log.csv
-
-# Setup continuous monitoring (Windows)
-schtasks /create /tn "Agent Fabric Health Check" /tr "C:\path\to\health-check-all.bat development" /sc minute /mo 5
+# Check Node.js memory
+export NODE_OPTIONS="--max-old-space-size=4096"
+docker-compose build react-nlp-client --no-cache
 ```
 
-### Metrics and Alerting
+**NLP not working**
+- Ensure speech recognition permissions in browser
+- Check browser console for JavaScript errors
+- Verify API endpoints are accessible
 
-- **Response Time Monitoring**: Track API response times
-- **Error Rate Tracking**: Monitor failure rates and error patterns  
-- **Resource Utilization**: CloudHub worker and memory usage
-- **Business Process Metrics**: Onboarding success rates and completion times
-
-## 🔄 Deployment
-
-### Environments
-
-The fabric supports multiple deployment environments:
-
-- **Development** (`development`): Local development and testing
-- **Staging** (`staging`): Pre-production validation
-- **Production** (`production`): Live production environment
-
-### Deployment Process
-
+### Performance Tuning
 ```bash
-# Deploy to specific environment
-.\deployment\scripts\deploy-agent-fabric.bat <environment>
+# Increase memory for Mule services
+export JAVA_OPTS="-Xms1g -Xmx2g"
 
-# Deploy individual components
-.\deployment\scripts\deploy-single-mcp.bat employee-onboarding-mcp development
-
-# Rollback if needed
-.\deployment\scripts\rollback-deployment.bat development
+# Optimize PostgreSQL
+docker-compose exec postgres psql -U postgres -c "
+ALTER SYSTEM SET shared_buffers = '256MB';
+ALTER SYSTEM SET effective_cache_size = '1GB';"
 ```
 
-### CI/CD Integration
+## 📊 Sample NLP Interactions
 
-The deployment scripts can be integrated with CI/CD pipelines:
+### Employee Management
+```
+User: "Create a new employee named Alice Johnson with email alice.johnson@company.com"
+System: "Employee Alice Johnson created successfully with ID: EMP009"
 
-```yaml
-# Example GitHub Actions workflow
-- name: Deploy Agent Fabric
-  run: .\deployment\scripts\deploy-agent-fabric.bat production
-  
-- name: Verify Deployment  
-  run: .\deployment\scripts\health-check-all.bat production
+User: "What's the onboarding status for EMP001?"
+System: "Employee EMP001 status: IN_PROGRESS (3/5 steps completed)"
 ```
 
-## 🔐 Security
+### Asset Allocation  
+```
+User: "Allocate a laptop to employee EMP003"
+System: "Laptop allocated to employee EMP003 successfully"
 
-### Security Features
-
-- **API Gateway Security**: OAuth2 authentication and RBAC authorization
-- **Secrets Management**: Integration with Anypoint Secrets Manager  
-- **Data Encryption**: AES-256 encryption for sensitive data
-- **Network Security**: VPC and firewall configurations
-- **Audit Logging**: Comprehensive audit trails
-
-### Security Configuration
-
-```yaml
-# Security settings in deployment-config.yaml
-security:
-  encryption:
-    enabled: true
-    algorithm: "AES-256"
-  secretsManagement:
-    provider: "anypoint-secrets"
-  apiSecurity:
-    authentication: "oauth2" 
-    authorization: "rbac"
+User: "Show me all available phones"
+System: "Found 1 available assets: Samsung Galaxy S24"
 ```
 
-## 🧪 Usage Examples
-
-### Complete Employee Onboarding
-
-```bash
-# POST to agent broker to start onboarding
-curl -X POST \
-  https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/broker/mcp/tools/orchestrate-employee-onboarding \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "firstName": "John",
-    "lastName": "Doe", 
-    "email": "john.doe@company.com",
-    "department": "Engineering",
-    "position": "Software Engineer",
-    "startDate": "2026-03-01",
-    "manager": "Jane Smith",
-    "assets": ["laptop", "monitor", "keyboard", "mouse"]
-  }'
+### Notifications
+```
+User: "Send welcome notification to new employees"
+System: "Notification sent successfully to 3 employees"
 ```
 
-### Check Onboarding Status
+## 🔐 Security Considerations
 
-```bash
-# GET onboarding status
-curl -X GET \
-  https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/broker/mcp/tools/get-onboarding-status \
-  -H 'Content-Type: application/json' \
-  -d '{"employeeId": "EMP001"}'
-```
+- Database credentials should be changed for production
+- API endpoints should use authentication
+- Network segmentation recommended for production
+- Regular security updates for base images
 
-### Health Check
+## 📈 Scaling
 
-```bash
-# Check agent fabric health
-curl -X GET \
-  https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/broker/health
-```
+### Horizontal Scaling
+- Add load balancer for React client
+- Scale MCP services with Docker Swarm/Kubernetes
+- Implement database replication
+- Add Redis for caching
+
+### Performance Optimization
+- Enable database connection pooling
+- Implement API response caching
+- Optimize Docker image sizes
+- Use CDN for static assets
 
 ## 🤝 Contributing
 
-We welcome contributions to improve the Employee Onboarding Agent Fabric!
-
-### Development Guidelines
-
-1. **Follow Mule Agent Fabric Standards**: Adhere to established patterns and conventions
-2. **Code Quality**: Implement proper error handling and logging
-3. **Testing**: Add unit and integration tests for new features  
-4. **Documentation**: Update documentation for changes
-5. **Security**: Follow security best practices
-
-### Contribution Process
-
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)  
-5. Open a Pull Request
+2. Create feature branch
+3. Add tests for new functionality  
+4. Update documentation
+5. Submit pull request
 
-## 📖 Documentation
+## 📄 License
 
-- **[Deployment Guide](docs/deployment-guide.md)**: Comprehensive deployment instructions
-- **[Architecture Documentation](docs/architecture.md)**: System architecture and design patterns
-- **[API Documentation](docs/api-docs/)**: Complete API reference
-- **[Troubleshooting Guide](docs/troubleshooting.md)**: Common issues and solutions
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🆘 Support
 
-### Getting Help
-
-1. **📖 Documentation**: Check the comprehensive documentation
-2. **🐛 Issues**: Report bugs and feature requests via GitHub issues
-3. **💬 Discussions**: Join community discussions for questions and ideas
-4. **📧 Support**: Contact the maintainers for enterprise support
-
-### Troubleshooting
-
-Common issues and solutions:
-
-- **Build Failures**: Verify Java 17+ and Maven configuration
-- **Deployment Issues**: Check Anypoint Platform credentials and capacity
-- **Health Check Failures**: Verify service URLs and network connectivity
-- **Performance Issues**: Review resource allocation and CloudHub worker sizing
-
-## 📈 Roadmap
-
-### Upcoming Features
-
-- **🔄 Advanced Workflow Engine**: Enhanced orchestration capabilities
-- **📊 Analytics Dashboard**: Business intelligence and reporting
-- **🔗 Third-party Integrations**: HRIS, LDAP, and other system connectors
-- **🤖 Enhanced AI**: Advanced natural language processing and decision making
-- **📱 Mobile Interface**: Mobile app for employee self-service
-
-### Version History
-
-- **v1.0.0** (Current): Initial release with core onboarding functionality
-- **v0.9.0**: Beta release with MCP server architecture
-- **v0.8.0**: Alpha release with basic agent orchestration
-
-## 📜 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **MuleSoft Anypoint Platform**: For providing the runtime and deployment infrastructure
-- **Model Context Protocol**: For enabling standardized agent-server communication
-- **Groq**: For providing fast and efficient LLM inference
-- **Open Source Community**: For tools, libraries, and inspiration
+For support and questions:
+- Create GitHub issues for bugs
+- Check troubleshooting section
+- Review service logs for errors
+- Test with provided sample commands
 
 ---
 
-## 📞 Contact
-
-- **Project Maintainer**: Agent Fabric Team
-- **Email**: agent-fabric@yourcompany.com
-- **Repository**: https://github.com/yourorg/employee-onboarding-agent-fabric
-- **Documentation**: https://docs.yourcompany.com/agent-fabric
-
----
-
-**🚀 Ready to transform your employee onboarding process with intelligent automation!**
-
-*Last Updated: February 2026*  
-*Version: 1.0.0*
+**Ready to experience intelligent employee onboarding with natural language processing!** 🚀

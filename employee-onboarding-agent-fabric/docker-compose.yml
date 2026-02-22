@@ -1,0 +1,161 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: employee-onboarding-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./mcp-servers/asset-allocation-mcp/database/init.sql:/docker-entrypoint-initdb.d/01-init-asset-allocation.sql:ro
+      - ./database/init-databases.sql:/docker-entrypoint-initdb.d/00-init-databases.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - mcp-network
+
+  # Employee Onboarding MCP Server
+  employee-onboarding-mcp:
+    build:
+      context: ./mcp-servers/employee-onboarding-mcp
+      dockerfile: Dockerfile
+    container_name: employee-onboarding-mcp
+    ports:
+      - "8081:8081"
+    environment:
+      - http.host=0.0.0.0
+      - http.port=8081
+      - db.url=jdbc:postgresql://postgres:5432/employee_onboarding
+      - db.username=employee_user
+      - db.password=employee_pass
+      - db.driverClassName=org.postgresql.Driver
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - mcp-network
+
+  # Asset Allocation MCP Server
+  asset-allocation-mcp:
+    build:
+      context: ./mcp-servers/asset-allocation-mcp
+      dockerfile: Dockerfile
+    container_name: asset-allocation-mcp
+    ports:
+      - "8082:8082"
+    environment:
+      - http.host=0.0.0.0
+      - http.port=8082
+      - db.url=jdbc:postgresql://postgres:5432/asset_allocation
+      - db.username=asset_user
+      - db.password=asset_pass
+      - db.driverClassName=org.postgresql.Driver
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - mcp-network
+
+  # Notification MCP Server
+  notification-mcp:
+    build:
+      context: ./mcp-servers/notification-mcp
+      dockerfile: Dockerfile
+    container_name: notification-mcp-server
+    ports:
+      - "8083:8083"
+    environment:
+      - http.host=0.0.0.0
+      - http.port=8083
+      - email.smtp.host=smtp.gmail.com
+      - email.smtp.port=587
+      - email.from=noreply@company.com
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - mcp-network
+
+  # Agent Broker MCP Server (Main Orchestrator)
+  agent-broker-mcp:
+    build:
+      context: ./mcp-servers/agent-broker-mcp
+      dockerfile: Dockerfile
+    container_name: agent-broker-mcp
+    ports:
+      - "8080:8080"
+    environment:
+      - http.host=0.0.0.0
+      - http.port=8080
+      - agent.broker.orchestration.enabled=true
+    depends_on:
+      notification-mcp:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - mcp-network
+
+  # React Client with NLP Processing
+  react-nlp-client:
+    build:
+      context: ./react-client
+      dockerfile: Dockerfile
+    container_name: employee-onboarding-client
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_BASE_URL=http://agent-broker-mcp:8080
+      - REACT_APP_EMPLOYEE_API_URL=http://employee-onboarding-mcp:8081
+      - REACT_APP_ASSET_API_URL=http://asset-allocation-mcp:8082
+      - REACT_APP_NOTIFICATION_API_URL=http://notification-mcp:8083
+    depends_on:
+      - agent-broker-mcp
+      - employee-onboarding-mcp
+      - asset-allocation-mcp
+      - notification-mcp
+    networks:
+      - mcp-network
+
+networks:
+  mcp-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  mule-logs:
+    driver: local
+  postgres_data:
+    driver: local
