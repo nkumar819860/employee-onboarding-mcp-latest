@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.mulesoft.mcp</groupId>
 	<artifactId>notification-mcp-server</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.2</version>
 	<packaging>mule-application</packaging>
 
 	<name>Notification MCP Server</name>
@@ -13,9 +13,9 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<maven.compiler.source>17</maven.compiler.source>
-		<maven.compiler.target>17</maven.compiler.target>
-		<mule.version>4.11.1:40e-java17</mule.version>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
+		<mule.version>4.4.0-20220824</mule.version>
 		<mule.maven.plugin.version>4.3.0</mule.maven.plugin.version>
 		<mule.tools.version>1.2</mule.tools.version>
 	</properties>
@@ -35,25 +35,16 @@
 				<configuration>
 					<cloudHubDeployment>
 						<uri>https://anypoint.mulesoft.com</uri>
-						<muleVersion>${mule.version}</muleVersion>
+						<muleVersion>4.4.0</muleVersion>
 						<applicationName>notification-mcp-server</applicationName>
 						<environment>Sandbox</environment>
-						<businessGroup>COE</businessGroup>
 						<region>us-east-1</region>
 						<workers>1</workers>
 						<workerType>MICRO</workerType>
-						<server>anypoint-exchange</server>
 						<properties>
-							<env>production</env>
-							<http.port>8081</http.port>
-							<gmail.username>${gmail.username}</gmail.username>
-							<gmail.password>${gmail.password}</gmail.password>
-							<email.from.address>${email.from.address}</email.from.address>
-							<notification.cc.hr>${notification.cc.hr}</notification.cc.hr>
-							<notification.cc.it>${notification.cc.it}</notification.cc.it>
-							<notification.employee.onboarding.enabled>true</notification.employee.onboarding.enabled>
-							<mcp.serverName>Notification MCP Server</mcp.serverName>
-							<mcp.serverVersion>1.0.0</mcp.serverVersion>
+							<email.smtp.host>smtp.gmail.com</email.smtp.host>
+							<email.smtp.port>587</email.smtp.port>
+							<email.from>noreply@company.com</email.from>
 						</properties>
 					</cloudHubDeployment>
 				</configuration>

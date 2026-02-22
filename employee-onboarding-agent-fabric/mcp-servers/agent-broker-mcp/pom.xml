@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.mulesoft.mcp</groupId>
 	<artifactId>employee-onboarding-agent-broker</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<packaging>mule-application</packaging>
 
 	<name>Employee Onboarding Agent Broker</name>
@@ -13,9 +13,9 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<maven.compiler.source>17</maven.compiler.source>
-		<maven.compiler.target>17</maven.compiler.target>
-		<mule.version>4.11.1:40e-java17</mule.version>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
+		<mule.version>4.4.0-20220824</mule.version>
 		<mule.maven.plugin.version>4.3.0</mule.maven.plugin.version>
 		<mule.tools.version>1.2</mule.tools.version>
 	</properties>
@@ -35,26 +35,13 @@
 				<configuration>
 					<cloudHubDeployment>
 						<uri>https://anypoint.mulesoft.com</uri>
-						<muleVersion>${mule.version}</muleVersion>
+						<muleVersion>4.4.0</muleVersion>
 						<applicationName>employee-onboarding-agent-broker</applicationName>
 						<environment>Sandbox</environment>
-						<businessGroup>COE</businessGroup>
 						<region>us-east-1</region>
 						<workers>1</workers>
 						<workerType>MICRO</workerType>
-						<server>anypoint-exchange</server>
 						<properties>
-							<env>production</env>
-							<http.port>8081</http.port>
-							<employee.onboarding.mcp.host>employee-onboarding-mcp-server.us-e1.cloudhub.io</employee.onboarding.mcp.host>
-							<employee.onboarding.mcp.port>443</employee.onboarding.mcp.port>
-							<employee.onboarding.mcp.protocol>HTTPS</employee.onboarding.mcp.protocol>
-							<asset.allocation.mcp.host>asset-allocation-mcp-server.us-e1.cloudhub.io</asset.allocation.mcp.host>
-							<asset.allocation.mcp.port>443</asset.allocation.mcp.port>
-							<asset.allocation.mcp.protocol>HTTPS</asset.allocation.mcp.protocol>
-							<notification.mcp.host>notification-mcp-server.us-e1.cloudhub.io</notification.mcp.host>
-							<notification.mcp.port>443</notification.mcp.port>
-							<notification.mcp.protocol>HTTPS</notification.mcp.protocol>
 							<agent.broker.orchestration.enabled>true</agent.broker.orchestration.enabled>
 						</properties>
 					</cloudHubDeployment>

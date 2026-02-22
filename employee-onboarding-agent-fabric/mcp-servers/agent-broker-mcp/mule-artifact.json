@@ -1,7 +1,9 @@
 {
   "name": "employee-onboarding-agent-broker",
   "minMuleVersion": "4.11.1",
-  "javaSpecificationVersions": ["17"],
+   "javaSpecificationVersions": [
+    "17"
+  ],
   "requiredProduct": "MULE_EE",
   "classLoaderModelLoaderDescriptor": {
     "id": "mule",
