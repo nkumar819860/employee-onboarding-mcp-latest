@@ -28,6 +28,7 @@ import {
 } from '@mui/icons-material';
 import { nlpProcessor } from '../services/nlpService';
 import { apiService } from '../services/apiService';
+import { mcpService } from '../services/mcpService';
 
 const NLPChat = () => {
   const [messages, setMessages] = useState([]);
@@ -36,11 +37,11 @@ const NLPChat = () => {
   const [isListening, setIsListening] = useState(false);
   const [nlpResults, setNlpResults] = useState(null);
   const [suggestions] = useState([
-    "Create new employee John Smith",
-    "Allocate laptop to employee EMP001",
-    "Show me all available assets",
-    "Get employee onboarding status",
-    "Send notification to new employees",
+    "Create new employee John Smith with MCP orchestration",
+    "Orchestrate complete onboarding for Sarah Johnson",
+    "Check system health via MCP",
+    "Get employee onboarding status for EMP001",
+    "Show me MCP server capabilities",
   ]);
 
   const messagesEndRef = useRef(null);
@@ -101,17 +102,69 @@ const NLPChat = () => {
     return results;
   };
 
-  const executeAction = async (intent, entities) => {
+  const executeAction = async (intent, entities, text) => {
     try {
+      // Check if the user specifically requests MCP functionality or orchestration
+      const isMCPRequest = text && (
+        text.toLowerCase().includes('mcp') || 
+        text.toLowerCase().includes('orchestrat') || 
+        text.toLowerCase().includes('health') ||
+        text.toLowerCase().includes('capabilities')
+      );
+
       switch (intent) {
         case 'CREATE_EMPLOYEE':
           const employeeName = entities.find(e => e.label === 'PERSON')?.text;
-          if (employeeName) {
+          if (employeeName && isMCPRequest) {
+            // Use MCP orchestration for complete onboarding
+            const nameParts = employeeName.split(' ');
+            const employeeData = mcpService.createEmployeeDataForMCP({
+              firstName: nameParts[0],
+              lastName: nameParts.slice(1).join(' '),
+              name: employeeName,
+              email: `${employeeName.toLowerCase().replace(' ', '.')}@company.com`,
+              department: 'Engineering',
+              position: 'Software Developer',
+              startDate: new Date().toISOString().split('T')[0]
+            });
+            
+            const result = await mcpService.orchestrateEmployeeOnboarding(employeeData);
+            if (result.success) {
+              return `🚀 MCP Orchestration Complete! Employee ${employeeName} has been fully onboarded with:
+              
+✅ Employee Profile Created
+✅ Assets Allocated 
+✅ Welcome Email Sent
+✅ Asset Notifications Delivered
+✅ Onboarding Complete Notification Sent
+
+Employee ID: ${result.data.employeeId}
+All systems updated via MCP Agent Broker!`;
+            } else {
+              return `❌ MCP Orchestration Failed: ${result.error}`;
+            }
+          } else if (employeeName) {
+            // Use legacy API service
             const response = await apiService.createEmployee({
               name: employeeName,
               email: `${employeeName.toLowerCase().replace(' ', '.')}@company.com`
             });
-            return `Employee ${employeeName} created successfully with ID: ${response.employeeId}`;
+            return `Employee ${employeeName} created successfully with ID: ${response.employeeId} (Legacy API)`;
+          }
+          break;
+
+        case 'GET_EMPLOYEE_STATUS':
+          const employee = entities.find(e => e.label === 'EMPLOYEE_ID')?.text;
+          if (employee && isMCPRequest) {
+            const result = await mcpService.getOnboardingStatus(employee);
+            if (result.success) {
+              return `📊 MCP Status Retrieved for ${employee}:\n\n${JSON.stringify(result.data, null, 2)}`;
+            } else {
+              return `❌ MCP Status Retrieval Failed: ${result.error}`;
+            }
+          } else if (employee) {
+            const status = await apiService.getEmployeeStatus(employee);
+            return `Employee ${employee} status: ${status.status} (Legacy API)`;
           }
           break;
 
@@ -128,21 +181,35 @@ const NLPChat = () => {
           const assets = await apiService.getAvailableAssets();
           return `Found ${assets.length} available assets: ${assets.map(a => a.name).join(', ')}`;
 
-        case 'GET_EMPLOYEE_STATUS':
-          const employee = entities.find(e => e.label === 'EMPLOYEE_ID')?.text;
-          if (employee) {
-            const status = await apiService.getEmployeeStatus(employee);
-            return `Employee ${employee} status: ${status.status}`;
-          }
-          break;
-
         case 'SEND_NOTIFICATION':
           const notificationType = entities.find(e => e.label === 'NOTIFICATION_TYPE')?.text || 'welcome';
           const response = await apiService.sendNotification(notificationType);
           return `Notification sent successfully to ${response.recipients} employees`;
 
         default:
-          return "I understand your request but I'm not sure how to help with that specific action yet.";
+          // Check for MCP-specific requests
+          if (text && text.toLowerCase().includes('health')) {
+            const healthResult = await mcpService.checkSystemHealth();
+            if (healthResult.success) {
+              const services = healthResult.data.services;
+              const healthSummary = services.map(s => 
+                `${s.status === 'UP' ? '✅' : '❌'} ${s.service}: ${s.status}`
+              ).join('\n');
+              
+              return `🏥 MCP System Health Check:\n\n${healthSummary}\n\nOverall Status: ${healthResult.data.overallStatus}`;
+            } else {
+              return `❌ MCP Health Check Failed: ${healthResult.error}`;
+            }
+          } else if (text && text.toLowerCase().includes('capabilit')) {
+            const infoResult = await mcpService.getMCPServerInfo();
+            if (infoResult.success) {
+              return `🔧 MCP Server Capabilities:\n\nName: ${infoResult.data.name}\nVersion: ${infoResult.data.version}\nDescription: ${infoResult.data.description}\n\nAvailable Tools:\n${infoResult.data.tools.map(t => `• ${t.name}: ${t.description}`).join('\n')}`;
+            } else {
+              return `❌ Failed to retrieve MCP capabilities: ${infoResult.error}`;
+            }
+          }
+          
+          return "I understand your request but I'm not sure how to help with that specific action yet. Try mentioning 'MCP' or 'orchestration' for enhanced capabilities!";
       }
     } catch (error) {
       console.error('Action execution error:', error);
@@ -171,7 +238,7 @@ const NLPChat = () => {
       let botResponse = "I'm processing your request...";
       
       if (nlpResults.intent && nlpResults.intent !== 'UNKNOWN') {
-        botResponse = await executeAction(nlpResults.intent, nlpResults.entities);
+        botResponse = await executeAction(nlpResults.intent, nlpResults.entities, userMessage.text);
       } else {
         // If no specific intent, try to provide helpful information
         botResponse = `I detected the following in your message: ${nlpResults.entities.map(e => `${e.label}: ${e.text}`).join(', ')}. Could you please be more specific about what you'd like me to do?`;

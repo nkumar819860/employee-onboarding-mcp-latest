@@ -1,4 +1,4 @@
-FROM mulesoft/mule-runtime:4.4.0
+FROM yogeshmulecraft/mulece-esb:latest
 
 # Set working directory
 WORKDIR /opt/mule

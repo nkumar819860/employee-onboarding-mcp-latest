@@ -115,8 +115,10 @@ services:
       - http.port=8080
       - agent.broker.orchestration.enabled=true
     depends_on:
-      notification-mcp:
-        condition: service_healthy
+      employee-onboarding-mcp:
+        condition: service_started
+      asset-allocation-mcp:
+        condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
