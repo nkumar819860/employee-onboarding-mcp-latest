@@ -1,110 +1,15 @@
-# Environment files with sensitive data
-.env
-.env.*
-
-# Maven build artifacts (can be large JAR files)
-target/
-*.jar
-!lib/*.jar
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
-release.properties
-dependency-reduced-pom.xml
-buildNumber.properties
-
-# Node.js dependencies
+# Node.js
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
 
-# Docker build context and volumes
-.dockerignore
+# React build
+react-client/build/
+react-client/dist/
+react-client/node_modules/
 
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
-# Logs
-logs/
-*.log
-
-# OS generated files
+# Cache files
+**/.cache/
+**/*.pack
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-*.temp
-*.bak
-*.backup
-
-# Build outputs
-dist/
-build/
-out/
-
-# Runtime data
-pids/
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage reports
-coverage/
-*.lcov
-.nyc_output
-
-# Cache directories
-.cache/
-.parcel-cache/
-
-# MuleSoft Studio
-.metadata/
-.mule/
-.studio/
-
-# Large binary files that might be accidentally added
-*.zip
-*.tar.gz
-*.rar
-*.7z
-*.dmg
-*.iso
-
-# Compiled class files
-*.class
-
-# Eclipse
-.project
-.classpath
-.settings/
-
-# IntelliJ IDEA
-*.iml
-*.ipr
-*.iws
-
-# NetBeans
-nbproject/
-nbbuild/
-nbdist/
-.nb-gradle/
