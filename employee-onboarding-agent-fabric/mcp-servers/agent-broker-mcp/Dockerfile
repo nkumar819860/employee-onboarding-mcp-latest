@@ -41,5 +41,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 # Make mule executable
 RUN chmod +x /opt/mule/bin/mule
 
-# Start Mule Runtime
-CMD ["/opt/mule/bin/mule", "start", "-M-Dfile.encoding=UTF-8"]
+# Start Mule Runtime in console mode (foreground) for Docker
+CMD ["/opt/mule/bin/mule", "console", "-M-Dfile.encoding=UTF-8"]

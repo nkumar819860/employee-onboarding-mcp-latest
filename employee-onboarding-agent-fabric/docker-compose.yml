@@ -8,8 +8,10 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres_pass
+      POSTGRES_USER: ${DB_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${DB_POSTGRES_PASSWORD}
+    env_file:
+      - .env
     ports:
       - "5432:5432"
     volumes:
@@ -32,14 +34,16 @@ services:
       dockerfile: Dockerfile
     container_name: employee-onboarding-mcp
     ports:
-      - "8081:8081"
+      - "${EMPLOYEE_HTTP_PORT:-8081}:8081"
     environment:
-      - http.host=0.0.0.0
+      - http.host=${HTTP_HOST}
       - http.port=8081
-      - db.url=jdbc:postgresql://postgres:5432/employee_onboarding
-      - db.username=employee_user
-      - db.password=employee_pass
+      - db.url=jdbc:postgresql://${DB_POSTGRES_HOST}:${DB_POSTGRES_PORT}/${EMPLOYEE_DB_NAME}
+      - db.username=${EMPLOYEE_DB_USER}
+      - db.password=${EMPLOYEE_DB_PASSWORD}
       - db.driverClassName=org.postgresql.Driver
+    env_file:
+      - .env
     depends_on:
       postgres:
         condition: service_healthy
@@ -59,14 +63,16 @@ services:
       dockerfile: Dockerfile
     container_name: asset-allocation-mcp
     ports:
-      - "8082:8082"
+      - "${ASSET_HTTP_PORT:-8082}:8082"
     environment:
-      - http.host=0.0.0.0
+      - http.host=${HTTP_HOST}
       - http.port=8082
-      - db.url=jdbc:postgresql://postgres:5432/asset_allocation
-      - db.username=asset_user
-      - db.password=asset_pass
+      - db.url=jdbc:postgresql://${DB_POSTGRES_HOST}:${DB_POSTGRES_PORT}/${ASSET_DB_NAME}
+      - db.username=${ASSET_DB_USER}
+      - db.password=${ASSET_DB_PASSWORD}
       - db.driverClassName=org.postgresql.Driver
+    env_file:
+      - .env
     depends_on:
       postgres:
         condition: service_healthy
@@ -86,13 +92,20 @@ services:
       dockerfile: Dockerfile
     container_name: notification-mcp-server
     ports:
-      - "8083:8083"
+      - "${NOTIFICATION_HTTP_PORT:-8083}:8083"
     environment:
-      - http.host=0.0.0.0
+      - http.host=${HTTP_HOST}
       - http.port=8083
-      - email.smtp.host=smtp.gmail.com
-      - email.smtp.port=587
-      - email.from=noreply@company.com
+      - db.url=jdbc:postgresql://${DB_POSTGRES_HOST}:${DB_POSTGRES_PORT}/${EMPLOYEE_DB_NAME}
+      - db.username=${EMPLOYEE_DB_USER}
+      - db.password=${EMPLOYEE_DB_PASSWORD}
+      - gmail.smtp.host=${GMAIL_SMTP_HOST}
+      - gmail.smtp.port=${GMAIL_SMTP_PORT}
+      - gmail.username=${GMAIL_USERNAME}
+      - gmail.password=${GMAIL_PASSWORD}
+      - gmail.from.address=${GMAIL_FROM_ADDRESS}
+    env_file:
+      - .env
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8083/health"]
       interval: 30s
@@ -137,10 +150,10 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - REACT_APP_API_BASE_URL=http://agent-broker-mcp:8080
-      - REACT_APP_EMPLOYEE_API_URL=http://employee-onboarding-mcp:8081
-      - REACT_APP_ASSET_API_URL=http://asset-allocation-mcp:8082
-      - REACT_APP_NOTIFICATION_API_URL=http://notification-mcp:8083
+      - REACT_APP_API_BASE_URL=http://localhost:8080
+      - REACT_APP_EMPLOYEE_API_URL=http://localhost:8081
+      - REACT_APP_ASSET_API_URL=http://localhost:8082
+      - REACT_APP_NOTIFICATION_API_URL=http://localhost:8083
     depends_on:
       - agent-broker-mcp
       - employee-onboarding-mcp

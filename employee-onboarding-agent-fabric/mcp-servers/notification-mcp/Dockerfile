@@ -3,7 +3,7 @@ FROM eclipse-temurin:11-jre
 # Install curl and other utilities  
 RUN apt-get update && apt-get install -y curl unzip && rm -rf /var/lib/apt/lists/*
 
-# Download and install Mule Runtime
+# Download and install Mule Runtime - Using version 4.4.0 (confirmed available)
 RUN mkdir -p /opt/mule && \
     cd /tmp && \
     curl -L -o mule-standalone-4.4.0.zip "https://repository.mulesoft.org/nexus/content/repositories/releases/org/mule/distributions/mule-standalone/4.4.0/mule-standalone-4.4.0.zip" && \
@@ -43,5 +43,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 # Make mule executable
 RUN chmod +x /opt/mule/bin/mule
 
-# Start Mule Runtime
-CMD ["/opt/mule/bin/mule", "start", "-M-Dfile.encoding=UTF-8"]
+# Start Mule Runtime in console mode (foreground) for Docker
+CMD ["/opt/mule/bin/mule", "console", "-M-Dfile.encoding=UTF-8"]
