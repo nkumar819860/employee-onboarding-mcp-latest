@@ -27,8 +27,8 @@
 		<mule.tools.version>3.5.3</mule.tools.version>
 		
 		<!-- CloudHub Deployment Properties -->
-		<cloudhub1.runtime.version>4.9.12:5e</cloudhub1.runtime.version>
-		<cloudhub2.runtime.version>4.11.1:5e</cloudhub2.runtime.version>
+		<cloudhub1.runtime.version>4.9.12:5</cloudhub1.runtime.version>
+		<cloudhub2.runtime.version>4.11.1:2e</cloudhub2.runtime.version>
 		
 		<!-- Connector Versions -->
 		<mule.http.connector.version>1.6.0</mule.http.connector.version>
