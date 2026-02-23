@@ -10,7 +10,7 @@
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
-	<artifactId>mcp-postgres-server</artifactId>
+	<artifactId>employee-onboarding-mcp</artifactId>
 	<version>1.0.2</version>
 	<packaging>mule-application</packaging>
 
@@ -31,8 +31,11 @@
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>mule-maven-plugin</artifactId>
 				<configuration>
-					<!-- CloudHub 2.0 deployment configuration inherits from parent -->
+					<!-- CloudHub deployment configuration inherits from parent -->
 					<!-- Application-specific overrides -->
+					<cloudHubDeployment>
+						<applicationName>employee-onboarding-mcp-server</applicationName>
+					</cloudHubDeployment>
 					<cloudHub2Deployment>
 						<applicationName>employee-onboarding-mcp-server</applicationName>
 					</cloudHub2Deployment>

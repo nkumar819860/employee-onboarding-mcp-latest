@@ -31,8 +31,11 @@
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>mule-maven-plugin</artifactId>
 				<configuration>
-					<!-- CloudHub 2.0 deployment configuration inherits from parent -->
+					<!-- CloudHub deployment configuration inherits from parent -->
 					<!-- Application-specific overrides -->
+					<cloudHubDeployment>
+						<applicationName>employee-onboarding-agent-broker</applicationName>
+					</cloudHubDeployment>
 					<cloudHub2Deployment>
 						<applicationName>employee-onboarding-agent-broker</applicationName>
 					</cloudHub2Deployment>

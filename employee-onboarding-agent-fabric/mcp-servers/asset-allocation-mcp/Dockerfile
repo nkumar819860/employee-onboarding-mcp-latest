@@ -3,11 +3,11 @@ FROM eclipse-temurin:17-jre
 RUN apt-get update && apt-get install -y curl unzip && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /opt/mule && cd /tmp && \
-    curl -L -o mule-standalone-4.6.0.zip \
-    "https://repository.mulesoft.org/nexus/content/repositories/releases/org/mule/distributions/mule-standalone/4.6.0/mule-standalone-4.6.0.zip" && \
-    unzip mule-standalone-4.6.0.zip && \
-    mv mule-standalone-4.6.0/* /opt/mule/ && \
-    rm -rf /tmp/* mule-standalone-4.6.0.zip && \
+    curl -L -o mule-standalone-4.4.0.zip \
+    "https://repository.mulesoft.org/nexus/content/repositories/releases/org/mule/distributions/mule-standalone/4.4.0/mule-standalone-4.4.0.zip" && \
+    unzip mule-standalone-4.4.0.zip && \
+    mv mule-standalone-4.4.0/* /opt/mule/ && \
+    rm -rf /tmp/* mule-standalone-4.4.0.zip && \
     chmod +x /opt/mule/bin/mule
 
 WORKDIR /opt/mule
