@@ -12,7 +12,7 @@ RUN mkdir -p /opt/mule && cd /tmp && \
     chmod +x /opt/mule/bin/mule
 
 WORKDIR /opt/mule
-COPY target/employee-onboarding-agent-broker-*.jar /opt/mule/apps/
+COPY target/employee-onboarding-agent-broker-*-*.jar /opt/mule/apps/
 COPY src/main/resources/ /opt/mule/apps/classes/
 
 ENV MULE_HOME=/opt/mule JAVA_OPTS="-Xms1g -Xmx2g"

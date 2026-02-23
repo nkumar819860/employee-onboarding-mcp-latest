@@ -27,7 +27,7 @@
 		<mule.tools.version>3.5.3</mule.tools.version>
 		
 		<!-- CloudHub Deployment Properties -->
-		<cloudhub1.runtime.version>4.9.12</cloudhub1.runtime.version>
+		<cloudhub1.runtime.version>4.9.12:5e</cloudhub1.runtime.version>
 		<cloudhub2.runtime.version>4.11.1:5e</cloudhub2.runtime.version>
 		
 		<!-- Connector Versions -->
@@ -81,29 +81,25 @@
 						<!-- ✅ PRIMARY: CloudHub 1.0 with supported runtime -->
 						<cloudHubDeployment>
 							<uri>https://anypoint.mulesoft.com</uri>
+							<server>CloudHub</server>
 							<muleVersion>${cloudhub1.runtime.version}</muleVersion>
-							<environment>${anypoint.environment}</environment>
-							<region>${anypoint.region}</region>
-							<businessGroupId>${anypoint.organization_id}</businessGroupId>
-							<connectedAppClientId>${anypoint.client_id}</connectedAppClientId>
-							<connectedAppClientSecret>${anypoint.client_secret}</connectedAppClientSecret>
-							<connectedAppGrantType>client_credentials</connectedAppGrantType>
-							<workers>${anypoint.workers}</workers>
-							<workerType>${anypoint.workerType}</workerType>
+							<environment>Sandbox</environment>
+							<region>us-east-1</region>
+							<businessGroup>COE</businessGroup>
+							<workers>1</workers>
+							<workerType>MICRO</workerType>
 						</cloudHubDeployment>
 						
 						<!-- ✅ FALLBACK: CloudHub 2.0 -->
 						<cloudHub2Deployment>
 							<uri>https://anypoint.mulesoft.com</uri>
+							<server>CloudHub</server>
 							<muleVersion>
 								<version>${cloudhub2.runtime.version}</version>
 							</muleVersion>
-							<environment>${anypoint.environment}</environment>
-							<region>${anypoint.region}</region>
-							<businessGroupId>${anypoint.organization_id}</businessGroupId>
-							<connectedAppClientId>${anypoint.client_id}</connectedAppClientId>
-							<connectedAppClientSecret>${anypoint.client_secret}</connectedAppClientSecret>
-							<connectedAppGrantType>client_credentials</connectedAppGrantType>
+							<environment>Sandbox</environment>
+							<region>us-east-1</region>
+							<businessGroup>COE</businessGroup>
 							<deploymentSettings>
 								<vCoreCount>0.1</vCoreCount>
 								<continuousDeployment>true</continuousDeployment>
