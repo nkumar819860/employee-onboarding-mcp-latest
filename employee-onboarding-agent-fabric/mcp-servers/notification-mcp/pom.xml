@@ -15,7 +15,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
-		<mule.version>4.6.25</mule.version>
+		<mule.version>4.6.0</mule.version>
 		<mule.maven.plugin.version>4.1.0</mule.maven.plugin.version>
 		<mule.tools.version>1.2</mule.tools.version>
 	</properties>
@@ -49,7 +49,7 @@
 				<configuration>
 					<cloudHubDeployment>
 						<uri>https://anypoint.mulesoft.com</uri>
-						<muleVersion>4.6.25</muleVersion>
+						<muleVersion>4.6.0</muleVersion>
 						<applicationName>notification-mcp-server</applicationName>
 						<environment>Sandbox</environment>
 						<region>us-east-1</region>
