@@ -1,14 +1,14 @@
-FROM eclipse-temurin:11-jre
+FROM eclipse-temurin:17-jre
 
 # Install curl and other utilities  
 RUN apt-get update && apt-get install -y curl unzip && rm -rf /var/lib/apt/lists/*
 
-# Download and install Mule Runtime - Using version 4.4.0 (confirmed available)
+# Download and install Mule Runtime - Using version 4.6.25 to match POM configuration
 RUN mkdir -p /opt/mule && \
     cd /tmp && \
-    curl -L -o mule-standalone-4.4.0.zip "https://repository.mulesoft.org/nexus/content/repositories/releases/org/mule/distributions/mule-standalone/4.4.0/mule-standalone-4.4.0.zip" && \
-    unzip mule-standalone-4.4.0.zip && \
-    mv mule-standalone-4.4.0/* /opt/mule/ && \
+    curl -L -o mule-standalone-4.6.25.zip "https://repository.mulesoft.org/nexus/content/repositories/releases/org/mule/distributions/mule-standalone/4.6.25/mule-standalone-4.6.25.zip" && \
+    unzip mule-standalone-4.6.25.zip && \
+    mv mule-standalone-4.6.25/* /opt/mule/ && \
     rm -rf /tmp/*
 
 # Set working directory
