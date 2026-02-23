@@ -1,5 +1,5 @@
 # ✅ FIXED - Java 17 Full Runtime (ALL 4 services)
-FROM eclipse-temurin:17-jre-full
+FROM eclipse-temurin:17-jdk-jammy
 
 RUN apt-get update && apt-get install -y curl unzip && rm -rf /var/lib/apt/lists/*
 
