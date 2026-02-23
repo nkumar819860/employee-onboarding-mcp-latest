@@ -30,14 +30,37 @@
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>mule-maven-plugin</artifactId>
+				<version>${mule.maven.plugin.version}</version>
+				<extensions>true</extensions>
 				<configuration>
-					<!-- CloudHub deployment configuration inherits from parent -->
-					<!-- Application-specific overrides -->
+					<!-- CloudHub 1.0 deployment configuration -->
 					<cloudHubDeployment>
+						<uri>https://anypoint.mulesoft.com</uri>
+						<server>CloudHub</server>
 						<applicationName>employee-onboarding-mcp-server</applicationName>
+						<muleVersion>${cloudhub1.runtime.version}</muleVersion>
+						<environment>Sandbox</environment>
+						<region>us-east-1</region>
+						<businessGroup>COE</businessGroup>
+						<workers>1</workers>
+						<workerType>MICRO</workerType>
 					</cloudHubDeployment>
+					
+					<!-- CloudHub 2.0 deployment configuration -->
 					<cloudHub2Deployment>
+						<uri>https://anypoint.mulesoft.com</uri>
+						<server>CloudHub</server>
 						<applicationName>employee-onboarding-mcp-server</applicationName>
+						<muleVersion>
+							<version>${cloudhub2.runtime.version}</version>
+						</muleVersion>
+						<environment>Sandbox</environment>
+						<region>us-east-1</region>
+						<businessGroup>COE</businessGroup>
+						<deploymentSettings>
+							<vCoreCount>0.1</vCoreCount>
+							<continuousDeployment>true</continuousDeployment>
+						</deploymentSettings>
 					</cloudHub2Deployment>
 				</configuration>
 			</plugin>
