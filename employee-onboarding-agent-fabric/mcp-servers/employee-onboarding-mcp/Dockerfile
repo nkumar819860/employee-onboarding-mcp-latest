@@ -1,64 +1,23 @@
-FROM eclipse-temurin:17-jdk as builder
-
-# Install curl and Maven
-RUN apt-get update && apt-get install -y curl unzip maven && rm -rf /var/lib/apt/lists/*
-
-# Set working directory for build
-WORKDIR /build
-
-# Copy source code for building
-COPY pom.xml .
-COPY mule-artifact.json .
-COPY src/ src/
-
-# Build the application with updated mule-artifact.json
-RUN mvn clean package -DskipTests
-
-# Runtime stage
 FROM eclipse-temurin:17-jre
 
-# Install curl and other utilities  
 RUN apt-get update && apt-get install -y curl unzip && rm -rf /var/lib/apt/lists/*
 
-# Download and install Mule Runtime - Using version 4.6.4 to match POM configuration
-RUN mkdir -p /opt/mule && \
-    cd /tmp && \
-    curl -L -o mule-standalone-4.6.4.zip "https://repository.mulesoft.org/nexus/content/repositories/releases/org/mule/distributions/mule-standalone/4.6.4/mule-standalone-4.6.4.zip" && \
-    unzip mule-standalone-4.6.4.zip && \
-    mv mule-standalone-4.6.4/* /opt/mule/ && \
-    rm -rf /tmp/*
+RUN mkdir -p /opt/mule && cd /tmp && \
+    curl -L -o mule-standalone-4.6.0.zip \
+    "https://repository.mulesoft.org/nexus/content/repositories/releases/org/mule/distributions/mule-standalone/4.6.0/mule-standalone-4.6.0.zip" && \
+    unzip mule-standalone-4.6.0.zip && \
+    mv mule-standalone-4.6.0/* /opt/mule/ && \
+    rm -rf /tmp/* mule-standalone-4.6.0.zip && \
+    chmod +x /opt/mule/bin/mule
 
-# Set working directory
 WORKDIR /opt/mule
+COPY target/employee-onboarding-mcp-*.jar /opt/mule/apps/
+COPY src/main/resources/ /opt/mule/apps/classes/
 
-# Copy the newly built application JAR to the apps directory
-COPY --from=builder /build/target/*.jar /opt/mule/apps/
+ENV MULE_HOME=/opt/mule JAVA_OPTS="-Xms512m -Xmx1024m"
+ENV http.host=0.0.0.0 http.port=8081 mcp.serverName=employee-mcp agent.fabric.enabled=true
+ENV db.driverClassName=org.postgresql.Driver dbType=postgres
 
-# Copy configuration files if they exist
-COPY src/main/resources/config.properties /opt/mule/conf/
-
-# Set environment variables
-ENV MULE_HOME=/opt/mule
-ENV JAVA_OPTS="-Xms512m -Xmx1024m"
-
-# Employee Onboarding MCP specific configuration
-ENV http.host=0.0.0.0
-ENV http.port=8081
-ENV mcp.serverName=employee-onboarding-mcp-server
-ENV mcp.serverVersion=1.0.2
-
-# Database configuration - Load from environment at runtime
-ENV db.driverClassName=org.postgresql.Driver
-
-# Expose port
 EXPOSE 8081
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8081/health || exit 1
-
-# Make mule executable
-RUN chmod +x /opt/mule/bin/mule
-
-# Start Mule Runtime in console mode (foreground) for Docker
-CMD ["/opt/mule/bin/mule", "console", "-M-Dfile.encoding=UTF-8"]
+HEALTHCHECK --interval=30s CMD curl -f http://localhost:8081/mcp/health || exit 1
+CMD ["/opt/mule/bin/mule"]

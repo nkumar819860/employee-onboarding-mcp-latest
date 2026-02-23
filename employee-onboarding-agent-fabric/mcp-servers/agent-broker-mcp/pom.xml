@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0           http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.mulesoft.mcp</groupId>
+	
+	<parent>
+		<groupId>com.mulesoft.mcp</groupId>
+		<artifactId>employee-onboarding-mcp-parent</artifactId>
+		<version>1.0.0</version>
+		<relativePath>../../pom.xml</relativePath>
+	</parent>
+
 	<artifactId>employee-onboarding-agent-broker</artifactId>
 	<version>1.0.1</version>
 	<packaging>mule-application</packaging>
@@ -10,55 +17,25 @@
 	<name>Employee Onboarding Agent Broker</name>
 	<description>Agent Broker MCP Server for Employee Onboarding Process Orchestration</description>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<maven.compiler.source>17</maven.compiler.source>
-		<maven.compiler.target>17</maven.compiler.target>
-		<mule.version>4.6.0</mule.version>
-		<mule.maven.plugin.version>4.1.0</mule.maven.plugin.version>
-		<mule.tools.version>1.2</mule.tools.version>
-	</properties>
-
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-clean-plugin</artifactId>
-				<version>3.2.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.11.0</version>
-				<configuration>
-					<source>17</source>
-					<target>17</target>
-					<compilerArgs>
-						<arg>--add-exports=java.base/sun.nio.ch=ALL-UNNAMED</arg>
-						<arg>--add-opens=java.base/java.lang=ALL-UNNAMED</arg>
-						<arg>--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</arg>
-					</compilerArgs>
-				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>mule-maven-plugin</artifactId>
-				<version>${mule.maven.plugin.version}</version>
-				<extensions>true</extensions>
 				<configuration>
-					<cloudHubDeployment>
-						<uri>https://anypoint.mulesoft.com</uri>
-						<muleVersion>4.6.0</muleVersion>
+					<!-- CloudHub 2.0 deployment configuration inherits from parent -->
+					<!-- Application-specific overrides -->
+					<cloudHub2Deployment>
 						<applicationName>employee-onboarding-agent-broker</applicationName>
-						<environment>Sandbox</environment>
-						<region>us-east-1</region>
-						<workers>1</workers>
-						<workerType>MICRO</workerType>
-						<properties>
-							<agent.broker.orchestration.enabled>true</agent.broker.orchestration.enabled>
-						</properties>
-					</cloudHubDeployment>
+					</cloudHub2Deployment>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -68,54 +45,21 @@
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-http-connector</artifactId>
-			<version>1.7.1</version>
+			<version>${mule.http.connector.version}</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-file-connector</artifactId>
-			<version>1.3.4</version>
+			<version>${mule.file.connector.version}</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.mule.modules</groupId>
 			<artifactId>mule-apikit-module</artifactId>
-			<version>1.8.2</version>
+			<version>${mule.apikit.version}</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 	</dependencies>
-
-	<distributionManagement>
-		<repository>
-			<id>anypoint-exchange-v3</id>
-			<name>Anypoint Exchange Repository</name>
-			<url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
-			<layout>default</layout>
-		</repository>
-	</distributionManagement>
-
-	<repositories>
-		<repository>
-			<id>anypoint-exchange-v3</id>
-			<name>Anypoint Exchange</name>
-			<url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
-			<layout>default</layout>
-		</repository>
-		<repository>
-			<id>mulesoft-releases</id>
-			<name>MuleSoft Releases Repository</name>
-			<url>https://repository.mulesoft.org/releases/</url>
-			<layout>default</layout>
-		</repository>
-	</repositories>
-
-	<pluginRepositories>
-		<pluginRepository>
-			<id>mulesoft-releases</id>
-			<name>MuleSoft Releases Repository</name>
-			<url>https://repository.mulesoft.org/releases/</url>
-			<layout>default</layout>
-		</pluginRepository>
-	</pluginRepositories>
 
 </project>

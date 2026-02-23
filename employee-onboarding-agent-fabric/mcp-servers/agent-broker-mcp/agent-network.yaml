@@ -105,8 +105,9 @@ agents:
 mcp_servers:
   - name: employee-onboarding-broker
     description: "Agent broker MCP server for orchestrating the complete onboarding process"
-    url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/broker"
-    cloudhub_url: "https://employee-onboarding-agent-broker.sandbox.anypoint.mulesoft.com"
+    url: "https://employee-onboarding-agent-broker.us-e1.cloudhub.io"
+    cloudhub_url: "https://employee-onboarding-agent-broker.us-e1.cloudhub.io"
+    docker_url: "http://localhost:8080"
     flex_gateway_url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/broker"
     timeout: 30000
     retry_attempts: 3
@@ -116,8 +117,9 @@ mcp_servers:
 
   - name: employee-onboarding-mcp
     description: "Employee management MCP server"
-    url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/employee"
-    cloudhub_url: "https://employee-onboarding-mcp-server.sandbox.anypoint.mulesoft.com"
+    url: "https://employee-onboarding-mcp-server.us-e1.cloudhub.io"
+    cloudhub_url: "https://employee-onboarding-mcp-server.us-e1.cloudhub.io"
+    docker_url: "http://localhost:8081"
     flex_gateway_url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/employee"
     timeout: 30000
     retry_attempts: 3
@@ -127,8 +129,9 @@ mcp_servers:
 
   - name: asset-allocation-mcp
     description: "Asset allocation MCP server"
-    url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/assets"
-    cloudhub_url: "https://asset-allocation-mcp-server.sandbox.anypoint.mulesoft.com"
+    url: "https://asset-allocation-mcp-server.us-e1.cloudhub.io"
+    cloudhub_url: "https://asset-allocation-mcp-server.us-e1.cloudhub.io"
+    docker_url: "http://localhost:8082"
     flex_gateway_url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/assets"
     timeout: 30000
     retry_attempts: 3
@@ -138,8 +141,9 @@ mcp_servers:
 
   - name: notification-mcp
     description: "Notification MCP server"
-    url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/notifications"
-    cloudhub_url: "https://notification-mcp-server.sandbox.anypoint.mulesoft.com"
+    url: "https://notification-mcp-server.us-e1.cloudhub.io"
+    cloudhub_url: "https://notification-mcp-server.us-e1.cloudhub.io"
+    docker_url: "http://localhost:8083"
     flex_gateway_url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/notifications"
     timeout: 30000
     retry_attempts: 3

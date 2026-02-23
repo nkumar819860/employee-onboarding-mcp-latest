@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0           http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.mulesoft.mcp</groupId>
+	
+	<parent>
+		<groupId>com.mulesoft.mcp</groupId>
+		<artifactId>employee-onboarding-mcp-parent</artifactId>
+		<version>1.0.0</version>
+		<relativePath>../../pom.xml</relativePath>
+	</parent>
+
 	<artifactId>asset-allocation-mcp-server</artifactId>
 	<version>1.0.0</version>
 	<packaging>mule-application</packaging>
@@ -10,62 +17,25 @@
 	<name>Asset Allocation MCP Server</name>
 	<description>MCP Server for Asset Allocation Operations (Laptops, ID Cards, etc.)</description>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<maven.compiler.source>17</maven.compiler.source>
-		<maven.compiler.target>17</maven.compiler.target>
-		<mule.version>4.6.0</mule.version>
-		<mule.maven.plugin.version>4.1.0</mule.maven.plugin.version>
-		<mule.tools.version>1.2</mule.tools.version>
-	</properties>
-
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-clean-plugin</artifactId>
-				<version>3.2.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.11.0</version>
-				<configuration>
-					<source>17</source>
-					<target>17</target>
-					<compilerArgs>
-						<arg>--add-exports=java.base/sun.nio.ch=ALL-UNNAMED</arg>
-						<arg>--add-opens=java.base/java.lang=ALL-UNNAMED</arg>
-						<arg>--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</arg>
-					</compilerArgs>
-				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>mule-maven-plugin</artifactId>
-				<version>${mule.maven.plugin.version}</version>
-				<extensions>true</extensions>
 				<configuration>
-					<cloudHubDeployment>
-						<uri>https://anypoint.mulesoft.com</uri>
-						<muleVersion>4.6.0</muleVersion>
+					<!-- CloudHub 2.0 deployment configuration inherits from parent -->
+					<!-- Application-specific overrides -->
+					<cloudHub2Deployment>
 						<applicationName>asset-allocation-mcp-server</applicationName>
-						<environment>Sandbox</environment>
-						<businessGroup>COE</businessGroup>
-						<region>us-east-1</region>
-						<workers>1</workers>
-						<workerType>MICRO</workerType>
-						<server>anypoint-exchange</server>
-						<properties>
-							<env>production</env>
-							<db.url>${db.h2.url}</db.url>
-							<db.username>${db.h2.username}</db.username>
-							<db.password>${db.h2.password}</db.password>
-							<db.driverClassName>${db.h2.driverClassName}</db.driverClassName>
-							<http.port>8082</http.port>
-						</properties>
-					</cloudHubDeployment>
+					</cloudHub2Deployment>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -75,64 +45,31 @@
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-http-connector</artifactId>
-			<version>1.7.1</version>
+			<version>${mule.http.connector.version}</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-db-connector</artifactId>
-			<version>1.13.7</version>
+			<version>${mule.db.connector.version}</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
-			<version>42.7.2</version>
+			<version>${postgresql.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
-			<version>2.2.224</version>
+			<version>${h2.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mule.modules</groupId>
 			<artifactId>mule-apikit-module</artifactId>
-			<version>1.8.2</version>
+			<version>${mule.apikit.version}</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 	</dependencies>
-
-	<distributionManagement>
-		<repository>
-			<id>anypoint-exchange-v3</id>
-			<name>Anypoint Exchange Repository</name>
-			<url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
-			<layout>default</layout>
-		</repository>
-	</distributionManagement>
-
-	<repositories>
-		<repository>
-			<id>anypoint-exchange-v3</id>
-			<name>Anypoint Exchange</name>
-			<url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
-			<layout>default</layout>
-		</repository>
-		<repository>
-			<id>mulesoft-releases</id>
-			<name>MuleSoft Releases Repository</name>
-			<url>https://repository.mulesoft.org/releases/</url>
-			<layout>default</layout>
-		</repository>
-	</repositories>
-
-	<pluginRepositories>
-		<pluginRepository>
-			<id>mulesoft-releases</id>
-			<name>MuleSoft Releases Repository</name>
-			<url>https://repository.mulesoft.org/releases/</url>
-			<layout>default</layout>
-		</pluginRepository>
-	</pluginRepositories>
 
 </project>

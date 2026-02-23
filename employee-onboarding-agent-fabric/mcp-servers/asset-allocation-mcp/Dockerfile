@@ -1,50 +1,23 @@
 FROM eclipse-temurin:17-jre
 
-# Install curl and other utilities  
 RUN apt-get update && apt-get install -y curl unzip && rm -rf /var/lib/apt/lists/*
 
-# Download and install Mule Runtime - Using version 4.6.4 to match other services
-RUN mkdir -p /opt/mule && \
-    cd /tmp && \
-    curl -L -o mule-standalone-4.6.4.zip "https://repository.mulesoft.org/nexus/content/repositories/releases/org/mule/distributions/mule-standalone/4.6.4/mule-standalone-4.6.4.zip" && \
-    unzip mule-standalone-4.6.4.zip && \
-    mv mule-standalone-4.6.4/* /opt/mule/ && \
-    rm -rf /tmp/*
+RUN mkdir -p /opt/mule && cd /tmp && \
+    curl -L -o mule-standalone-4.6.0.zip \
+    "https://repository.mulesoft.org/nexus/content/repositories/releases/org/mule/distributions/mule-standalone/4.6.0/mule-standalone-4.6.0.zip" && \
+    unzip mule-standalone-4.6.0.zip && \
+    mv mule-standalone-4.6.0/* /opt/mule/ && \
+    rm -rf /tmp/* mule-standalone-4.6.0.zip && \
+    chmod +x /opt/mule/bin/mule
 
-# Set working directory
 WORKDIR /opt/mule
+COPY target/asset-allocation-mcp-server-*.jar /opt/mule/apps/
+COPY src/main/resources/ /opt/mule/apps/classes/
 
-# Copy the application JAR to the apps directory
-COPY target/asset-allocation-mcp-server-1.0.0-mule-application.jar /opt/mule/apps/
+ENV MULE_HOME=/opt/mule JAVA_OPTS="-Xms512m -Xmx1024m"
+ENV http.host=0.0.0.0 http.port=8082 mcp.serverName=asset-mcp agent.fabric.enabled=true
+ENV db.driverClassName=org.postgresql.Driver dbType=postgres
 
-# Copy configuration files if they exist
-COPY src/main/resources/config.properties /opt/mule/conf/
-
-# Copy database initialization script
-COPY database/init.sql /opt/mule/database/
-
-# Set environment variables
-ENV MULE_HOME=/opt/mule
-ENV JAVA_OPTS="-Xms512m -Xmx1024m"
-
-# Asset Allocation MCP specific configuration
-ENV http.host=0.0.0.0
-ENV http.port=8082
-ENV mcp.serverName=asset-allocation-mcp-server
-ENV mcp.serverVersion=1.0.0
-
-# Database configuration - Load from environment at runtime
-ENV db.driverClassName=org.postgresql.Driver
-
-# Expose port
 EXPOSE 8082
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8082/health || exit 1
-
-# Make mule executable
-RUN chmod +x /opt/mule/bin/mule
-
-# Start Mule Runtime in console mode (foreground) for Docker
-CMD ["/opt/mule/bin/mule", "console", "-M-Dfile.encoding=UTF-8"]
+HEALTHCHECK --interval=30s CMD curl -f http://localhost:8082/mcp/health || exit 1
+CMD ["/opt/mule/bin/mule"]

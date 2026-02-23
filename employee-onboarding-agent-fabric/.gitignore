@@ -13,3 +13,25 @@ react-client/node_modules/
 **/.cache/
 **/*.pack
 .DS_Store
+
+# Environment and credentials files
+.env
+*.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Maven
+target/
+*.jar
+*.war
+*.ear
+
+# IDE files
+.idea/
+.vscode/
+
+# Logs
+*.log
+logs/

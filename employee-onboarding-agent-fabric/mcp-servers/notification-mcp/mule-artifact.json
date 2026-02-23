@@ -1,7 +1,7 @@
 {
   "name": "notification-mcp-server",
   "minMuleVersion": "4.6.0",
-   "javaSpecificationVersions": [
+  "javaSpecificationVersions": [
     "17"
   ],
   "secureProperties": [
