@@ -27,7 +27,6 @@
 		<http:request-connection host="localhost" port="8083"/>
 	</http:request-config>
 
-
 	<!-- Global Error Handler -->
 	<error-handler name="global-error-handler" doc:name="Global Error Handler">
 		<on-error-propagate type="HTTP:CONNECTIVITY">

@@ -1,8 +1,8 @@
 {
   "name": "notification-mcp-server",
-  "minMuleVersion": "4.4.0",
+  "minMuleVersion": "4.6.0",
    "javaSpecificationVersions": [
-    "11"
+    "17"
   ],
   "secureProperties": [
     "gmail.username",
