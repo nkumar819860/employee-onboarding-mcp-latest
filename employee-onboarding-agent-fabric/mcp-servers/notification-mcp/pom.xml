@@ -1,62 +1,87 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-	<modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.hr-onboarding</groupId>
-		<artifactId>employee-onboarding-mcp-parent</artifactId>
-		<version>1.0.0</version>
-		<relativePath>../../pom.xml</relativePath>
-	</parent>
+    <parent>
+        <groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
+        <artifactId>employee-onboarding-mcp-parent</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
 
-	<artifactId>notification-mcp</artifactId>
-	<version>1.0.3</version>
-	<packaging>mule-application</packaging>
+    <artifactId>notification-mcp</artifactId>
+    <version>1.0.3</version>
+    <packaging>mule-application</packaging>
 
-	<name>Notification MCP Server</name>
-	<description>MCP Server for Employee Notifications</description>
+    <name>Notification MCP Server</name>
+    <description>MCP Server for Employee Notifications</description>
 
-	<properties>
-		<maven.compiler.source>17</maven.compiler.source>
-		<maven.compiler.target>17</maven.compiler.target>
-		<mule.maven.plugin.version>4.3.0</mule.maven.plugin.version>
-		<application.name>notification-mcp-server</application.name>
-	</properties>
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <mule.maven.plugin.version>4.3.0</mule.maven.plugin.version>
+        <application.name>notification-mcp-server</application.name>
+    </properties>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.mule.connectors</groupId>
-			<artifactId>mule-http-connector</artifactId>
-			<classifier>mule-plugin</classifier>
-		</dependency>
+    <!-- ✅ NO VERSIONS NEEDED - Inherits from parent dependencyManagement -->
+    <dependencies>
+        <!-- ✅ Mule Connectors (parent provides versions) -->
+        <dependency>
+            <groupId>org.mule.connectors</groupId>
+            <artifactId>mule-http-connector</artifactId>
+            <classifier>mule-plugin</classifier>
+        </dependency>
 
-		<dependency>
-			<groupId>org.mule.connectors</groupId>
-			<artifactId>mule-db-connector</artifactId>
-			<classifier>mule-plugin</classifier>
-		</dependency>
+        <dependency>
+            <groupId>org.mule.connectors</groupId>
+            <artifactId>mule-db-connector</artifactId>
+            <classifier>mule-plugin</classifier>
+        </dependency>
 
-		<dependency>
-			<groupId>org.mule.connectors</groupId>
-			<artifactId>mule-email-connector</artifactId>
-			<classifier>mule-plugin</classifier>
-		</dependency>
+        <dependency>
+            <groupId>org.mule.connectors</groupId>
+            <artifactId>mule-email-connector</artifactId>
+            <classifier>mule-plugin</classifier>
+        </dependency>
 
-		<!-- PostgreSQL -->
-		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-		</dependency>
+        <!-- ✅ Databases (NO classifier - parent provides versions) -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <!-- ❌ NO classifier=mule-plugin for JDBC drivers -->
+        </dependency>
 
-		<!-- H2 Database -->
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <!-- ❌ NO classifier=mule-plugin for JDBC drivers -->
+        </dependency>
+    </dependencies>
 
-
-</project> 
+    <!-- 🚀 CRITICAL: Enables mule-application packaging -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.mule.tools.maven</groupId>
+                <artifactId>mule-maven-plugin</artifactId>
+                <version>${mule.maven.plugin.version}</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <cloudHubDeployment>
+                        <uri>https://anypoint.mulesoft.com</uri>
+                        <muleVersion>4.9.0</muleVersion>
+                        <connectedAppClientId>25bb2da884004ff6af264101e535c5f9</connectedAppClientId>
+                        <connectedAppClientSecret>758185C9B0964D2b961f066F582379a2</connectedAppClientSecret>
+                        <businessGroup>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</businessGroup>
+                        <environment>Sandbox</environment>
+                        <applicationName>${application.name}</applicationName>
+                        <workerType>Micro</workerType>
+                    </cloudHubDeployment>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
