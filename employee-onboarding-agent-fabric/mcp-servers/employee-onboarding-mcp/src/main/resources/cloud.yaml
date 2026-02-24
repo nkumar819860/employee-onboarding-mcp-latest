@@ -1,0 +1,5 @@
+env: cloud
+db.url: jdbc:postgresql://${env.PGHOST:postgres}:${env.PGPORT:5432}/${env.PGDB:employee_db}
+db.driver: org.postgresql.Driver
+db.user: ${env.PGUSER}
+db.password: ${env.PGPASSWORD}
