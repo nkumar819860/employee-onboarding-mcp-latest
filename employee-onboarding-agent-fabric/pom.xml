@@ -34,7 +34,7 @@
         
         <!-- ✅ Java 17 SAFE Connector Versions -->
         <mule.http.connector.version>1.9.0</mule.http.connector.version>
-        <mule.db.connector.version>1.13.5</mule.db.connector.version>  <!-- FIXED: Java 17 -->
+        <mule.db.connector.version>1.14.0</mule.db.connector.version>  <!-- FIXED: Java 17 -->
         <mule.email.connector.version>1.7.4</mule.email.connector.version>
         <mule.file.connector.version>1.5.0</mule.file.connector.version>
         <mule.apikit.connector.version>1.6.3</mule.apikit.connector.version>
