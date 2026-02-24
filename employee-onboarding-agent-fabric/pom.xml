@@ -2,19 +2,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" 
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    
     <modelVersion>4.0.0</modelVersion>
     
-    <!-- ✅ FIXED: Consistent Group ID across all projects -->
+    <!-- ✅ FIXED: Use your Business Group ID -->
     <groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
     <artifactId>employee-onboarding-mcp-parent</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
 
-    <!-- ✅ ADDED: Missing modules section -->
+    <!-- ✅ FIXED: Correct module paths -->
     <modules>
+        <module>mcp-servers/notification-mcp</module>
         <module>mcp-servers/employee-onboarding-mcp</module>
         <module>mcp-servers/asset-allocation-mcp</module>
-        <module>mcp-servers/notification-mcp</module>
         <module>mcp-servers/agent-broker-mcp</module>
     </modules>
 
@@ -22,37 +23,70 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <mule.version>4.9.0</mule.version>
-        <mule.maven.plugin.version>4.3.0</mule.maven.plugin.version>
         
-        <!-- ✅ FIXED: Connector versions -->
-        <mule.http.connector.version>1.10.3</mule.http.connector.version>
-        <mule.db.connector.version>1.14.7</mule.db.connector.version>
+        <!-- ✅ Java 17 Compatible RUNTIME -->
+       <mule.version>4.9.0</mule.version> 
+       <mule.runtime.version>4.9</mule.runtime.version>
+	   <java.version>17</java.version>
+
+
+        <mule.maven.plugin.version>4.5.0</mule.maven.plugin.version>
+        
+        <!-- ✅ Java 17 SAFE Connector Versions -->
+        <mule.http.connector.version>1.9.0</mule.http.connector.version>
+        <mule.db.connector.version>1.13.5</mule.db.connector.version>  <!-- FIXED: Java 17 -->
         <mule.email.connector.version>1.7.4</mule.email.connector.version>
         <mule.file.connector.version>1.5.0</mule.file.connector.version>
-        <mule.apikit.connector.version>1.11.3</mule.apikit.connector.version>
-        <mule.secure.properties.version>1.2.7</mule.secure.properties.version>
-        <postgresql.version>42.7.3</postgresql.version>
-        <h2.version>2.3.230</h2.version>
-
-        <!-- ✅ FIXED: Consistent organization ID -->
-        <connected.app.client.id>25bb2da884004ff6af264101e535c5f9</connected.app.client.id>
-        <connected.app.client.secret>758185C9B0964D2b961f066F582379a2</connected.app.client.secret>
-        <anypoint.platform.org.id>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</anypoint.platform.org.id>
+        <mule.apikit.connector.version>1.6.3</mule.apikit.connector.version>
+        <postgresql.version>42.7.4</postgresql.version>
+        <h2.version>2.2.224</h2.version>
+        
+        <!-- ✅ Connected App -->
+        <connected.app.client.id>aec0b3117f7d4d4e8433a7d3d23bc80e</connected.app.client.id>
+        <connected.app.client.secret>9bc9D86a77b343b98a148C0313239aDA</connected.app.client.secret>
+        <anypoint.business.group>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</anypoint.business.group>
         <anypoint.platform.env>Sandbox</anypoint.platform.env>
     </properties>
 
+    <!-- ✅ FIXED: Repositories FIRST -->
+    <repositories>
+        <repository>
+            <id>mulesoft-releases</id>
+            <url>https://repository.mulesoft.org/releases/</url>
+        </repository>
+        <repository>
+            <id>mulesoft-public</id>
+            <url>https://repository.mulesoft.org/nexus/content/repositories/public/</url>
+        </repository>
+        <repository>
+            <id>mule-ee-releases</id>
+            <url>https://repository.mulesoft.org/nexus/content/repositories/releases-ee/</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>mulesoft-releases</id>
+            <url>https://repository.mulesoft.org/releases/</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>mule-ee-releases</id>
+            <url>https://repository.mulesoft.org/nexus/content/repositories/releases-ee/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
     <dependencyManagement>
         <dependencies>
-            <!-- ✅ FIXED: Secure Properties -->
+            <!-- ✅ Mule BOM - CRITICAL -->
             <dependency>
-                <groupId>com.mulesoft.modules</groupId>
-                <artifactId>mule-secure-configuration-property-module</artifactId>
-                <version>${mule.secure.properties.version}</version>
-                <classifier>mule-plugin</classifier>
+                <groupId>org.mule.distributions</groupId>
+                <artifactId>mule-runtime-impl-bom</artifactId>
+                <version>${mule.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
-            
-            <!-- ✅ ADDED: Missing DB Connector -->
+
+            <!-- ✅ Connectors - OVERRIDE BOM for Java 17 -->
             <dependency>
                 <groupId>org.mule.connectors</groupId>
                 <artifactId>mule-db-connector</artifactId>
@@ -71,28 +105,13 @@
                 <version>${mule.email.connector.version}</version>
                 <classifier>mule-plugin</classifier>
             </dependency>
-            <dependency>
-                <groupId>org.mule.connectors</groupId>
-                <artifactId>mule-file-connector</artifactId>
-                <version>${mule.file.connector.version}</version>
-                <classifier>mule-plugin</classifier>
-            </dependency>
-            <!-- APIKit -->
-            <dependency>
-                <groupId>org.mule.modules</groupId>
-                <artifactId>mule-apikit-module</artifactId>
-                <version>${mule.apikit.connector.version}</version>
-                <classifier>mule-plugin</classifier>
-            </dependency>
-            
-            <!-- ✅ FIXED: PostgreSQL - removed incorrect classifier -->
+
+            <!-- ✅ Databases -->
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
                 <version>${postgresql.version}</version>
             </dependency>
-            
-            <!-- ✅ FIXED: H2 Database - removed incorrect classifier -->
             <dependency>
                 <groupId>com.h2database</groupId>
                 <artifactId>h2</artifactId>
@@ -100,60 +119,20 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-			
-    <distributionManagement>
 
+    <!-- ✅ FIXED: Clean distributionManagement -->
+    <distributionManagement>
         <repository>
             <id>anypoint-exchange-v3</id>
-            <name>Exchange Maven Repository</name>
             <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
-
-            <layout>default</layout>
         </repository>
         <snapshotRepository>
             <id>anypoint-exchange-v3</id>
-            <name>Exchange Maven Snapshot Repository</name>
             <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
-
-            <layout>default</layout>
         </snapshotRepository>
-    <!-- ✅ MuleSoft Releases -->
-
-
-
     </distributionManagement>
-    <repositories>
-        <repository>
-            <id>mulesoft-releases</id>
-            <url>https://repository.mulesoft.org/releases/</url>
-        </repository>
-        <repository>
-            <id>mulesoft-public</id>
-            <url>https://repository.mulesoft.org/nexus/content/repositories/public/</url>
-        </repository>
-        <!-- ✅ ADDED: MuleSoft EE Repository for mule-maven-plugin -->
-        <repository>
-            <id>mule-enterprise</id>
-            <url>https://repository.mulesoft.org/nexus/content/repositories/releases-ee/</url>
-        </repository>
-    </repositories>
 
-    <pluginRepositories>
-        <pluginRepository>
-            <id>mulesoft-releases</id>
-            <url>https://repository.mulesoft.org/releases/</url>
-        </pluginRepository>
-        <pluginRepository>
-            <id>mulesoft-public</id>
-            <url>https://repository.mulesoft.org/nexus/content/repositories/public/</url>
-        </pluginRepository>
-        <!-- ✅ ADDED: MuleSoft Plugin Repository -->
-        <pluginRepository>
-            <id>mule-enterprise</id>
-            <url>https://repository.mulesoft.org/nexus/content/repositories/releases-ee/</url>
-        </pluginRepository>
-    </pluginRepositories>
-
+    <!-- ✅ Plugin Management -->
     <build>
         <pluginManagement>
             <plugins>
@@ -161,19 +140,6 @@
                     <groupId>org.mule.tools.maven</groupId>
                     <artifactId>mule-maven-plugin</artifactId>
                     <version>${mule.maven.plugin.version}</version>
-                    <extensions>true</extensions>
-                    <configuration>
-                        <cloudHubDeployment>
-                            <uri>https://anypoint.mulesoft.com</uri>
-                            <muleVersion>${mule.version}</muleVersion>
-                            <connectedAppClientId>${connected.app.client.id}</connectedAppClientId>
-                            <connectedAppClientSecret>${connected.app.client.secret}</connectedAppClientSecret>
-                            <businessGroup>${anypoint.platform.org.id}</businessGroup>
-                            <environment>${anypoint.platform.env}</environment>
-                            <workers>1</workers>
-                            <workerType>Micro</workerType>
-                        </cloudHubDeployment>
-                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

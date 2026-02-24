@@ -29,10 +29,17 @@
 				<extensions>true</extensions>
 				<configuration>
 					<cloudHubDeployment>
+						<uri>https://anypoint.mulesoft.com</uri>
+						<muleVersion>${mule.runtime.version}</muleVersion>
+						<server>CloudHub</server>
 						<applicationName>asset-allocation-mcp-server</applicationName>
-						<!-- Inherits workers, environment from parent -->
+						<businessGroupId>${anypoint.business.group}</businessGroupId>
+						<environment>${anypoint.platform.env}</environment>
+						<region>us-east-1</region>
+						<workers>1</workers>
+						<workerType>MICRO</workerType>
+						<objectStoreV2>true</objectStoreV2>
 					</cloudHubDeployment>
-					<classifier>---- select project type ----</classifier>
 				</configuration>
 			</plugin>
 		</plugins>

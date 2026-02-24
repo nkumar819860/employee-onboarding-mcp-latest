@@ -34,7 +34,7 @@ Try this corrected curl command:
 ```cmd
 curl -X POST "https://anypoint.mulesoft.com/accounts/api/v2/oauth2/token" ^
   -H "Content-Type: application/x-www-form-urlencoded" ^
-  -d "client_id=25bb2da884004ff6af264101e535c5f9&client_secret=758185C9B0964D2b961f066F582379a2&grant_type=client_credentials"
+  -d "client_id=aec0b3117f7d4d4e8433a7d3d23bc80e&client_secret=9bc9D86a77b343b98a148C0313239aDA&grant_type=client_credentials"
 ```
 
 ### Step 3: Manual CloudHub Deployment (RECOMMENDED)

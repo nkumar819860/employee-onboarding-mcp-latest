@@ -65,8 +65,8 @@ Several dependencies in parent POM missing required information and have incorre
         <h2.version>2.3.230</h2.version>
 
         <!-- ✅ FIXED: Consistent organization ID -->
-        <connected.app.client.id>25bb2da884004ff6af264101e535c5f9</connected.app.client.id>
-        <connected.app.client.secret>758185C9B0964D2b961f066F582379a2</connected.app.client.secret>
+        <connected.app.client.id>aec0b3117f7d4d4e8433a7d3d23bc80e</connected.app.client.id>
+        <connected.app.client.secret>9bc9D86a77b343b98a148C0313239aDA</connected.app.client.secret>
         <anypoint.platform.org.id>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</anypoint.platform.org.id>
         <anypoint.platform.env>Sandbox</anypoint.platform.env>
     </properties>

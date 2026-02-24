@@ -10,7 +10,7 @@ TESTING ANYPOINT CREDENTIALS
 ====================================
 [SUCCESS] .env loaded
 [INFO] Testing credentials...
-Client ID: 25bb2da884004ff6af264101e535c5f9
+Client ID: aec0b3117f7d4d4e8433a7d3d23bc80e
 Org ID: 47562e5d-bf49-440a-a0f5-a9cea0a89aa9
 Environment: Sandbox
 
