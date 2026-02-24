@@ -1,21 +1,4 @@
 {
-  "minMuleVersion": "4.6.0",
-  "javaSpecificationVersions": [
-    "17"
-  ],
-  "secureProperties": [],
-  "bundleDescriptorLoader": {
-    "id": "mule",
-    "attributes": {}
-  },
-  "classLoaderModelLoaderDescriptor": {
-    "id": "mule",
-    "attributes": {
-      "exportedResources": []
-    }
-  },
-  "configs": [
-    "asset-allocation-mcp-server.xml",
-    "global.xml"
-  ]
+  "minMuleVersion": "4.9.5",
+  "name": "asset-allocation-mcp-server"
 }

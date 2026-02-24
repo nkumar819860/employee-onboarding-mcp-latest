@@ -8,6 +8,9 @@
 	http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
 	http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 
+	<!-- Import Global Configuration -->
+	<import file="global.xml"/>
+
 	<!-- Health Check Endpoint -->
 	<flow name="health-check">
 		<http:listener config-ref="http-config" path="/health" doc:name="Health Check Listener">

@@ -1,74 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
-	
+
 	<parent>
-		<groupId>com.mulesoft.mcp</groupId>
+		<groupId>com.hr-onboarding</groupId>
 		<artifactId>employee-onboarding-mcp-parent</artifactId>
 		<version>1.0.0</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
-	<artifactId>notification-mcp-server</artifactId>
-	<version>1.0.2</version>
+	<artifactId>notification-mcp</artifactId>
+	<version>1.0.3</version>
 	<packaging>mule-application</packaging>
 
 	<name>Notification MCP Server</name>
-	<description>MCP Server for Email Notifications (Employee Onboarding and Asset Allocation)</description>
+	<description>MCP Server for Employee Notifications</description>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-clean-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.mule.tools.maven</groupId>
-				<artifactId>mule-maven-plugin</artifactId>
-				<configuration>
-					<!-- CloudHub deployment configuration inherits from parent -->
-					<!-- Application-specific overrides -->
-					<cloudHubDeployment>
-						<applicationName>notification-mcp-server</applicationName>
-					</cloudHubDeployment>
-					<cloudHub2Deployment>
-						<applicationName>notification-mcp-server</applicationName>
-					</cloudHub2Deployment>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+	<properties>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
+		<mule.maven.plugin.version>4.3.0</mule.maven.plugin.version>
+		<application.name>notification-mcp-server</application.name>
+	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-http-connector</artifactId>
-			<version>${mule.http.connector.version}</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
+
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-db-connector</artifactId>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-email-connector</artifactId>
-			<version>${mule.email.connector.version}</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
+
+		<!-- PostgreSQL -->
 		<dependency>
-			<groupId>org.mule.connectors</groupId>
-			<artifactId>mule-file-connector</artifactId>
-			<version>${mule.file.connector.version}</version>
-			<classifier>mule-plugin</classifier>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
 		</dependency>
+
+		<!-- H2 Database -->
 		<dependency>
-			<groupId>org.mule.modules</groupId>
-			<artifactId>mule-apikit-module</artifactId>
-			<version>${mule.apikit.version}</version>
-			<classifier>mule-plugin</classifier>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
 		</dependency>
 	</dependencies>
 
-</project>
+
+</project> 

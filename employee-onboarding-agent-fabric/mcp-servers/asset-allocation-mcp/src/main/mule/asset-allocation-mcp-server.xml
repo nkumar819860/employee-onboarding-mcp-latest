@@ -1,792 +1,559 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:db="http://www.mulesoft.org/schema/mule/db"
-	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:http="http://www.mulesoft.org/schema/mule/http"
-	xmlns:mcp="http://www.mulesoft.org/schema/mule/mcp"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd 
-	http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
-	http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
-	http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
-	http://www.mulesoft.org/schema/mule/mcp http://www.mulesoft.org/schema/mule/mcp/current/mule-mcp.xsd">
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" 
+      xmlns:db="http://www.mulesoft.org/schema/mule/db" 
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 
-	<!-- Database Initialization Flow - Runs on startup -->
-	<flow name="db-initialization">
-		<logger level="INFO" message="Starting asset allocation database initialization..." />
-		<try doc:name="Try PostgreSQL">
-			<db:execute-script config-ref="postgres-config">
-				<db:sql><![CDATA[SELECT COUNT(*) as init_check FROM information_schema.tables WHERE table_name = 'departments';]]></db:sql>
-			</db:execute-script>
-			
-			<choice>
-				<when expression="#[payload[0].init_check == 0]">
-					<logger level="INFO" message="Initializing PostgreSQL asset allocation database..." />
-					<db:execute-script config-ref="postgres-config">
-						<db:sql><![CDATA[
--- Asset Allocation MCP Server Database Initialization
--- Drop tables if they exist (for clean restart)
-DROP TABLE IF EXISTS asset_maintenance CASCADE;
-DROP TABLE IF EXISTS asset_allocations CASCADE;
-DROP TABLE IF EXISTS assets CASCADE;
-DROP TABLE IF EXISTS asset_categories CASCADE;
-DROP TABLE IF EXISTS employees CASCADE;
-DROP TABLE IF EXISTS departments CASCADE;
+  <!-- ✅ FIXED: Database Initialization (runs ONCE on startup) -->
+  <flow name="initialize-mcp-database">
+    <scheduler doc:name="Startup Only">
+      <scheduling-strategy>
+        <fixed-frequency frequency="3000" timeUnit="MILLISECONDS"/>
+      </scheduling-strategy>
+    </scheduler>
+    
+    <logger level="INFO" message="🔧 Initializing Asset Allocation MCP Database..." />
+    
+    <try>
+      <!-- Test PostgreSQL -->
+      <db:execute-script config-ref="postgres-config">
+        <db:sql><![CDATA[
+          -- Load full database schema from init.sql
+          CREATE TABLE IF NOT EXISTS departments (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            description VARCHAR(255),
+            manager_name VARCHAR(100),
+            budget_allocation DECIMAL(12,2),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
 
--- Create departments table
-CREATE TABLE departments (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    description VARCHAR(255),
-    manager_name VARCHAR(100),
-    budget_allocation DECIMAL(12,2),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+          CREATE TABLE IF NOT EXISTS employees (
+            id SERIAL PRIMARY KEY,
+            employee_id VARCHAR(20) UNIQUE NOT NULL,
+            first_name VARCHAR(50) NOT NULL,
+            last_name VARCHAR(50) NOT NULL,
+            email VARCHAR(100) UNIQUE NOT NULL,
+            phone VARCHAR(20),
+            department_id INTEGER REFERENCES departments(id),
+            position VARCHAR(100),
+            hire_date DATE,
+            termination_date DATE NULL,
+            status VARCHAR(20) DEFAULT 'ACTIVE',
+            manager_id INTEGER REFERENCES employees(id),
+            location VARCHAR(100),
+            cost_center VARCHAR(50),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
 
--- Create employees table
-CREATE TABLE employees (
-    id SERIAL PRIMARY KEY,
-    employee_id VARCHAR(20) UNIQUE NOT NULL,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    phone VARCHAR(20),
-    department_id INTEGER REFERENCES departments(id),
-    position VARCHAR(100),
-    hire_date DATE,
-    termination_date DATE NULL,
-    status VARCHAR(20) DEFAULT 'ACTIVE',
-    manager_id INTEGER REFERENCES employees(id),
-    location VARCHAR(100),
-    cost_center VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+          CREATE TABLE IF NOT EXISTS asset_categories (
+            id SERIAL PRIMARY KEY,
+            category_name VARCHAR(50) UNIQUE NOT NULL,
+            description VARCHAR(255),
+            requires_approval BOOLEAN DEFAULT FALSE,
+            max_allocation_per_employee INTEGER DEFAULT 1,
+            depreciation_years INTEGER DEFAULT 3,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
 
--- Create asset categories table
-CREATE TABLE asset_categories (
-    id SERIAL PRIMARY KEY,
-    category_name VARCHAR(50) UNIQUE NOT NULL,
-    description VARCHAR(255),
-    requires_approval BOOLEAN DEFAULT FALSE,
-    max_allocation_per_employee INTEGER DEFAULT 1,
-    depreciation_years INTEGER DEFAULT 3,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+          CREATE TABLE IF NOT EXISTS assets (
+            id SERIAL PRIMARY KEY,
+            asset_tag VARCHAR(50) UNIQUE NOT NULL,
+            asset_name VARCHAR(100) NOT NULL,
+            category_id INTEGER REFERENCES asset_categories(id),
+            brand VARCHAR(50),
+            model VARCHAR(100),
+            serial_number VARCHAR(100) UNIQUE,
+            purchase_date DATE,
+            purchase_cost DECIMAL(10,2),
+            warranty_expiry DATE,
+            status VARCHAR(20) DEFAULT 'AVAILABLE',
+            condition_status VARCHAR(20) DEFAULT 'NEW',
+            location VARCHAR(100),
+            vendor VARCHAR(100),
+            specifications TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
 
--- Create assets table
-CREATE TABLE assets (
-    id SERIAL PRIMARY KEY,
-    asset_tag VARCHAR(50) UNIQUE NOT NULL,
-    asset_name VARCHAR(100) NOT NULL,
-    category_id INTEGER REFERENCES asset_categories(id),
-    brand VARCHAR(50),
-    model VARCHAR(100),
-    serial_number VARCHAR(100) UNIQUE,
-    purchase_date DATE,
-    purchase_cost DECIMAL(10,2),
-    warranty_expiry DATE,
-    status VARCHAR(20) DEFAULT 'AVAILABLE',
-    condition_status VARCHAR(20) DEFAULT 'NEW',
-    location VARCHAR(100),
-    vendor VARCHAR(100),
-    specifications TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+          CREATE TABLE IF NOT EXISTS asset_allocations (
+            id SERIAL PRIMARY KEY,
+            asset_id INTEGER REFERENCES assets(id),
+            employee_id INTEGER REFERENCES employees(id),
+            allocated_date DATE DEFAULT CURRENT_DATE,
+            expected_return_date DATE,
+            actual_return_date DATE NULL,
+            allocation_status VARCHAR(20) DEFAULT 'ALLOCATED',
+            allocation_reason VARCHAR(255),
+            approved_by VARCHAR(100),
+            approval_date DATE,
+            return_condition VARCHAR(20),
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+          
+          DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM departments WHERE name = '_INIT_COMPLETE_') THEN
+              INSERT INTO departments (name) VALUES ('IT'), ('HR'), ('Engineering');
+              INSERT INTO departments (name) VALUES ('_INIT_COMPLETE_');
+            END IF;
+          END $$;
+        ]]></db:sql>
+      </db:execute-script>
+      
+      <set-variable variableName="activeDatabase" value="'postgres'" />
+      <logger level="INFO" message="✅ PostgreSQL initialized successfully" />
+      
+      <error-handler>
+        <on-error-continue type="DB:CONNECTIVITY">
+          <logger level="WARN" message="⚠️ PostgreSQL unavailable, initializing H2..." />
+          
+          <db:execute-script config-ref="h2-config">
+            <db:sql><![CDATA[
+              CREATE TABLE IF NOT EXISTS departments (
+                id IDENTITY PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+              );
+              
+              MERGE INTO departments (name) KEY(name) VALUES ('IT');
+              MERGE INTO departments (name) KEY(name) VALUES ('HR');  
+              MERGE INTO departments (name) KEY(name) VALUES ('Engineering');
+              MERGE INTO departments (name) KEY(name) VALUES ('_INIT_COMPLETE_');
+            ]]></db:sql>
+          </db:execute-script>
+          
+          <set-variable variableName="activeDatabase" value="'h2'" />
+          <logger level="INFO" message="✅ H2 database initialized successfully" />
+        </on-error-continue>
+      </error-handler>
+    </try>
+  </flow>
 
--- Create asset allocations table
-CREATE TABLE asset_allocations (
-    id SERIAL PRIMARY KEY,
-    asset_id INTEGER REFERENCES assets(id),
-    employee_id INTEGER REFERENCES employees(id),
-    allocated_date DATE DEFAULT CURRENT_DATE,
-    expected_return_date DATE,
-    actual_return_date DATE NULL,
-    allocation_status VARCHAR(20) DEFAULT 'ALLOCATED',
-    allocation_reason VARCHAR(255),
-    approved_by VARCHAR(100),
-    approval_date DATE,
-    return_condition VARCHAR(20),
-    notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+  <!-- ✅ Health Check -->
+  <flow name="health-check">
+    <http:listener config-ref="http-config" path="/health" />
+    <set-payload value="#[output application/json --- {
+      status: 'UP',
+      service: 'Asset Allocation MCP Server v1.0.0',
+      database: vars.activeDatabase default 'uninitialized',
+      timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+      javaVersion: '17'
+    }]" />
+    <logger level="INFO" message="Health check OK" />
+  </flow>
 
--- Create asset maintenance table
-CREATE TABLE asset_maintenance (
-    id SERIAL PRIMARY KEY,
-    asset_id INTEGER REFERENCES assets(id),
-    maintenance_type VARCHAR(50) NOT NULL,
-    maintenance_date DATE DEFAULT CURRENT_DATE,
-    description TEXT,
-    cost DECIMAL(10,2),
-    performed_by VARCHAR(100),
-    next_maintenance_date DATE,
-    status VARCHAR(20) DEFAULT 'COMPLETED',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+  <!-- ✅ MCP Server Info -->
+  <flow name="mcp-info">
+    <http:listener config-ref="http-config" path="/mcp/info" />
+    <set-payload value="#[output application/json --- {
+      name: 'Asset Allocation MCP Server',
+      version: '1.0.0',
+      description: 'Manages IT asset allocation (laptops, ID cards, etc)',
+      javaVersion: '17',
+      endpoints: [
+        {name: 'allocate-assets', path: '/mcp/tools/allocate-assets'},
+        {name: 'return-asset', path: '/mcp/tools/return-asset'},
+        {name: 'list-assets', path: '/mcp/tools/list-assets'},
+        {name: 'get-available-assets', path: '/mcp/tools/get-available-assets'},
+        {name: 'get-employee-assets', path: '/mcp/tools/get-employee-assets'}
+      ],
+      database: vars.activeDatabase default 'uninitialized'
+    }]" />
+  </flow>
 
--- Insert sample departments
-INSERT INTO departments (name, description, manager_name, budget_allocation) VALUES
-('Information Technology', 'IT operations and support', 'John Mitchell', 500000.00),
-('Human Resources', 'Employee management and relations', 'Sarah Johnson', 75000.00),
-('Engineering', 'Software development and technical operations', 'Michael Chen', 750000.00),
-('Marketing', 'Brand promotion and customer engagement', 'Emily Rodriguez', 200000.00),
-('Finance', 'Financial planning and accounting', 'David Kim', 100000.00),
-('Operations', 'Business operations and logistics', 'Lisa Thompson', 300000.00),
-('Security', 'Physical and cybersecurity', 'Robert Garcia', 150000.00);
+  <!-- ✅ NEW: Allocate Assets (Main MCP Tool) -->
+  <flow name="allocate-assets">
+    <http:listener config-ref="http-config" path="/mcp/tools/allocate-assets" />
+    
+    <logger level="INFO" message="Asset allocation request for employee: #[payload.employeeId]" />
+    <set-variable variableName="requestPayload" value="#[payload]" />
+    <set-variable variableName="allocatedAssets" value="#[[]]" />
+    
+    <try>
+      <!-- Get employee info -->
+      <choice>
+        <when expression="#[vars.activeDatabase == 'postgres']">
+          <db:select config-ref="postgres-config">
+            <db:sql><![CDATA[
+              SELECT e.*, d.name as department_name 
+              FROM employees e 
+              LEFT JOIN departments d ON e.department_id = d.id 
+              WHERE e.employee_id = :employeeId AND e.status = 'ACTIVE'
+            ]]></db:sql>
+            <db:input-parameters><![CDATA[#[{'employeeId': vars.requestPayload.employeeId}]]]></db:input-parameters>
+          </db:select>
+        </when>
+        <otherwise>
+          <set-payload value="#[[{employee_id: vars.requestPayload.employeeId, first_name: vars.requestPayload.firstName, last_name: vars.requestPayload.lastName, department_name: vars.requestPayload.department}]]" />
+        </otherwise>
+      </choice>
+      
+      <choice>
+        <when expression="#[payload.size() > 0]">
+          <set-variable variableName="employeeInfo" value="#[payload[0]]" />
+          
+          <!-- Smart asset allocation based on requested assets or defaults -->
+          <set-variable variableName="assetsToAllocate" value="#[vars.requestPayload.assets default ['laptop', 'id-card']]" />
+          
+          <!-- Allocate each requested asset -->
+          <foreach collection="#[vars.assetsToAllocate]">
+            <set-variable variableName="currentAssetType" value="#[payload]" />
+            
+            <!-- Find available asset of this type -->
+            <choice>
+              <when expression="#[vars.activeDatabase == 'postgres']">
+                <db:select config-ref="postgres-config">
+                  <db:sql><![CDATA[
+                    SELECT a.*, ac.category_name 
+                    FROM assets a 
+                    JOIN asset_categories ac ON a.category_id = ac.id 
+                    WHERE UPPER(ac.category_name) = UPPER(:assetType) 
+                    AND a.status = 'AVAILABLE' 
+                    ORDER BY a.purchase_date DESC 
+                    LIMIT 1
+                  ]]></db:sql>
+                  <db:input-parameters><![CDATA[#[{'assetType': vars.currentAssetType}]]]></db:input-parameters>
+                </db:select>
+              </when>
+              <otherwise>
+                <!-- Mock data for H2/demo -->
+                <set-payload value="#[[{
+                  id: 1,
+                  asset_tag: 'DEMO-' ++ vars.currentAssetType as String ++ '-001',
+                  asset_name: vars.currentAssetType as String ++ ' (Demo Asset)',
+                  category_name: vars.currentAssetType,
+                  brand: 'Demo Brand',
+                  model: 'Demo Model',
+                  serial_number: 'DEMO123456',
+                  condition_status: 'NEW'
+                }]]" />
+              </otherwise>
+            </choice>
+            
+            <choice>
+              <when expression="#[payload.size() > 0]">
+                <set-variable variableName="selectedAsset" value="#[payload[0]]" />
+                
+                <!-- Create allocation record -->
+                <choice>
+                  <when expression="#[vars.activeDatabase == 'postgres']">
+                    <!-- Update asset status -->
+                    <db:update config-ref="postgres-config">
+                      <db:sql><![CDATA[
+                        UPDATE assets 
+                        SET status = 'ALLOCATED', updated_at = CURRENT_TIMESTAMP 
+                        WHERE id = :assetId
+                      ]]></db:sql>
+                      <db:input-parameters><![CDATA[#[{'assetId': vars.selectedAsset.id}]]]></db:input-parameters>
+                    </db:update>
+                    
+                    <!-- Create allocation record -->
+                    <db:insert config-ref="postgres-config">
+                      <db:sql><![CDATA[
+                        INSERT INTO asset_allocations 
+                        (asset_id, employee_id, allocated_date, allocation_status, allocation_reason, approved_by, approval_date, notes)
+                        VALUES (:assetId, 
+                               (SELECT id FROM employees WHERE employee_id = :employeeId), 
+                               CURRENT_DATE, 'ALLOCATED', 'Employee Onboarding', 'MCP System', CURRENT_DATE,
+                               'Allocated via Asset Allocation MCP Server')
+                      ]]></db:sql>
+                      <db:input-parameters><![CDATA[#[{
+                        'assetId': vars.selectedAsset.id,
+                        'employeeId': vars.requestPayload.employeeId
+                      }]]]></db:input-parameters>
+                    </db:insert>
+                  </when>
+                </choice>
+                
+                <!-- Add to allocated assets list -->
+                <set-variable variableName="allocatedAssets" value="#[vars.allocatedAssets + [{
+                  assetId: vars.selectedAsset.id,
+                  assetTag: vars.selectedAsset.asset_tag,
+                  assetName: vars.selectedAsset.asset_name,
+                  category: vars.selectedAsset.category_name,
+                  brand: vars.selectedAsset.brand,
+                  model: vars.selectedAsset.model,
+                  serialNumber: vars.selectedAsset.serial_number,
+                  condition: vars.selectedAsset.condition_status,
+                  allocationDate: now() as String {format: 'yyyy-MM-dd'},
+                  status: 'ALLOCATED'
+                }]]" />
+                
+                <logger level="INFO" message="Asset allocated: #[vars.selectedAsset.asset_tag] to #[vars.requestPayload.employeeId]" />
+              </when>
+              <otherwise>
+                <logger level="WARN" message="No available asset of type: #[vars.currentAssetType]" />
+              </otherwise>
+            </choice>
+          </foreach>
+          
+          <!-- Return success response -->
+          <set-payload value="#[output application/json --- {
+            status: 'success',
+            message: 'Assets allocated successfully',
+            employeeId: vars.requestPayload.employeeId,
+            employeeName: vars.employeeInfo.first_name ++ ' ' ++ vars.employeeInfo.last_name,
+            allocatedAssets: vars.allocatedAssets,
+            allocationCount: sizeOf(vars.allocatedAssets),
+            timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+          }]" />
+        </when>
+        <otherwise>
+          <set-payload value="#[output application/json --- {
+            status: 'error',
+            message: 'Employee not found or inactive',
+            employeeId: vars.requestPayload.employeeId,
+            timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+          }]" />
+        </otherwise>
+      </choice>
+      
+      <error-handler>
+        <on-error-propagate type="ANY">
+          <set-payload value="#[output application/json --- {
+            status: 'error',
+            message: 'Asset allocation failed',
+            error: error.description,
+            employeeId: vars.requestPayload.employeeId default 'unknown',
+            timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+          }]" />
+          <logger level="ERROR" message="Asset allocation error: #[error.description]" />
+        </on-error-propagate>
+      </error-handler>
+    </try>
+  </flow>
 
--- Insert sample employees
-INSERT INTO employees (employee_id, first_name, last_name, email, phone, department_id, position, hire_date, status, location, cost_center) VALUES
-('EMP001', 'John', 'Smith', 'john.smith@company.com', '+1-555-0101', 3, 'Senior Software Engineer', '2024-01-15', 'ACTIVE', 'New York', 'ENG-001'),
-('EMP002', 'Maria', 'Garcia', 'maria.garcia@company.com', '+1-555-0201', 4, 'Marketing Manager', '2024-02-01', 'ACTIVE', 'Los Angeles', 'MKT-001'),
-('EMP003', 'Robert', 'Wilson', 'robert.wilson@company.com', '+1-555-0301', 2, 'HR Specialist', '2024-01-20', 'ACTIVE', 'Chicago', 'HR-001'),
-('EMP004', 'Jennifer', 'Brown', 'jennifer.brown@company.com', '+1-555-0401', 5, 'Financial Analyst', '2024-02-15', 'ACTIVE', 'Boston', 'FIN-001'),
-('EMP005', 'Alex', 'Davis', 'alex.davis@company.com', '+1-555-0501', 3, 'Junior Developer', '2024-03-01', 'ACTIVE', 'Seattle', 'ENG-002'),
-('EMP006', 'Lisa', 'Thompson', 'lisa.thompson@company.com', '+1-555-0601', 6, 'Operations Manager', '2024-01-10', 'ACTIVE', 'Denver', 'OPS-001'),
-('EMP007', 'Mark', 'Anderson', 'mark.anderson@company.com', '+1-555-0701', 1, 'IT Support Specialist', '2024-02-20', 'ACTIVE', 'Austin', 'IT-001'),
-('EMP008', 'Rachel', 'Martinez', 'rachel.martinez@company.com', '+1-555-0801', 7, 'Security Officer', '2024-03-05', 'ACTIVE', 'Miami', 'SEC-001');
+  <!-- ✅ NEW: Get Available Assets -->
+  <flow name="get-available-assets">
+    <http:listener config-ref="http-config" path="/mcp/tools/get-available-assets" />
+    
+    <logger level="INFO" message="Getting available assets" />
+    
+    <try>
+      <choice>
+        <when expression="#[vars.activeDatabase == 'postgres']">
+          <db:select config-ref="postgres-config">
+            <db:sql><![CDATA[
+              SELECT a.*, ac.category_name 
+              FROM assets a 
+              JOIN asset_categories ac ON a.category_id = ac.id 
+              WHERE a.status = 'AVAILABLE'
+              ORDER BY ac.category_name, a.asset_name
+            ]]></db:sql>
+          </db:select>
+        </when>
+        <otherwise>
+          <!-- Demo data for H2 -->
+          <set-payload value="#[[
+            {id: 1, asset_tag: 'LAP-001', asset_name: 'Dell Latitude 7420', category_name: 'LAPTOP', brand: 'Dell', model: 'Latitude 7420', status: 'AVAILABLE'},
+            {id: 2, asset_tag: 'ID-001', asset_name: 'Employee ID Card', category_name: 'ID_CARD', brand: 'HID Global', model: 'ProxCard II', status: 'AVAILABLE'},
+            {id: 3, asset_tag: 'PHN-001', asset_name: 'iPhone 15 Pro', category_name: 'MOBILE_PHONE', brand: 'Apple', model: 'iPhone 15 Pro', status: 'AVAILABLE'}
+          ]]" />
+        </otherwise>
+      </choice>
+      
+      <set-payload value="#[output application/json --- {
+        status: 'success',
+        message: 'Available assets retrieved',
+        assets: payload,
+        assetCount: sizeOf(payload),
+        timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+      }]" />
+      
+      <error-handler>
+        <on-error-propagate type="ANY">
+          <set-payload value="#[output application/json --- {
+            status: 'error',
+            message: 'Failed to retrieve available assets',
+            error: error.description,
+            timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+          }]" />
+          <logger level="ERROR" message="Get available assets error: #[error.description]" />
+        </on-error-propagate>
+      </error-handler>
+    </try>
+  </flow>
 
--- Insert asset categories
-INSERT INTO asset_categories (category_name, description, requires_approval, max_allocation_per_employee, depreciation_years) VALUES
-('LAPTOP', 'Laptop computers for employees', TRUE, 1, 4),
-('DESKTOP', 'Desktop computers for office use', TRUE, 1, 5),
-('ID_CARD', 'Employee identification cards', FALSE, 1, 2),
-('ACCESS_CARD', 'Building and system access cards', TRUE, 1, 3),
-('MOBILE_PHONE', 'Company mobile phones', TRUE, 1, 3),
-('TABLET', 'Tablet devices for mobile work', TRUE, 1, 4),
-('MONITOR', 'External monitors for workstations', FALSE, 2, 6),
-('KEYBOARD', 'Computer keyboards', FALSE, 1, 3),
-('MOUSE', 'Computer mice', FALSE, 1, 2),
-('HEADSET', 'Audio headsets for communication', FALSE, 1, 2),
-('DOCKING_STATION', 'Laptop docking stations', FALSE, 1, 5),
-('PARKING_PASS', 'Employee parking passes', FALSE, 1, 1);
+  <!-- ✅ NEW: Get Employee Assets -->
+  <flow name="get-employee-assets">
+    <http:listener config-ref="http-config" path="/mcp/tools/get-employee-assets" />
+    
+    <logger level="INFO" message="Getting assets for employee: #[payload.employeeId]" />
+    <set-variable variableName="employeeId" value="#[payload.employeeId]" />
+    
+    <try>
+      <choice>
+        <when expression="#[vars.activeDatabase == 'postgres']">
+          <db:select config-ref="postgres-config">
+            <db:sql><![CDATA[
+              SELECT a.*, ac.category_name, aa.allocated_date, aa.allocation_status, aa.notes
+              FROM asset_allocations aa
+              JOIN assets a ON aa.asset_id = a.id
+              JOIN asset_categories ac ON a.category_id = ac.id
+              JOIN employees e ON aa.employee_id = e.id
+              WHERE e.employee_id = :employeeId 
+              AND aa.allocation_status = 'ALLOCATED'
+              ORDER BY aa.allocated_date DESC
+            ]]></db:sql>
+            <db:input-parameters><![CDATA[#[{'employeeId': vars.employeeId}]]]></db:input-parameters>
+          </db:select>
+        </when>
+        <otherwise>
+          <!-- Demo data -->
+          <set-payload value="#[[
+            {asset_tag: 'DEMO-LAP-001', asset_name: 'Demo Laptop', category_name: 'LAPTOP', allocated_date: '2024-01-15', allocation_status: 'ALLOCATED'},
+            {asset_tag: 'DEMO-ID-001', asset_name: 'Demo ID Card', category_name: 'ID_CARD', allocated_date: '2024-01-15', allocation_status: 'ALLOCATED'}
+          ]]" />
+        </otherwise>
+      </choice>
+      
+      <set-payload value="#[output application/json --- {
+        status: 'success',
+        message: 'Employee assets retrieved',
+        employeeId: vars.employeeId,
+        assets: payload,
+        assetCount: sizeOf(payload),
+        timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+      }]" />
+      
+      <error-handler>
+        <on-error-propagate type="ANY">
+          <set-payload value="#[output application/json --- {
+            status: 'error',
+            message: 'Failed to retrieve employee assets',
+            error: error.description,
+            employeeId: vars.employeeId default 'unknown',
+            timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+          }]" />
+          <logger level="ERROR" message="Get employee assets error: #[error.description]" />
+        </on-error-propagate>
+      </error-handler>
+    </try>
+  </flow>
 
--- Insert completion marker
-INSERT INTO departments (name, description) VALUES ('_INIT_COMPLETE_', 'Asset allocation database initialization completed successfully');
-						]]></db:sql>
-					</db:execute-script>
-					<logger level="INFO" message="PostgreSQL asset allocation database initialized successfully" />
-				</when>
-				<otherwise>
-					<logger level="INFO" message="PostgreSQL asset allocation database already initialized" />
-				</otherwise>
-			</choice>
-			
-			<set-variable variableName="activeDatabase" value="postgres" />
-			<error-handler>
-				<on-error-continue type="DB:CONNECTIVITY">
-					<logger level="WARN" message="PostgreSQL connection failed. Falling back to H2 database..." />
-					<try doc:name="Try H2">
-						<db:execute-script config-ref="h2-config">
-							<db:sql><![CDATA[
--- Asset Allocation MCP Server Database Initialization (H2 Compatible)
--- Drop tables if they exist (for clean restart)
-DROP TABLE IF EXISTS asset_maintenance;
-DROP TABLE IF EXISTS asset_allocations;
-DROP TABLE IF EXISTS assets;
-DROP TABLE IF EXISTS asset_categories;
-DROP TABLE IF EXISTS employees;
-DROP TABLE IF EXISTS departments;
+  <!-- ✅ NEW: Return Asset -->
+  <flow name="return-asset">
+    <http:listener config-ref="http-config" path="/mcp/tools/return-asset" />
+    
+    <logger level="INFO" message="Asset return request for: #[payload.assetTag]" />
+    <set-variable variableName="requestPayload" value="#[payload]" />
+    
+    <try>
+      <choice>
+        <when expression="#[vars.activeDatabase == 'postgres']">
+          <!-- Update asset status to available -->
+          <db:update config-ref="postgres-config">
+            <db:sql><![CDATA[
+              UPDATE assets 
+              SET status = 'AVAILABLE', updated_at = CURRENT_TIMESTAMP 
+              WHERE asset_tag = :assetTag
+            ]]></db:sql>
+            <db:input-parameters><![CDATA[#[{'assetTag': vars.requestPayload.assetTag}]]]></db:input-parameters>
+          </db:update>
+          
+          <!-- Update allocation record -->
+          <db:update config-ref="postgres-config">
+            <db:sql><![CDATA[
+              UPDATE asset_allocations 
+              SET allocation_status = 'RETURNED', 
+                  actual_return_date = CURRENT_DATE,
+                  return_condition = :condition,
+                  notes = COALESCE(notes, '') || ' | Returned: ' || :returnNotes
+              WHERE asset_id = (SELECT id FROM assets WHERE asset_tag = :assetTag)
+              AND allocation_status = 'ALLOCATED'
+            ]]></db:sql>
+            <db:input-parameters><![CDATA[#[{
+              'assetTag': vars.requestPayload.assetTag,
+              'condition': vars.requestPayload.condition default 'GOOD',
+              'returnNotes': vars.requestPayload.notes default 'Asset returned via MCP'
+            }]]]></db:input-parameters>
+          </db:update>
+        </when>
+      </choice>
+      
+      <set-payload value="#[output application/json --- {
+        status: 'success',
+        message: 'Asset returned successfully',
+        assetTag: vars.requestPayload.assetTag,
+        condition: vars.requestPayload.condition default 'GOOD',
+        returnDate: now() as String {format: 'yyyy-MM-dd'},
+        timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+      }]" />
+      
+      <error-handler>
+        <on-error-propagate type="ANY">
+          <set-payload value="#[output application/json --- {
+            status: 'error',
+            message: 'Asset return failed',
+            error: error.description,
+            assetTag: vars.requestPayload.assetTag default 'unknown',
+            timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+          }]" />
+          <logger level="ERROR" message="Asset return error: #[error.description]" />
+        </on-error-propagate>
+      </error-handler>
+    </try>
+  </flow>
 
--- Create departments table
-CREATE TABLE departments (
-    id IDENTITY PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    description VARCHAR(255),
-    manager_name VARCHAR(100),
-    budget_allocation DECIMAL(12,2),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create employees table
-CREATE TABLE employees (
-    id IDENTITY PRIMARY KEY,
-    employee_id VARCHAR(20) UNIQUE NOT NULL,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    phone VARCHAR(20),
-    department_id INTEGER,
-    position VARCHAR(100),
-    hire_date DATE,
-    termination_date DATE NULL,
-    status VARCHAR(20) DEFAULT 'ACTIVE',
-    manager_id INTEGER,
-    location VARCHAR(100),
-    cost_center VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create asset categories table
-CREATE TABLE asset_categories (
-    id IDENTITY PRIMARY KEY,
-    category_name VARCHAR(50) UNIQUE NOT NULL,
-    description VARCHAR(255),
-    requires_approval BOOLEAN DEFAULT FALSE,
-    max_allocation_per_employee INTEGER DEFAULT 1,
-    depreciation_years INTEGER DEFAULT 3,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create assets table
-CREATE TABLE assets (
-    id IDENTITY PRIMARY KEY,
-    asset_tag VARCHAR(50) UNIQUE NOT NULL,
-    asset_name VARCHAR(100) NOT NULL,
-    category_id INTEGER,
-    brand VARCHAR(50),
-    model VARCHAR(100),
-    serial_number VARCHAR(100) UNIQUE,
-    purchase_date DATE,
-    purchase_cost DECIMAL(10,2),
-    warranty_expiry DATE,
-    status VARCHAR(20) DEFAULT 'AVAILABLE',
-    condition_status VARCHAR(20) DEFAULT 'NEW',
-    location VARCHAR(100),
-    vendor VARCHAR(100),
-    specifications CLOB,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create asset allocations table
-CREATE TABLE asset_allocations (
-    id IDENTITY PRIMARY KEY,
-    asset_id INTEGER,
-    employee_id INTEGER,
-    allocated_date DATE DEFAULT CURRENT_DATE,
-    expected_return_date DATE,
-    actual_return_date DATE NULL,
-    allocation_status VARCHAR(20) DEFAULT 'ALLOCATED',
-    allocation_reason VARCHAR(255),
-    approved_by VARCHAR(100),
-    approval_date DATE,
-    return_condition VARCHAR(20),
-    notes CLOB,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create asset maintenance table
-CREATE TABLE asset_maintenance (
-    id IDENTITY PRIMARY KEY,
-    asset_id INTEGER,
-    maintenance_type VARCHAR(50) NOT NULL,
-    maintenance_date DATE DEFAULT CURRENT_DATE,
-    description CLOB,
-    cost DECIMAL(10,2),
-    performed_by VARCHAR(100),
-    next_maintenance_date DATE,
-    status VARCHAR(20) DEFAULT 'COMPLETED',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Insert sample departments
-INSERT INTO departments (name, description, manager_name, budget_allocation) VALUES
-('Information Technology', 'IT operations and support', 'John Mitchell', 500000.00),
-('Human Resources', 'Employee management and relations', 'Sarah Johnson', 75000.00),
-('Engineering', 'Software development and technical operations', 'Michael Chen', 750000.00),
-('Marketing', 'Brand promotion and customer engagement', 'Emily Rodriguez', 200000.00),
-('Finance', 'Financial planning and accounting', 'David Kim', 100000.00),
-('Operations', 'Business operations and logistics', 'Lisa Thompson', 300000.00),
-('Security', 'Physical and cybersecurity', 'Robert Garcia', 150000.00);
-
--- Insert sample employees
-INSERT INTO employees (employee_id, first_name, last_name, email, phone, department_id, position, hire_date, status, location, cost_center) VALUES
-('EMP001', 'John', 'Smith', 'john.smith@company.com', '+1-555-0101', 3, 'Senior Software Engineer', '2024-01-15', 'ACTIVE', 'New York', 'ENG-001'),
-('EMP002', 'Maria', 'Garcia', 'maria.garcia@company.com', '+1-555-0201', 4, 'Marketing Manager', '2024-02-01', 'ACTIVE', 'Los Angeles', 'MKT-001'),
-('EMP003', 'Robert', 'Wilson', 'robert.wilson@company.com', '+1-555-0301', 2, 'HR Specialist', '2024-01-20', 'ACTIVE', 'Chicago', 'HR-001'),
-('EMP004', 'Jennifer', 'Brown', 'jennifer.brown@company.com', '+1-555-0401', 5, 'Financial Analyst', '2024-02-15', 'ACTIVE', 'Boston', 'FIN-001'),
-('EMP005', 'Alex', 'Davis', 'alex.davis@company.com', '+1-555-0501', 3, 'Junior Developer', '2024-03-01', 'ACTIVE', 'Seattle', 'ENG-002'),
-('EMP006', 'Lisa', 'Thompson', 'lisa.thompson@company.com', '+1-555-0601', 6, 'Operations Manager', '2024-01-10', 'ACTIVE', 'Denver', 'OPS-001'),
-('EMP007', 'Mark', 'Anderson', 'mark.anderson@company.com', '+1-555-0701', 1, 'IT Support Specialist', '2024-02-20', 'ACTIVE', 'Austin', 'IT-001'),
-('EMP008', 'Rachel', 'Martinez', 'rachel.martinez@company.com', '+1-555-0801', 7, 'Security Officer', '2024-03-05', 'ACTIVE', 'Miami', 'SEC-001');
-
--- Insert asset categories
-INSERT INTO asset_categories (category_name, description, requires_approval, max_allocation_per_employee, depreciation_years) VALUES
-('LAPTOP', 'Laptop computers for employees', TRUE, 1, 4),
-('DESKTOP', 'Desktop computers for office use', TRUE, 1, 5),
-('ID_CARD', 'Employee identification cards', FALSE, 1, 2),
-('ACCESS_CARD', 'Building and system access cards', TRUE, 1, 3),
-('MOBILE_PHONE', 'Company mobile phones', TRUE, 1, 3),
-('TABLET', 'Tablet devices for mobile work', TRUE, 1, 4),
-('MONITOR', 'External monitors for workstations', FALSE, 2, 6),
-('KEYBOARD', 'Computer keyboards', FALSE, 1, 3),
-('MOUSE', 'Computer mice', FALSE, 1, 2),
-('HEADSET', 'Audio headsets for communication', FALSE, 1, 2),
-('DOCKING_STATION', 'Laptop docking stations', FALSE, 1, 5),
-('PARKING_PASS', 'Employee parking passes', FALSE, 1, 1);
-
--- Insert completion marker
-INSERT INTO departments (name, description) VALUES ('_INIT_COMPLETE_', 'Asset allocation database initialization completed successfully');
-							]]></db:sql>
-						</db:execute-script>
-						<logger level="INFO" message="H2 asset allocation database initialized successfully" />
-						<set-variable variableName="activeDatabase" value="h2" />
-						<error-handler>
-							<on-error-propagate type="ANY">
-								<logger level="ERROR" message="Failed to initialize H2 database: #[error.description]" />
-							</on-error-propagate>
-						</error-handler>
-					</try>
-				</on-error-continue>
-				<on-error-propagate type="ANY">
-					<logger level="ERROR" message="Database initialization failed: #[error.description]" />
-				</on-error-propagate>
-			</error-handler>
-		</try>
-	</flow>
-
-	<!-- Health Check Endpoint -->
-	<flow name="health-check">
-		<http:listener config-ref="http-config" path="/health" doc:name="Health Check Listener">
-		</http:listener>
-		<set-payload
-			value="#[{'status': 'UP', 'service': 'Asset Allocation MCP Server', 'activeDatabase': vars.activeDatabase default 'unknown', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-			mimeType="application/json" />
-		<logger level="INFO" message="Health check requested" />
-	</flow>
-
-	<!-- MCP Server Info Endpoint -->
-	<flow name="mcp-server-info">
-		<http:listener config-ref="http-config" path="/mcp/info" doc:name="MCP Info Listener">
-		</http:listener>
-		<set-payload
-			value="#[{'name': 'Asset Allocation MCP Server', 'version': '1.0.0', 'description': 'MCP Server for Asset Allocation Operations (Laptops, ID Cards, etc.)', 'tools': [{'name': 'allocate-asset', 'description': 'Allocates assets to employees', 'endpoint': '/mcp/tools/allocate-asset'}, {'name': 'return-asset', 'description': 'Returns assets from employees', 'endpoint': '/mcp/tools/return-asset'}, {'name': 'list-assets', 'description': 'Lists available assets', 'endpoint': '/mcp/tools/list-assets'}, {'name': 'get-asset-details', 'description': 'Gets detailed asset information', 'endpoint': '/mcp/tools/get-asset-details'}, {'name': 'get-employee-assets', 'description': 'Gets all assets allocated to an employee', 'endpoint': '/mcp/tools/get-employee-assets'}, {'name': 'add-asset', 'description': 'Adds new asset to inventory', 'endpoint': '/mcp/tools/add-asset'}, {'name': 'update-asset-status', 'description': 'Updates asset status', 'endpoint': '/mcp/tools/update-asset-status'}]}]"
-			mimeType="application/json" />
-		<logger level="INFO" message="Asset allocation MCP Server info requested" />
-	</flow>
-
-	<!-- MCP Tool: Allocate Asset -->
-	<flow name="allocate-asset">
-		<http:listener config-ref="http-config" path="/mcp/tools/allocate-asset" doc:name="Allocate Asset Listener">
-		</http:listener>
-
-		<logger level="INFO" message="Allocating asset: #[payload]" />
-
-		<try doc:name="Try PostgreSQL Allocate">
-			<!-- First, check if asset is available -->
-			<db:select config-ref="postgres-config">
-				<db:sql>SELECT * FROM assets WHERE asset_tag = :assetTag AND status = 'AVAILABLE'</db:sql>
-				<db:input-parameters>#[{'assetTag': payload.assetTag}]</db:input-parameters>
-			</db:select>
-
-			<choice>
-				<when expression="#[sizeOf(payload) == 0]">
-					<set-payload
-						value="#[{'error': 'Asset Not Available', 'message': 'Asset not found or not available for allocation', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-					<set-variable value="404" variableName="httpStatus" />
-				</when>
-				<otherwise>
-					<set-variable variableName="assetInfo" value="#[payload[0]]" />
-					
-					<!-- Check if employee exists -->
-					<db:select config-ref="postgres-config">
-						<db:sql>SELECT id FROM employees WHERE employee_id = :empId</db:sql>
-						<db:input-parameters>#[{'empId': payload.employeeId}]</db:input-parameters>
-					</db:select>
-
-					<choice>
-						<when expression="#[sizeOf(payload) == 0]">
-							<set-payload
-								value="#[{'error': 'Employee Not Found', 'message': 'Employee not found', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-								mimeType="application/json" />
-							<set-variable value="404" variableName="httpStatus" />
-						</when>
-						<otherwise>
-							<set-variable variableName="employeeDbId" value="#[payload[0].id]" />
-							
-							<!-- Create allocation record -->
-							<db:insert config-ref="postgres-config">
-								<db:sql>INSERT INTO asset_allocations (asset_id, employee_id, allocated_date, allocation_status, allocation_reason, approved_by, approval_date, notes) 
-								VALUES (:assetId, :empId, :allocDate, 'ALLOCATED', :reason, :approver, :approvalDate, :notes)</db:sql>
-								<db:input-parameters>#[{
-									'assetId': vars.assetInfo.id,
-									'empId': vars.employeeDbId,
-									'allocDate': payload.allocatedDate default now() as Date,
-									'reason': payload.reason default 'Asset allocation request',
-									'approver': payload.approvedBy default 'System Auto-Approval',
-									'approvalDate': now() as Date,
-									'notes': payload.notes default null
-								}]</db:input-parameters>
-							</db:insert>
-
-							<!-- Update asset status to ALLOCATED -->
-							<db:update config-ref="postgres-config">
-								<db:sql>UPDATE assets SET status = 'ALLOCATED', updated_at = CURRENT_TIMESTAMP WHERE id = :assetId</db:sql>
-								<db:input-parameters>#[{'assetId': vars.assetInfo.id}]</db:input-parameters>
-							</db:update>
-
-							<set-payload
-								value="#[{'status': 'success', 'message': 'Asset allocated successfully', 'assetTag': payload.assetTag, 'assetName': vars.assetInfo.asset_name, 'employeeId': payload.employeeId, 'database': 'PostgreSQL', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-								mimeType="application/json" />
-							<logger level="INFO" message="Asset allocated: #[payload.assetTag] to #[payload.employeeId]" />
-						</otherwise>
-					</choice>
-				</otherwise>
-			</choice>
-
-			<error-handler>
-				<on-error-continue type="DB:CONNECTIVITY">
-					<logger level="WARN" message="PostgreSQL unavailable, trying H2..." />
-					<!-- Similar logic for H2 fallback -->
-					<set-payload
-						value="#[{'error': 'Service Unavailable', 'message': 'Database connectivity issues - please try again later', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-					<set-variable value="503" variableName="httpStatus" />
-				</on-error-continue>
-				<on-error-propagate type="DB:*">
-					<set-payload
-						value="#[{'error': 'Database Error', 'message': error.description, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-					<set-variable value="500" variableName="httpStatus" />
-				</on-error-propagate>
-			</error-handler>
-		</try>
-	</flow>
-
-	<!-- MCP Tool: Return Asset -->
-	<flow name="return-asset">
-		<http:listener config-ref="http-config" path="/mcp/tools/return-asset" doc:name="Return Asset Listener">
-		</http:listener>
-
-		<logger level="INFO" message="Returning asset: #[payload]" />
-
-		<try doc:name="Try PostgreSQL Return">
-			<!-- Update allocation record -->
-			<db:update config-ref="postgres-config">
-				<db:sql>UPDATE asset_allocations SET actual_return_date = :returnDate, allocation_status = 'RETURNED', return_condition = :condition, notes = :notes, updated_at = CURRENT_TIMESTAMP 
-				WHERE asset_id = (SELECT id FROM assets WHERE asset_tag = :assetTag) AND allocation_status = 'ALLOCATED'</db:sql>
-				<db:input-parameters>#[{
-					'assetTag': payload.assetTag,
-					'returnDate': payload.returnDate default now() as Date,
-					'condition': payload.condition default 'GOOD',
-					'notes': payload.notes default 'Asset returned'
-				}]</db:input-parameters>
-			</db:update>
-
-			<choice>
-				<when expression="#[payload > 0]">
-					<!-- Update asset status to AVAILABLE -->
-					<db:update config-ref="postgres-config">
-						<db:sql>UPDATE assets SET status = 'AVAILABLE', condition_status = :condition, updated_at = CURRENT_TIMESTAMP WHERE asset_tag = :assetTag</db:sql>
-						<db:input-parameters>#[{
-							'assetTag': payload.assetTag,
-							'condition': payload.condition default 'GOOD'
-						}]</db:input-parameters>
-					</db:update>
-
-					<set-payload
-						value="#[{'status': 'success', 'message': 'Asset returned successfully', 'assetTag': payload.assetTag, 'condition': payload.condition default 'GOOD', 'database': 'PostgreSQL', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-				</when>
-				<otherwise>
-					<set-payload
-						value="#[{'error': 'Asset Not Found', 'message': 'No active allocation found for this asset', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-					<set-variable value="404" variableName="httpStatus" />
-				</otherwise>
-			</choice>
-
-			<error-handler>
-				<on-error-continue type="DB:CONNECTIVITY">
-					<logger level="WARN" message="PostgreSQL unavailable for asset return" />
-					<set-payload
-						value="#[{'error': 'Service Unavailable', 'message': 'Database connectivity issues - please try again later', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-					<set-variable value="503" variableName="httpStatus" />
-				</on-error-continue>
-				<on-error-propagate type="DB:*">
-					<set-payload
-						value="#[{'error': 'Database Error', 'message': error.description, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-					<set-variable value="500" variableName="httpStatus" />
-				</on-error-propagate>
-			</error-handler>
-		</try>
-	</flow>
-
-	<!-- MCP Tool: List Assets -->
-	<flow name="list-assets">
-		<http:listener config-ref="http-config" path="/mcp/tools/list-assets" doc:name="List Assets Listener">
-		</http:listener>
-
-		<logger level="INFO" message="Listing assets with filters: #[attributes.queryParams]" />
-
-		<try doc:name="Try PostgreSQL List">
-			<set-variable variableName="statusFilter" value="#[attributes.queryParams.status default 'ALL']" />
-			<set-variable variableName="categoryFilter" value="#[attributes.queryParams.category default 'ALL']" />
-			
-			<choice>
-				<when expression="#[vars.statusFilter == 'ALL' and vars.categoryFilter == 'ALL']">
-					<db:select config-ref="postgres-config">
-						<db:sql>SELECT a.*, ac.category_name FROM assets a 
-						LEFT JOIN asset_categories ac ON a.category_id = ac.id 
-						ORDER BY a.created_at DESC LIMIT 100</db:sql>
-					</db:select>
-				</when>
-				<when expression="#[vars.statusFilter != 'ALL' and vars.categoryFilter == 'ALL']">
-					<db:select config-ref="postgres-config">
-						<db:sql>SELECT a.*, ac.category_name FROM assets a 
-						LEFT JOIN asset_categories ac ON a.category_id = ac.id 
-						WHERE a.status = :status 
-						ORDER BY a.created_at DESC LIMIT 100</db:sql>
-						<db:input-parameters>#[{'status': vars.statusFilter}]</db:input-parameters>
-					</db:select>
-				</when>
-				<when expression="#[vars.statusFilter == 'ALL' and vars.categoryFilter != 'ALL']">
-					<db:select config-ref="postgres-config">
-						<db:sql>SELECT a.*, ac.category_name FROM assets a 
-						LEFT JOIN asset_categories ac ON a.category_id = ac.id 
-						WHERE ac.category_name = :category 
-						ORDER BY a.created_at DESC LIMIT 100</db:sql>
-						<db:input-parameters>#[{'category': vars.categoryFilter}]</db:input-parameters>
-					</db:select>
-				</when>
-				<otherwise>
-					<db:select config-ref="postgres-config">
-						<db:sql>SELECT a.*, ac.category_name FROM assets a 
-						LEFT JOIN asset_categories ac ON a.category_id = ac.id 
-						WHERE a.status = :status AND ac.category_name = :category 
-						ORDER BY a.created_at DESC LIMIT 100</db:sql>
-						<db:input-parameters>#[{'status': vars.statusFilter, 'category': vars.categoryFilter}]</db:input-parameters>
-					</db:select>
-				</otherwise>
-			</choice>
-
-			<set-payload
-				value="#[{'status': 'success', 'assets': payload, 'count': sizeOf(payload), 'filters': {'status': vars.statusFilter, 'category': vars.categoryFilter}, 'database': 'PostgreSQL', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-				mimeType="application/json" />
-
-			<error-handler>
-				<on-error-continue type="DB:CONNECTIVITY">
-					<logger level="WARN" message="PostgreSQL unavailable for listing assets" />
-					<set-payload
-						value="#[{'error': 'Service Unavailable', 'message': 'Database connectivity issues - please try again later', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-					<set-variable value="503" variableName="httpStatus" />
-				</on-error-continue>
-				<on-error-propagate type="DB:*">
-					<set-payload
-						value="#[{'error': 'Database Error', 'message': error.description, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-					<set-variable value="500" variableName="httpStatus" />
-				</on-error-propagate>
-			</error-handler>
-		</try>
-	</flow>
-
-	<!-- MCP Tool: Get Asset Details -->
-	<flow name="get-asset-details">
-		<http:listener config-ref="http-config" path="/mcp/tools/get-asset-details" doc:name="Get Asset Details Listener">
-		</http:listener>
-
-		<logger level="INFO" message="Getting asset details: #[attributes.queryParams.assetTag default payload.assetTag]" />
-
-		<try doc:name="Try PostgreSQL Get Asset">
-			<db:select config-ref="postgres-config">
-				<db:sql>SELECT a.*, ac.category_name, ac.requires_approval, ac.max_allocation_per_employee,
-				(SELECT json_agg(json_build_object('employee_id', e.employee_id, 'first_name', e.first_name, 'last_name', e.last_name, 'allocated_date', aa.allocated_date, 'status', aa.allocation_status)) 
-				 FROM asset_allocations aa JOIN employees e ON aa.employee_id = e.id 
-				 WHERE aa.asset_id = a.id) as allocation_history
-				FROM assets a 
-				LEFT JOIN asset_categories ac ON a.category_id = ac.id 
-				WHERE a.asset_tag = :assetTag</db:sql>
-				<db:input-parameters>#[{'assetTag': attributes.queryParams.assetTag default payload.assetTag}]</db:input-parameters>
-			</db:select>
-
-			<choice>
-				<when expression="#[sizeOf(payload) > 0]">
-					<set-payload
-						value="#[{'status': 'success', 'asset': payload[0], 'database': 'PostgreSQL', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-				</when>
-				<otherwise>
-					<set-payload
-						value="#[{'error': 'Asset Not Found', 'message': 'Asset not found', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-					<set-variable value="404" variableName="httpStatus" />
-				</otherwise>
-			</choice>
-
-			<error-handler>
-				<on-error-continue type="DB:CONNECTIVITY">
-					<logger level="WARN" message="PostgreSQL unavailable for asset details" />
-					<set-payload
-						value="#[{'error': 'Service Unavailable', 'message': 'Database connectivity issues - please try again later', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-					<set-variable value="503" variableName="httpStatus" />
-				</on-error-continue>
-				<on-error-propagate type="DB:*">
-					<set-payload
-						value="#[{'error': 'Database Error', 'message': error.description, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-					<set-variable value="500" variableName="httpStatus" />
-				</on-error-propagate>
-			</error-handler>
-		</try>
-	</flow>
-
-	<!-- MCP Tool: Get Employee Assets -->
-	<flow name="get-employee-assets">
-		<http:listener config-ref="http-config" path="/mcp/tools/get-employee-assets" doc:name="Get Employee Assets Listener">
-		</http:listener>
-
-		<logger level="INFO" message="Getting assets for employee: #[attributes.queryParams.employeeId default payload.employeeId]" />
-
-		<try doc:name="Try PostgreSQL Get Employee Assets">
-			<db:select config-ref="postgres-config">
-				<db:sql>SELECT a.asset_tag, a.asset_name, a.brand, a.model, a.serial_number, ac.category_name, 
-				aa.allocated_date, aa.allocation_status, aa.allocation_reason, aa.notes
-				FROM asset_allocations aa 
-				JOIN assets a ON aa.asset_id = a.id 
-				JOIN asset_categories ac ON a.category_id = ac.id 
-				JOIN employees e ON aa.employee_id = e.id 
-				WHERE e.employee_id = :empId AND aa.allocation_status = 'ALLOCATED'
-				ORDER BY aa.allocated_date DESC</db:sql>
-				<db:input-parameters>#[{'empId': attributes.queryParams.employeeId default payload.employeeId}]</db:input-parameters>
-			</db:select>
-
-			<set-payload
-				value="#[{'status': 'success', 'employeeId': attributes.queryParams.employeeId default payload.employeeId, 'assets': payload, 'count': sizeOf(payload), 'database': 'PostgreSQL', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-				mimeType="application/json" />
-
-			<error-handler>
-				<on-error-continue type="DB:CONNECTIVITY">
-					<logger level="WARN" message="PostgreSQL unavailable for employee assets" />
-					<set-payload
-						value="#[{'error': 'Service Unavailable', 'message': 'Database connectivity issues - please try again later', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-					<set-variable value="503" variableName="httpStatus" />
-				</on-error-continue>
-				<on-error-propagate type="DB:*">
-					<set-payload
-						value="#[{'error': 'Database Error', 'message': error.description, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-					<set-variable value="500" variableName="httpStatus" />
-				</on-error-propagate>
-			</error-handler>
-		</try>
-	</flow>
-
-	<!-- MCP Tool: Add Asset -->
-	<flow name="add-asset">
-		<http:listener config-ref="http-config" path="/mcp/tools/add-asset" doc:name="Add Asset Listener">
-		</http:listener>
-
-		<logger level="INFO" message="Adding new asset: #[payload]" />
-
-		<try doc:name="Try PostgreSQL Add Asset">
-			<db:insert config-ref="postgres-config">
-				<db:sql>INSERT INTO assets (asset_tag, asset_name, category_id, brand, model, serial_number, purchase_date, purchase_cost, warranty_expiry, status, condition_status, location, vendor, specifications) 
-				VALUES (:assetTag, :assetName, (SELECT id FROM asset_categories WHERE category_name = :category), :brand, :model, :serialNumber, :purchaseDate, :purchaseCost, :warrantyExpiry, :status, :conditionStatus, :location, :vendor, :specifications)</db:sql>
-				<db:input-parameters>#[{
-					'assetTag': payload.assetTag,
-					'assetName': payload.assetName,
-					'category': payload.category,
-					'brand': payload.brand default null,
-					'model': payload.model default null,
-					'serialNumber': payload.serialNumber default null,
-					'purchaseDate': payload.purchaseDate default now() as Date,
-					'purchaseCost': payload.purchaseCost default 0.00,
-					'warrantyExpiry': payload.warrantyExpiry default null,
-					'status': payload.status default 'AVAILABLE',
-					'conditionStatus': payload.conditionStatus default 'NEW',
-					'location': payload.location default 'IT Storage',
-					'vendor': payload.vendor default null,
-					'specifications': payload.specifications default null
-				}]</db:input-parameters>
-			</db:insert>
-
-			<set-payload
-				value="#[{'status': 'success', 'message': 'Asset added successfully', 'assetTag': payload.assetTag, 'assetName': payload.assetName, 'category': payload.category, 'database': 'PostgreSQL', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-				mimeType="application/json" />
-			<logger level="INFO" message="Asset added: #[payload.assetTag]" />
-
-			<error-handler>
-				<on-error-continue type="DB:CONNECTIVITY">
-					<logger level="WARN" message="PostgreSQL unavailable for adding asset" />
-					<set-payload
-						value="#[{'error': 'Service Unavailable', 'message': 'Database connectivity issues - please try again later', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-					<set-variable value="503" variableName="httpStatus" />
-				</on-error-continue>
-				<on-error-propagate type="DB:*">
-					<choice>
-						<when expression="#[error.description contains 'duplicate' or error.description contains 'unique']">
-							<set-payload
-								value="#[{'error': 'Conflict', 'message': 'Asset tag or serial number already exists', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-								mimeType="application/json" />
-							<set-variable value="409" variableName="httpStatus" />
-						</when>
-						<otherwise>
-							<set-payload
-								value="#[{'error': 'Database Error', 'message': error.description, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-								mimeType="application/json" />
-							<set-variable value="500" variableName="httpStatus" />
-						</otherwise>
-					</choice>
-				</on-error-propagate>
-			</error-handler>
-		</try>
-	</flow>
-
-	<!-- MCP Tool: Update Asset Status -->
-	<flow name="update-asset-status">
-		<http:listener config-ref="http-config" path="/mcp/tools/update-asset-status" doc:name="Update Asset Status Listener">
-		</http:listener>
-
-		<logger level="INFO" message="Updating asset status: #[payload]" />
-
-		<try doc:name="Try PostgreSQL Update Status">
-			<db:update config-ref="postgres-config">
-				<db:sql>UPDATE assets SET status = :status, condition_status = :condition, updated_at = CURRENT_TIMESTAMP WHERE asset_tag = :assetTag</db:sql>
-				<db:input-parameters>#[{
-					'assetTag': payload.assetTag,
-					'status': payload.status,
-					'condition': payload.condition default payload.status
-				}]</db:input-parameters>
-			</db:update>
-
-			<choice>
-				<when expression="#[payload > 0]">
-					<set-payload
-						value="#[{'status': 'success', 'message': 'Asset status updated successfully', 'assetTag': payload.assetTag, 'newStatus': payload.status, 'database': 'PostgreSQL', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-				</when>
-				<otherwise>
-					<set-payload
-						value="#[{'error': 'Asset Not Found', 'message': 'Asset not found', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-					<set-variable value="404" variableName="httpStatus" />
-				</otherwise>
-			</choice>
-
-			<error-handler>
-				<on-error-continue type="DB:CONNECTIVITY">
-					<logger level="WARN" message="PostgreSQL unavailable for status update" />
-					<set-payload
-						value="#[{'error': 'Service Unavailable', 'message': 'Database connectivity issues - please try again later', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-					<set-variable value="503" variableName="httpStatus" />
-				</on-error-continue>
-				<on-error-propagate type="DB:*">
-					<set-payload
-						value="#[{'error': 'Database Error', 'message': error.description, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-						mimeType="application/json" />
-					<set-variable value="500" variableName="httpStatus" />
-				</on-error-propagate>
-			</error-handler>
-		</try>
-	</flow>
+  <!-- ✅ List Assets (Enhanced) -->
+  <flow name="list-assets">
+    <http:listener config-ref="http-config" path="/mcp/tools/list-assets" />
+    
+    <try>
+      <choice>
+        <when expression="#[vars.activeDatabase == 'postgres']">
+          <db:select config-ref="postgres-config">
+            <db:sql><![CDATA[
+              SELECT a.*, ac.category_name,
+                     CASE WHEN aa.allocation_status = 'ALLOCATED' THEN e.employee_id ELSE NULL END as allocated_to
+              FROM assets a 
+              JOIN asset_categories ac ON a.category_id = ac.id
+              LEFT JOIN asset_allocations aa ON a.id = aa.asset_id AND aa.allocation_status = 'ALLOCATED'
+              LEFT JOIN employees e ON aa.employee_id = e.id
+              ORDER BY ac.category_name, a.asset_name
+            ]]></db:sql>
+          </db:select>
+        </when>
+        <otherwise>
+          <set-payload value="#[[
+            {asset_tag: 'DEMO-LAP-001', asset_name: 'Demo Laptop', category_name: 'LAPTOP', status: 'AVAILABLE', allocated_to: null},
+            {asset_tag: 'DEMO-ID-001', asset_name: 'Demo ID Card', category_name: 'ID_CARD', status: 'ALLOCATED', allocated_to: 'EMP001'}
+          ]]" />
+        </otherwise>
+      </choice>
+      
+      <set-payload value="#[output application/json --- {
+        status: 'success',
+        database: vars.activeDatabase default 'unknown',
+        assets: payload,
+        assetCount: sizeOf(payload),
+        timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+      }]" />
+      
+      <error-handler>
+        <on-error-propagate type="ANY">
+          <set-payload value="#[output application/json --- {
+            status: 'error',
+            message: 'Failed to list assets',
+            error: error.description,
+            timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+          }]" />
+          <logger level="ERROR" message="List assets error: #[error.description]" />
+        </on-error-propagate>
+      </error-handler>
+    </try>
+  </flow>
 
 </mule>

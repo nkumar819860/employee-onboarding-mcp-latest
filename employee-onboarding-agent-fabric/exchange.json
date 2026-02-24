@@ -1,0 +1,30 @@
+{
+  "name": "Employee Onboarding MCP Parent",
+  "description": "Parent POM for Employee Onboarding MCP Servers - Multi-module project containing agent broker, asset allocation, notification, and employee onboarding MCP servers",
+  "keywords": [
+    "mcp",
+    "employee",
+    "onboarding",
+    "parent",
+    "multi-module",
+    "agent-broker",
+    "asset-allocation",
+    "notification"
+  ],
+  "contactName": "Development Team",
+  "contactEmail": "dev@company.com",
+  "tags": [
+    {
+      "key": "category",
+      "value": "integration"
+    },
+    {
+      "key": "type",
+      "value": "parent-pom"
+    },
+    {
+      "key": "architecture",
+      "value": "multi-module"
+    }
+  ]
+}

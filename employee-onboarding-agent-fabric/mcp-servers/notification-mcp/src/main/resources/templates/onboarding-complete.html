@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Onboarding Complete</title>
+    <title>Onboarding Complete - Welcome to {{companyName}}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,146 +12,396 @@
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
         .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #6f42c1;
+        }
+        .header h1 {
+            color: #6f42c1;
+            margin: 0;
+            font-size: 32px;
+        }
+        .celebration-message {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px;
-            text-align: center;
-            border-radius: 8px 8px 0 0;
-        }
-        .content {
-            background-color: #f8f9fa;
-            padding: 30px;
-            border-radius: 0 0 8px 8px;
-            border: 1px solid #dee2e6;
-        }
-        .summary-box {
-            background-color: white;
-            padding: 20px;
-            border-radius: 6px;
+            padding: 25px;
+            border-radius: 10px;
             margin: 20px 0;
-            border-left: 4px solid #667eea;
+            text-align: center;
+        }
+        .celebration-message h2 {
+            margin: 0 0 15px 0;
+            font-size: 24px;
+        }
+        .employee-summary {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+        .employee-summary h3 {
+            color: #6f42c1;
+            margin-top: 0;
+            border-bottom: 2px solid #6f42c1;
+            padding-bottom: 10px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #495057;
+            min-width: 120px;
+        }
+        .info-value {
+            color: #6f42c1;
+            font-weight: 600;
+        }
+        .assets-summary {
+            background-color: #e8f5e8;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .assets-summary h3 {
+            color: #155724;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
         }
         .asset-summary {
-            background-color: #e8f5e8;
+            background-color: #fff;
+            border: 1px solid #c3e6cb;
+            border-radius: 6px;
             padding: 15px;
             margin: 10px 0;
-            border-radius: 4px;
-            border: 1px solid #c3e6c3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .resources {
-            background-color: #f0f7ff;
+        .asset-info {
+            flex: 1;
+        }
+        .asset-name {
+            font-weight: bold;
+            color: #28a745;
+            font-size: 16px;
+        }
+        .asset-details {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .asset-tag {
+            background-color: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .milestone-checklist {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
             padding: 20px;
-            border-radius: 6px;
-            margin: 20px 0;
-            border: 1px solid #c7e2ff;
+            margin: 25px 0;
+        }
+        .milestone-checklist h3 {
+            color: #856404;
+            margin-top: 0;
+        }
+        .milestone-item {
+            display: flex;
+            align-items: center;
+            margin: 12px 0;
+            padding: 8px 0;
+        }
+        .milestone-check {
+            color: #28a745;
+            font-size: 18px;
+            margin-right: 12px;
+        }
+        .milestone-text {
+            color: #495057;
+            font-weight: 500;
+        }
+        .next-phase {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .next-phase h3 {
+            color: #0c5460;
+            margin-top: 0;
+        }
+        .next-phase ul {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+        .next-phase li {
+            margin: 8px 0;
+            color: #6c757d;
+        }
+        .manager-section {
+            background-color: #e2e3e5;
+            border: 1px solid #d6d8db;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .manager-section h3 {
+            color: #383d41;
+            margin-top: 0;
         }
         .footer {
             text-align: center;
-            padding: 20px;
-            color: #666;
-            font-size: 12px;
-        }
-        .success-badge {
-            display: inline-block;
-            padding: 6px 16px;
-            background-color: #28a745;
-            color: white;
-            border-radius: 16px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e9ecef;
+            color: #6c757d;
             font-size: 14px;
-            font-weight: bold;
         }
-        .resource-link {
-            display: inline-block;
-            padding: 8px 16px;
-            background-color: #667eea;
+        .completion-badge {
+            background-color: #6f42c1;
             color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            margin: 5px;
+            padding: 6px 15px;
+            border-radius: 20px;
             font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .button {
+            display: inline-block;
+            background-color: #6f42c1;
+            color: #fff;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .button:hover {
+            background-color: #5a32a3;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #6f42c1;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+        }
+        @media (max-width: 600px) {
+            .info-row, .asset-summary {
+                flex-direction: column;
+            }
+            .info-label {
+                margin-bottom: 5px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🎊 Onboarding Complete!</h1>
-        <p>Welcome to the Team!</p>
-    </div>
-    
-    <div class="content">
-        <p>Dear <strong>{{employeeName}}</strong>,</p>
-        <p>Congratulations! Your onboarding process has been successfully completed. You are now officially part of our team and ready to begin your journey with us.</p>
-        
-        <div class="summary-box">
-            <h3>✅ Onboarding Summary</h3>
-            <p><strong>Employee ID:</strong> {{employeeId}}</p>
-            <p><strong>Department:</strong> {{department}}</p>
-            <p><strong>Position:</strong> {{position}}</p>
-            <p><strong>Start Date:</strong> {{startDate}}</p>
-            <p><strong>Onboarding Completed:</strong> {{completionDate}}</p>
-            <p><strong>Status:</strong> <span class="success-badge">ACTIVE</span></p>
+    <div class="container">
+        <div class="header">
+            <h1>🎊 Congratulations!</h1>
+            <p>Your onboarding journey is complete</p>
         </div>
-        
-        <div class="summary-box">
-            <h3>📦 Assets Allocated</h3>
-            <p>The following assets have been allocated to you:</p>
+
+        <div class="celebration-message">
+            <h2>Welcome to the Team, {{employeeName}}! 🎉</h2>
+            <p>You have successfully completed all onboarding requirements and are now officially part of the {{companyName}} family. We're excited to see what you'll accomplish!</p>
+            <div class="completion-badge">Onboarding Complete</div>
+        </div>
+
+        <div class="employee-summary">
+            <h3>👤 Your Profile Summary</h3>
+            <div class="info-row">
+                <span class="info-label">Employee ID:</span>
+                <span class="info-value">{{employeeId}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Department:</span>
+                <span class="info-value">{{department}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Position:</span>
+                <span class="info-value">{{position}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Start Date:</span>
+                <span class="info-value">{{startDate}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Completion Date:</span>
+                <span class="info-value">{{completionDate}}</span>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{assetCount}}</div>
+                <div class="stat-label">Assets Allocated</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Tasks Complete</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">5</div>
+                <div class="stat-label">Steps Finished</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">✓</div>
+                <div class="stat-label">Ready to Work</div>
+            </div>
+        </div>
+
+        <div class="milestone-checklist">
+            <h3>✅ Completed Milestones</h3>
+            <div class="milestone-item">
+                <span class="milestone-check">✓</span>
+                <span class="milestone-text">Employee profile created and verified</span>
+            </div>
+            <div class="milestone-item">
+                <span class="milestone-check">✓</span>
+                <span class="milestone-text">Welcome email sent and acknowledged</span>
+            </div>
+            <div class="milestone-item">
+                <span class="milestone-check">✓</span>
+                <span class="milestone-text">Work assets allocated and distributed</span>
+            </div>
+            <div class="milestone-item">
+                <span class="milestone-check">✓</span>
+                <span class="milestone-text">Asset pickup notification sent</span>
+            </div>
+            <div class="milestone-item">
+                <span class="milestone-check">✓</span>
+                <span class="milestone-text">Onboarding completion confirmed</span>
+            </div>
+        </div>
+
+        <div class="assets-summary">
+            <h3>🎯 Your Allocated Assets</h3>
+            <p>You have been allocated {{assetCount}} asset(s) for your role:</p>
+            
             {{#assets}}
             <div class="asset-summary">
-                <strong>{{assetName}}</strong> ({{category}})
-                <br><small>Asset Tag: {{assetTag}} | Condition: {{condition}}</small>
+                <div class="asset-info">
+                    <div class="asset-name">{{assetName}}</div>
+                    <div class="asset-details">{{category}} | {{brand}} {{model}} | Condition: {{condition}}</div>
+                </div>
+                <div class="asset-tag">{{assetTag}}</div>
             </div>
             {{/assets}}
-            <p><strong>Total Assets:</strong> {{assetCount}} items</p>
         </div>
-        
-        <div class="resources">
-            <h3>🔗 Important Resources</h3>
-            <p>Here are some important links and resources to help you get started:</p>
-            <div style="text-align: center; margin: 15px 0;">
-                <a href="#" class="resource-link">Employee Handbook</a>
-                <a href="#" class="resource-link">IT Policies</a>
-                <a href="#" class="resource-link">Benefits Portal</a>
-                <a href="#" class="resource-link">Company Directory</a>
-                <a href="#" class="resource-link">Help Desk</a>
+
+        <div class="next-phase">
+            <h3>🚀 What's Next - Your First Week</h3>
+            <ul>
+                <li><strong>Meet Your Team:</strong> Schedule 1:1 meetings with immediate team members</li>
+                <li><strong>Complete Training:</strong> Finish any remaining mandatory training modules</li>
+                <li><strong>Set Up Workspace:</strong> Organize your workstation and test all equipment</li>
+                <li><strong>Review Projects:</strong> Get briefed on current projects and your role</li>
+                <li><strong>System Access:</strong> Ensure all system accounts and permissions are working</li>
+                <li><strong>First Assignment:</strong> Receive and begin your first work assignment</li>
+                <li><strong>Feedback Session:</strong> Schedule a check-in with your manager for Day 3</li>
+            </ul>
+        </div>
+
+        <div class="manager-section">
+            <h3>👥 Your Manager & Support Team</h3>
+            <div class="info-row">
+                <span class="info-label">Direct Manager:</span>
+                <span class="info-value">{{managerName}}</span>
             </div>
-            
-            <h4>📞 Key Contacts:</h4>
-            <ul>
-                <li><strong>Your Manager:</strong> {{managerName}} ({{managerEmail}})</li>
-                <li><strong>HR Representative:</strong> hr@company.com | (555) 123-4567</li>
-                <li><strong>IT Support:</strong> it-support@company.com | (555) 123-4567</li>
-                <li><strong>Payroll:</strong> payroll@company.com | (555) 123-4568</li>
-                <li><strong>Benefits:</strong> benefits@company.com | (555) 123-4569</li>
+            <div class="info-row">
+                <span class="info-label">Manager Email:</span>
+                <span class="info-value">{{managerEmail}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">HR Contact:</span>
+                <span class="info-value">hr@{{companyName}}.com</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">IT Support:</span>
+                <span class="info-value">it-support@{{companyName}}.com</span>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="mailto:{{managerEmail}}?subject=Ready to Start - {{employeeId}}" class="button">
+                📧 Contact Your Manager
+            </a>
+        </div>
+
+        <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h4 style="color: #155724; margin-top: 0;">🌟 Welcome to {{companyName}}!</h4>
+            <p style="color: #155724; margin: 10px 0;">
+                You're now part of a team that values innovation, collaboration, and excellence. 
+                We're confident you'll make a significant impact and we look forward to supporting 
+                your growth and success with us.
+            </p>
+            <p style="color: #155724; margin: 10px 0; font-weight: bold;">
+                Remember: Your success is our success. Don't hesitate to reach out if you need anything!
+            </p>
+        </div>
+
+        <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 15px; margin: 20px 0;">
+            <h4 style="color: #721c24; margin-top: 0;">📝 Important Reminders</h4>
+            <ul style="color: #721c24; margin: 10px 0;">
+                <li>Keep your employee ID card with you at all times</li>
+                <li>Report any equipment issues to IT immediately</li>
+                <li>Review and follow all company policies in the employee handbook</li>
+                <li>Complete your performance goals discussion with your manager within 30 days</li>
+                <li>Attend the new employee orientation session if you haven't already</li>
             </ul>
         </div>
-        
-        <div class="summary-box">
-            <h3>🚀 What's Next?</h3>
-            <ul>
-                <li><strong>Week 1:</strong> Get familiar with your role and team</li>
-                <li><strong>Week 2:</strong> Complete initial training modules</li>
-                <li><strong>Month 1:</strong> Set goals with your manager</li>
-                <li><strong>Month 3:</strong> First performance check-in</li>
-            </ul>
+
+        <div class="footer">
+            <p><strong>{{companyName}} Human Resources Department</strong></p>
+            <p>Employee Onboarding System - Completion Notification</p>
+            <p>Employee ID: {{employeeId}} | Completed: {{completionDate}}</p>
+            <p>Generated: {{timestamp}} | Process Duration: {{processTime}}</p>
+            <p>&copy; {{currentYear}} {{companyName}}. All rights reserved.</p>
         </div>
-        
-        <div style="text-align: center; margin: 30px 0; padding: 20px; background-color: white; border-radius: 6px;">
-            <h3>🎯 Ready to Make an Impact!</h3>
-            <p>You now have everything you need to succeed in your new role. If you have any questions or need assistance, don't hesitate to reach out to your manager or the HR team.</p>
-            <p><strong>We're excited to see what you'll accomplish!</strong></p>
-        </div>
-        
-        <p>Welcome aboard and best of luck in your new position!</p>
-        <p>Warm regards,<br>
-        <strong>The {{companyName}} Team</strong></p>
-    </div>
-    
-    <div class="footer">
-        <p>This is an automated message from the HR Notification System.</p>
-        <p>Your onboarding journey is complete, but we're always here to help!</p>
-        <p>© {{currentYear}} {{companyName}}. All rights reserved.</p>
     </div>
 </body>
 </html>

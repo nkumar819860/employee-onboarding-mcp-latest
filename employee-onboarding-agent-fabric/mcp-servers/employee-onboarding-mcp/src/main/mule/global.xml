@@ -35,14 +35,7 @@
         </db:generic-connection>
     </db:config>
     
-    <!-- Dynamic Database Configuration (Primary) -->
-    <db:config doc:name="Database Config" name="database-config">
-        <db:generic-connection driverClassName="${db.driverClassName}" 
-            url="${db.url}" 
-            user="${db.username}" 
-            password="${db.password}">
-        </db:generic-connection>
-    </db:config>
+
     
     
 </mule>

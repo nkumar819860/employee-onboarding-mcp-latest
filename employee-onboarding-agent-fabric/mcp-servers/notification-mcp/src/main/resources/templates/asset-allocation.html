@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asset Allocation Confirmation</title>
+    <title>Asset Allocation Complete - {{companyName}}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,130 +12,311 @@
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
         .header {
-            background-color: #28a745;
-            color: white;
-            padding: 20px;
             text-align: center;
-            border-radius: 8px 8px 0 0;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #28a745;
         }
-        .content {
-            background-color: #f8f9fa;
-            padding: 30px;
-            border-radius: 0 0 8px 8px;
-            border: 1px solid #dee2e6;
+        .header h1 {
+            color: #28a745;
+            margin: 0;
+            font-size: 28px;
         }
-        .asset-info {
-            background-color: white;
+        .success-message {
+            background-color: #d4edda;
             padding: 20px;
-            border-radius: 6px;
-            margin: 20px 0;
             border-left: 4px solid #28a745;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .employee-info {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+        .employee-info h3 {
+            color: #28a745;
+            margin-top: 0;
+            border-bottom: 2px solid #28a745;
+            padding-bottom: 10px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #495057;
+            min-width: 120px;
+        }
+        .info-value {
+            color: #28a745;
+            font-weight: 600;
+        }
+        .assets-section {
+            margin: 25px 0;
+            padding: 20px;
+            background-color: #e8f5e8;
+            border-radius: 8px;
+            border: 1px solid #c3e6cb;
+        }
+        .assets-section h3 {
+            color: #155724;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
         }
         .asset-item {
-            background-color: #f1f3f4;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 4px;
-            border: 1px solid #e0e0e0;
-        }
-        .responsibility {
-            background-color: #fff3cd;
+            background-color: #fff;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
             padding: 20px;
-            border-radius: 6px;
-            margin: 20px 0;
+            margin: 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .asset-item h4 {
+            color: #28a745;
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            border-bottom: 1px solid #c3e6cb;
+            padding-bottom: 8px;
+        }
+        .asset-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .asset-detail {
+            display: flex;
+            flex-direction: column;
+        }
+        .asset-detail-label {
+            font-weight: bold;
+            color: #495057;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+        .asset-detail-value {
+            color: #28a745;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .instructions {
+            background-color: #fff3cd;
             border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .instructions h3 {
+            color: #856404;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+        }
+        .instructions ul {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+        .instructions li {
+            margin: 8px 0;
+            color: #6c757d;
+        }
+        .contact-section {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .contact-section h3 {
+            color: #0c5460;
+            margin-top: 0;
         }
         .footer {
             text-align: center;
-            padding: 20px;
-            color: #666;
-            font-size: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e9ecef;
+            color: #6c757d;
+            font-size: 14px;
         }
         .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
             background-color: #28a745;
             color: white;
-            border-radius: 12px;
+            padding: 4px 12px;
+            border-radius: 15px;
             font-size: 12px;
             font-weight: bold;
+            text-transform: uppercase;
+        }
+        .button {
+            display: inline-block;
+            background-color: #28a745;
+            color: #fff;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .button:hover {
+            background-color: #218838;
+        }
+        @media (max-width: 600px) {
+            .asset-details {
+                grid-template-columns: 1fr;
+            }
+            .info-row {
+                flex-direction: column;
+            }
+            .info-label {
+                margin-bottom: 5px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>📦 Asset Allocation Confirmation</h1>
-    </div>
-    
-    <div class="content">
-        <p>Dear <strong>{{employeeName}}</strong>,</p>
-        <p>Great news! Your company assets have been allocated and are ready for pickup/delivery.</p>
-        
-        <div class="asset-info">
-            <h3>🏷️ Allocation Details</h3>
-            <p><strong>Employee ID:</strong> {{employeeId}}</p>
-            <p><strong>Allocation Date:</strong> {{allocationDate}}</p>
-            <p><strong>Approved By:</strong> {{approvedBy}}</p>
-            <p><strong>Status:</strong> <span class="status-badge">{{allocationStatus}}</span></p>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Asset Allocation Complete!</h1>
+            <p>Your equipment is ready for pickup</p>
         </div>
-        
-        <div class="asset-info">
-            <h3>📋 Assets Allocated</h3>
+
+        <div class="success-message">
+            <h2>Hello {{employeeName}}! ✅</h2>
+            <p>Great news! Your work equipment has been successfully allocated and is ready for you. All assets have been assigned to your employee profile and are available for pickup.</p>
+        </div>
+
+        <div class="employee-info">
+            <h3>👤 Allocation Details</h3>
+            <div class="info-row">
+                <span class="info-label">Employee ID:</span>
+                <span class="info-value">{{employeeId}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Allocation Date:</span>
+                <span class="info-value">{{allocationDate}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Approved By:</span>
+                <span class="info-value">{{approvedBy}}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Status:</span>
+                <span class="status-badge">{{allocationStatus}}</span>
+            </div>
+        </div>
+
+        <div class="assets-section">
+            <h3>🎯 Your Allocated Assets</h3>
+            <p>The following equipment has been assigned to you:</p>
+            
             {{#assets}}
             <div class="asset-item">
                 <h4>{{assetName}} ({{category}})</h4>
-                <p><strong>Asset Tag:</strong> {{assetTag}}</p>
-                <p><strong>Brand/Model:</strong> {{brand}} {{model}}</p>
-                {{#serialNumber}}<p><strong>Serial Number:</strong> {{serialNumber}}</p>{{/serialNumber}}
-                <p><strong>Condition:</strong> {{condition}}</p>
-                {{#specifications}}<p><strong>Specifications:</strong> {{specifications}}</p>{{/specifications}}
-                <p><strong>Location:</strong> {{location}}</p>
+                <div class="asset-details">
+                    <div class="asset-detail">
+                        <span class="asset-detail-label">Asset Tag</span>
+                        <span class="asset-detail-value">{{assetTag}}</span>
+                    </div>
+                    <div class="asset-detail">
+                        <span class="asset-detail-label">Brand/Model</span>
+                        <span class="asset-detail-value">{{brand}} {{model}}</span>
+                    </div>
+                    <div class="asset-detail">
+                        <span class="asset-detail-label">Serial Number</span>
+                        <span class="asset-detail-value">{{serialNumber}}</span>
+                    </div>
+                    <div class="asset-detail">
+                        <span class="asset-detail-label">Condition</span>
+                        <span class="asset-detail-value">{{condition}}</span>
+                    </div>
+                    <div class="asset-detail">
+                        <span class="asset-detail-label">Specifications</span>
+                        <span class="asset-detail-value">{{specifications}}</span>
+                    </div>
+                    <div class="asset-detail">
+                        <span class="asset-detail-label">Location</span>
+                        <span class="asset-detail-value">{{location}}</span>
+                    </div>
+                </div>
             </div>
             {{/assets}}
         </div>
-        
-        <div class="responsibility">
-            <h3>⚠️ Asset Responsibility</h3>
-            <p><strong>Important:</strong> You are now responsible for the allocated assets. Please note:</p>
+
+        <div class="instructions">
+            <h3>📋 Next Steps - Asset Pickup</h3>
             <ul>
-                <li>Keep all assets in good condition and report any damage immediately</li>
-                <li>Do not share your access cards or allow others to use your equipment</li>
-                <li>Return all assets if you change roles or leave the company</li>
-                <li>Report lost or stolen assets to IT and Security immediately</li>
-                <li>Follow company policies regarding asset usage and security</li>
-                <li>Ensure proper care and maintenance of all equipment</li>
+                <li><strong>Visit IT Department:</strong> Go to the IT Service Desk during business hours (9:00 AM - 5:00 PM)</li>
+                <li><strong>Bring Documentation:</strong> Present your employee ID badge and this email confirmation</li>
+                <li><strong>Asset Inspection:</strong> Verify all equipment is in good condition before signing</li>
+                <li><strong>Sign Agreement:</strong> Complete the Asset Responsibility Agreement form</li>
+                <li><strong>Setup Assistance:</strong> IT will help with initial setup and configuration if needed</li>
+                <li><strong>Care Instructions:</strong> Receive guidelines for proper equipment care and maintenance</li>
+                <li><strong>Return Policy:</strong> Understand the return process for equipment at end of employment</li>
             </ul>
         </div>
-        
-        <div class="asset-info">
-            <h3>📞 Contact Information</h3>
-            <p><strong>IT Support:</strong> it-support@company.com | (555) 123-4567</p>
-            <p><strong>Asset Management:</strong> assets@company.com | (555) 123-4568</p>
-            <p><strong>Security:</strong> security@company.com | (555) 123-4569</p>
+
+        <div class="contact-section">
+            <h3>📞 Asset Management Contacts</h3>
+            <div class="info-row">
+                <span class="info-label">IT Service Desk:</span>
+                <span class="info-value">it-servicedesk@{{companyName}}.com</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Asset Manager:</span>
+                <span class="info-value">asset-manager@{{companyName}}.com</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Phone Support:</span>
+                <span class="info-value">+1-800-IT-HELP (1-800-484-3571)</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Location:</span>
+                <span class="info-value">Building A, Floor 2, Room 201</span>
+            </div>
         </div>
-        
+
         <div style="text-align: center; margin: 30px 0;">
-            <p><strong>Next Steps:</strong></p>
-            <ul style="text-align: left;">
-                <li>Schedule pickup/delivery with IT department</li>
-                <li>Complete asset acknowledgment form</li>
-                <li>Set up your workstation with IT support</li>
-                <li>Test all equipment and report any issues</li>
+            <a href="mailto:it-servicedesk@{{companyName}}.com?subject=Asset Pickup - {{employeeId}}" class="button">
+                📧 Contact IT for Pickup
+            </a>
+        </div>
+
+        <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 15px; margin: 20px 0;">
+            <h4 style="color: #721c24; margin-top: 0;">⚠️ Important Reminders</h4>
+            <ul style="color: #721c24; margin: 10px 0;">
+                <li>All equipment remains property of {{companyName}}</li>
+                <li>Report any damage or issues immediately</li>
+                <li>Do not install unauthorized software</li>
+                <li>Equipment must be returned upon termination</li>
+                <li>Lost or damaged equipment may result in charges</li>
             </ul>
         </div>
-        
-        <p>Thank you for your cooperation!</p>
-        <p>Best regards,<br>
-        <strong>IT Asset Management Team</strong><br>
-        {{companyName}}</p>
-    </div>
-    
-    <div class="footer">
-        <p>This is an automated message from the Asset Management System.</p>
-        <p>Please do not reply to this email directly.</p>
-        <p>For asset-related queries, please contact the IT Support team.</p>
+
+        <div class="footer">
+            <p><strong>{{companyName}} IT Asset Management</strong></p>
+            <p>This is an automated notification from our Asset Allocation System</p>
+            <p>Allocation ID: {{employeeId}}-{{allocationDate}} | Generated: {{timestamp}}</p>
+            <p>&copy; {{currentYear}} {{companyName}}. All rights reserved.</p>
+        </div>
     </div>
 </body>
 </html>
