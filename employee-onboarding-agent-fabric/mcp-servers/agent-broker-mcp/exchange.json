@@ -1,72 +1,72 @@
 {
-  "name": "Employee Onboarding Agent Broker",
-  "description": "Agent Broker MCP Server for Employee Onboarding Process Orchestration - coordinates employee onboarding, asset allocation, and notifications",
-  "version": "1.0.0",
-  "main": "employee-onboarding-agent-broker.xml",
-  "groupId": "COE",
-  "assetId": "employee-onboarding-agent-broker",
-  "classifier": "mule-application",
-  "keywords": [
-    "mcp",
-    "agent-broker",
-    "orchestration",
-    "onboarding",
-    "employee",
-    "workflow",
-    "integration",
-    "mulesoft"
-  ],
-  "author": "MCP Development Team",
-  "license": "MIT",
-  "homepage": "https://github.com/mulesoft/agent-broker-mcp",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/mulesoft/agent-broker-mcp.git"
-  },
-  "bugs": {
-    "url": "https://github.com/mulesoft/agent-broker-mcp/issues"
-  },
-  "tags": [
-    "Agent Broker",
-    "MCP Server",
-    "Process Orchestration",
-    "Employee Onboarding",
-    "Workflow Management"
-  ],
-  "categories": [
-    "Integration", 
-    "Process Automation", 
-    "Agent Network",
-    "Human Resources"
-  ],
-  "contactName": "MCP Development Team",
-  "contactEmail": "mcp-dev@company.com",
-  "dependencies": [
-    {
-      "groupId": "org.mule.connectors",
-      "artifactId": "mule-http-connector",
-      "version": "1.9.3"
-    },
-    {
-      "groupId": "com.mulesoft.connectors",
-      "artifactId": "mule-mcp-connector",
-      "version": "1.3.0"
-    }
-  ],
-  "properties": {
-    "apiVersion": "v1",
-    "secure": "true",
-    "monitoring": "advanced",
-    "orchestrationMode": "synchronous"
-  },
-  "documentation": {
-    "summary": "Central orchestrator for the complete employee onboarding process, integrating with multiple MCP servers to provide seamless end-to-end workflow management.",
-    "description": "This MCP server acts as the central orchestrator for employee onboarding, coordinating between multiple specialized services to deliver a complete, automated onboarding experience:\n\n- **End-to-end Orchestration**: Manages the complete employee onboarding lifecycle from profile creation to completion notification\n- **Multi-Service Integration**: Coordinates between Employee Onboarding, Asset Allocation, and Notification MCP servers\n- **Error Handling**: Comprehensive error handling with detailed failure reporting and recovery mechanisms\n- **Status Tracking**: Real-time status monitoring of onboarding progress across all integrated services\n- **Atomic Operations**: Ensures data consistency and transactional integrity across all services\n\n## Key Features\n\n### Orchestration Flow\n1. **Employee Profile Creation**: Creates employee record in the HR system with validation\n2. **Asset Allocation**: Allocates required IT assets based on role and department policies\n3. **Welcome Email Notification**: Sends professional welcome email with onboarding information\n4. **Asset Notification**: Sends detailed asset allocation confirmation with care instructions\n5. **Completion Notification**: Sends comprehensive onboarding completion summary to all stakeholders\n\n### Integration Architecture\n- **Employee Onboarding MCP**: Employee profile and data management\n- **Asset Allocation MCP**: IT asset allocation and tracking\n- **Notification MCP**: Email notification and communication services\n\n### Process Management\n- **Synchronous Orchestration**: Real-time coordination of all onboarding steps\n- **Transaction Management**: Ensures consistency across distributed services\n- **Error Recovery**: Automatic retry capabilities for transient failures\n- **Status Reporting**: Comprehensive progress tracking and audit trails\n\n### API Endpoints\n- `/mcp/tools/orchestrate-employee-onboarding` - Complete employee onboarding orchestration\n- `/mcp/tools/get-onboarding-status` - Get employee onboarding process status\n- `/mcp/tools/retry-failed-step` - Retry failed onboarding steps\n\n## API Specification\n\n**OpenAPI 3.0 Specification Available**: `src/main/resources/api/agent-broker-mcp-api.yaml`\n\nComprehensive API documentation including:\n- Complete orchestration workflow definitions\n- Multi-step process coordination schemas\n- Integration patterns and service dependencies\n- Error handling and recovery mechanisms\n- Status tracking and monitoring endpoints\n- Authentication and security requirements\n\n## Service Dependencies\n\n### Required MCP Services\n- **Employee Onboarding MCP**: Profile management and employee data\n- **Asset Allocation MCP**: IT asset management and allocation\n- **Notification MCP**: Email notifications and communications\n\n### Configuration Requirements\n- Service endpoint configurations for all integrated MCP servers\n- Authentication credentials for service-to-service communication\n- Orchestration timeout and retry policies\n- Error handling and notification preferences\n\n## Monitoring and Observability\n\n- **Process Metrics**: Track onboarding completion rates and processing times\n- **Service Health**: Monitor health and availability of all integrated services\n- **Error Tracking**: Comprehensive error logging and failure analysis\n- **Performance Monitoring**: Track orchestration performance and bottlenecks\n\n## Security Features\n\n- **Service Authentication**: Secure communication with all integrated MCP servers\n- **Data Validation**: Comprehensive input validation and sanitization\n- **Audit Logging**: Complete audit trail of all orchestration activities\n- **Error Handling**: Secure error handling without sensitive data exposure\n\n## Integration Patterns\n\nDesigned to integrate with:\n- HR management systems\n- IT service management platforms\n- Employee onboarding portals\n- Asset management systems\n- Email and communication platforms"
-  },
-  "apiSpecification": {
-    "type": "OpenAPI",
-    "version": "3.0.3",
-    "location": "src/main/resources/api/agent-broker-mcp-api.yaml",
-    "description": "Complete OpenAPI specification with orchestration workflows, integration patterns, and comprehensive service coordination examples"
-  }
+    "name":  "Employee Onboarding Agent Broker",
+    "description":  "Agent Broker MCP Server for Employee Onboarding Process Orchestration - coordinates employee onboarding, asset allocation, and notifications",
+    "version":  "..1",
+    "main":  "employee-onboarding-agent-broker.xml",
+    "groupId":  "COE",
+    "assetId":  "employee-onboarding-agent-broker",
+    "classifier":  "mule-application",
+    "keywords":  [
+                     "mcp",
+                     "agent-broker",
+                     "orchestration",
+                     "onboarding",
+                     "employee",
+                     "workflow",
+                     "integration",
+                     "mulesoft"
+                 ],
+    "author":  "MCP Development Team",
+    "license":  "MIT",
+    "homepage":  "https://github.com/mulesoft/agent-broker-mcp",
+    "repository":  {
+                       "type":  "git",
+                       "url":  "https://github.com/mulesoft/agent-broker-mcp.git"
+                   },
+    "bugs":  {
+                 "url":  "https://github.com/mulesoft/agent-broker-mcp/issues"
+             },
+    "tags":  [
+                 "Agent Broker",
+                 "MCP Server",
+                 "Process Orchestration",
+                 "Employee Onboarding",
+                 "Workflow Management"
+             ],
+    "categories":  [
+                       "Integration",
+                       "Process Automation",
+                       "Agent Network",
+                       "Human Resources"
+                   ],
+    "contactName":  "MCP Development Team",
+    "contactEmail":  "mcp-dev@company.com",
+    "dependencies":  [
+                         {
+                             "groupId":  "org.mule.connectors",
+                             "artifactId":  "mule-http-connector",
+                             "version":  "1.9.3"
+                         },
+                         {
+                             "groupId":  "com.mulesoft.connectors",
+                             "artifactId":  "mule-mcp-connector",
+                             "version":  "1.3.0"
+                         }
+                     ],
+    "properties":  {
+                       "apiVersion":  "v1",
+                       "secure":  "true",
+                       "monitoring":  "advanced",
+                       "orchestrationMode":  "synchronous"
+                   },
+    "documentation":  {
+                          "summary":  "Central orchestrator for the complete employee onboarding process, integrating with multiple MCP servers to provide seamless end-to-end workflow management.",
+                          "description":  "This MCP server acts as the central orchestrator for employee onboarding, coordinating between multiple specialized services to deliver a complete, automated onboarding experience:\n\n- **End-to-end Orchestration**: Manages the complete employee onboarding lifecycle from profile creation to completion notification\n- **Multi-Service Integration**: Coordinates between Employee Onboarding, Asset Allocation, and Notification MCP servers\n- **Error Handling**: Comprehensive error handling with detailed failure reporting and recovery mechanisms\n- **Status Tracking**: Real-time status monitoring of onboarding progress across all integrated services\n- **Atomic Operations**: Ensures data consistency and transactional integrity across all services\n\n## Key Features\n\n### Orchestration Flow\n1. **Employee Profile Creation**: Creates employee record in the HR system with validation\n2. **Asset Allocation**: Allocates required IT assets based on role and department policies\n3. **Welcome Email Notification**: Sends professional welcome email with onboarding information\n4. **Asset Notification**: Sends detailed asset allocation confirmation with care instructions\n5. **Completion Notification**: Sends comprehensive onboarding completion summary to all stakeholders\n\n### Integration Architecture\n- **Employee Onboarding MCP**: Employee profile and data management\n- **Asset Allocation MCP**: IT asset allocation and tracking\n- **Notification MCP**: Email notification and communication services\n\n### Process Management\n- **Synchronous Orchestration**: Real-time coordination of all onboarding steps\n- **Transaction Management**: Ensures consistency across distributed services\n- **Error Recovery**: Automatic retry capabilities for transient failures\n- **Status Reporting**: Comprehensive progress tracking and audit trails\n\n### API Endpoints\n- `/mcp/tools/orchestrate-employee-onboarding` - Complete employee onboarding orchestration\n- `/mcp/tools/get-onboarding-status` - Get employee onboarding process status\n- `/mcp/tools/retry-failed-step` - Retry failed onboarding steps\n\n## API Specification\n\n**OpenAPI 3.0 Specification Available**: `src/main/resources/api/agent-broker-mcp-api.yaml`\n\nComprehensive API documentation including:\n- Complete orchestration workflow definitions\n- Multi-step process coordination schemas\n- Integration patterns and service dependencies\n- Error handling and recovery mechanisms\n- Status tracking and monitoring endpoints\n- Authentication and security requirements\n\n## Service Dependencies\n\n### Required MCP Services\n- **Employee Onboarding MCP**: Profile management and employee data\n- **Asset Allocation MCP**: IT asset management and allocation\n- **Notification MCP**: Email notifications and communications\n\n### Configuration Requirements\n- Service endpoint configurations for all integrated MCP servers\n- Authentication credentials for service-to-service communication\n- Orchestration timeout and retry policies\n- Error handling and notification preferences\n\n## Monitoring and Observability\n\n- **Process Metrics**: Track onboarding completion rates and processing times\n- **Service Health**: Monitor health and availability of all integrated services\n- **Error Tracking**: Comprehensive error logging and failure analysis\n- **Performance Monitoring**: Track orchestration performance and bottlenecks\n\n## Security Features\n\n- **Service Authentication**: Secure communication with all integrated MCP servers\n- **Data Validation**: Comprehensive input validation and sanitization\n- **Audit Logging**: Complete audit trail of all orchestration activities\n- **Error Handling**: Secure error handling without sensitive data exposure\n\n## Integration Patterns\n\nDesigned to integrate with:\n- HR management systems\n- IT service management platforms\n- Employee onboarding portals\n- Asset management systems\n- Email and communication platforms"
+                      },
+    "apiSpecification":  {
+                             "type":  "OpenAPI",
+                             "version":  "3.0.3",
+                             "location":  "src/main/resources/api/agent-broker-mcp-api.yaml",
+                             "description":  "Complete OpenAPI specification with orchestration workflows, integration patterns, and comprehensive service coordination examples"
+                         }
 }

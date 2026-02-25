@@ -1,29 +1,29 @@
 {
-  "name": "Employee Onboarding MCP Server",
-  "description": "MCP Server for Employee Database Operations with PostgreSQL/H2 Fallback Support",
-  "keywords": [
-    "mcp",
-    "employee",
-    "onboarding",
-    "database",
-    "postgresql",
-    "h2",
-    "fallback"
-  ],
-  "contactName": "Development Team",
-  "contactEmail": "dev@company.com",
-  "tags": [
-    {
-      "key": "category",
-      "value": "integration"
-    },
-    {
-      "key": "type",
-      "value": "mcp-server"
-    },
-    {
-      "key": "database",
-      "value": "postgresql-h2"
-    }
-  ]
+    "name":  "Employee Onboarding MCP Server",
+    "description":  "MCP Server for Employee Database Operations with PostgreSQL/H2 Fallback Support",
+    "keywords":  [
+                     "mcp",
+                     "employee",
+                     "onboarding",
+                     "database",
+                     "postgresql",
+                     "h2",
+                     "fallback"
+                 ],
+    "contactName":  "Development Team",
+    "contactEmail":  "dev@company.com",
+    "tags":  [
+                 {
+                     "key":  "category",
+                     "value":  "integration"
+                 },
+                 {
+                     "key":  "type",
+                     "value":  "mcp-server"
+                 },
+                 {
+                     "key":  "database",
+                     "value":  "postgresql-h2"
+                 }
+             ]
 }
