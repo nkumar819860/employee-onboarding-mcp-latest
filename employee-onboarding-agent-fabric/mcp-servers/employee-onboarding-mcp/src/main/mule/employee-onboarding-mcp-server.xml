@@ -12,6 +12,99 @@
         http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 
     <!-- ========================= -->
+    <!-- MCP SERVER INFO ENDPOINT  -->
+    <!-- ========================= -->
+
+    <flow name="mcp-server-info">
+        <http:listener config-ref="HTTP_Listener_config" path="/mcp/info" allowedMethods="GET"/>
+        
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    name: "Employee Onboarding MCP Server",
+    version: "1.0.0",
+    description: "Employee Management MCP Server for Employee Onboarding Process",
+    tools: [
+        {
+            name: "create-employee",
+            description: "Create a new employee profile",
+            endpoint: "/mcp/tools/create-employee"
+        },
+        {
+            name: "get-employee",
+            description: "Get employee details by ID",
+            endpoint: "/mcp/tools/get-employee"
+        },
+        {
+            name: "list-employees",
+            description: "List all employees",
+            endpoint: "/mcp/tools/list-employees"
+        },
+        {
+            name: "update-employee-status",
+            description: "Update employee onboarding status",
+            endpoint: "/mcp/tools/update-employee-status"
+        }
+    ]
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        
+        <logger level="INFO" message="Employee Onboarding MCP Server info requested"/>
+    </flow>
+
+    <!-- ========================= -->
+    <!-- MCP TOOL: CREATE EMPLOYEE -->
+    <!-- ========================= -->
+
+    <flow name="mcp-create-employee-tool">
+        <http:listener config-ref="HTTP_Listener_config" path="/mcp/tools/create-employee" allowedMethods="POST"/>
+        
+        <logger level="INFO" message="MCP Tool: Creating employee via MCP interface"/>
+        
+        <flow-ref name="create-employee-flow"/>
+    </flow>
+
+    <!-- ========================= -->
+    <!-- MCP TOOL: GET EMPLOYEE    -->
+    <!-- ========================= -->
+
+    <flow name="mcp-get-employee-tool">
+        <http:listener config-ref="HTTP_Listener_config" path="/mcp/tools/get-employee/{empId}" allowedMethods="GET"/>
+        
+        <logger level="INFO" message="MCP Tool: Getting employee #[attributes.uriParams.empId] via MCP interface"/>
+        
+        <flow-ref name="get-employee-flow"/>
+    </flow>
+
+    <!-- ========================= -->
+    <!-- MCP TOOL: LIST EMPLOYEES  -->
+    <!-- ========================= -->
+
+    <flow name="mcp-list-employees-tool">
+        <http:listener config-ref="HTTP_Listener_config" path="/mcp/tools/list-employees" allowedMethods="GET"/>
+        
+        <logger level="INFO" message="MCP Tool: Listing employees via MCP interface"/>
+        
+        <flow-ref name="list-employees-flow"/>
+    </flow>
+
+    <!-- ========================= -->
+    <!-- MCP TOOL: UPDATE STATUS   -->
+    <!-- ========================= -->
+
+    <flow name="mcp-update-employee-status-tool">
+        <http:listener config-ref="HTTP_Listener_config" path="/mcp/tools/update-employee-status/{empId}/{status}" allowedMethods="PUT"/>
+        
+        <logger level="INFO" message="MCP Tool: Updating employee status via MCP interface"/>
+        
+        <flow-ref name="update-employee-status-flow"/>
+    </flow>
+
+    <!-- ========================= -->
     <!-- CREATE EMPLOYEE (POST)    -->
     <!-- ========================= -->
 

@@ -10,6 +10,9 @@ echo Root: %CD%
 setlocal enabledelayedexpansion
 set SCRIPT_DIR=%CD%
 
+cd /d "%CD%\\employee-onboarding-agent-fabric"
+echo ✅ Working from: %CD%
+
 REM === FIXED .env LOADING (No subroutines) ===
 if not exist ".env" (
     echo ERROR: .env missing!
