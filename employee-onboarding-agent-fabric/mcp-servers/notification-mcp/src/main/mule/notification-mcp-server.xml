@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+<mule
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
 	xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:db="http://www.mulesoft.org/schema/mule/db"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
@@ -7,7 +8,8 @@
 	xmlns:email="http://www.mulesoft.org/schema/mule/email"
 	xmlns:file="http://www.mulesoft.org/schema/mule/file"
 	xmlns:http="http://www.mulesoft.org/schema/mule/http"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd 
 	http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
 	http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
 	http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd 
@@ -17,7 +19,8 @@
 
 	<!-- Health Check Endpoint -->
 	<flow name="health-check">
-		<http:listener config-ref="http-config" path="/health" doc:name="Health Check Listener">
+		<http:listener config-ref="http-config" path="/health"
+			doc:name="Health Check Listener">
 		</http:listener>
 		<set-payload
 			value="#[{'status': 'UP', 'service': 'Notification MCP Server', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}, 'emailEnabled': '${notification.employee.onboarding.enabled}'}]"
@@ -27,25 +30,32 @@
 
 	<!-- MCP Server Info Endpoint -->
 	<flow name="mcp-server-info">
-		<http:listener config-ref="http-config" path="/mcp/info" doc:name="MCP Info Listener">
+		<http:listener config-ref="http-config" path="/mcp/info"
+			doc:name="MCP Info Listener">
 		</http:listener>
 		<set-payload
 			value="#[{'name': 'Notification MCP Server', 'version': '1.0.0', 'description': 'MCP Server for Email Notifications (Employee Onboarding and Asset Allocation)', 'tools': [{'name': 'send-welcome-email', 'description': 'Send employee welcome email', 'endpoint': '/mcp/tools/send-welcome-email'}, {'name': 'send-asset-notification', 'description': 'Send asset allocation notification', 'endpoint': '/mcp/tools/send-asset-notification'}, {'name': 'send-onboarding-complete', 'description': 'Send onboarding complete notification', 'endpoint': '/mcp/tools/send-onboarding-complete'}, {'name': 'test-email-config', 'description': 'Test email configuration', 'endpoint': '/mcp/tools/test-email-config'}]}]"
 			mimeType="application/json" />
-		<logger level="INFO" message="Notification MCP Server info requested" />
+		<logger level="INFO"
+			message="Notification MCP Server info requested" />
 	</flow>
 
 	<!-- MCP Tool: Send Welcome Email -->
 	<flow name="send-welcome-email">
-		<http:listener config-ref="http-config" path="/mcp/tools/send-welcome-email" doc:name="Send Welcome Email Listener">
+		<http:listener config-ref="http-config"
+			path="/mcp/tools/send-welcome-email"
+			doc:name="Send Welcome Email Listener">
 		</http:listener>
 
-		<logger level="INFO" message="Sending welcome email to: #[payload.email]" />
+		<logger level="INFO"
+			message="Sending welcome email to: #[payload.email]" />
 
 		<try doc:name="Try Send Welcome Email">
 			<!-- Load email template -->
-			<file:read path="src/main/resources/templates/employee-welcome.html" />
-			<set-variable variableName="emailTemplate" value="#[payload]" />
+			<file:read
+				path="src/main/resources/templates/employee-welcome.html" />
+			<set-variable variableName="emailTemplate"
+				value="#[payload]" />
 
 			<!-- Replace template variables -->
 			<ee:transform doc:name="Prepare Email Content">
@@ -66,10 +76,14 @@ replace "{{companyName}}" with (payload.companyName default "Our Company")
 					]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
-			<set-variable variableName="emailBody" value="#[payload]" />
+			<set-variable variableName="emailBody"
+				value="#[payload]" />
 
 			<!-- Send Email -->
-			<email:send config-ref="gmail-smtp-config" doc:name="Send Welcome Email" subject="Welcome to the Team - Your Journey Begins! 🎉" fromAddress="${email.from.address}">
+			<email:send config-ref="gmail-smtp-config"
+				doc:name="Send Welcome Email"
+				subject="Welcome to the Team - Your Journey Begins! 🎉"
+				fromAddress="${email.from.address}">
 				<email:to-addresses>
 					<email:to-address value="#[payload.email]" />
 				</email:to-addresses>
@@ -84,7 +98,8 @@ replace "{{companyName}}" with (payload.companyName default "Our Company")
 			<set-payload
 				value="#[{'status': 'success', 'message': 'Welcome email sent successfully', 'recipient': payload.email, 'employeeName': payload.firstName ++ ' ' ++ payload.lastName, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
 				mimeType="application/json" />
-			<logger level="INFO" message="Welcome email sent to: #[payload.email]" />
+			<logger level="INFO"
+				message="Welcome email sent to: #[payload.email]" />
 
 			<error-handler>
 				<on-error-propagate type="EMAIL:*">
@@ -92,14 +107,16 @@ replace "{{companyName}}" with (payload.companyName default "Our Company")
 						value="#[{'error': 'Email Send Failed', 'message': error.description, 'recipient': payload.email, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
 						mimeType="application/json" />
 					<set-variable value="500" variableName="httpStatus" />
-					<logger level="ERROR" message="Failed to send welcome email: #[error.description]" />
+					<logger level="ERROR"
+						message="Failed to send welcome email: #[error.description]" />
 				</on-error-propagate>
 				<on-error-propagate type="ANY">
 					<set-payload
 						value="#[{'error': 'Notification Error', 'message': error.description, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
 						mimeType="application/json" />
 					<set-variable value="500" variableName="httpStatus" />
-					<logger level="ERROR" message="Welcome email processing error: #[error.description]" />
+					<logger level="ERROR"
+						message="Welcome email processing error: #[error.description]" />
 				</on-error-propagate>
 			</error-handler>
 		</try>
@@ -107,15 +124,20 @@ replace "{{companyName}}" with (payload.companyName default "Our Company")
 
 	<!-- MCP Tool: Send Asset Allocation Notification -->
 	<flow name="send-asset-notification">
-		<http:listener config-ref="http-config" path="/mcp/tools/send-asset-notification" doc:name="Send Asset Notification Listener">
+		<http:listener config-ref="http-config"
+			path="/mcp/tools/send-asset-notification"
+			doc:name="Send Asset Notification Listener">
 		</http:listener>
 
-		<logger level="INFO" message="Sending asset allocation notification to: #[payload.email]" />
+		<logger level="INFO"
+			message="Sending asset allocation notification to: #[payload.email]" />
 
 		<try doc:name="Try Send Asset Notification">
 			<!-- Load email template -->
-			<file:read path="src/main/resources/templates/asset-allocation.html" />
-			<set-variable variableName="emailTemplate" value="#[payload]" />
+			<file:read
+				path="src/main/resources/templates/asset-allocation.html" />
+			<set-variable variableName="emailTemplate"
+				value="#[payload]" />
 
 			<!-- Replace template variables -->
 			<ee:transform doc:name="Prepare Asset Email Content">
@@ -148,10 +170,14 @@ replace "{{companyName}}" with (payload.companyName default "Our Company")
 					]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
-			<set-variable variableName="emailBody" value="#[payload]" />
+			<set-variable variableName="emailBody"
+				value="#[payload]" />
 
 			<!-- Send Email -->
-			<email:send config-ref="gmail-smtp-config" doc:name="Send Asset Notification" subject="Asset Allocation Complete - Your Equipment is Ready! 📦" fromAddress="${email.from.address}">
+			<email:send config-ref="gmail-smtp-config"
+				doc:name="Send Asset Notification"
+				subject="Asset Allocation Complete - Your Equipment is Ready! 📦"
+				fromAddress="${email.from.address}">
 				<email:to-addresses>
 					<email:to-address value="#[payload.email]" />
 				</email:to-addresses>
@@ -166,7 +192,8 @@ replace "{{companyName}}" with (payload.companyName default "Our Company")
 			<set-payload
 				value="#[{'status': 'success', 'message': 'Asset allocation notification sent successfully', 'recipient': payload.email, 'employeeName': payload.firstName ++ ' ' ++ payload.lastName, 'assetCount': sizeOf(payload.assets default []), 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
 				mimeType="application/json" />
-			<logger level="INFO" message="Asset notification sent to: #[payload.email]" />
+			<logger level="INFO"
+				message="Asset notification sent to: #[payload.email]" />
 
 			<error-handler>
 				<on-error-propagate type="EMAIL:*">
@@ -174,14 +201,16 @@ replace "{{companyName}}" with (payload.companyName default "Our Company")
 						value="#[{'error': 'Email Send Failed', 'message': error.description, 'recipient': payload.email, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
 						mimeType="application/json" />
 					<set-variable value="500" variableName="httpStatus" />
-					<logger level="ERROR" message="Failed to send asset notification: #[error.description]" />
+					<logger level="ERROR"
+						message="Failed to send asset notification: #[error.description]" />
 				</on-error-propagate>
 				<on-error-propagate type="ANY">
 					<set-payload
 						value="#[{'error': 'Notification Error', 'message': error.description, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
 						mimeType="application/json" />
 					<set-variable value="500" variableName="httpStatus" />
-					<logger level="ERROR" message="Asset notification processing error: #[error.description]" />
+					<logger level="ERROR"
+						message="Asset notification processing error: #[error.description]" />
 				</on-error-propagate>
 			</error-handler>
 		</try>
@@ -189,18 +218,24 @@ replace "{{companyName}}" with (payload.companyName default "Our Company")
 
 	<!-- MCP Tool: Send Onboarding Complete Notification -->
 	<flow name="send-onboarding-complete">
-		<http:listener config-ref="http-config" path="/mcp/tools/send-onboarding-complete" doc:name="Send Onboarding Complete Listener">
+		<http:listener config-ref="http-config"
+			path="/mcp/tools/send-onboarding-complete"
+			doc:name="Send Onboarding Complete Listener">
 		</http:listener>
 
-		<logger level="INFO" message="Sending onboarding complete notification to: #[payload.email]" />
+		<logger level="INFO"
+			message="Sending onboarding complete notification to: #[payload.email]" />
 
 		<try doc:name="Try Send Onboarding Complete">
 			<!-- Load email template -->
-			<file:read path="src/main/resources/templates/onboarding-complete.html" />
-			<set-variable variableName="emailTemplate" value="#[payload]" />
+			<file:read
+				path="src/main/resources/templates/onboarding-complete.html" />
+			<set-variable variableName="emailTemplate"
+				value="#[payload]" />
 
 			<!-- Replace template variables -->
-			<ee:transform doc:name="Prepare Onboarding Complete Content">
+			<ee:transform
+				doc:name="Prepare Onboarding Complete Content">
 				<ee:message>
 					<ee:set-payload><![CDATA[%dw 2.0
 output text/plain
@@ -230,16 +265,21 @@ replace "{{currentYear}}" with (now().year as String)
 					]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
-			<set-variable variableName="emailBody" value="#[payload]" />
+			<set-variable variableName="emailBody"
+				value="#[payload]" />
 
 			<!-- Send Email -->
-			<email:send config-ref="gmail-smtp-config" doc:name="Send Onboarding Complete" subject="🎊 Onboarding Complete - Welcome to the Team!" fromAddress="${email.from.address}">
+			<email:send config-ref="gmail-smtp-config"
+				doc:name="Send Onboarding Complete"
+				subject="🎊 Onboarding Complete - Welcome to the Team!"
+				fromAddress="${email.from.address}">
 				<email:to-addresses>
 					<email:to-address value="#[payload.email]" />
 				</email:to-addresses>
 				<email:cc-addresses>
 					<email:cc-address value="${notification.cc.hr}" />
-					<email:cc-address value="#[payload.managerEmail default 'manager@company.com']" />
+					<email:cc-address
+						value="#[payload.managerEmail default 'manager@company.com']" />
 				</email:cc-addresses>
 				<email:body contentType="text/html">
 					<email:content>#[vars.emailBody]</email:content>
@@ -249,7 +289,8 @@ replace "{{currentYear}}" with (now().year as String)
 			<set-payload
 				value="#[{'status': 'success', 'message': 'Onboarding complete notification sent successfully', 'recipient': payload.email, 'employeeName': payload.firstName ++ ' ' ++ payload.lastName, 'assetCount': sizeOf(payload.assets default []), 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
 				mimeType="application/json" />
-			<logger level="INFO" message="Onboarding complete notification sent to: #[payload.email]" />
+			<logger level="INFO"
+				message="Onboarding complete notification sent to: #[payload.email]" />
 
 			<error-handler>
 				<on-error-propagate type="EMAIL:*">
@@ -257,14 +298,16 @@ replace "{{currentYear}}" with (now().year as String)
 						value="#[{'error': 'Email Send Failed', 'message': error.description, 'recipient': payload.email, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
 						mimeType="application/json" />
 					<set-variable value="500" variableName="httpStatus" />
-					<logger level="ERROR" message="Failed to send onboarding complete notification: #[error.description]" />
+					<logger level="ERROR"
+						message="Failed to send onboarding complete notification: #[error.description]" />
 				</on-error-propagate>
 				<on-error-propagate type="ANY">
 					<set-payload
 						value="#[{'error': 'Notification Error', 'message': error.description, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
 						mimeType="application/json" />
 					<set-variable value="500" variableName="httpStatus" />
-					<logger level="ERROR" message="Onboarding complete processing error: #[error.description]" />
+					<logger level="ERROR"
+						message="Onboarding complete processing error: #[error.description]" />
 				</on-error-propagate>
 			</error-handler>
 		</try>
@@ -272,24 +315,30 @@ replace "{{currentYear}}" with (now().year as String)
 
 	<!-- MCP Tool: Test Email Configuration -->
 	<flow name="test-email-config">
-		<http:listener config-ref="http-config" path="/mcp/tools/test-email-config" doc:name="Test Email Config Listener">
+		<http:listener config-ref="http-config"
+			path="/mcp/tools/test-email-config"
+			doc:name="Test Email Config Listener">
 		</http:listener>
 
 		<logger level="INFO" message="Testing email configuration" />
 
 		<try doc:name="Try Test Email">
 			<!-- Send test email -->
-			<email:send config-ref="gmail-smtp-config" doc:name="Send Test Email" subject="Test Email - Notification MCP Server" fromAddress="${email.from.address}">
+			<email:send config-ref="gmail-smtp-config"
+				doc:name="Send Test Email"
+				subject="Test Email - Notification MCP Server"
+				fromAddress="${email.from.address}">
 				<email:to-addresses>
-					<email:to-address value="#[payload.testEmail default '${email.from.address}']" />
+					<email:to-address
+						value="#[payload.testEmail default '${email.from.address}']" />
 				</email:to-addresses>
 				<email:body contentType="text/html">
 					<email:content><![CDATA[
 						<h2>Email Configuration Test</h2>
 						<p>This is a test email from the Notification MCP Server.</p>
-						<p><strong>Timestamp:</strong> ${now()}</p>
+						<p><strong>Timestamp:</strong> #[now()]</p>
 						<p><strong>Server:</strong> ${mcp.serverName}</p>
-						<p><strong>Version:</strong> ${mcp.serverVersion}</p>
+                        <p><strong>Version:</strong> ${mcp.serverVersion}</p>
 						<p>If you receive this email, your Gmail SMTP configuration is working correctly!</p>
 					]]></email:content>
 				</email:body>
@@ -306,14 +355,16 @@ replace "{{currentYear}}" with (now().year as String)
 						value="#[{'error': 'Email Configuration Error', 'message': error.description, 'suggestion': 'Check Gmail SMTP settings, username, password, and app password configuration', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
 						mimeType="application/json" />
 					<set-variable value="500" variableName="httpStatus" />
-					<logger level="ERROR" message="Email configuration test failed: #[error.description]" />
+					<logger level="ERROR"
+						message="Email configuration test failed: #[error.description]" />
 				</on-error-propagate>
 				<on-error-propagate type="ANY">
 					<set-payload
 						value="#[{'error': 'Test Error', 'message': error.description, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
 						mimeType="application/json" />
 					<set-variable value="500" variableName="httpStatus" />
-					<logger level="ERROR" message="Email test error: #[error.description]" />
+					<logger level="ERROR"
+						message="Email test error: #[error.description]" />
 				</on-error-propagate>
 			</error-handler>
 		</try>

@@ -33,11 +33,6 @@
 			<classifier>mule-plugin</classifier>
 		</dependency>
 
-		<dependency>
-			<groupId>org.mule.connectors</groupId>
-			<artifactId>mule-db-connector</artifactId>
-			<classifier>mule-plugin</classifier>
-		</dependency>
 
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
@@ -51,15 +46,7 @@
 			<classifier>mule-plugin</classifier>
 		</dependency>
 
-		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-		</dependency>
 
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-		</dependency>
 	</dependencies>
 
 	<!-- ✅ FIXED: Inherits plugin version + OVERRIDES app name only -->
