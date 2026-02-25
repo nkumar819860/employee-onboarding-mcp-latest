@@ -28,7 +28,6 @@
 	</http:request-config>
 
 	<!-- Global Error Handler -->
-
 	<error-handler name="global-error-handler" doc:name="Global Error Handler">
 		<on-error-propagate type="HTTP:CONNECTIVITY">
 			<set-payload value="#[{'error': 'Connection Error', 'message': 'Unable to connect to MCP server', 'details': error.description, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]" mimeType="application/json"/>

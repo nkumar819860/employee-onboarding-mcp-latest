@@ -80,6 +80,11 @@
 			<artifactId>mule-apikit-module</artifactId>
 			<classifier>mule-plugin</classifier>
 		</dependency>
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-http-connector</artifactId>
+			<classifier>mule-plugin</classifier>
+		</dependency>
 	</dependencies>
 
 	<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>

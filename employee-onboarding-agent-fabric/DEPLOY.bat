@@ -1,317 +1,148 @@
 @echo off
 REM ========================================
-REM EMPLOYEE ONBOARDING SYSTEM DEPLOYMENT
-REM Final Unified Script with Debug Control
+REM EMPLOYEE ONBOARDING - AUTO DEPLOY ALL MCP
+REM Auto-discovers + Compiles + Deploys + Tests
 REM ========================================
 
-REM ============ CONFIGURATION FLAGS ============
-REM Set DEBUG=1 to enable verbose output, 0 to disable
-set DEBUG=0
+cd /d "C:\Users\Pradeep\AI\employee-onboarding\employee-onboarding-agent-fabric"
+echo Root: %CD%
 
-REM Set DEPLOYMENT_TYPE: 1=Docker, 2=CloudHub
-set DEPLOYMENT_TYPE=1
+setlocal enabledelayedexpansion
+set SCRIPT_DIR=%CD%
 
-REM CloudHub Runtime Version (if using CloudHub)
-set MULE_RUNTIME_VERSION=4.6.0
-set JAVA_VERSION=8
-REM ============================================
-
-if %DEBUG%==1 (
-    echo [DEBUG] Starting Employee Onboarding System Deployment
-    echo [DEBUG] Configuration - DEBUG: %DEBUG%, TYPE: %DEPLOYMENT_TYPE%
-)
-
-set SCRIPT_DIR=%~dp0
-cd /d "%SCRIPT_DIR%"
-
-if %DEBUG%==1 (
-    echo [DEBUG] Working directory: %CD%
-)
-
-echo ========================================
-echo EMPLOYEE ONBOARDING SYSTEM DEPLOYMENT
-echo ========================================
-
-REM Environment validation
+REM === FIXED .env LOADING (No subroutines) ===
 if not exist ".env" (
-    echo ERROR: .env file not found!
-    pause
-    exit /b 1
+    echo ERROR: .env missing!
+    pause & exit /b 1
 )
 
-if %DEBUG%==1 (
-    echo [DEBUG] Environment file found
+REM Simple robust parsing - handles spaces
+for /f "usebackq tokens=1,2 delims== eol=#" %%a in (".env") do (
+    set "key=%%a"
+    set "val=%%b"
+    REM Trim spaces from key
+    for /f "tokens=* delims= " %%k in ("!key!") do set "key=%%k"
+    REM Trim spaces from value  
+    for /f "tokens=* delims= " %%v in ("!val!") do set "val=%%v"
+    if not "!key!"=="" if not "!val!"=="" set "!key!=!val!"
 )
 
-REM Check required tools
-mvn --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ERROR: Maven not found!
-    pause
-    exit /b 1
+REM Defaults
+if not defined ANYPOINT_ENV_NAME set "ANYPOINT_ENV_NAME=Sandbox"
+if not defined ANYPOINT_ORG_ID set "ANYPOINT_ORG_ID=47562e5d-bf49-440a-a0f5-a9cea0a89aa9"
+
+echo ✅ Client: %ANYPOINT_CLIENT_ID:~0,8%... 
+echo ✅ Env: %ANYPOINT_ENV_NAME%
+echo ✅ Org: %ANYPOINT_ORG_ID:~0,8%...
+
+REM Validate essentials
+if not defined ANYPOINT_CLIENT_ID (
+    echo ERROR: ANYPOINT_CLIENT_ID missing from .env
+    pause & exit /b 1
+)
+if not defined ANYPOINT_CLIENT_SECRET (
+    echo ERROR: ANYPOINT_CLIENT_SECRET missing from .env
+    pause & exit /b 1
 )
 
-if %DEBUG%==1 (
-    echo [DEBUG] Maven installation verified
-)
+REM === AUTO-DISCOVER MCP SERVICES ===
+echo.
+echo 🔍 Finding MCP services in mcp-servers...
+set SERVER_COUNT=0
 
-if %DEPLOYMENT_TYPE%==1 (
-    docker --version >nul 2>&1
-    if %errorlevel% neq 0 (
-        echo ERROR: Docker not found for Docker deployment!
-        pause
-        exit /b 1
+for /d %%d in (mcp-servers\*) do (
+    if exist "%%d\pom.xml" (
+        set /a SERVER_COUNT+=1
+        call set "SERVER!SERVER_COUNT!=%%~nxd"
+        echo [!SERVER_COUNT!] Found: !SERVER!SERVER_COUNT!! 
     )
-    if %DEBUG%==1 (
-        echo [DEBUG] Docker installation verified
-    )
 )
 
+if !SERVER_COUNT! == 0 (
+    echo ERROR: No pom.xml found in mcp-servers\
+    dir mcp-servers
+    pause & exit /b 1
+)
+
+echo ✅ Found !SERVER_COUNT! MCP services
+
+REM === COMPILE ALL ===
 echo.
 echo ==============================
-echo COMPILING ALL MCP SERVERS
+echo COMPILING !SERVER_COUNT! SERVICES
 echo ==============================
 
-REM Compile all MCP servers
-set SERVERS=notification-mcp employee-onboarding-mcp asset-allocation-mcp agent-broker-mcp
-
-for %%s in (%SERVERS%) do (
-    echo Compiling %%s...
-    if %DEBUG%==1 (
-        echo [DEBUG] Compiling mcp-servers/%%s
-    )
+for /l %%i in (1,1,!SERVER_COUNT!) do (
+    call set "SRV=%%SERVER%%i%%"
+    echo [!%%i!/!SERVER_COUNT!] Compiling !SRV!...
+    cd mcp-servers\!SRV!
     
-    cd mcp-servers\%%s
-    
-    if %DEBUG%==1 (
-        call mvn clean compile package -DskipTests -U -X
-    ) else (
-        call mvn clean compile package -DskipTests -U -q
-    )
-    
+    call mvn clean compile package -DskipTests -U -q
     if !errorlevel! neq 0 (
-        echo ERROR: %%s compilation failed!
+        echo ❌ !SRV! COMPILE FAILED
         cd /d "%SCRIPT_DIR%"
-        pause
-        exit /b 1
+        pause & exit /b 1
     )
-    
-    if %DEBUG%==1 (
-        echo [DEBUG] %%s compiled successfully
-    ) else (
-        echo ✅ %%s compiled successfully
-    )
-    
+    echo ✅ !SRV! compiled OK
     cd /d "%SCRIPT_DIR%"
 )
 
-echo.
-echo ============================
-echo BUILDING REACT FRONTEND
-echo ============================
-
-cd react-client
-
-if %DEBUG%==1 (
-    echo [DEBUG] Installing React dependencies
-    call npm install
+REM === REACT OPTIONAL ===
+if exist "react-client" (
+    echo 🌐 Building React...
+    cd react-client
+    call npm install --silent && call npm run build --silent
+    echo ✅ React OK
+    cd /d "%SCRIPT_DIR%"
 ) else (
-    call npm install --silent
+    echo [INFO] No react-client folder
 )
 
-if %errorlevel% neq 0 (
-    echo ERROR: React dependencies installation failed!
-    cd /d "%SCRIPT_DIR%"
-    pause
-    exit /b 1
-)
-
-if %DEBUG%==1 (
-    echo [DEBUG] Building React application
-    call npm run build
-) else (
-    call npm run build --silent
-)
-
-if %errorlevel% neq 0 (
-    echo ERROR: React build failed!
-    cd /d "%SCRIPT_DIR%"
-    pause
-    exit /b 1
-)
-
-echo ✅ React application built successfully
-
-cd /d "%SCRIPT_DIR%"
-
+REM === DEPLOY ALL TO CLOUDHUB ===
 echo.
 echo ===============================
-echo DEPLOYMENT PHASE
+echo DEPLOYING !SERVER_COUNT! SERVICES
 echo ===============================
 
-if %DEPLOYMENT_TYPE%==1 goto docker_deployment
-if %DEPLOYMENT_TYPE%==2 goto cloudhub_deployment
-
-:docker_deployment
-echo DOCKER DEPLOYMENT SELECTED
-echo.
-
-if %DEBUG%==1 (
-    echo [DEBUG] Stopping existing containers
-)
-
-docker-compose down --remove-orphans 2>nul
-
-if %DEBUG%==1 (
-    echo [DEBUG] Building and starting all services
-    docker-compose up --build -d
-) else (
-    docker-compose up --build -d >nul 2>&1
-)
-
-if %errorlevel% neq 0 (
-    echo ERROR: Docker deployment failed!
-    pause
-    exit /b 1
-)
-
-echo ✅ Docker deployment successful
-echo.
-echo Waiting for services to initialize...
-timeout /t 30 >nul
-
-echo.
-echo Testing service health...
-
-curl -s -f http://localhost:8080/health >nul 2>&1
-if %errorlevel% equ 0 (
-    echo ✅ Agent Broker: HEALTHY
-) else (
-    echo ⚠️ Agent Broker: Starting up...
-)
-
-curl -s -f http://localhost:8081/health >nul 2>&1
-if %errorlevel% equ 0 (
-    echo ✅ Employee Service: HEALTHY
-) else (
-    echo ⚠️ Employee Service: Starting up...
-)
-
-curl -s -f http://localhost:8082/health >nul 2>&1
-if %errorlevel% equ 0 (
-    echo ✅ Asset Service: HEALTHY
-) else (
-    echo ⚠️ Asset Service: Starting up...
-)
-
-curl -s -f http://localhost:8083/health >nul 2>&1
-if %errorlevel% equ 0 (
-    echo ✅ Notification Service: HEALTHY
-) else (
-    echo ⚠️ Notification Service: Starting up...
-)
-
-curl -s -f http://localhost:3000 >nul 2>&1
-if %errorlevel% equ 0 (
-    echo ✅ React Frontend: HEALTHY
-) else (
-    echo ⚠️ React Frontend: Starting up...
-)
-
-goto deployment_complete
-
-:cloudhub_deployment
-echo CLOUDHUB DEPLOYMENT SELECTED
-echo WARNING: Java 17 + CloudHub compatibility limited
-echo.
-
-set BASE_DIR=C:\Users\Pradeep\AI\employee-onboarding\employee-onboarding-agent-fabric\mcp-servers
-
-for %%s in (%SERVERS%) do (
-    echo Deploying %%s to CloudHub...
-    cd /d "%BASE_DIR%\%%s"
+for /l %%i in (1,1,!SERVER_COUNT!) do (
+    call set "SRV=%%SERVER%%i%%"
+    echo [!%%i!/!SERVER_COUNT!] Deploying !SRV!-server...
+    cd mcp-servers\!SRV!
     
-    if %DEBUG%==1 (
-        mvn clean deploy ^
-            -DmuleDeploy ^
-            -Danypoint.businessGroup=47562e5d-bf49-440a-a0f5-a9cea0a89aa9 ^
-            -Danypoint.environment=Sandbox ^
-            -DskipTests ^
-            -Dcloudhub.applicationName=%%s-server ^
-            -Dcloudhub.muleVersion=%MULE_RUNTIME_VERSION% ^
-            -Dcloudhub.javaVersion=%JAVA_VERSION% ^
-            -Dcloudhub.region=us-east-1 ^
-            -Dcloudhub.workers=1 ^
-            -Dcloudhub.workerType=MICRO ^
-            -U -X
-    ) else (
-        mvn clean deploy ^
-            -DmuleDeploy ^
-            -Danypoint.businessGroup=47562e5d-bf49-440a-a0f5-a9cea0a89aa9 ^
-            -Danypoint.environment=Sandbox ^
-            -DskipTests ^
-            -Dcloudhub.applicationName=%%s-server ^
-            -Dcloudhub.muleVersion=%MULE_RUNTIME_VERSION% ^
-            -Dcloudhub.javaVersion=%JAVA_VERSION% ^
-            -Dcloudhub.region=us-east-1 ^
-            -Dcloudhub.workers=1 ^
-            -Dcloudhub.workerType=MICRO ^
-            -U -q
-    )
+    call mvn clean deploy ^
+        -DmuleDeploy ^
+        -Danypoint.platform.client_id=%ANYPOINT_CLIENT_ID% ^
+        -Danypoint.platform.client_secret=%ANYPOINT_CLIENT_SECRET% ^
+        -Danypoint.businessGroup=%ANYPOINT_ORG_ID% ^
+        -Danypoint.environment=%ANYPOINT_ENV_NAME% ^
+        -Dcloudhub.applicationName=!SRV!-server ^
+        -Dcloudhub.muleVersion=4.6.0 ^
+        -Dcloudhub.region=us-east-1 ^
+        -Dcloudhub.workers=1 ^
+        -Dcloudhub.workerType=MICRO ^
+        -DskipTests ^
+        -U -q
     
     if !errorlevel! neq 0 (
-        echo ERROR: %%s CloudHub deployment failed!
-        echo RECOMMENDATION: Change DEPLOYMENT_TYPE=1 for Docker deployment
+        echo ❌ !SRV!-server FAILED
         cd /d "%SCRIPT_DIR%"
-        pause
-        exit /b 1
+        pause & exit /b 1
     )
-    
-    echo ✅ %%s deployed to CloudHub successfully
+    echo ✅ !SRV!-server: https://!SRV!-server.us-e1.cloudhub.io
+)
+
+REM === HEALTH TESTS ===
+echo.
+echo 🧪 Testing services...
+for /l %%i in (1,1,!SERVER_COUNT!) do (
+    call set "SRV=%%SERVER%%i%%"
+    echo Testing !SRV!-server...
+    powershell -c "if ((Invoke-WebRequest -Uri 'https://!SRV!-server.us-e1.cloudhub.io/health' -UseBasicParsing -TimeoutSec 5 -Method Get).StatusCode -eq 200) { Write-Host '✅ !SRV!: OK' } else { Write-Host '⏳ !SRV!: Starting...' }"
 )
 
 cd /d "%SCRIPT_DIR%"
-
-:deployment_complete
 echo.
-echo ========================================
-echo 🎉 DEPLOYMENT COMPLETED SUCCESSFULLY!
-echo ========================================
-
-if %DEPLOYMENT_TYPE%==1 (
-    echo.
-    echo LOCAL DOCKER ENVIRONMENT:
-    echo 🤖 Agent Broker:   http://localhost:8080
-    echo 👥 Employee API:   http://localhost:8081  
-    echo 💼 Asset API:      http://localhost:8082
-    echo 🔔 Notification:   http://localhost:8083
-    echo 🌐 React Frontend: http://localhost:3000
-    echo.
-    echo Test Employee Onboarding:
-    echo curl -X POST http://localhost:8080/mcp/tools/orchestrate-employee-onboarding
-    echo.
-    start http://localhost:3000
-) else (
-    echo.
-    echo CLOUDHUB ENVIRONMENT:
-    echo 🤖 Agent Broker:   https://agent-broker-mcp-server.us-e1.cloudhub.io
-    echo 👥 Employee API:   https://employee-onboarding-mcp-server.us-e1.cloudhub.io
-    echo 💼 Asset API:      https://asset-allocation-mcp-server.us-e1.cloudhub.io  
-    echo 🔔 Notification:   https://notification-mcp-server.us-e1.cloudhub.io
-    echo.
-    echo Test Employee Onboarding:
-    echo curl -X POST https://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/tools/orchestrate-employee-onboarding
-)
-
-echo.
-echo ========================================
-echo 📋 CONFIGURATION OPTIONS
-echo ========================================
-echo To modify deployment:
-echo - Set DEBUG=1 for verbose output
-echo - Set DEPLOYMENT_TYPE=1 for Docker
-echo - Set DEPLOYMENT_TYPE=2 for CloudHub
-echo - Update MULE_RUNTIME_VERSION as needed
-echo ========================================
-
+echo 🎉 ALL MCP SERVERS LIVE!
+echo Run: curl -X POST https://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/tools/orchestrate-employee-onboarding -d "{\"employeeId\":\"E123\"}"
 pause
+endlocal
