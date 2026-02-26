@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:mcp="http://www.mulesoft.org/schema/mule/mcp"
 	xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:db="http://www.mulesoft.org/schema/mule/db"

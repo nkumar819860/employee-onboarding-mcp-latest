@@ -33,7 +33,6 @@
 			<classifier>mule-plugin</classifier>
 		</dependency>
 
-
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-email-connector</artifactId>
@@ -46,7 +45,16 @@
 			<classifier>mule-plugin</classifier>
 		</dependency>
 
+		<!-- Database Dependencies (Required for shared libraries) -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+		</dependency>
 
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
