@@ -1,10 +1,10 @@
 {
-    "name":  "Notification MCP Server",
+    "name":  "Employee Notification Service",
     "description":  "MCP Server for Email Notifications - Employee Onboarding \u0026 Asset Allocation confirmations using Gmail SMTP",
-    "version":  "..1",
+    "version":  "1.0.3",
     "main":  "notification-mcp-server.xml",
-    "groupId":  "COE",
-    "assetId":  "notification-mcp",
+    "groupId":  "47562e5d-bf49-440a-a0f5-a9cea0a89aa9",
+    "assetId":  "employee-notification-service",
     "classifier":  "mcp",
     "keywords":  [
                      "mcp",

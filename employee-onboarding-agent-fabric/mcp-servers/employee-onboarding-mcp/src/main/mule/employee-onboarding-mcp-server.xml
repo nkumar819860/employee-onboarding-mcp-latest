@@ -26,9 +26,16 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 output application/json
 ---
 {
-    name: "Employee Onboarding MCP Server",
-    version: "1.0.0",
-    description: "Employee Management MCP Server for Employee Onboarding Process",
+    name: "${mcp.serverName}",
+    version: "${mcp.serverVersion}",
+    description: "${mcp.serverDescription}",
+    baseUrl: "${mcp.serverBaseUrl}",
+    environment: "${env}",
+    cloudhub: {
+        workerType: "${cloudhub.worker.type}",
+        region: "${cloudhub.region}",
+        environment: "${cloudhub.environment}"
+    },
     tools: [
         {
             name: "create-employee",
@@ -38,7 +45,7 @@ output application/json
         {
             name: "get-employee",
             description: "Get employee details by ID",
-            endpoint: "/mcp/tools/get-employee"
+            endpoint: "/mcp/tools/get-employee/{empId}"
         },
         {
             name: "list-employees",
@@ -48,15 +55,23 @@ output application/json
         {
             name: "update-employee-status",
             description: "Update employee onboarding status",
-            endpoint: "/mcp/tools/update-employee-status"
+            endpoint: "/mcp/tools/update-employee-status/{empId}/{status}"
         }
-    ]
+    ],
+    database: {
+        type: "PostgreSQL with H2 fallback",
+        initialized: "${app.startup.database.init}"
+    },
+    health: {
+        status: "UP",
+        timestamp: now()
+    }
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 
 		<logger level="INFO"
-			message="Employee Onboarding MCP Server info requested" />
+			message="MCP Server info requested - Name: ${mcp.serverName}, Version: ${mcp.serverVersion}, Environment: ${env}" />
 	</flow>
 
 	<!-- ========================= -->

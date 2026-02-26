@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
+		<artifactId>employee-onboarding-mcp-parent</artifactId>
+		<version>1.0.0</version>
+		<relativePath>../../pom.xml</relativePath>
+	</parent>
 
-	<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
 	<artifactId>notification-mcp</artifactId>
 	<version>1.0.3</version>
 	<packaging>mule-application</packaging>
@@ -13,129 +16,144 @@
 	<name>Notification MCP Server</name>
 	<description>MCP Server for Employee Notifications</description>
 
-	<!-- Self-contained properties -->
+	<!-- Additional properties for CloudHub deployment -->
 	<properties>
-		<maven.compiler.source>17</maven.compiler.source>
-		<maven.compiler.target>17</maven.compiler.target>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<!-- CloudHub deployment properties - can be overridden by -D parameters or .env -->
+		<anypoint.business.group>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</anypoint.business.group>
+		<anypoint.platform.env>Sandbox</anypoint.platform.env>
+		<cloudhub.region>us-east-1</cloudhub.region>
+		<cloudhub.workers>1</cloudhub.workers>
+		<cloudhub.worker.type>MICRO</cloudhub.worker.type>
+		<application.name>employee-notification-service</application.name>
 		
-		<mule.version>4.9.0</mule.version>
-		<mule.runtime.version>4.9-java17</mule.runtime.version>
-		<java.version>17</java.version>
-		<mule.maven.plugin.version>4.5.0</mule.maven.plugin.version>
-		
-		<mule.http.connector.version>1.9.0</mule.http.connector.version>
-		<mule.db.connector.version>1.14.17</mule.db.connector.version>
-		<mule.email.connector.version>1.7.4</mule.email.connector.version>
-		<mule.file.connector.version>1.5.0</mule.file.connector.version>
-		<mule.apikit.connector.version>1.6.3</mule.apikit.connector.version>
-		<postgresql.version>42.7.4</postgresql.version>
-		<h2.version>2.2.224</h2.version>
-		
-		<application.name>notification-mcp-server</application.name>
+		<!-- Connected App Authentication Properties -->
+		<anypoint.platform.client_id>${env:CONNECTED_APP_CLIENT_ID}</anypoint.platform.client_id>
+		<anypoint.platform.client_secret>${env:CONNECTED_APP_CLIENT_SECRET}</anypoint.platform.client_secret>
+		<anypoint.username>${env:ANYPOINT_USERNAME}</anypoint.username>
+		<anypoint.password>${env:ANYPOINT_PASSWORD}</anypoint.password>
 	</properties>
 
-	<!-- Repositories -->
-	<repositories>
-		<repository>
-			<id>mulesoft-releases</id>
-			<url>https://repository.mulesoft.org/releases/</url>
-		</repository>
-		<repository>
-			<id>mulesoft-public</id>
-			<url>https://repository.mulesoft.org/nexus/content/repositories/public/</url>
-		</repository>
-		<repository>
-			<id>mule-ee-releases</id>
-			<url>https://repository.mulesoft.org/nexus/content/repositories/releases-ee/</url>
-		</repository>
-	</repositories>
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.mule.tools.maven</groupId>
+            <artifactId>mule-maven-plugin</artifactId>
+            <!-- ✅ Inherits ${mule.maven.plugin.version} from parent -->
+            <extensions>true</extensions>
+            
+            <configuration>
+                <!-- ✅ Shared libraries - CORRECTLY inside configuration -->
+                <sharedLibraries>
+                    <sharedLibrary>
+                        <groupId>com.h2database</groupId>
+                        <artifactId>h2</artifactId>
+                    </sharedLibrary>
+                    <sharedLibrary>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                    </sharedLibrary>
+                </sharedLibraries>
 
-	<pluginRepositories>
-		<pluginRepository>
-			<id>mulesoft-releases</id>
-			<url>https://repository.mulesoft.org/releases/</url>
-		</pluginRepository>
-	</pluginRepositories>
+                <!-- ✅ CloudHub deployment (used by mule:deploy command) -->
+                <cloudHubDeployment>
+                    <uri>https://anypoint.mulesoft.com</uri>
+                    <muleVersion>${mule.runtime.version}</muleVersion>
+                    <javaVersion>${java.version}</javaVersion>
+                    <server>CloudHub</server>
+                    <applicationName>${application.name}</applicationName>
+                    <businessGroupId>${anypoint.business.group}</businessGroupId>
+                    <environment>${anypoint.platform.env}</environment>
+                    <region>${cloudhub.region}</region>
+                    <workers>${cloudhub.workers}</workers>
+                    <workerType>${cloudhub.worker.type}</workerType>
+                    <objectStoreV2>true</objectStoreV2>
+                    
+                    <!-- Connected App Authentication Configuration -->
+                    <clientId>${anypoint.platform.client_id}</clientId>
+                    <clientSecret>${anypoint.platform.client_secret}</clientSecret>
+                    
+                    <!-- Application Properties -->
+                    <properties>
+                        <env>${anypoint.platform.env}</env>
+                        <http.port>8084</http.port>
+                    </properties>
+                </cloudHubDeployment>
+            </configuration>
+        </plugin>
 
-	<!-- Dependencies with explicit versions -->
+        <!-- ✅ Exchange Plugin for MCP Asset Publishing -->
+        <plugin>
+            <groupId>org.mule.tools.maven</groupId>
+            <artifactId>exchange-mule-maven-plugin</artifactId>
+            <version>0.1.4</version>
+            <executions>
+                <execution>
+                    <id>validate</id>
+                    <phase>validate</phase>
+                    <goals>
+                        <goal>exchange-pre-deploy</goal>
+                    </goals>
+                </execution>
+                <execution>
+                    <id>deploy</id>
+                    <phase>deploy</phase>
+                    <goals>
+                        <goal>exchange-deploy</goal>
+                    </goals>
+                    <configuration>
+                        <classifier>mule-application</classifier>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+
+	<!-- ✅ SIMPLIFIED: Inherits ALL versions from parent dependencyManagement -->
 	<dependencies>
+		<!-- HTTP Connector -->
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-http-connector</artifactId>
-			<version>${mule.http.connector.version}</version>
 			<classifier>mule-plugin</classifier>
+			<!-- Uses ${mule.http.connector.version} from parent -->
 		</dependency>
 
+		<!-- Email Connector -->
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-email-connector</artifactId>
-			<version>${mule.email.connector.version}</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 
+		<!-- File Connector -->
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-file-connector</artifactId>
-			<version>${mule.file.connector.version}</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 
-		<!-- Database Dependencies (Required for shared libraries) -->
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<version>${h2.version}</version>
-		</dependency>
-
+		<!-- PostgreSQL -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
-			<version>${postgresql.version}</version>
+		</dependency>
+
+		<!-- H2 Database -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+		</dependency>
+
+		<!-- Secure Configuration Property Module -->
+		<dependency>
+			<groupId>com.mulesoft.modules</groupId>
+			<artifactId>mule-secure-configuration-property-module</artifactId>
+			<classifier>mule-plugin</classifier>
 		</dependency>
 	</dependencies>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.mule.tools.maven</groupId>
-				<artifactId>mule-maven-plugin</artifactId>
-				<version>${mule.maven.plugin.version}</version>
-				<extensions>true</extensions>
-
-				<configuration>
-					<!-- Shared libraries -->
-					<sharedLibraries>
-						<sharedLibrary>
-							<groupId>com.h2database</groupId>
-							<artifactId>h2</artifactId>
-						</sharedLibrary>
-						<sharedLibrary>
-							<groupId>org.postgresql</groupId>
-							<artifactId>postgresql</artifactId>
-						</sharedLibrary>
-					</sharedLibraries>
-
-					<!-- CloudHub deployment -->
-					<cloudHubDeployment>
-						<uri>https://anypoint.mulesoft.com</uri>
-						<muleVersion>${mule.runtime.version}</muleVersion>
-						<javaVersion>${java.version}</javaVersion>
-						<server>CloudHub</server>
-						<applicationName>${application.name}</applicationName>
-						<businessGroupId>${anypoint.business.group}</businessGroupId>
-						<environment>${anypoint.platform.env}</environment>
-						<region>us-east-1</region>
-						<workers>1</workers>
-						<workerType>MICRO</workerType>
-						<objectStoreV2>true</objectStoreV2>
-					</cloudHubDeployment>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-
-	<!-- Distribution Management for Exchange -->
+	<!-- ✅ Exchange Repository -->
 	<distributionManagement>
 		<repository>
 			<id>anypoint-exchange</id>
@@ -143,9 +161,4 @@
 			<url>https://maven.anypoint.mulesoft.com/api/v1/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
 		</repository>
 	</distributionManagement>
-
-
-
-
-
 </project>

@@ -1,5 +1,5 @@
 {
-  "name": "notification-mcp-server",
+  "name": "employee-notification-service",
   "minMuleVersion": "4.9.0",
   "javaSpecificationVersions": [
     "17"

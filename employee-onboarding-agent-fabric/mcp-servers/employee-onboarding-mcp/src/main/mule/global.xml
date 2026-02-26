@@ -11,11 +11,11 @@
         http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
         http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 
-	<!-- ✅ 1. FIXED: Properties FIRST -->
-	<configuration-properties file="${env}.yaml" />
-
-	<!-- global.xml -->
-	<global-property doc:name="Global Property" doc:id="084073d4-b919-4860-8243-7463949fc13a" name="env" value="local" />
+	<!-- ✅ Load Properties Configuration -->
+	<configuration-properties file="config.properties" />
+	
+	<!-- Environment-specific properties override -->
+	<global-property doc:name="Global Property" doc:id="084073d4-b919-4860-8243-7463949fc13a" name="env" value="${env:local}" />
 	<error-handler name="GLOBAL-Error-Handler">
 		<on-error-propagate type="ANY">
 			<ee:transform>
@@ -40,15 +40,20 @@ output application/json
 		defaultErrorHandler-ref="GLOBAL-Error-Handler" />
 
 
-	<db:config name="Database_Config">
-		<db:generic-connection url="${db.url}"
-			driverClassName="${db.driver}" user="${db.user}"
-			password="${db.password}" />
+	<!-- ✅ Database Configuration with Environment-based Selection -->
+	<db:config name="Database_Config" doc:name="Database Config">
+		<db:generic-connection 
+			url="${db.postgres.url}" 
+			driverClassName="${db.postgres.driverClassName}" 
+			user="${db.postgres.username}" 
+			password="${db.postgres.password}" />
 	</db:config>
 
-	<http:listener-config name="HTTP_Listener_config">
-		<http:listener-connection host="0.0.0.0"
-			port="8081" />
+	<!-- ✅ HTTP Listener with Property-based Configuration -->
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener Config">
+		<http:listener-connection 
+			host="${http.host}" 
+			port="${http.port}" />
 	</http:listener-config>
 
 

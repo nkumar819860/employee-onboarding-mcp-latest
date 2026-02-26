@@ -32,6 +32,20 @@
 		<h2.version>2.2.224</h2.version>
 		
 		<application.name>agent-broker-mcp-server</application.name>
+		
+		<!-- CloudHub deployment properties - can be overridden by -D parameters or .env -->
+		<anypoint.business.group>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</anypoint.business.group>
+		<anypoint.platform.env>Sandbox</anypoint.platform.env>
+		<cloudhub.region>us-east-1</cloudhub.region>
+		<cloudhub.workers>1</cloudhub.workers>
+		<cloudhub.worker.type>MICRO</cloudhub.worker.type>
+		
+		<!-- Authentication Properties - Load from command line parameters -->
+		<!-- These will be provided by the deploy script via -D parameters -->
+		<anypoint.platform.client_id></anypoint.platform.client_id>
+		<anypoint.platform.client_secret></anypoint.platform.client_secret>
+		<anypoint.username></anypoint.username>
+		<anypoint.password></anypoint.password>
 	</properties>
 
 	<!-- Repositories -->
@@ -119,12 +133,22 @@
 						<javaVersion>${java.version}</javaVersion>
 						<server>CloudHub</server>
 						<applicationName>${application.name}</applicationName>
-						<businessGroupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</businessGroupId>
-						<environment>Sandbox</environment>
-						<region>us-east-1</region>
-						<workers>1</workers>
-						<workerType>MICRO</workerType>
+						<businessGroupId>${anypoint.business.group}</businessGroupId>
+						<environment>${anypoint.platform.env}</environment>
+						<region>${cloudhub.region}</region>
+						<workers>${cloudhub.workers}</workers>
+						<workerType>${cloudhub.worker.type}</workerType>
 						<objectStoreV2>true</objectStoreV2>
+						
+						<!-- Connected App Authentication Configuration -->
+						<clientId>${anypoint.platform.client_id}</clientId>
+						<clientSecret>${anypoint.platform.client_secret}</clientSecret>
+						
+						<!-- Application Properties -->
+						<properties>
+							<env>${anypoint.platform.env}</env>
+							<http.port>8082</http.port>
+						</properties>
 					</cloudHubDeployment>
 				</configuration>
 			</plugin>

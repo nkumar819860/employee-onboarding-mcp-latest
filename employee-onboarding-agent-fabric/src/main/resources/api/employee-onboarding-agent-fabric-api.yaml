@@ -1,0 +1,663 @@
+openapi: 3.0.3
+info:
+  title: Employee Onboarding Agent Fabric API
+  description: |
+    Comprehensive API specification for the Employee Onboarding Agent Fabric - a multi-module MCP server suite that provides complete employee onboarding automation.
+    
+    This API encompasses all MCP servers in the fabric:
+    - Agent Broker MCP (Central Orchestrator)
+    - Employee Onboarding MCP (Profile Management)
+    - Asset Allocation MCP (IT Asset Management)
+    - Notification MCP (Email Communications)
+    
+    ## Architecture Overview
+    
+    The Employee Onboarding Agent Fabric follows a microservices architecture where each MCP server handles specific domain responsibilities:
+    
+    ### Agent Broker MCP
+    - **Purpose**: Central orchestrator for end-to-end employee onboarding
+    - **Responsibilities**: Workflow coordination, process management, status tracking
+    - **Dependencies**: All other MCP servers
+    
+    ### Employee Onboarding MCP
+    - **Purpose**: Employee profile and data management
+    - **Responsibilities**: CRUD operations, data validation, database management
+    - **Database**: PostgreSQL primary with H2 fallback
+    
+    ### Asset Allocation MCP
+    - **Purpose**: IT asset allocation and inventory management
+    - **Responsibilities**: Asset assignment, tracking, return processing
+    - **Assets**: Laptops, ID cards, mobile phones, monitors, peripherals
+    
+    ### Notification MCP
+    - **Purpose**: Email notification and communication services
+    - **Responsibilities**: Template-based emails, SMTP integration
+    - **Provider**: Gmail SMTP with TLS encryption
+    
+    ## Integration Patterns
+    
+    The fabric supports multiple integration patterns:
+    - **Synchronous Orchestration**: Real-time coordination via Agent Broker
+    - **Event-Driven Processing**: Asynchronous notifications and updates
+    - **Database Integration**: Multi-database support with failover
+    - **Email Integration**: Template-based notifications with customization
+    
+    ## Security Features
+    
+    - **Authentication**: Connected App OAuth 2.0 integration
+    - **Authorization**: Role-based access control
+    - **Data Protection**: Encrypted sensitive data handling
+    - **Audit Logging**: Comprehensive activity tracking
+    
+    ## Error Handling
+    
+    - **Graceful Degradation**: Fallback mechanisms for service failures
+    - **Retry Logic**: Automatic retry with exponential backoff
+    - **Circuit Breaker**: Prevents cascading failures
+    - **Comprehensive Logging**: Detailed error reporting and diagnostics
+    
+  version: 1.0.0
+  contact:
+    name: MCP Development Team
+    email: mcp-dev@company.com
+    url: https://github.com/mulesoft/employee-onboarding-agent-fabric
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  x-mcp-classifier: mcp
+  x-agent-fabric: true
+  x-multi-module: true
+
+servers:
+  - url: https://agent-broker-mcp-server.us-e1.cloudhub.io
+    description: Agent Broker MCP - Central Orchestrator
+  - url: https://employee-onboarding-mcp-server.us-e1.cloudhub.io
+    description: Employee Onboarding MCP - Profile Management
+  - url: https://asset-allocation-mcp-server.us-e1.cloudhub.io
+    description: Asset Allocation MCP - IT Asset Management
+  - url: https://notification-mcp-server.us-e1.cloudhub.io
+    description: Notification MCP - Email Communications
+
+paths:
+  # Agent Broker MCP Endpoints
+  /mcp/tools/orchestrate-employee-onboarding:
+    post:
+      tags:
+        - Agent Broker MCP
+      summary: Complete Employee Onboarding Orchestration
+      description: |
+        Orchestrates the complete employee onboarding process by coordinating all MCP servers:
+        1. Creates employee profile (Employee Onboarding MCP)
+        2. Allocates IT assets (Asset Allocation MCP)
+        3. Sends welcome email (Notification MCP)
+        4. Sends asset notification (Notification MCP)
+        5. Sends completion notification (Notification MCP)
+        
+        This is the primary entry point for automated employee onboarding.
+      operationId: orchestrateEmployeeOnboarding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingRequest'
+            examples:
+              fullOnboarding:
+                summary: Complete Onboarding Request
+                value:
+                  firstName: "John"
+                  lastName: "Doe"
+                  email: "john.doe@company.com"
+                  phone: "+1-555-0123"
+                  department: "Engineering"
+                  position: "Senior Software Engineer"
+                  startDate: "2024-03-15"
+                  salary: 95000
+                  manager: "Jane Smith"
+                  managerEmail: "jane.smith@company.com"
+                  companyName: "TechCorp Inc"
+                  assets: ["laptop", "id-card", "mobile-phone"]
+      responses:
+        '200':
+          description: Onboarding orchestration completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error during orchestration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /mcp/tools/get-onboarding-status:
+    get:
+      tags:
+        - Agent Broker MCP
+      summary: Get Employee Onboarding Status
+      description: Retrieves the current status of an employee onboarding process
+      operationId: getOnboardingStatus
+      parameters:
+        - name: employeeId
+          in: query
+          schema:
+            type: string
+          description: Employee ID to check status for
+        - name: email
+          in: query
+          schema:
+            type: string
+          description: Employee email to check status for
+      responses:
+        '200':
+          description: Onboarding status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingStatus'
+
+  # Employee Onboarding MCP Endpoints
+  /mcp/tools/create-employee:
+    post:
+      tags:
+        - Employee Onboarding MCP
+      summary: Create Employee Profile
+      description: Creates a new employee profile in the system
+      operationId: createEmployee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeProfile'
+      responses:
+        '201':
+          description: Employee profile created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponse'
+
+  /mcp/tools/get-employee:
+    get:
+      tags:
+        - Employee Onboarding MCP
+      summary: Get Employee Profile
+      description: Retrieves employee profile information
+      operationId: getEmployee
+      parameters:
+        - name: employeeId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Unique employee identifier
+      responses:
+        '200':
+          description: Employee profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeProfile'
+
+  # Asset Allocation MCP Endpoints
+  /mcp/tools/allocate-asset:
+    post:
+      tags:
+        - Asset Allocation MCP
+      summary: Allocate Asset to Employee
+      description: Assigns an IT asset to an employee
+      operationId: allocateAsset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetAllocationRequest'
+      responses:
+        '200':
+          description: Asset allocated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetAllocationResponse'
+
+  /mcp/tools/list-assets:
+    get:
+      tags:
+        - Asset Allocation MCP
+      summary: List Available Assets
+      description: Retrieves a list of available assets for allocation
+      operationId: listAssets
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [laptop, id-card, mobile-phone, monitor, peripheral]
+          description: Filter assets by category
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [available, allocated, maintenance, retired]
+          description: Filter assets by status
+      responses:
+        '200':
+          description: Asset list retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetList'
+
+  # Notification MCP Endpoints
+  /mcp/tools/send-welcome-email:
+    post:
+      tags:
+        - Notification MCP
+      summary: Send Employee Welcome Email
+      description: Sends a welcome email to a new employee
+      operationId: sendWelcomeEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WelcomeEmailRequest'
+      responses:
+        '200':
+          description: Welcome email sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+
+  /mcp/tools/send-asset-notification:
+    post:
+      tags:
+        - Notification MCP
+      summary: Send Asset Allocation Notification
+      description: Sends an email notification about allocated assets
+      operationId: sendAssetNotification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetNotificationRequest'
+      responses:
+        '200':
+          description: Asset notification sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+
+components:
+  schemas:
+    OnboardingRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+      properties:
+        firstName:
+          type: string
+          description: Employee first name
+          example: "John"
+        lastName:
+          type: string
+          description: Employee last name
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          description: Employee email address
+          example: "john.doe@company.com"
+        phone:
+          type: string
+          description: Employee phone number
+          example: "+1-555-0123"
+        department:
+          type: string
+          description: Department name
+          example: "Engineering"
+        position:
+          type: string
+          description: Job position/title
+          example: "Senior Software Engineer"
+        startDate:
+          type: string
+          format: date
+          description: Start date (YYYY-MM-DD format)
+          example: "2024-03-15"
+        salary:
+          type: number
+          description: Annual salary
+          example: 95000
+        manager:
+          type: string
+          description: Manager name
+          example: "Jane Smith"
+        managerEmail:
+          type: string
+          format: email
+          description: Manager email address
+          example: "jane.smith@company.com"
+        companyName:
+          type: string
+          description: Company name
+          example: "TechCorp Inc"
+        assets:
+          type: array
+          items:
+            type: string
+            enum: [laptop, id-card, mobile-phone, monitor, peripheral]
+          description: List of assets to allocate
+          example: ["laptop", "id-card", "mobile-phone"]
+
+    OnboardingResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Overall success status
+        employeeId:
+          type: string
+          description: Generated employee ID
+        processId:
+          type: string
+          description: Onboarding process tracking ID
+        steps:
+          type: object
+          properties:
+            profileCreation:
+              $ref: '#/components/schemas/StepResult'
+            assetAllocation:
+              $ref: '#/components/schemas/StepResult'
+            welcomeEmail:
+              $ref: '#/components/schemas/StepResult'
+            assetNotification:
+              $ref: '#/components/schemas/StepResult'
+            onboardingComplete:
+              $ref: '#/components/schemas/StepResult'
+        message:
+          type: string
+          description: Overall process message
+        timestamp:
+          type: string
+          format: date-time
+          description: Process completion timestamp
+
+    StepResult:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [completed, failed, pending]
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: object
+
+    OnboardingStatus:
+      type: object
+      properties:
+        employeeId:
+          type: string
+        processId:
+          type: string
+        currentStep:
+          type: string
+        overallStatus:
+          type: string
+          enum: [in-progress, completed, failed, pending]
+        steps:
+          type: object
+        lastUpdated:
+          type: string
+          format: date-time
+
+    EmployeeProfile:
+      type: object
+      properties:
+        employeeId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        department:
+          type: string
+        position:
+          type: string
+        startDate:
+          type: string
+          format: date
+        salary:
+          type: number
+        manager:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, pending]
+
+    EmployeeResponse:
+      type: object
+      properties:
+        employeeId:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    AssetAllocationRequest:
+      type: object
+      required:
+        - employeeId
+        - assetType
+      properties:
+        employeeId:
+          type: string
+          description: Employee ID to allocate asset to
+        assetType:
+          type: string
+          enum: [laptop, id-card, mobile-phone, monitor, peripheral]
+          description: Type of asset to allocate
+        specifications:
+          type: object
+          description: Asset-specific specifications
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          description: Allocation priority
+
+    AssetAllocationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        assetTag:
+          type: string
+        assetId:
+          type: string
+        allocationId:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    AssetList:
+      type: object
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Asset'
+        total:
+          type: integer
+        filters:
+          type: object
+
+    Asset:
+      type: object
+      properties:
+        assetId:
+          type: string
+        assetTag:
+          type: string
+        category:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+        status:
+          type: string
+        specifications:
+          type: object
+
+    WelcomeEmailRequest:
+      type: object
+      required:
+        - employeeId
+        - email
+        - firstName
+      properties:
+        employeeId:
+          type: string
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        department:
+          type: string
+        position:
+          type: string
+        startDate:
+          type: string
+          format: date
+        manager:
+          type: string
+        companyName:
+          type: string
+
+    AssetNotificationRequest:
+      type: object
+      required:
+        - employeeId
+        - email
+        - assets
+      properties:
+        employeeId:
+          type: string
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetDetails'
+
+    AssetDetails:
+      type: object
+      properties:
+        assetTag:
+          type: string
+        category:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+        specifications:
+          type: object
+
+    NotificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        messageId:
+          type: string
+        recipient:
+          type: string
+        subject:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error type
+        message:
+          type: string
+          description: Error description
+        code:
+          type: integer
+          description: Error code
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: object
+          description: Additional error details
+
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://anypoint.mulesoft.com/accounts/oauth2/token
+          scopes:
+            read: Read access to employee data
+            write: Write access for employee operations
+            admin: Administrative access
+
+security:
+  - OAuth2: [read, write]
+
+tags:
+  - name: Agent Broker MCP
+    description: Central orchestration service for complete employee onboarding workflows
+  - name: Employee Onboarding MCP
+    description: Employee profile and data management operations
+  - name: Asset Allocation MCP
+    description: IT asset management and allocation services
+  - name: Notification MCP
+    description: Email notification and communication services
+
+externalDocs:
+  description: Employee Onboarding Agent Fabric Documentation
+  url: https://github.com/mulesoft/employee-onboarding-agent-fabric/wiki

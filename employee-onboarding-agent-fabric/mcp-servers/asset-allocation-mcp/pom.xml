@@ -15,6 +15,24 @@
 
 	<name>Asset Allocation MCP Server</name>
 	<description>MCP Server for Asset Allocation Operations</description>
+
+	<!-- Additional properties for CloudHub deployment -->
+	<properties>
+		<!-- CloudHub deployment properties - can be overridden by -D parameters or .env -->
+		<anypoint.business.group>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</anypoint.business.group>
+		<anypoint.platform.env>Sandbox</anypoint.platform.env>
+		<cloudhub.region>us-east-1</cloudhub.region>
+		<cloudhub.workers>1</cloudhub.workers>
+		<cloudhub.worker.type>MICRO</cloudhub.worker.type>
+		<application.name>asset-allocation-mcp-server</application.name>
+		
+		<!-- Connected App Authentication Properties -->
+		<anypoint.platform.client_id>${env:CONNECTED_APP_CLIENT_ID}</anypoint.platform.client_id>
+		<anypoint.platform.client_secret>${env:CONNECTED_APP_CLIENT_SECRET}</anypoint.platform.client_secret>
+		<anypoint.username>${env:ANYPOINT_USERNAME}</anypoint.username>
+		<anypoint.password>${env:ANYPOINT_PASSWORD}</anypoint.password>
+	</properties>
+
 <build>
     <plugins>
         <plugin>
@@ -45,10 +63,20 @@
                     <applicationName>${application.name}</applicationName>
                     <businessGroupId>${anypoint.business.group}</businessGroupId>
                     <environment>${anypoint.platform.env}</environment>
-                    <region>us-east-1</region>
-                    <workers>1</workers>
-                    <workerType>MICRO</workerType>
+                    <region>${cloudhub.region}</region>
+                    <workers>${cloudhub.workers}</workers>
+                    <workerType>${cloudhub.worker.type}</workerType>
                     <objectStoreV2>true</objectStoreV2>
+                    
+                    <!-- Connected App Authentication Configuration -->
+                    <clientId>${anypoint.platform.client_id}</clientId>
+                    <clientSecret>${anypoint.platform.client_secret}</clientSecret>
+                    
+                    <!-- Application Properties -->
+                    <properties>
+                        <env>${anypoint.platform.env}</env>
+                        <http.port>8083</http.port>
+                    </properties>
                 </cloudHubDeployment>
             </configuration>
         </plugin>

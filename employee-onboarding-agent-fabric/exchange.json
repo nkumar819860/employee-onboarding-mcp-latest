@@ -1,0 +1,97 @@
+{
+    "name": "Employee Onboarding Agent Fabric",
+    "description": "Enterprise-grade agent fabric for complete employee onboarding automation - Multi-module MCP server suite with orchestration capabilities",
+    "version": "1.0.0",
+    "main": "pom.xml",
+    "groupId": "47562e5d-bf49-440a-a0f5-a9cea0a89aa9",
+    "assetId": "employee-onboarding-agent-fabric",
+    "classifier": "mcp",
+    "keywords": [
+        "mcp",
+        "parent-pom",
+        "employee-onboarding",
+        "multi-module",
+        "orchestration",
+        "asset-allocation",
+        "notification",
+        "agent-fabric",
+        "mulesoft"
+    ],
+    "author": "MCP Development Team",
+    "license": "MIT",
+    "homepage": "https://github.com/mulesoft/employee-onboarding-mcp-parent",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mulesoft/employee-onboarding-mcp-parent.git"
+    },
+    "bugs": {
+        "url": "https://github.com/mulesoft/employee-onboarding-mcp-parent/issues"
+    },
+    "tags": [
+        "Parent POM",
+        "MCP Server Suite",
+        "Multi-Module Project",
+        "Employee Onboarding",
+        "Process Automation"
+    ],
+    "categories": [
+        "Integration",
+        "Process Automation",
+        "Agent Network",
+        "Human Resources",
+        "Project Management"
+    ],
+    "contactName": "MCP Development Team",
+    "contactEmail": "mcp-dev@company.com",
+    "modules": [
+        "mcp-servers/notification-mcp",
+        "mcp-servers/employee-onboarding-mcp", 
+        "mcp-servers/asset-allocation-mcp",
+        "mcp-servers/agent-broker-mcp"
+    ],
+    "dependencies": [
+        {
+            "groupId": "org.mule.distributions",
+            "artifactId": "mule-runtime-impl-bom",
+            "version": "4.9.0",
+            "type": "pom",
+            "scope": "import"
+        },
+        {
+            "groupId": "org.mule.connectors",
+            "artifactId": "mule-http-connector",
+            "version": "1.9.0"
+        },
+        {
+            "groupId": "org.mule.connectors",
+            "artifactId": "mule-db-connector",
+            "version": "1.14.17"
+        },
+        {
+            "groupId": "org.mule.connectors",
+            "artifactId": "mule-email-connector",
+            "version": "1.7.4"
+        }
+    ],
+    "properties": {
+        "muleVersion": "4.9.0",
+        "runtimeVersion": "4.9-java17",
+        "javaVersion": "17",
+        "packaging": "pom",
+        "multiModule": "true"
+    },
+    "documentation": {
+        "summary": "Parent POM for Employee Onboarding MCP Server Suite providing centralized dependency management and build configuration for all MCP servers.",
+        "description": "This parent POM provides centralized management for the complete Employee Onboarding MCP Server Suite:\n\n- **Multi-Module Architecture**: Manages four specialized MCP servers as child modules\n- **Centralized Dependency Management**: Unified version management for Mule runtime and connectors\n- **Build Consistency**: Standardized build configuration across all modules\n- **Java 17 Compatibility**: Full support for modern Java runtime features\n\n## Child Modules\n\n### Agent Broker MCP\n- **Purpose**: Central orchestrator for complete employee onboarding workflow\n- **Coordinates**: End-to-end process management across all services\n- **Dependencies**: Employee Onboarding, Asset Allocation, and Notification MCPs\n\n### Employee Onboarding MCP\n- **Purpose**: Employee profile and data management\n- **Database**: PostgreSQL primary with H2 fallback support\n- **Operations**: Employee CRUD operations, profile validation\n\n### Asset Allocation MCP\n- **Purpose**: IT asset management and allocation\n- **Assets**: Laptops, ID cards, mobile phones, monitors, peripherals\n- **Operations**: Asset allocation, return processing, inventory tracking\n\n### Notification MCP\n- **Purpose**: Email notification and communication services\n- **Provider**: Gmail SMTP integration\n- **Templates**: Welcome emails, asset notifications, completion confirmations\n\n## Technical Specifications\n\n### Runtime Environment\n- **Mule Version**: 4.9.0 with Java 17 support\n- **Maven**: Multi-module project with shared plugin management\n- **Packaging**: POM packaging for parent, JAR for modules\n\n### Dependency Management\n- **BOM Import**: Mule Runtime Implementation BOM for version consistency\n- **Connector Versions**: Java 17 compatible connector versions\n- **Database Support**: PostgreSQL and H2 drivers included\n\n### Build Configuration\n- **Plugin Management**: Centralized Mule Maven Plugin configuration\n- **Exchange Integration**: Anypoint Exchange publishing support\n- **Deployment**: CloudHub 2.0 and Runtime Fabric ready\n\n## Development Workflow\n\n1. **Parent Build**: Builds all child modules in dependency order\n2. **Version Management**: Centralized version control for all modules\n3. **Testing**: Integrated testing across all MCP servers\n4. **Deployment**: Coordinated deployment to Anypoint Platform\n\n## Integration Architecture\n\nDesigned for seamless integration with:\n- Anypoint Platform (CloudHub 2.0, Runtime Fabric)\n- Anypoint Exchange (asset publishing and discovery)\n- Salesforce MuleSoft environments\n- Enterprise HR and IT systems\n- Agent Network frameworks\n\n## Usage\n\n```bash\n# Build all modules\nmvn clean compile\n\n# Package all modules\nmvn clean package\n\n# Deploy to Exchange\nmvn deploy -DskipMuleApplicationDeployment\n\n# Deploy to CloudHub\nmvn deploy -DmuleDeploy\n```"
+    },
+    "apiSpecification": {
+        "type": "OpenAPI",
+        "version": "3.0.3",
+        "location": "src/main/resources/api/employee-onboarding-agent-fabric-api.yaml",
+        "description": "Comprehensive OpenAPI 3.0.3 specification covering all MCP servers in the agent fabric with complete endpoint definitions, schemas, and examples"
+    },
+    "transport": {
+        "kind": "maven-multimodule",
+        "path": "/parent"
+    }
+}

@@ -1,7 +1,7 @@
 {
     "name":  "Asset Allocation MCP Server",
     "description":  "MCP Server for Asset Allocation Operations - Managing laptops, ID cards, mobile phones, and other company assets",
-    "version":  "..1",
+    "version":  "1.0.1",
     "main":  "asset-allocation-mcp-server.xml",
     "groupId":  "COE",
     "assetId":  "asset-allocation-mcp",

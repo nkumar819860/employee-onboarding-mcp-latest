@@ -1,7 +1,7 @@
 {
     "name":  "Employee Onboarding Agent Broker",
     "description":  "Agent Broker MCP Server for Employee Onboarding Process Orchestration - coordinates employee onboarding, asset allocation, and notifications",
-    "version":  "..1",
+    "version":  "1.0.1",
     "main":  "employee-onboarding-agent-broker.xml",
     "groupId":  "COE",
     "assetId":  "employee-onboarding-agent-broker",
