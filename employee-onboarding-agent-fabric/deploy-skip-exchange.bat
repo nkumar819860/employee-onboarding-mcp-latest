@@ -1,11 +1,12 @@
 @echo off
 REM ========================================
-REM COMPREHENSIVE DEPLOYMENT SCRIPT
+REM CLOUDHUB-ONLY DEPLOYMENT SCRIPT
+REM ⚠️  Skips Exchange publishing (401 error workaround)
 REM ✅ Load .env variables
-REM ✅ Clean target folders (fix locking issues)
+REM ✅ Clean target folders
 REM ✅ Compile projects
-REM ✅ Publish assets to Exchange
-REM ✅ Deploy to CloudHub
+REM ⏭️  Skip Exchange publishing
+REM ✅ Deploy directly to CloudHub
 REM ========================================
 
 setlocal enabledelayedexpansion
@@ -16,6 +17,7 @@ cd /d "%SCRIPT_DIR%"
 
 echo ========================================
 echo EMPLOYEE ONBOARDING DEPLOYMENT SCRIPT
+echo (CloudHub Only - Skipping Exchange)
 echo ========================================
 echo Working directory: %CD%
 echo.
@@ -126,7 +128,7 @@ echo.
 echo ✅ Discovered %SERVER_COUNT% MCP services:%SERVER_LIST%
 echo.
 
-REM === STEP 4: CLEAN TARGET FOLDERS (FIX LOCKING ISSUES) ===
+REM === STEP 4: CLEAN TARGET FOLDERS ===
 echo ==============================
 echo 🧹 CLEANING TARGET FOLDERS
 echo ==============================
@@ -203,47 +205,12 @@ echo.
 echo ✅ All MCP services compiled successfully
 echo.
 
-REM === STEP 6: PUBLISH TO EXCHANGE ===
+REM === STEP 6: SKIP EXCHANGE PUBLISHING ===
 echo ==============================
-echo 📤 PUBLISHING TO EXCHANGE
+echo ⏭️  SKIPPING EXCHANGE PUBLISHING
 echo ==============================
-
-echo 📤 Publishing MCP assets to Anypoint Exchange...
-echo ℹ️  Using new credentials with proper Exchange permissions
-echo.
-
-for /l %%i in (1,1,%SERVER_COUNT%) do (
-    call set "SRV=%%SERVER%%i%%"
-    echo.
-    echo [%%i/%SERVER_COUNT%] 📤 Publishing !SRV! to Exchange...
-    echo ================================
-    
-    cd /d "%SCRIPT_DIR%"
-    cd "mcp-servers\!SRV!"
-    echo 📁 Publishing from: %CD%
-    
-    REM Publish to Exchange using correct MCP classifier
-    echo   📦 Publishing !SRV! with MCP classifier to Exchange...
-    call mvn deploy -DskipMuleApplicationDeployment -DskipTests -q ^
-        -Danypoint.client.id="!ANYPOINT_CLIENT_ID!" ^
-        -Danypoint.client.secret="!ANYPOINT_CLIENT_SECRET!" ^
-        -Danypoint.businessGroup.id="!ANYPOINT_ORG_ID!" ^
-        -Danypoint.platform.base.uri="https://anypoint.mulesoft.com" ^
-        -Danypoint.exchange.base.uri="https://anypoint.mulesoft.com/exchange"
-    
-    if !errorlevel! neq 0 (
-        echo ❌ ERROR: Failed to publish !SRV! to Exchange
-        echo ℹ️  Exchange publication failed - continuing with CloudHub deployment
-        echo ℹ️  Check: EXCHANGE_401_AUTHENTICATION_FIX.md for troubleshooting
-    ) else (
-        echo ✅ !SRV! published to Exchange successfully
-    )
-    
-    cd /d "%SCRIPT_DIR%"
-)
-
-echo.
-echo ✅ Exchange publishing phase completed
+echo ⚠️  Skipping Exchange publishing due to 401 authentication issues
+echo 💡 Applications will be deployed directly to CloudHub using local JARs
 echo.
 
 REM === STEP 7: DEPLOY TO CLOUDHUB ===
@@ -270,11 +237,12 @@ for /l %%i in (1,1,%SERVER_COUNT%) do (
     echo 📁 Deploying from: %CD%
     
     echo   Running CloudHub deployment for !SRV!-server...
-    call mvn clean deploy ^
+    call mvn clean package deploy ^
         -DmuleDeploy ^
-        -Danypoint.client.id="!ANYPOINT_CLIENT_ID!" ^
-        -Danypoint.client.secret="!ANYPOINT_CLIENT_SECRET!" ^
-        -Danypoint.businessGroup.id="!ANYPOINT_ORG_ID!" ^
+        -DskipMuleApplicationDeployment=false ^
+        -Danypoint.platform.client_id="!ANYPOINT_CLIENT_ID!" ^
+        -Danypoint.platform.client_secret="!ANYPOINT_CLIENT_SECRET!" ^
+        -Danypoint.businessGroup="!ANYPOINT_ORG_ID!" ^
         -Danypoint.environment="!ANYPOINT_ENV!" ^
         -Dcloudhub.applicationName="!SRV!-server" ^
         -Dcloudhub.muleVersion="!MULE_VERSION!" ^
@@ -287,9 +255,30 @@ for /l %%i in (1,1,%SERVER_COUNT%) do (
     
     if !errorlevel! neq 0 (
         echo ❌ DEPLOYMENT FAILED for !SRV!
-        cd /d "%SCRIPT_DIR%"
-        pause
-        exit /b 1
+        echo 💡 Trying alternative deployment approach...
+        
+        REM Alternative approach using mule:deploy goal directly
+        call mvn mule:deploy ^
+            -Dmule.artifact=target\!SRV!-1.0.2-mule-application.jar ^
+            -Danypoint.platform.client_id="!ANYPOINT_CLIENT_ID!" ^
+            -Danypoint.platform.client_secret="!ANYPOINT_CLIENT_SECRET!" ^
+            -Danypoint.businessGroup="!ANYPOINT_ORG_ID!" ^
+            -Danypoint.environment="!ANYPOINT_ENV!" ^
+            -Dcloudhub.applicationName="!SRV!-server" ^
+            -Dcloudhub.muleVersion="!MULE_VERSION!" ^
+            -Dcloudhub.region="!CLOUDHUB_REGION!" ^
+            -Dcloudhub.workers="!CLOUDHUB_WORKERS!" ^
+            -Dcloudhub.workerType="!CLOUDHUB_WORKER_TYPE!" ^
+            -Dcloudhub.objectStoreV2=true
+        
+        if !errorlevel! neq 0 (
+            echo ❌ BOTH DEPLOYMENT APPROACHES FAILED for !SRV!
+            echo 📋 Check CloudHub console for existing applications
+            echo 🔧 Verify credentials and permissions
+            cd /d "%SCRIPT_DIR%"
+            pause
+            exit /b 1
+        )
     )
     
     echo ✅ !SRV!-server deployed successfully
@@ -307,8 +296,8 @@ echo ==============================
 echo 🧪 PERFORMING HEALTH CHECKS
 echo ==============================
 
-echo Waiting 15 seconds for applications to start...
-timeout /t 15 /nobreak >nul
+echo Waiting 30 seconds for applications to start...
+timeout /t 30 /nobreak >nul
 
 echo Testing deployed services:
 
@@ -318,7 +307,7 @@ for /l %%i in (1,1,%SERVER_COUNT%) do (
     
     powershell -Command ^
         "try { ^
-            $response = Invoke-WebRequest -Uri 'https://!SRV!-server.us-e1.cloudhub.io/health' -UseBasicParsing -TimeoutSec 10 -Method GET; ^
+            $response = Invoke-WebRequest -Uri 'https://!SRV!-server.us-e1.cloudhub.io/health' -UseBasicParsing -TimeoutSec 15 -Method GET; ^
             if ($response.StatusCode -eq 200) { ^
                 Write-Host '    ✅ !SRV!-server: HEALTHY' -ForegroundColor Green ^
             } else { ^
@@ -360,12 +349,15 @@ if exist "mcp-servers\agent-broker-mcp" (
 )
 
 echo.
-echo ✅ DEPLOYMENT SCRIPT COMPLETED SUCCESSFULLY
+echo ✅ CLOUDHUB DEPLOYMENT COMPLETED SUCCESSFULLY
 echo   - %SERVER_COUNT% services compiled
-echo   - Target folders cleaned
-echo   - Exchange publishing attempted (with new credentials)
+echo   - Target folders cleaned  
+echo   - Exchange publishing skipped (401 error workaround)
 echo   - All services deployed to CloudHub
 echo   - Health checks performed
+echo.
+echo ⚠️  NOTE: Services deployed without Exchange artifacts
+echo 💡 Exchange publishing can be configured separately once 401 issues are resolved
 echo.
 echo Ready for testing and use!
 echo.

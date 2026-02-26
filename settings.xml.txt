@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 
+          http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+  <localRepository>${user.home}/.m2/repository</localRepository>
+
+  <servers>
+    <!-- ✅ EXCHANGE v3 - Connected App Credentials -->
+    <server>
+      <id>anypoint-exchange</id>
+      <username>~~~Token~~~</username>
+      <password>b3ee6a4c-9aa7-4913-9402-a8d35420a692</password>
+    </server>
+    
+    <!-- ✅ EXCHANGE for Publishing - Connected App Credentials -->
+    <server>
+      <id>anypoint-exchange</id>
+      <username>~~~Client~~~</username>
+      <password>867ff64da92f4dd89c428f27c3f7c7f1~~~09f4C0a99F494785be2918F6e0Cd6e9B</password>
+    </server>
+    
+    <!-- ✅ CLOUDHUB Deployment (Updated with NEW Connected App) -->
+    <server>
+      <id>CloudHub</id>
+      <username>~~~Client~~~</username>
+      <password>867ff64da92f4dd89c428f27c3f7c7f1~~~09f4C0a99F494785be2918F6e0Cd6e9B</password>
+    </server>
+    
+    <!-- REPOSITORIES (Updated with NEW Connected App) -->
+    <server>
+      <id>MuleRepository</id>
+      <username>867ff64da92f4dd89c428f27c3f7c7f1</username>
+      <password>867ff64da92f4dd89c428f27c3f7c7f1|09f4C0a99F494785be2918F6e0Cd6e9B</password>
+    </server>
+    <server>
+      <id>mulesoft-releases</id>
+      <username>867ff64da92f4dd89c428f27c3f7c7f1</username>
+      <password>867ff64da92f4dd89c428f27c3f7c7f1|09f4C0a99F494785be2918F6e0Cd6e9B</password>
+    </server>
+    
+    <!-- ENTERPRISE EDITION REPOSITORY -->
+    <server>
+      <id>mule-ee-releases</id>
+      <username>inveniobusinesssolutions.nexus</username>
+      <password>sqANY2AWA5G6fXM</password>
+    </server>
+    
+    <!-- PUBLIC REPOS (No password needed) -->
+    <server>
+      <id>central</id>
+    </server>
+  </servers>
+
+  <profiles>
+    <profile>
+      <id>mulesoft</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <repositories>
+        <repository>
+          <id>anypoint-exchange-v3</id>
+          <name>Anypoint Exchange V3</name>
+          <url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+          <layout>default</layout>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+        <repository>
+          <id>anypoint-exchange</id>
+          <name>Anypoint Exchange</name>
+          <url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+        </repository>
+        <repository>
+          <id>mulesoft-releases</id>
+          <name>MuleSoft Releases</name>
+          <url>https://repository.mulesoft.org/releases/</url>
+        </repository>
+        <repository>
+          <id>mule-ee-releases</id>
+          <name>MuleSoft Enterprise Edition Releases</name>
+          <url>https://repository.mulesoft.org/nexus/content/repositories/releases-ee/</url>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>mulesoft-releases</id>
+          <url>https://repository.mulesoft.org/releases/</url>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+
+  <activeProfiles>
+    <activeProfile>mulesoft</activeProfile>
+  </activeProfiles>
+
+</settings>

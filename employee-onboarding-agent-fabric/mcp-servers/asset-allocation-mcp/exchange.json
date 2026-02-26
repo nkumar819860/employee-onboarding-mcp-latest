@@ -3,6 +3,9 @@
     "description":  "MCP Server for Asset Allocation Operations - Managing laptops, ID cards, mobile phones, and other company assets",
     "version":  "..1",
     "main":  "asset-allocation-mcp-server.xml",
+    "groupId":  "COE",
+    "assetId":  "asset-allocation-mcp",
+    "classifier":  "mcp",
     "keywords":  [
                      "mcp",
                      "asset-allocation",
@@ -65,5 +68,9 @@
                              "version":  "3.0.3",
                              "location":  "src/main/resources/api/asset-allocation-mcp-api.yaml",
                              "description":  "Complete OpenAPI specification with detailed asset management endpoints, database models, and comprehensive examples"
-                         }
+                         },
+    "transport": {
+        "kind": "streamableHttp",
+        "path": "/assets"
+    }
 }

@@ -5,7 +5,7 @@
     "main":  "employee-onboarding-agent-broker.xml",
     "groupId":  "COE",
     "assetId":  "employee-onboarding-agent-broker",
-    "classifier":  "mule-application",
+    "classifier":  "mcp",
     "keywords":  [
                      "mcp",
                      "agent-broker",
@@ -68,5 +68,9 @@
                              "version":  "3.0.3",
                              "location":  "src/main/resources/api/agent-broker-mcp-api.yaml",
                              "description":  "Complete OpenAPI specification with orchestration workflows, integration patterns, and comprehensive service coordination examples"
-                         }
+                         },
+    "transport": {
+        "kind": "streamableHttp",
+        "path": "/assets"
+    }
 }

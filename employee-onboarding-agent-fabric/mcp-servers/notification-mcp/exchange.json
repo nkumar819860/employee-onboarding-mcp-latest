@@ -3,6 +3,9 @@
     "description":  "MCP Server for Email Notifications - Employee Onboarding \u0026 Asset Allocation confirmations using Gmail SMTP",
     "version":  "..1",
     "main":  "notification-mcp-server.xml",
+    "groupId":  "COE",
+    "assetId":  "notification-mcp",
+    "classifier":  "mcp",
     "keywords":  [
                      "mcp",
                      "notification",
@@ -66,5 +69,9 @@
                              "version":  "3.0.3",
                              "location":  "src/main/resources/api/notification-mcp-api.yaml",
                              "description":  "Complete OpenAPI specification with all endpoint definitions, schemas, and examples"
-                         }
+                         },
+    "transport": {
+        "kind": "streamableHttp",
+        "path": "/assets"
+    }
 }

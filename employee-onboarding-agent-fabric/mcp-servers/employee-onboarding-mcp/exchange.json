@@ -1,6 +1,10 @@
 {
     "name": "Employee Onboarding MCP Server",
     "description": "MCP Server for Employee Database Operations with PostgreSQL/H2 Fallback Support",
+    "version": "..1",
+    "main": "employee-onboarding-mcp-server.xml",
+    "groupId": "COE",
+    "assetId": "employee-onboarding-mcp",
     "classifier": "mcp",
     "keywords": [
         "mcp",
@@ -31,5 +35,9 @@
             "key": "agent-fabric",
             "value": "enabled"
         }
-    ]
+    ],
+    "transport": {
+        "kind": "streamableHttp",
+        "path": "/assets"
+    }
 }
