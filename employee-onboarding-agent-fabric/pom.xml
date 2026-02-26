@@ -103,12 +103,6 @@
                 <version>${mule.http.connector.version}</version>
                 <classifier>mule-plugin</classifier>
             </dependency>
-			<dependency>
-              <groupId>org.mule.connectors</groupId>
-              <artifactId>mule-http-connector</artifactId>
-              <version>${mule.http.request.version}</version>
-              <classifier>mule-plugin</classifier>
-            </dependency>
             <dependency>
                 <groupId>org.mule.connectors</groupId>
                 <artifactId>mule-email-connector</artifactId>
@@ -132,15 +126,13 @@
 
     <!-- ✅ FIXED: Clean distributionManagement -->
     <distributionManagement>
-        <repository>
-            <id>anypoint-exchange-v3</id>
-            <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
-        </repository>
-        <snapshotRepository>
-            <id>anypoint-exchange-v3</id>
-            <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
-        </snapshotRepository>
-    </distributionManagement>
+    <repository>
+        <id>anypoint-exchange</id>
+        <name>Anypoint Exchange</name>
+        <url>https://maven.anypoint.mulesoft.com/api/v1/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
+    </repository>
+</distributionManagement>
+
 
     <!-- ✅ Plugin Management -->
     <build>
@@ -153,5 +145,15 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+        
+        <plugins>
+            <!-- ✅ Mule Maven Plugin for Exchange Publishing -->
+            <plugin>
+                <groupId>org.mule.tools.maven</groupId>
+                <artifactId>mule-maven-plugin</artifactId>
+                <version>${mule.maven.plugin.version}</version>
+                <extensions>true</extensions>
+            </plugin>
+        </plugins>
     </build>
 </project>

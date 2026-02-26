@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
@@ -16,23 +18,34 @@
 	<name>Agent Broker MCP Server</name>
 	<description>MCP Server for Employee Onboarding Agent Broker</description>
 
-	<!-- ✅ REMOVED: No local properties - uses parent -->
-
 	<build>
 		<plugins>
-			<!-- ✅ REMOVED: Compiler - inherits from parent pluginManagement -->
-			<!-- ✅ FIXED: Mule Maven Plugin - OVERRIDES parent -->
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>mule-maven-plugin</artifactId>
-				<!-- Inherits version from parent -->
+				<!-- ✅ Inherits ${mule.maven.plugin.version} from parent -->
 				<extensions>true</extensions>
+
 				<configuration>
+					<!-- ✅ Shared libraries - CORRECTLY inside configuration -->
+					<sharedLibraries>
+						<sharedLibrary>
+							<groupId>com.h2database</groupId>
+							<artifactId>h2</artifactId>
+						</sharedLibrary>
+						<sharedLibrary>
+							<groupId>org.postgresql</groupId>
+							<artifactId>postgresql</artifactId>
+						</sharedLibrary>
+					</sharedLibraries>
+
+					<!-- ✅ CloudHub deployment (used by mule:deploy command) -->
 					<cloudHubDeployment>
 						<uri>https://anypoint.mulesoft.com</uri>
 						<muleVersion>${mule.runtime.version}</muleVersion>
+						<javaVersion>${java.version}</javaVersion>
 						<server>CloudHub</server>
-						<applicationName>agent-broker-mcp-server</applicationName>
+						<applicationName>${application.name}</applicationName>
 						<businessGroupId>${anypoint.business.group}</businessGroupId>
 						<environment>${anypoint.platform.env}</environment>
 						<region>us-east-1</region>
@@ -44,6 +57,7 @@
 			</plugin>
 		</plugins>
 	</build>
+
 
 	<!-- ✅ SIMPLIFIED: Inherits ALL versions from parent dependencyManagement -->
 	<dependencies>
@@ -87,5 +101,4 @@
 		</dependency>
 	</dependencies>
 
-	<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
 </project>

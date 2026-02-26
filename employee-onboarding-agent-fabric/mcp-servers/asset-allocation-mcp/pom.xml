@@ -15,35 +15,46 @@
 
 	<name>Asset Allocation MCP Server</name>
 	<description>MCP Server for Asset Allocation Operations</description>
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.mule.tools.maven</groupId>
+            <artifactId>mule-maven-plugin</artifactId>
+            <!-- ✅ Inherits ${mule.maven.plugin.version} from parent -->
+            <extensions>true</extensions>
+            
+            <configuration>
+                <!-- ✅ Shared libraries - CORRECTLY inside configuration -->
+                <sharedLibraries>
+                    <sharedLibrary>
+                        <groupId>com.h2database</groupId>
+                        <artifactId>h2</artifactId>
+                    </sharedLibrary>
+                    <sharedLibrary>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                    </sharedLibrary>
+                </sharedLibraries>
 
-	<!-- ✅ REMOVED: No local properties - uses parent -->
+                <!-- ✅ CloudHub deployment (used by mule:deploy command) -->
+                <cloudHubDeployment>
+                    <uri>https://anypoint.mulesoft.com</uri>
+                    <muleVersion>${mule.runtime.version}</muleVersion>
+                    <javaVersion>${java.version}</javaVersion>
+                    <server>CloudHub</server>
+                    <applicationName>${application.name}</applicationName>
+                    <businessGroupId>${anypoint.business.group}</businessGroupId>
+                    <environment>${anypoint.platform.env}</environment>
+                    <region>us-east-1</region>
+                    <workers>1</workers>
+                    <workerType>MICRO</workerType>
+                    <objectStoreV2>true</objectStoreV2>
+                </cloudHubDeployment>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
 
-	<build>
-		<plugins>
-			<!-- ✅ REMOVED: Compiler - inherits from parent pluginManagement -->
-			<!-- ✅ FIXED: Mule Maven Plugin - OVERRIDES parent -->
-			<plugin>
-				<groupId>org.mule.tools.maven</groupId>
-				<artifactId>mule-maven-plugin</artifactId>
-				<!-- Inherits version from parent -->
-				<extensions>true</extensions>
-				<configuration>
-					<cloudHubDeployment>
-						<uri>https://anypoint.mulesoft.com</uri>
-						<muleVersion>${mule.runtime.version}</muleVersion>
-						<server>CloudHub</server>
-						<applicationName>asset-allocation-mcp-server</applicationName>
-						<businessGroupId>${anypoint.business.group}</businessGroupId>
-						<environment>${anypoint.platform.env}</environment>
-						<region>us-east-1</region>
-						<workers>1</workers>
-						<workerType>MICRO</workerType>
-						<objectStoreV2>true</objectStoreV2>
-					</cloudHubDeployment>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 
 	<!-- ✅ SIMPLIFIED: Inherits ALL versions from parent dependencyManagement -->
 	<dependencies>

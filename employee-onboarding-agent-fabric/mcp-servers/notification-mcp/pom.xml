@@ -49,15 +49,28 @@
 
 	</dependencies>
 
-	<!-- ✅ FIXED: Inherits plugin version + OVERRIDES app name only -->
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>mule-maven-plugin</artifactId>
-				<!-- ✅ FIXED: Inherits ${mule.maven.plugin.version} from parent -->
+				<!-- ✅ Inherits ${mule.maven.plugin.version} from parent -->
 				<extensions>true</extensions>
+
 				<configuration>
+					<!-- ✅ Shared libraries - CORRECTLY inside configuration -->
+					<sharedLibraries>
+						<sharedLibrary>
+							<groupId>com.h2database</groupId>
+							<artifactId>h2</artifactId>
+						</sharedLibrary>
+						<sharedLibrary>
+							<groupId>org.postgresql</groupId>
+							<artifactId>postgresql</artifactId>
+						</sharedLibrary>
+					</sharedLibraries>
+
+					<!-- ✅ CloudHub deployment (used by mule:deploy command) -->
 					<cloudHubDeployment>
 						<uri>https://anypoint.mulesoft.com</uri>
 						<muleVersion>${mule.runtime.version}</muleVersion>
@@ -75,4 +88,9 @@
 			</plugin>
 		</plugins>
 	</build>
+
+
+
+
+
 </project>

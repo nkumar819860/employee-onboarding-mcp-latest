@@ -13,6 +13,7 @@
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
+	<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
 	<artifactId>employee-onboarding-mcp</artifactId>
 	<version>1.0.3</version>
 	<packaging>mule-application</packaging>
@@ -20,8 +21,13 @@
 	<name>Employee Onboarding MCP Server</name>
 	<description>MCP Server for Employee Database Operations</description>
 
-	<dependencies>
+	<properties>
+		<mule.maven.plugin.version>4.5.0</mule.maven.plugin.version>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
+	</properties>
 
+	<dependencies>
 		<!-- HTTP Connector -->
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
@@ -42,47 +48,42 @@
 			<artifactId>postgresql</artifactId>
 		</dependency>
 
-		<!-- H2 Driver (for local testing only) -->
+		<!-- H2 Driver (local testing) -->
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-
-		<!-- APIKit (only if you are using RAML) -->
-		<dependency>
-			<groupId>org.mule.modules</groupId>
-			<artifactId>mule-apikit-module</artifactId>
-			<classifier>mule-plugin</classifier>
-		</dependency>
-
 	</dependencies>
 
 	<build>
 		<plugins>
-
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>mule-maven-plugin</artifactId>
+				<!-- ✅ Inherits ${mule.maven.plugin.version} from parent -->
 				<extensions>true</extensions>
 
 				<configuration>
+					<!-- ✅ Shared libraries - CORRECTLY inside configuration -->
 					<sharedLibraries>
 						<sharedLibrary>
 							<groupId>com.h2database</groupId>
 							<artifactId>h2</artifactId>
 						</sharedLibrary>
-
 						<sharedLibrary>
 							<groupId>org.postgresql</groupId>
 							<artifactId>postgresql</artifactId>
 						</sharedLibrary>
 					</sharedLibraries>
+
+					<!-- ✅ CloudHub deployment (used by mule:deploy command) -->
 					<cloudHubDeployment>
 						<uri>https://anypoint.mulesoft.com</uri>
 						<muleVersion>${mule.runtime.version}</muleVersion>
+						<javaVersion>${java.version}</javaVersion>
 						<server>CloudHub</server>
-						<applicationName>employee-onboarding-mcp-server</applicationName>
+						<applicationName>${application.name}</applicationName>
 						<businessGroupId>${anypoint.business.group}</businessGroupId>
 						<environment>${anypoint.platform.env}</environment>
 						<region>us-east-1</region>
@@ -90,11 +91,18 @@
 						<workerType>MICRO</workerType>
 						<objectStoreV2>true</objectStoreV2>
 					</cloudHubDeployment>
-
 				</configuration>
 			</plugin>
-
 		</plugins>
 	</build>
 
+
+	<!-- ✅ Exchange Repository -->
+	<distributionManagement>
+		<repository>
+			<id>anypoint-exchange</id>
+			<name>Anypoint Exchange</name>
+			<url>https://maven.anypoint.mulesoft.com/api/v1/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
+		</repository>
+	</distributionManagement>
 </project>
