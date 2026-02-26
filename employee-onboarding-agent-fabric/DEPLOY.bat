@@ -203,47 +203,75 @@ echo.
 echo ✅ All MCP services compiled successfully
 echo.
 
-REM === STEP 6: PUBLISH TO EXCHANGE ===
+REM === STEP 6: PUBLISH TO EXCHANGE (OPTIONAL) ===
 echo ==============================
-echo 📤 PUBLISHING TO EXCHANGE
+echo 📤 EXCHANGE PUBLICATION OPTIONS
 echo ==============================
 
-echo 📤 Publishing MCP assets to Anypoint Exchange...
-echo ℹ️  Using new credentials with proper Exchange permissions
+echo Do you want to publish assets to Anypoint Exchange?
+echo [Y] Yes - Publish to Exchange (requires proper Exchange permissions)
+echo [N] No  - Skip Exchange publication (CloudHub deployment only)
 echo.
+set /p PUBLISH_CHOICE=Enter your choice (Y/N): 
 
-for /l %%i in (1,1,%SERVER_COUNT%) do (
-    call set "SRV=%%SERVER%%i%%"
-    echo.
-    echo [%%i/%SERVER_COUNT%] 📤 Publishing !SRV! to Exchange...
-    echo ================================
-    
-    cd /d "%SCRIPT_DIR%"
-    cd "mcp-servers\!SRV!"
-    echo 📁 Publishing from: %CD%
-    
-    REM Publish to Exchange using correct MCP classifier
-    echo   📦 Publishing !SRV! with MCP classifier to Exchange...
-    call mvn deploy -DskipMuleApplicationDeployment -DskipTests -q ^
-        -Danypoint.client.id="!ANYPOINT_CLIENT_ID!" ^
-        -Danypoint.client.secret="!ANYPOINT_CLIENT_SECRET!" ^
-        -Danypoint.businessGroup.id="!ANYPOINT_ORG_ID!" ^
-        -Danypoint.platform.base.uri="https://anypoint.mulesoft.com" ^
-        -Danypoint.exchange.base.uri="https://anypoint.mulesoft.com/exchange"
-    
-    if !errorlevel! neq 0 (
-        echo ❌ ERROR: Failed to publish !SRV! to Exchange
-        echo ℹ️  Exchange publication failed - continuing with CloudHub deployment
-        echo ℹ️  Check: EXCHANGE_401_AUTHENTICATION_FIX.md for troubleshooting
-    ) else (
-        echo ✅ !SRV! published to Exchange successfully
-    )
-    
-    cd /d "%SCRIPT_DIR%"
+if /i "%PUBLISH_CHOICE%"=="Y" (
+    set SKIP_EXCHANGE=false
+    echo ✅ Exchange publication ENABLED
+) else if /i "%PUBLISH_CHOICE%"=="N" (
+    set SKIP_EXCHANGE=true
+    echo ℹ️  Exchange publication SKIPPED - CloudHub deployment only
+) else (
+    echo ❌ Invalid choice. Defaulting to SKIP Exchange publication
+    set SKIP_EXCHANGE=true
 )
 
 echo.
-echo ✅ Exchange publishing phase completed
+
+if "%SKIP_EXCHANGE%"=="false" (
+    echo ==============================
+    echo 📤 PUBLISHING TO EXCHANGE
+    echo ==============================
+    
+    echo 📤 Publishing MCP assets to Anypoint Exchange...
+    echo ℹ️  Using new credentials with proper Exchange permissions
+    echo.
+
+    for /l %%i in (1,1,%SERVER_COUNT%) do (
+        call set "SRV=%%SERVER%%i%%"
+        echo.
+        echo [%%i/%SERVER_COUNT%] 📤 Publishing !SRV! to Exchange...
+        echo ================================
+        
+        cd /d "%SCRIPT_DIR%"
+        cd "mcp-servers\!SRV!"
+        echo 📁 Publishing from: %CD%
+        
+        REM Publish to Exchange using correct MCP classifier
+        echo   📦 Publishing !SRV! with MCP classifier to Exchange...
+        call mvn deploy -DskipMuleApplicationDeployment -DskipTests -q ^
+            -Danypoint.client.id="!ANYPOINT_CLIENT_ID!" ^
+            -Danypoint.client.secret="!ANYPOINT_CLIENT_SECRET!" ^
+            -Danypoint.businessGroup.id="!ANYPOINT_ORG_ID!" ^
+            -Danypoint.platform.base.uri="https://anypoint.mulesoft.com" ^
+            -Danypoint.exchange.base.uri="https://anypoint.mulesoft.com/exchange"
+        
+        if !errorlevel! neq 0 (
+            echo ❌ ERROR: Failed to publish !SRV! to Exchange
+            echo ℹ️  Exchange publication failed - continuing with CloudHub deployment
+            echo ℹ️  Check: EXCHANGE_401_AUTHENTICATION_FIX.md for troubleshooting
+        ) else (
+            echo ✅ !SRV! published to Exchange successfully
+        )
+        
+        cd /d "%SCRIPT_DIR%"
+    )
+
+    echo.
+    echo ✅ Exchange publishing phase completed
+) else (
+    echo ℹ️  Exchange publication skipped as requested
+)
+
 echo.
 
 REM === STEP 7: DEPLOY TO CLOUDHUB ===
@@ -363,7 +391,11 @@ echo.
 echo ✅ DEPLOYMENT SCRIPT COMPLETED SUCCESSFULLY
 echo   - %SERVER_COUNT% services compiled
 echo   - Target folders cleaned
-echo   - Exchange publishing attempted (with new credentials)
+if "%SKIP_EXCHANGE%"=="false" (
+    echo   - Exchange publishing attempted ^(with corrected credentials^)
+) else (
+    echo   - Exchange publishing skipped ^(as requested^)
+)
 echo   - All services deployed to CloudHub
 echo   - Health checks performed
 echo.
