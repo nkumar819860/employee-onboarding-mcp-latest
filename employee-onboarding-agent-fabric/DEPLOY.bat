@@ -176,8 +176,8 @@ for /l %%i in (1,1,%SERVER_COUNT%) do (
     cd "mcp-servers\!SRV!"
     echo 📁 Compiling from: %CD%
     
-    echo   Running: mvn clean compile package -DskipTests -U
-    call mvn clean compile package -DskipTests -U
+    echo   Running: mvn clean compile package -DskipTests -T 4 -q
+    call mvn clean compile package -DskipTests -T 4 -q
     if !errorlevel! neq 0 (
         echo ❌ COMPILATION FAILED for !SRV!
         cd /d "%SCRIPT_DIR%"
@@ -218,39 +218,41 @@ for /l %%i in (1,1,%SERVER_COUNT%) do (
     cd "mcp-servers\!SRV!"
     echo 📁 Working from: %CD%
     
-    REM Extract current version from pom.xml
+    REM Extract current version from pom.xml (Windows compatible) 
     echo   🔍 Checking current version...
-    for /f "tokens=2 delims=><" %%v in ('findstr "<version>" pom.xml ^| findstr -v "parent" ^| findstr -v "mule" ^| findstr -v "connector" ^| head -n 1') do (
+    
+    REM Clear any previous version
+    set "CURRENT_VERSION="
+    
+    REM Use PowerShell to extract version more reliably
+    for /f "usebackq delims=" %%v in (`powershell -Command "([xml](Get-Content pom.xml)).project.version"`) do (
         set "CURRENT_VERSION=%%v"
     )
     
+    REM If PowerShell fails or returns empty, use fallback method
+    if "!CURRENT_VERSION!"=="" (
+        REM Simple regex approach - get first version tag that's not in parent block
+        for /f "skip=1 tokens=2 delims=<>" %%v in ('findstr "<version>" pom.xml') do (
+            if not defined CURRENT_VERSION (
+                set "CURRENT_VERSION=%%v"
+                goto :version_found
+            )
+        )
+    )
+    
+    :version_found
+    REM Final fallback to default version
+    if "!CURRENT_VERSION!"=="" set "CURRENT_VERSION=1.0.3"
+    
     echo   Current version: !CURRENT_VERSION!
     
-    REM For simplicity, assume asset exists and increment version
-    echo   📦 Incrementing version for Exchange publishing...
+    REM Skip version increment for faster deployment - use existing version
+    echo   📦 Using existing version for Exchange publishing...
+    set "NEW_VERSION=!CURRENT_VERSION!"
     
-    REM Parse version and increment patch number
-    for /f "tokens=1,2,3 delims=." %%a in ("!CURRENT_VERSION!") do (
-        set "MAJOR=%%a"
-        set "MINOR=%%b"  
-        set "PATCH=%%c"
-    )
+    echo   🔢 Publishing with version: !NEW_VERSION!
     
-    set /a NEW_PATCH=!PATCH!+1
-    set "NEW_VERSION=!MAJOR!.!MINOR!.!NEW_PATCH!"
-    
-    echo   🔢 Version increment: !CURRENT_VERSION! → !NEW_VERSION!
-    
-    REM Update pom.xml version using simple find/replace
-    powershell -Command "(Get-Content pom.xml) -replace '<version>!CURRENT_VERSION!</version>', '<version>!NEW_VERSION!</version>' | Set-Content pom.xml"
-    
-    REM Update exchange.json version if it exists
-    if exist "exchange.json" (
-        echo   📝 Updating exchange.json version...
-        powershell -Command "$json = Get-Content exchange.json | ConvertFrom-Json; $json.version = '!NEW_VERSION!'; $json | ConvertTo-Json -Depth 10 | Set-Content exchange.json"
-    )
-    
-    REM Create simple exchange.json if it doesn't exist
+    REM Ensure exchange.json exists with current version
     if not exist "exchange.json" (
         echo   📄 Creating exchange.json...
         echo { > exchange.json
@@ -265,32 +267,23 @@ for /l %%i in (1,1,%SERVER_COUNT%) do (
         echo } >> exchange.json
     )
     
-    echo   ✅ Version updated to !NEW_VERSION!
+    echo   ✅ Ready for Exchange publishing with version !NEW_VERSION!
     
     echo    Publishing to Exchange with version !NEW_VERSION!...
     
-    REM Try Exchange publishing with retry logic
-    set EXCHANGE_SUCCESS=0
-    for /l %%r in (1,1,3) do (
-        if !EXCHANGE_SUCCESS! equ 0 (
-            echo   Attempt %%r/3: Publishing to Exchange...
-            call mvn clean deploy -DaltDeploymentRepository=anypoint-exchange::default::https://maven.anypoint.mulesoft.com/api/v1/organizations/!ANYPOINT_ORG_ID!/maven -Danypoint.platform.client_id="!ANYPOINT_CLIENT_ID!" -Danypoint.platform.client_secret="!ANYPOINT_CLIENT_SECRET!" -DskipTests -q
-            
-            if !errorlevel! equ 0 (
-                echo ✅ !SRV! v!NEW_VERSION! published to Exchange successfully
-                set EXCHANGE_SUCCESS=1
-            ) else (
-                if %%r lss 3 (
-                    echo   ⏳ Retrying in 5 seconds...
-                    timeout /t 5 >nul
-                ) else (
-                    echo ⚠️  Warning: Exchange publish failed after 3 attempts for !SRV! v!NEW_VERSION!
-                    echo   This is often due to network connectivity issues or repository timeouts
-                    echo   The deployment will continue to CloudHub regardless
-                )
-            )
-        )
+    REM 401 Error has been FIXED - Now publishing to Exchange!
+    echo   📤 Publishing !SRV! to Anypoint Exchange...
+    call mvn deploy -DskipMuleApplicationDeployment -DskipTests -q
+    
+    if !errorlevel! neq 0 (
+        echo ❌ ERROR: Failed to publish !SRV! to Exchange
+        echo Check Maven settings.xml and Exchange server configuration
+        cd /d "%SCRIPT_DIR%"
+        pause
+        exit /b 1
     )
+    
+    echo   ✅ !SRV! published to Exchange successfully
     
     cd /d "%SCRIPT_DIR%"
 )
