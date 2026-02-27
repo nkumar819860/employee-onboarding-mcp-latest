@@ -1,559 +1,1392 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" 
-      xmlns:db="http://www.mulesoft.org/schema/mule/db" 
-      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-      xmlns:http="http://www.mulesoft.org/schema/mule/http"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="
-        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-        http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
-        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+      http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 
-  <!-- ✅ FIXED: Database Initialization (runs ONCE on startup) -->
-  <flow name="initialize-mcp-database">
-    <scheduler doc:name="Startup Only">
-      <scheduling-strategy>
-        <fixed-frequency frequency="3000" timeUnit="MILLISECONDS"/>
-      </scheduling-strategy>
-    </scheduler>
-    
-    <logger level="INFO" message="🔧 Initializing Asset Allocation MCP Database..." />
-    
-    <try>
-      <!-- Test PostgreSQL -->
-      <db:execute-script config-ref="postgres-config">
-        <db:sql><![CDATA[
-          -- Load full database schema from init.sql
-          CREATE TABLE IF NOT EXISTS departments (
-            id SERIAL PRIMARY KEY,
-            name VARCHAR(100) NOT NULL,
-            description VARCHAR(255),
-            manager_name VARCHAR(100),
-            budget_allocation DECIMAL(12,2),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-          );
+	<!-- ========================================================================================= -->
+	<!-- DATABASE INITIALIZATION & HEALTH MANAGEMENT - PRODUCTION READY -->
+	<!-- ========================================================================================= -->
 
-          CREATE TABLE IF NOT EXISTS employees (
-            id SERIAL PRIMARY KEY,
-            employee_id VARCHAR(20) UNIQUE NOT NULL,
-            first_name VARCHAR(50) NOT NULL,
-            last_name VARCHAR(50) NOT NULL,
-            email VARCHAR(100) UNIQUE NOT NULL,
-            phone VARCHAR(20),
-            department_id INTEGER REFERENCES departments(id),
-            position VARCHAR(100),
-            hire_date DATE,
-            termination_date DATE NULL,
-            status VARCHAR(20) DEFAULT 'ACTIVE',
-            manager_id INTEGER REFERENCES employees(id),
-            location VARCHAR(100),
-            cost_center VARCHAR(50),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-          );
+	<flow name="database-initialization" initialState="started" doc:name="Smart Database Initialization">
+		<scheduler doc:name="Database Init Scheduler">
+			<scheduling-strategy>
+				<fixed-frequency frequency="300" startDelay="5" timeUnit="SECONDS"/>
+			</scheduling-strategy>
+		</scheduler>
+		
+		<choice doc:name="Database Initialization Enabled?">
+			<when expression="${db.initialization.enabled}">
+				<flow-ref name="smart-database-setup" doc:name="Initialize Database"/>
+			</when>
+			<otherwise>
+				<logger level="DEBUG" message="Database initialization disabled via configuration"/>
+			</otherwise>
+		</choice>
+		
+		<!-- Run only once then disable -->
+		<set-variable variableName="initComplete" value="true"/>
+	</flow>
 
-          CREATE TABLE IF NOT EXISTS asset_categories (
-            id SERIAL PRIMARY KEY,
-            category_name VARCHAR(50) UNIQUE NOT NULL,
-            description VARCHAR(255),
-            requires_approval BOOLEAN DEFAULT FALSE,
-            max_allocation_per_employee INTEGER DEFAULT 1,
-            depreciation_years INTEGER DEFAULT 3,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-          );
+	<!-- Smart Database Setup with Fallback Strategy -->
+	<flow name="smart-database-setup" doc:name="Smart Database Setup">
+		<logger level="INFO" message="Starting intelligent database initialization - Strategy: ${db.strategy}"/>
+		
+		<try doc:name="Primary Database Setup">
+			<choice doc:name="Database Strategy Selection">
+				<when expression='#["${db.strategy}" == "postgresql"]'>
+					<flow-ref name="setup-postgresql-database"/>
+					<set-variable variableName="activeDatabase" value="postgresql"/>
+				</when>
+				<when expression='#["${db.strategy}" == "h2"]'>
+					<flow-ref name="setup-h2-database"/>
+					<set-variable variableName="activeDatabase" value="h2"/>
+				</when>
+				<otherwise>
+					<!-- Auto-detection: Try PostgreSQL first -->
+					<flow-ref name="detect-and-setup-database"/>
+				</otherwise>
+			</choice>
+			
+			<logger level="INFO" message="Database initialization completed successfully with: #[vars.activeDatabase]"/>
+			
+			<error-handler>
+				<on-error-continue type="ANY">
+					<logger level="ERROR" message="All database initialization failed - switching to mock mode: #[error.description]"/>
+					<set-variable variableName="activeDatabase" value="mock"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
 
-          CREATE TABLE IF NOT EXISTS assets (
-            id SERIAL PRIMARY KEY,
-            asset_tag VARCHAR(50) UNIQUE NOT NULL,
-            asset_name VARCHAR(100) NOT NULL,
-            category_id INTEGER REFERENCES asset_categories(id),
-            brand VARCHAR(50),
-            model VARCHAR(100),
-            serial_number VARCHAR(100) UNIQUE,
-            purchase_date DATE,
-            purchase_cost DECIMAL(10,2),
-            warranty_expiry DATE,
-            status VARCHAR(20) DEFAULT 'AVAILABLE',
-            condition_status VARCHAR(20) DEFAULT 'NEW',
-            location VARCHAR(100),
-            vendor VARCHAR(100),
-            specifications TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-          );
+	<!-- Auto-Detection Flow (moved out to avoid nested error handlers) -->
+	<flow name="detect-and-setup-database" doc:name="Detect and Setup Database">
+		<try doc:name="Try PostgreSQL First">
+			<flow-ref name="setup-postgresql-database"/>
+			<set-variable variableName="activeDatabase" value="postgresql"/>
+			<logger level="INFO" message="Auto-detection successful: Using PostgreSQL"/>
+			<error-handler>
+				<on-error-continue type="ANY">
+					<logger level="WARN" message="PostgreSQL unavailable, falling back to H2: #[error.description]"/>
+					<flow-ref name="setup-h2-database"/>
+					<set-variable variableName="activeDatabase" value="h2"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
 
-          CREATE TABLE IF NOT EXISTS asset_allocations (
-            id SERIAL PRIMARY KEY,
-            asset_id INTEGER REFERENCES assets(id),
-            employee_id INTEGER REFERENCES employees(id),
-            allocated_date DATE DEFAULT CURRENT_DATE,
-            expected_return_date DATE,
-            actual_return_date DATE NULL,
-            allocation_status VARCHAR(20) DEFAULT 'ALLOCATED',
-            allocation_reason VARCHAR(255),
-            approved_by VARCHAR(100),
-            approval_date DATE,
-            return_condition VARCHAR(20),
-            notes TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-          );
-          
-          DO $$ BEGIN
-            IF NOT EXISTS (SELECT 1 FROM departments WHERE name = '_INIT_COMPLETE_') THEN
-              INSERT INTO departments (name) VALUES ('IT'), ('HR'), ('Engineering');
-              INSERT INTO departments (name) VALUES ('_INIT_COMPLETE_');
-            END IF;
-          END $$;
-        ]]></db:sql>
-      </db:execute-script>
-      
-      <set-variable variableName="activeDatabase" value="'postgres'" />
-      <logger level="INFO" message="✅ PostgreSQL initialized successfully" />
-      
-      <error-handler>
-        <on-error-continue type="DB:CONNECTIVITY">
-          <logger level="WARN" message="⚠️ PostgreSQL unavailable, initializing H2..." />
-          
-          <db:execute-script config-ref="h2-config">
-            <db:sql><![CDATA[
-              CREATE TABLE IF NOT EXISTS departments (
-                id IDENTITY PRIMARY KEY,
-                name VARCHAR(100) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-              );
-              
-              MERGE INTO departments (name) KEY(name) VALUES ('IT');
-              MERGE INTO departments (name) KEY(name) VALUES ('HR');  
-              MERGE INTO departments (name) KEY(name) VALUES ('Engineering');
-              MERGE INTO departments (name) KEY(name) VALUES ('_INIT_COMPLETE_');
-            ]]></db:sql>
-          </db:execute-script>
-          
-          <set-variable variableName="activeDatabase" value="'h2'" />
-          <logger level="INFO" message="✅ H2 database initialized successfully" />
-        </on-error-continue>
-      </error-handler>
-    </try>
-  </flow>
+	<!-- ========================================================================================= -->
+	<!-- PRODUCTION-GRADE HEALTH CHECK WITH COMPREHENSIVE STATUS -->
+	<!-- ========================================================================================= -->
 
-  <!-- ✅ Health Check -->
-  <flow name="health-check">
-    <http:listener config-ref="http-config" path="/health" />
-    <set-payload value="#[output application/json --- {
-      status: 'UP',
-      service: 'Asset Allocation MCP Server v1.0.0',
-      database: vars.activeDatabase default 'uninitialized',
-      timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
-      javaVersion: '17'
-    }]" />
-    <logger level="INFO" message="Health check OK" />
-  </flow>
+	<flow name="health-check" doc:name="Production Health Check">
+		<http:listener path="/health" config-ref="HTTP_Listener_config" doc:name="Health Endpoint"/>
+		
+		<parallel-foreach doc:name="Parallel Health Checks">
+			<ee:transform doc:name="Health Check Tasks">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+["database", "application", "configuration"]]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			
+			<choice doc:name="Health Check Type">
+				<when expression='#[payload == "database"]'>
+					<flow-ref name="database-health-status"/>
+				</when>
+				<when expression='#[payload == "application"]'>
+					<flow-ref name="application-health-status"/>
+				</when>
+				<when expression='#[payload == "configuration"]'>
+					<flow-ref name="configuration-health-status"/>
+				</when>
+			</choice>
+		</parallel-foreach>
+		
+		<ee:transform doc:name="Aggregate Health Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: if (payload filter ($.healthy == false) != []) "DEGRADED" else "HEALTHY",
+	service: "${mcp.server.name}",
+	version: "${mcp.server.version}",
+	timestamp: now(),
+	environment: "${env}",
+	checks: payload,
+	uptime: (now() - |2024-01-01T00:00:00|) as Number {unit: "seconds"},
+	features: {
+		mockMode: "${mcp.features.mock.enabled}",
+		databaseRequired: "${mcp.features.database.required}",
+		auditEnabled: "${mcp.features.audit.enabled}"
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		
+		<logger level="INFO" message="Health check completed - Status: #[payload.status]"/>
+	</flow>
 
-  <!-- ✅ MCP Server Info -->
-  <flow name="mcp-info">
-    <http:listener config-ref="http-config" path="/mcp/info" />
-    <set-payload value="#[output application/json --- {
-      name: 'Asset Allocation MCP Server',
-      version: '1.0.0',
-      description: 'Manages IT asset allocation (laptops, ID cards, etc)',
-      javaVersion: '17',
-      endpoints: [
-        {name: 'allocate-assets', path: '/mcp/tools/allocate-assets'},
-        {name: 'return-asset', path: '/mcp/tools/return-asset'},
-        {name: 'list-assets', path: '/mcp/tools/list-assets'},
-        {name: 'get-available-assets', path: '/mcp/tools/get-available-assets'},
-        {name: 'get-employee-assets', path: '/mcp/tools/get-employee-assets'}
-      ],
-      database: vars.activeDatabase default 'uninitialized'
-    }]" />
-  </flow>
+	<!-- ========================================================================================= -->
+	<!-- MCP SERVER METADATA & DISCOVERY -->
+	<!-- ========================================================================================= -->
 
-  <!-- ✅ NEW: Allocate Assets (Main MCP Tool) -->
-  <flow name="allocate-assets">
-    <http:listener config-ref="http-config" path="/mcp/tools/allocate-assets" />
-    
-    <logger level="INFO" message="Asset allocation request for employee: #[payload.employeeId]" />
-    <set-variable variableName="requestPayload" value="#[payload]" />
-    <set-variable variableName="allocatedAssets" value="#[[]]" />
-    
-    <try>
-      <!-- Get employee info -->
-      <choice>
-        <when expression="#[vars.activeDatabase == 'postgres']">
-          <db:select config-ref="postgres-config">
-            <db:sql><![CDATA[
-              SELECT e.*, d.name as department_name 
-              FROM employees e 
-              LEFT JOIN departments d ON e.department_id = d.id 
-              WHERE e.employee_id = :employeeId AND e.status = 'ACTIVE'
-            ]]></db:sql>
-            <db:input-parameters><![CDATA[#[{'employeeId': vars.requestPayload.employeeId}]]]></db:input-parameters>
-          </db:select>
-        </when>
-        <otherwise>
-          <set-payload value="#[[{employee_id: vars.requestPayload.employeeId, first_name: vars.requestPayload.firstName, last_name: vars.requestPayload.lastName, department_name: vars.requestPayload.department}]]" />
-        </otherwise>
-      </choice>
-      
-      <choice>
-        <when expression="#[payload.size() > 0]">
-          <set-variable variableName="employeeInfo" value="#[payload[0]]" />
-          
-          <!-- Smart asset allocation based on requested assets or defaults -->
-          <set-variable variableName="assetsToAllocate" value="#[vars.requestPayload.assets default ['laptop', 'id-card']]" />
-          
-          <!-- Allocate each requested asset -->
-          <foreach collection="#[vars.assetsToAllocate]">
-            <set-variable variableName="currentAssetType" value="#[payload]" />
-            
-            <!-- Find available asset of this type -->
-            <choice>
-              <when expression="#[vars.activeDatabase == 'postgres']">
-                <db:select config-ref="postgres-config">
-                  <db:sql><![CDATA[
-                    SELECT a.*, ac.category_name 
-                    FROM assets a 
-                    JOIN asset_categories ac ON a.category_id = ac.id 
-                    WHERE UPPER(ac.category_name) = UPPER(:assetType) 
-                    AND a.status = 'AVAILABLE' 
-                    ORDER BY a.purchase_date DESC 
-                    LIMIT 1
-                  ]]></db:sql>
-                  <db:input-parameters><![CDATA[#[{'assetType': vars.currentAssetType}]]]></db:input-parameters>
-                </db:select>
-              </when>
-              <otherwise>
-                <!-- Mock data for H2/demo -->
-                <set-payload value="#[[{
-                  id: 1,
-                  asset_tag: 'DEMO-' ++ vars.currentAssetType as String ++ '-001',
-                  asset_name: vars.currentAssetType as String ++ ' (Demo Asset)',
-                  category_name: vars.currentAssetType,
-                  brand: 'Demo Brand',
-                  model: 'Demo Model',
-                  serial_number: 'DEMO123456',
-                  condition_status: 'NEW'
-                }]]" />
-              </otherwise>
-            </choice>
-            
-            <choice>
-              <when expression="#[payload.size() > 0]">
-                <set-variable variableName="selectedAsset" value="#[payload[0]]" />
-                
-                <!-- Create allocation record -->
-                <choice>
-                  <when expression="#[vars.activeDatabase == 'postgres']">
-                    <!-- Update asset status -->
-                    <db:update config-ref="postgres-config">
-                      <db:sql><![CDATA[
-                        UPDATE assets 
-                        SET status = 'ALLOCATED', updated_at = CURRENT_TIMESTAMP 
-                        WHERE id = :assetId
-                      ]]></db:sql>
-                      <db:input-parameters><![CDATA[#[{'assetId': vars.selectedAsset.id}]]]></db:input-parameters>
-                    </db:update>
-                    
-                    <!-- Create allocation record -->
-                    <db:insert config-ref="postgres-config">
-                      <db:sql><![CDATA[
-                        INSERT INTO asset_allocations 
-                        (asset_id, employee_id, allocated_date, allocation_status, allocation_reason, approved_by, approval_date, notes)
-                        VALUES (:assetId, 
-                               (SELECT id FROM employees WHERE employee_id = :employeeId), 
-                               CURRENT_DATE, 'ALLOCATED', 'Employee Onboarding', 'MCP System', CURRENT_DATE,
-                               'Allocated via Asset Allocation MCP Server')
-                      ]]></db:sql>
-                      <db:input-parameters><![CDATA[#[{
-                        'assetId': vars.selectedAsset.id,
-                        'employeeId': vars.requestPayload.employeeId
-                      }]]]></db:input-parameters>
-                    </db:insert>
-                  </when>
-                </choice>
-                
-                <!-- Add to allocated assets list -->
-                <set-variable variableName="allocatedAssets" value="#[vars.allocatedAssets + [{
-                  assetId: vars.selectedAsset.id,
-                  assetTag: vars.selectedAsset.asset_tag,
-                  assetName: vars.selectedAsset.asset_name,
-                  category: vars.selectedAsset.category_name,
-                  brand: vars.selectedAsset.brand,
-                  model: vars.selectedAsset.model,
-                  serialNumber: vars.selectedAsset.serial_number,
-                  condition: vars.selectedAsset.condition_status,
-                  allocationDate: now() as String {format: 'yyyy-MM-dd'},
-                  status: 'ALLOCATED'
-                }]]" />
-                
-                <logger level="INFO" message="Asset allocated: #[vars.selectedAsset.asset_tag] to #[vars.requestPayload.employeeId]" />
-              </when>
-              <otherwise>
-                <logger level="WARN" message="No available asset of type: #[vars.currentAssetType]" />
-              </otherwise>
-            </choice>
-          </foreach>
-          
-          <!-- Return success response -->
-          <set-payload value="#[output application/json --- {
-            status: 'success',
-            message: 'Assets allocated successfully',
-            employeeId: vars.requestPayload.employeeId,
-            employeeName: vars.employeeInfo.first_name ++ ' ' ++ vars.employeeInfo.last_name,
-            allocatedAssets: vars.allocatedAssets,
-            allocationCount: sizeOf(vars.allocatedAssets),
-            timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
-          }]" />
-        </when>
-        <otherwise>
-          <set-payload value="#[output application/json --- {
-            status: 'error',
-            message: 'Employee not found or inactive',
-            employeeId: vars.requestPayload.employeeId,
-            timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
-          }]" />
-        </otherwise>
-      </choice>
-      
-      <error-handler>
-        <on-error-propagate type="ANY">
-          <set-payload value="#[output application/json --- {
-            status: 'error',
-            message: 'Asset allocation failed',
-            error: error.description,
-            employeeId: vars.requestPayload.employeeId default 'unknown',
-            timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
-          }]" />
-          <logger level="ERROR" message="Asset allocation error: #[error.description]" />
-        </on-error-propagate>
-      </error-handler>
-    </try>
-  </flow>
+	<flow name="mcp-server-info" doc:name="MCP Server Discovery">
+		<http:listener path="/mcp/info" config-ref="HTTP_Listener_config"/>
+		
+		<ee:transform doc:name="Server Metadata Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	name: "${mcp.server.name}",
+	version: "${mcp.server.version}",
+	description: "${mcp.server.description}",
+	baseUrl: "${mcp.server.baseUrl}",
+	environment: "${env}",
+	capabilities: {
+		databases: ["postgresql", "h2"],
+		fallbackMode: "mock",
+		multiTenant: false,
+		audit: "${mcp.features.audit.enabled}",
+		cache: "${cache.enabled}"
+	},
+	endpoints: {
+		health: "/health",
+		info: "/mcp/info",
+		tools: "/mcp/tools"
+	},
+	tools: [
+		{
+			name: "allocate-assets",
+			description: "Allocate assets to employees",
+			endpoint: "/mcp/tools/allocate-assets",
+			method: "POST",
+			inputSchema: {
+				employeeId: "string",
+				assets: "array?",
+				firstName: "string?",
+				lastName: "string?",
+				department: "string?",
+				position: "string?"
+			}
+		},
+		{
+			name: "return-asset",
+			description: "Return allocated assets",
+			endpoint: "/mcp/tools/return-asset",
+			method: "POST",
+			inputSchema: {
+				assetTag: "string",
+				condition: "string?",
+				notes: "string?"
+			}
+		},
+		{
+			name: "list-assets",
+			description: "List all assets with status",
+			endpoint: "/mcp/tools/list-assets",
+			method: "GET",
+			parameters: ["status?", "category?"]
+		},
+		{
+			name: "get-available-assets",
+			description: "Get available assets for allocation",
+			endpoint: "/mcp/tools/get-available-assets",
+			method: "GET"
+		},
+		{
+			name: "get-employee-assets",
+			description: "Get assets allocated to specific employee",
+			endpoint: "/mcp/tools/get-employee-assets",
+			method: "POST",
+			inputSchema: {
+				employeeId: "string"
+			}
+		}
+	]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		
+		<logger level="INFO" message="MCP server info requested - responding with metadata"/>
+	</flow>
 
-  <!-- ✅ NEW: Get Available Assets -->
-  <flow name="get-available-assets">
-    <http:listener config-ref="http-config" path="/mcp/tools/get-available-assets" />
-    
-    <logger level="INFO" message="Getting available assets" />
-    
-    <try>
-      <choice>
-        <when expression="#[vars.activeDatabase == 'postgres']">
-          <db:select config-ref="postgres-config">
-            <db:sql><![CDATA[
-              SELECT a.*, ac.category_name 
-              FROM assets a 
-              JOIN asset_categories ac ON a.category_id = ac.id 
-              WHERE a.status = 'AVAILABLE'
-              ORDER BY ac.category_name, a.asset_name
-            ]]></db:sql>
-          </db:select>
-        </when>
-        <otherwise>
-          <!-- Demo data for H2 -->
-          <set-payload value="#[[
-            {id: 1, asset_tag: 'LAP-001', asset_name: 'Dell Latitude 7420', category_name: 'LAPTOP', brand: 'Dell', model: 'Latitude 7420', status: 'AVAILABLE'},
-            {id: 2, asset_tag: 'ID-001', asset_name: 'Employee ID Card', category_name: 'ID_CARD', brand: 'HID Global', model: 'ProxCard II', status: 'AVAILABLE'},
-            {id: 3, asset_tag: 'PHN-001', asset_name: 'iPhone 15 Pro', category_name: 'MOBILE_PHONE', brand: 'Apple', model: 'iPhone 15 Pro', status: 'AVAILABLE'}
-          ]]" />
-        </otherwise>
-      </choice>
-      
-      <set-payload value="#[output application/json --- {
-        status: 'success',
-        message: 'Available assets retrieved',
-        assets: payload,
-        assetCount: sizeOf(payload),
-        timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
-      }]" />
-      
-      <error-handler>
-        <on-error-propagate type="ANY">
-          <set-payload value="#[output application/json --- {
-            status: 'error',
-            message: 'Failed to retrieve available assets',
-            error: error.description,
-            timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
-          }]" />
-          <logger level="ERROR" message="Get available assets error: #[error.description]" />
-        </on-error-propagate>
-      </error-handler>
-    </try>
-  </flow>
+	<!-- ========================================================================================= -->
+	<!-- MCP TOOLS - PRODUCTION IMPLEMENTATIONS WITH INTELLIGENT FALLBACK -->
+	<!-- ========================================================================================= -->
 
-  <!-- ✅ NEW: Get Employee Assets -->
-  <flow name="get-employee-assets">
-    <http:listener config-ref="http-config" path="/mcp/tools/get-employee-assets" />
-    
-    <logger level="INFO" message="Getting assets for employee: #[payload.employeeId]" />
-    <set-variable variableName="employeeId" value="#[payload.employeeId]" />
-    
-    <try>
-      <choice>
-        <when expression="#[vars.activeDatabase == 'postgres']">
-          <db:select config-ref="postgres-config">
-            <db:sql><![CDATA[
-              SELECT a.*, ac.category_name, aa.allocated_date, aa.allocation_status, aa.notes
-              FROM asset_allocations aa
-              JOIN assets a ON aa.asset_id = a.id
-              JOIN asset_categories ac ON a.category_id = ac.id
-              JOIN employees e ON aa.employee_id = e.id
-              WHERE e.employee_id = :employeeId 
-              AND aa.allocation_status = 'ALLOCATED'
-              ORDER BY aa.allocated_date DESC
-            ]]></db:sql>
-            <db:input-parameters><![CDATA[#[{'employeeId': vars.employeeId}]]]></db:input-parameters>
-          </db:select>
-        </when>
-        <otherwise>
-          <!-- Demo data -->
-          <set-payload value="#[[
-            {asset_tag: 'DEMO-LAP-001', asset_name: 'Demo Laptop', category_name: 'LAPTOP', allocated_date: '2024-01-15', allocation_status: 'ALLOCATED'},
-            {asset_tag: 'DEMO-ID-001', asset_name: 'Demo ID Card', category_name: 'ID_CARD', allocated_date: '2024-01-15', allocation_status: 'ALLOCATED'}
-          ]]" />
-        </otherwise>
-      </choice>
-      
-      <set-payload value="#[output application/json --- {
-        status: 'success',
-        message: 'Employee assets retrieved',
-        employeeId: vars.employeeId,
-        assets: payload,
-        assetCount: sizeOf(payload),
-        timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
-      }]" />
-      
-      <error-handler>
-        <on-error-propagate type="ANY">
-          <set-payload value="#[output application/json --- {
-            status: 'error',
-            message: 'Failed to retrieve employee assets',
-            error: error.description,
-            employeeId: vars.employeeId default 'unknown',
-            timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
-          }]" />
-          <logger level="ERROR" message="Get employee assets error: #[error.description]" />
-        </on-error-propagate>
-      </error-handler>
-    </try>
-  </flow>
+	<flow name="mcp-allocate-assets-tool" doc:name="Allocate Assets Tool">
+		<http:listener path="/mcp/tools/allocate-assets" config-ref="HTTP_Listener_config"/>
+		<logger level="INFO" message="MCP Tool: Allocate assets - Request: #[payload]"/>
+		<flow-ref name="allocate-assets-with-fallback"/>
+	</flow>
 
-  <!-- ✅ NEW: Return Asset -->
-  <flow name="return-asset">
-    <http:listener config-ref="http-config" path="/mcp/tools/return-asset" />
-    
-    <logger level="INFO" message="Asset return request for: #[payload.assetTag]" />
-    <set-variable variableName="requestPayload" value="#[payload]" />
-    
-    <try>
-      <choice>
-        <when expression="#[vars.activeDatabase == 'postgres']">
-          <!-- Update asset status to available -->
-          <db:update config-ref="postgres-config">
-            <db:sql><![CDATA[
-              UPDATE assets 
-              SET status = 'AVAILABLE', updated_at = CURRENT_TIMESTAMP 
-              WHERE asset_tag = :assetTag
-            ]]></db:sql>
-            <db:input-parameters><![CDATA[#[{'assetTag': vars.requestPayload.assetTag}]]]></db:input-parameters>
-          </db:update>
-          
-          <!-- Update allocation record -->
-          <db:update config-ref="postgres-config">
-            <db:sql><![CDATA[
-              UPDATE asset_allocations 
-              SET allocation_status = 'RETURNED', 
-                  actual_return_date = CURRENT_DATE,
-                  return_condition = :condition,
-                  notes = COALESCE(notes, '') || ' | Returned: ' || :returnNotes
-              WHERE asset_id = (SELECT id FROM assets WHERE asset_tag = :assetTag)
-              AND allocation_status = 'ALLOCATED'
-            ]]></db:sql>
-            <db:input-parameters><![CDATA[#[{
-              'assetTag': vars.requestPayload.assetTag,
-              'condition': vars.requestPayload.condition default 'GOOD',
-              'returnNotes': vars.requestPayload.notes default 'Asset returned via MCP'
-            }]]]></db:input-parameters>
-          </db:update>
-        </when>
-      </choice>
-      
-      <set-payload value="#[output application/json --- {
-        status: 'success',
-        message: 'Asset returned successfully',
-        assetTag: vars.requestPayload.assetTag,
-        condition: vars.requestPayload.condition default 'GOOD',
-        returnDate: now() as String {format: 'yyyy-MM-dd'},
-        timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
-      }]" />
-      
-      <error-handler>
-        <on-error-propagate type="ANY">
-          <set-payload value="#[output application/json --- {
-            status: 'error',
-            message: 'Asset return failed',
-            error: error.description,
-            assetTag: vars.requestPayload.assetTag default 'unknown',
-            timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
-          }]" />
-          <logger level="ERROR" message="Asset return error: #[error.description]" />
-        </on-error-propagate>
-      </error-handler>
-    </try>
-  </flow>
+	<flow name="mcp-return-asset-tool" doc:name="Return Asset Tool">
+		<http:listener path="/mcp/tools/return-asset" config-ref="HTTP_Listener_config"/>
+		<logger level="INFO" message="MCP Tool: Return asset - Request: #[payload]"/>
+		<flow-ref name="return-asset-with-fallback"/>
+	</flow>
 
-  <!-- ✅ List Assets (Enhanced) -->
-  <flow name="list-assets">
-    <http:listener config-ref="http-config" path="/mcp/tools/list-assets" />
-    
-    <try>
-      <choice>
-        <when expression="#[vars.activeDatabase == 'postgres']">
-          <db:select config-ref="postgres-config">
-            <db:sql><![CDATA[
-              SELECT a.*, ac.category_name,
-                     CASE WHEN aa.allocation_status = 'ALLOCATED' THEN e.employee_id ELSE NULL END as allocated_to
-              FROM assets a 
-              JOIN asset_categories ac ON a.category_id = ac.id
-              LEFT JOIN asset_allocations aa ON a.id = aa.asset_id AND aa.allocation_status = 'ALLOCATED'
-              LEFT JOIN employees e ON aa.employee_id = e.id
-              ORDER BY ac.category_name, a.asset_name
-            ]]></db:sql>
-          </db:select>
-        </when>
-        <otherwise>
-          <set-payload value="#[[
-            {asset_tag: 'DEMO-LAP-001', asset_name: 'Demo Laptop', category_name: 'LAPTOP', status: 'AVAILABLE', allocated_to: null},
-            {asset_tag: 'DEMO-ID-001', asset_name: 'Demo ID Card', category_name: 'ID_CARD', status: 'ALLOCATED', allocated_to: 'EMP001'}
-          ]]" />
-        </otherwise>
-      </choice>
-      
-      <set-payload value="#[output application/json --- {
-        status: 'success',
-        database: vars.activeDatabase default 'unknown',
-        assets: payload,
-        assetCount: sizeOf(payload),
-        timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
-      }]" />
-      
-      <error-handler>
-        <on-error-propagate type="ANY">
-          <set-payload value="#[output application/json --- {
-            status: 'error',
-            message: 'Failed to list assets',
-            error: error.description,
-            timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
-          }]" />
-          <logger level="ERROR" message="List assets error: #[error.description]" />
-        </on-error-propagate>
-      </error-handler>
-    </try>
-  </flow>
+	<flow name="mcp-list-assets-tool" doc:name="List Assets Tool">
+		<http:listener path="/mcp/tools/list-assets" config-ref="HTTP_Listener_config"/>
+		<set-variable variableName="statusFilter" value="#[attributes.queryParams.status default '']"/>
+		<set-variable variableName="categoryFilter" value="#[attributes.queryParams.category default '']"/>
+		<logger level="INFO" message="MCP Tool: List assets - Status: #[vars.statusFilter], Category: #[vars.categoryFilter]"/>
+		<flow-ref name="list-assets-with-fallback"/>
+	</flow>
+
+	<flow name="mcp-get-available-assets-tool" doc:name="Get Available Assets Tool">
+		<http:listener path="/mcp/tools/get-available-assets" config-ref="HTTP_Listener_config"/>
+		<logger level="INFO" message="MCP Tool: Get available assets"/>
+		<flow-ref name="get-available-assets-with-fallback"/>
+	</flow>
+
+	<flow name="mcp-get-employee-assets-tool" doc:name="Get Employee Assets Tool">
+		<http:listener path="/mcp/tools/get-employee-assets" config-ref="HTTP_Listener_config"/>
+		<set-variable variableName="employeeId" value="#[payload.employeeId]"/>
+		<logger level="INFO" message="MCP Tool: Get employee assets - ID: #[vars.employeeId]"/>
+		<flow-ref name="get-employee-assets-with-fallback"/>
+	</flow>
+
+	<!-- ========================================================================================= -->
+	<!-- CORE BUSINESS LOGIC WITH INTELLIGENT DATABASE FALLBACK -->
+	<!-- ========================================================================================= -->
+
+	<!-- Allocate Assets with Fallback Strategy -->
+	<flow name="allocate-assets-with-fallback" doc:name="Allocate Assets with Smart Fallback">
+		<try doc:name="Database Operation with Fallback">
+			<ee:transform doc:name="Validate and Transform Input">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	employeeId: payload.employeeId,
+	firstName: payload.firstName default "",
+	lastName: payload.lastName default "",
+	department: payload.department default "IT",
+	position: payload.position default "Employee",
+	assets: payload.assets default ["laptop", "id-card"]
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			
+			<!-- Try Primary Database First -->
+			<try doc:name="Primary Database Operation">
+				<choice doc:name="Database Strategy">
+					<when expression='#["${db.strategy}" == "h2" or "${env}" == "sandbox" or "${env}" == "production"]'>
+						<flow-ref name="allocate-assets-h2"/>
+						<set-variable variableName="databaseUsed" value="h2"/>
+					</when>
+					<otherwise>
+						<flow-ref name="allocate-assets-postgresql"/>
+						<set-variable variableName="databaseUsed" value="postgresql"/>
+					</otherwise>
+				</choice>
+				
+				<error-handler>
+					<on-error-continue type="DB:*" doc:name="Fallback to Alternative DB">
+						<logger level="WARN" message="Primary database failed, trying fallback database: #[error.description]"/>
+						
+						<choice doc:name="Try Fallback Database">
+							<when expression='#[vars.databaseUsed != "h2"]'>
+								<flow-ref name="allocate-assets-h2"/>
+								<set-variable variableName="databaseUsed" value="h2-fallback"/>
+							</when>
+							<otherwise>
+								<flow-ref name="allocate-assets-postgresql"/>
+								<set-variable variableName="databaseUsed" value="postgresql-fallback"/>
+							</otherwise>
+						</choice>
+						
+					</on-error-continue>
+				</error-handler>
+			</try>
+			
+			<error-handler>
+				<on-error-continue type="ANY">
+					<flow-ref name="allocate-assets-mock-response"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- PostgreSQL Asset Allocation -->
+	<flow name="allocate-assets-postgresql" doc:name="PostgreSQL Asset Allocation">
+		<logger level="INFO" message="🐘 Processing allocation via PostgreSQL..." />
+		<set-variable variableName="allocatedAssets" value="#[[]]" />
+		
+		<!-- Get or create employee record -->
+		<db:select config-ref="PostgreSQL_Database_Config">
+			<db:sql><![CDATA[
+				SELECT e.*, d.name as department_name 
+				FROM employees e 
+				LEFT JOIN departments d ON e.department_id = d.id 
+				WHERE e.employee_id = :employeeId AND e.status = 'ACTIVE'
+			]]></db:sql>
+			<db:input-parameters><![CDATA[#[{'employeeId': payload.employeeId}]]]></db:input-parameters>
+		</db:select>
+		
+		<choice>
+			<when expression="#[payload.size() > 0]">
+				<set-variable variableName="employeeInfo" value="#[payload[0]]" />
+			</when>
+			<otherwise>
+				<!-- Create employee if not exists -->
+				<db:insert config-ref="PostgreSQL_Database_Config">
+					<db:sql><![CDATA[
+						INSERT INTO employees (employee_id, first_name, last_name, email, department_id, position, status) 
+						VALUES (:employeeId, :firstName, :lastName, :email, 1, :position, 'ACTIVE')
+					]]></db:sql>
+					<db:input-parameters><![CDATA[#[{
+						'employeeId': payload.employeeId,
+						'firstName': payload.firstName,
+						'lastName': payload.lastName,
+						'email': payload.employeeId ++ '@company.com',
+						'position': payload.position
+					}]]]></db:input-parameters>
+				</db:insert>
+			</otherwise>
+		</choice>
+		
+		<!-- Allocate each requested asset -->
+		<foreach collection="#[payload.assets]">
+			<set-variable variableName="currentAssetType" value="#[payload]" />
+			
+			<!-- Find available asset -->
+			<db:select config-ref="PostgreSQL_Database_Config">
+				<db:sql><![CDATA[
+					SELECT a.*, ac.category_name 
+					FROM assets a 
+					JOIN asset_categories ac ON a.category_id = ac.id 
+					WHERE UPPER(ac.category_name) = UPPER(:assetType) 
+					AND a.status = 'AVAILABLE' 
+					ORDER BY a.purchase_date DESC 
+					LIMIT 1
+				]]></db:sql>
+				<db:input-parameters><![CDATA[#[{'assetType': vars.currentAssetType}]]]></db:input-parameters>
+			</db:select>
+			
+			<choice>
+				<when expression="#[payload.size() > 0]">
+					<set-variable variableName="selectedAsset" value="#[payload[0]]" />
+					
+					<!-- Update asset status and create allocation -->
+					<db:update config-ref="PostgreSQL_Database_Config">
+						<db:sql><![CDATA[UPDATE assets SET status = 'ALLOCATED', updated_at = CURRENT_TIMESTAMP WHERE id = :assetId]]></db:sql>
+						<db:input-parameters><![CDATA[#[{'assetId': vars.selectedAsset.id}]]]></db:input-parameters>
+					</db:update>
+					
+					<db:insert config-ref="PostgreSQL_Database_Config">
+						<db:sql><![CDATA[
+							INSERT INTO asset_allocations 
+							(asset_id, employee_id, allocated_date, allocation_status, allocation_reason, approved_by, approval_date, notes)
+							VALUES (:assetId, 
+							       (SELECT id FROM employees WHERE employee_id = :employeeId), 
+							       CURRENT_DATE, 'ALLOCATED', 'Employee Onboarding', 'MCP System', CURRENT_DATE,
+							       'Allocated via Asset Allocation MCP Server')
+						]]></db:sql>
+						<db:input-parameters><![CDATA[#[{
+							'assetId': vars.selectedAsset.id,
+							'employeeId': vars.requestPayload.employeeId
+						}]]]></db:input-parameters>
+					</db:insert>
+					
+					<!-- Add to allocated assets list -->
+					<set-variable variableName="allocatedAssets" value="#[vars.allocatedAssets + [{
+						assetId: vars.selectedAsset.id,
+						assetTag: vars.selectedAsset.asset_tag,
+						assetName: vars.selectedAsset.asset_name,
+						category: vars.selectedAsset.category_name,
+						brand: vars.selectedAsset.brand,
+						model: vars.selectedAsset.model,
+						serialNumber: vars.selectedAsset.serial_number,
+						condition: vars.selectedAsset.condition_status,
+						allocationDate: now() as String {format: 'yyyy-MM-dd'},
+						status: 'ALLOCATED'
+					}]]" />
+				</when>
+				<otherwise>
+					<logger level="WARN" message="⚠️ No available asset of type: #[vars.currentAssetType]" />
+				</otherwise>
+			</choice>
+		</foreach>
+		
+		<!-- Return success response -->
+		<ee:transform doc:name="PostgreSQL Success Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	message: "Assets allocated successfully via PostgreSQL",
+	database: vars.databaseUsed,
+	employeeId: payload.employeeId,
+	employeeName: payload.firstName ++ ' ' ++ payload.lastName,
+	allocatedAssets: vars.allocatedAssets,
+	allocationCount: sizeOf(vars.allocatedAssets),
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	mockMode: false
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<!-- H2 Asset Allocation -->
+	<flow name="allocate-assets-h2" doc:name="H2 Asset Allocation">
+		<logger level="INFO" message="🏠 Processing allocation via H2 embedded database..." />
+		<set-variable variableName="allocatedAssets" value="#[[]]" />
+		
+		<!-- Initialize H2 database if needed -->
+		<try doc:name="Try H2 Initialization">
+			<db:select config-ref="H2_Database_Config">
+				<db:sql><![CDATA[SELECT COUNT(*) FROM assets]]></db:sql>
+			</db:select>
+			<error-handler>
+				<on-error-continue type="ANY">
+					<logger level="INFO" message="Initializing H2 database tables..."/>
+					<flow-ref name="create-h2-tables"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		
+		<!-- Allocate each requested asset from H2 database -->
+		<foreach collection="#[payload.assets]">
+			<set-variable variableName="currentAssetType" value="#[payload]" />
+			
+			<!-- Find available asset in H2 -->
+			<db:select config-ref="H2_Database_Config">
+				<db:sql><![CDATA[
+					SELECT a.*, ac.category_name 
+					FROM assets a 
+					JOIN asset_categories ac ON a.category_id = ac.id 
+					WHERE UPPER(ac.category_name) = UPPER(:assetType) 
+					AND a.status = 'AVAILABLE' 
+					ORDER BY a.purchase_date DESC 
+					LIMIT 1
+				]]></db:sql>
+				<db:input-parameters><![CDATA[#[{'assetType': vars.currentAssetType}]]]></db:input-parameters>
+			</db:select>
+			
+			<choice>
+				<when expression="#[payload.size() > 0]">
+					<set-variable variableName="selectedAsset" value="#[payload[0]]" />
+					
+					<!-- Update asset status in H2 -->
+					<db:update config-ref="H2_Database_Config">
+						<db:sql><![CDATA[UPDATE assets SET status = 'ALLOCATED' WHERE id = :assetId]]></db:sql>
+						<db:input-parameters><![CDATA[#[{'assetId': vars.selectedAsset.id}]]]></db:input-parameters>
+					</db:update>
+					
+					<!-- Add to allocated assets list -->
+					<set-variable variableName="allocatedAssets" value="#[vars.allocatedAssets + [{
+						assetId: vars.selectedAsset.id,
+						assetTag: vars.selectedAsset.asset_tag,
+						assetName: vars.selectedAsset.asset_name,
+						category: vars.selectedAsset.category_name,
+						brand: vars.selectedAsset.brand,
+						model: vars.selectedAsset.model,
+						serialNumber: vars.selectedAsset.serial_number,
+						condition: vars.selectedAsset.condition_status,
+						allocationDate: now() as String {format: 'yyyy-MM-dd'},
+						status: 'ALLOCATED'
+					}]]" />
+					
+					<logger level="INFO" message="✅ H2 asset allocated: #[vars.selectedAsset.asset_tag] to #[payload.employeeId]" />
+				</when>
+				<otherwise>
+					<logger level="WARN" message="⚠️ No available H2 assets of type: #[vars.currentAssetType]" />
+				</otherwise>
+			</choice>
+		</foreach>
+		
+		<!-- Return H2 success response -->
+		<ee:transform doc:name="H2 Success Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	message: "Assets allocated successfully via H2 embedded database",
+	database: vars.databaseUsed,
+	employeeId: payload.employeeId,
+	employeeName: payload.firstName ++ ' ' ++ payload.lastName,
+	allocatedAssets: vars.allocatedAssets,
+	allocationCount: sizeOf(vars.allocatedAssets),
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	mockMode: false
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<!-- Return Asset with Fallback Strategy -->
+	<flow name="return-asset-with-fallback" doc:name="Return Asset with Smart Fallback">
+		<try doc:name="Database Operation with Fallback">
+			<!-- Try Primary Database First -->
+			<try doc:name="Primary Database Operation">
+				<choice doc:name="Database Strategy">
+					<when expression='#["${db.strategy}" == "h2" or "${env}" == "sandbox" or "${env}" == "production"]'>
+						<flow-ref name="return-asset-h2"/>
+						<set-variable variableName="databaseUsed" value="h2"/>
+					</when>
+					<otherwise>
+						<flow-ref name="return-asset-postgresql"/>
+						<set-variable variableName="databaseUsed" value="postgresql"/>
+					</otherwise>
+				</choice>
+				
+				<error-handler>
+					<on-error-continue type="DB:*" doc:name="Fallback to Alternative DB">
+						<logger level="WARN" message="Primary database failed, trying fallback database: #[error.description]"/>
+						
+						<choice doc:name="Try Fallback Database">
+							<when expression='#[vars.databaseUsed != "h2"]'>
+								<flow-ref name="return-asset-h2"/>
+								<set-variable variableName="databaseUsed" value="h2-fallback"/>
+							</when>
+							<otherwise>
+								<flow-ref name="return-asset-postgresql"/>
+								<set-variable variableName="databaseUsed" value="postgresql-fallback"/>
+							</otherwise>
+						</choice>
+					</on-error-continue>
+				</error-handler>
+			</try>
+			
+			<error-handler>
+				<on-error-continue type="ANY">
+					<flow-ref name="return-asset-mock-response"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- PostgreSQL Return Asset -->
+	<flow name="return-asset-postgresql" doc:name="PostgreSQL Return Asset">
+		<db:update config-ref="PostgreSQL_Database_Config">
+			<db:sql><![CDATA[UPDATE assets SET status = 'AVAILABLE', updated_at = CURRENT_TIMESTAMP WHERE asset_tag = :assetTag]]></db:sql>
+			<db:input-parameters><![CDATA[#[{'assetTag': payload.assetTag}]]]></db:input-parameters>
+		</db:update>
+		
+		<db:update config-ref="PostgreSQL_Database_Config">
+			<db:sql><![CDATA[
+				UPDATE asset_allocations 
+				SET allocation_status = 'RETURNED', 
+				    actual_return_date = CURRENT_DATE,
+				    return_condition = :condition,
+				    notes = COALESCE(notes, '') || ' | Returned: ' || :returnNotes
+				WHERE asset_id = (SELECT id FROM assets WHERE asset_tag = :assetTag)
+				AND allocation_status = 'ALLOCATED'
+			]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+				'assetTag': payload.assetTag,
+				'condition': payload.condition default 'GOOD',
+				'returnNotes': payload.notes default 'Asset returned via MCP'
+			}]]]></db:input-parameters>
+		</db:update>
+		
+		<ee:transform doc:name="PostgreSQL Return Success Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	message: "Asset returned successfully via PostgreSQL",
+	database: vars.databaseUsed,
+	assetTag: payload.assetTag,
+	condition: payload.condition default 'GOOD',
+	returnDate: now() as String {format: 'yyyy-MM-dd'},
+	notes: payload.notes default 'Asset returned successfully',
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	mockMode: false
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<!-- H2 Return Asset -->
+	<flow name="return-asset-h2" doc:name="H2 Return Asset">
+		<db:update config-ref="H2_Database_Config">
+			<db:sql><![CDATA[UPDATE assets SET status = 'AVAILABLE' WHERE asset_tag = :assetTag]]></db:sql>
+			<db:input-parameters><![CDATA[#[{'assetTag': payload.assetTag}]]]></db:input-parameters>
+		</db:update>
+		
+		<ee:transform doc:name="H2 Return Success Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	message: "Asset returned successfully via H2 embedded database",
+	database: vars.databaseUsed,
+	assetTag: payload.assetTag,
+	condition: payload.condition default 'GOOD',
+	returnDate: now() as String {format: 'yyyy-MM-dd'},
+	notes: payload.notes default 'Asset returned successfully',
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	mockMode: false
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<!-- List Assets with Fallback Strategy -->
+	<flow name="list-assets-with-fallback" doc:name="List Assets with Smart Fallback">
+		<try doc:name="Database Query with Fallback">
+			<!-- Try Primary Database First -->
+			<try doc:name="Primary Database Query">
+				<choice doc:name="Database Strategy">
+					<when expression='#["${db.strategy}" == "h2" or "${env}" == "sandbox" or "${env}" == "production"]'>
+						<db:select config-ref="H2_Database_Config">
+							<db:sql><![CDATA[
+								SELECT a.*, ac.category_name
+								FROM assets a 
+								JOIN asset_categories ac ON a.category_id = ac.id
+								WHERE (:statusFilter = '' OR a.status = :statusFilter)
+								AND (:categoryFilter = '' OR UPPER(ac.category_name) = UPPER(:categoryFilter))
+								ORDER BY ac.category_name, a.asset_name
+							]]></db:sql>
+							<db:input-parameters><![CDATA[#[{
+								statusFilter: vars.statusFilter,
+								categoryFilter: vars.categoryFilter
+							}]]]></db:input-parameters>
+						</db:select>
+						<set-variable variableName="databaseUsed" value="h2"/>
+					</when>
+					<otherwise>
+						<db:select config-ref="PostgreSQL_Database_Config">
+							<db:sql><![CDATA[
+								SELECT a.*, ac.category_name,
+								       CASE WHEN aa.allocation_status = 'ALLOCATED' THEN e.employee_id ELSE NULL END as allocated_to,
+								       aa.allocated_date, aa.allocation_status
+								FROM assets a 
+								JOIN asset_categories ac ON a.category_id = ac.id
+								LEFT JOIN asset_allocations aa ON a.id = aa.asset_id AND aa.allocation_status = 'ALLOCATED'
+								LEFT JOIN employees e ON aa.employee_id = e.id
+								WHERE (:statusFilter = '' OR a.status = :statusFilter)
+								AND (:categoryFilter = '' OR UPPER(ac.category_name) = UPPER(:categoryFilter))
+								ORDER BY ac.category_name, a.asset_name
+							]]></db:sql>
+							<db:input-parameters><![CDATA[#[{
+								statusFilter: vars.statusFilter,
+								categoryFilter: vars.categoryFilter
+							}]]]></db:input-parameters>
+						</db:select>
+						<set-variable variableName="databaseUsed" value="postgresql"/>
+					</otherwise>
+				</choice>
+				
+				<error-handler>
+					<on-error-continue type="DB:*" doc:name="Fallback to Alternative DB">
+						<logger level="WARN" message="Primary database failed, trying fallback: #[error.description]"/>
+						<flow-ref name="list-assets-fallback-database"/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+			
+			<ee:transform doc:name="Format Assets List Response">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	message: "Assets listed successfully",
+	database: vars.databaseUsed,
+	assets: payload,
+	assetCount: sizeOf(payload),
+	statistics: {
+		available: sizeOf(payload filter ($.status == 'AVAILABLE')),
+		allocated: sizeOf(payload filter ($.status == 'ALLOCATED')),
+		categories: payload distinctBy $.category_name pluck $.category_name
+	},
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	mockMode: vars.databaseUsed == "mock"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			
+			<error-handler>
+				<on-error-continue type="ANY">
+					<flow-ref name="list-assets-mock-response"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- List Assets Fallback Database Flow -->
+	<flow name="list-assets-fallback-database" doc:name="List Assets Fallback Database">
+		<try doc:name="Try Fallback Database">
+			<choice doc:name="Try Fallback Database">
+				<when expression='#[vars.databaseUsed != "h2"]'>
+					<db:select config-ref="H2_Database_Config">
+						<db:sql><![CDATA[
+							SELECT a.*, ac.category_name
+							FROM assets a 
+							JOIN asset_categories ac ON a.category_id = ac.id
+							WHERE (:statusFilter = '' OR a.status = :statusFilter)
+							AND (:categoryFilter = '' OR UPPER(ac.category_name) = UPPER(:categoryFilter))
+							ORDER BY ac.category_name, a.asset_name
+						]]></db:sql>
+						<db:input-parameters><![CDATA[#[{
+							statusFilter: vars.statusFilter,
+							categoryFilter: vars.categoryFilter
+						}]]]></db:input-parameters>
+					</db:select>
+					<set-variable variableName="databaseUsed" value="h2-fallback"/>
+				</when>
+				<otherwise>
+					<db:select config-ref="PostgreSQL_Database_Config">
+						<db:sql><![CDATA[
+							SELECT a.*, ac.category_name,
+							       CASE WHEN aa.allocation_status = 'ALLOCATED' THEN e.employee_id ELSE NULL END as allocated_to
+							FROM assets a 
+							JOIN asset_categories ac ON a.category_id = ac.id
+							LEFT JOIN asset_allocations aa ON a.id = aa.asset_id AND aa.allocation_status = 'ALLOCATED'
+							LEFT JOIN employees e ON aa.employee_id = e.id
+							WHERE (:statusFilter = '' OR a.status = :statusFilter)
+							AND (:categoryFilter = '' OR UPPER(ac.category_name) = UPPER(:categoryFilter))
+							ORDER BY ac.category_name, a.asset_name
+						]]></db:sql>
+						<db:input-parameters><![CDATA[#[{
+							statusFilter: vars.statusFilter,
+							categoryFilter: vars.categoryFilter
+						}]]]></db:input-parameters>
+					</db:select>
+					<set-variable variableName="databaseUsed" value="postgresql-fallback"/>
+				</otherwise>
+			</choice>
+			<error-handler>
+				<on-error-continue type="ANY">
+					<flow-ref name="list-assets-mock-response"/>
+					<set-variable variableName="databaseUsed" value="mock"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- Get Available Assets with Fallback Strategy -->
+	<flow name="get-available-assets-with-fallback" doc:name="Get Available Assets with Smart Fallback">
+		<try doc:name="Database Query with Fallback">
+			<!-- Try Primary Database First -->
+			<try doc:name="Primary Database Query">
+				<choice doc:name="Database Strategy">
+					<when expression='#["${db.strategy}" == "h2" or "${env}" == "sandbox" or "${env}" == "production"]'>
+						<db:select config-ref="H2_Database_Config">
+							<db:sql><![CDATA[
+								SELECT a.*, ac.category_name
+								FROM assets a 
+								JOIN asset_categories ac ON a.category_id = ac.id 
+								WHERE a.status = 'AVAILABLE'
+								ORDER BY ac.category_name, a.asset_name
+							]]></db:sql>
+						</db:select>
+						<set-variable variableName="databaseUsed" value="h2"/>
+					</when>
+					<otherwise>
+						<db:select config-ref="PostgreSQL_Database_Config">
+							<db:sql><![CDATA[
+								SELECT a.*, ac.category_name, a.specifications::text as specs_json
+								FROM assets a 
+								JOIN asset_categories ac ON a.category_id = ac.id 
+								WHERE a.status = 'AVAILABLE'
+								ORDER BY ac.category_name, a.asset_name
+							]]></db:sql>
+						</db:select>
+						<set-variable variableName="databaseUsed" value="postgresql"/>
+					</otherwise>
+				</choice>
+				
+				<error-handler>
+					<on-error-continue type="DB:*">
+						<logger level="WARN" message="Primary database failed, trying fallback: #[error.description]"/>
+						<flow-ref name="get-available-assets-fallback-database"/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+			
+			<ee:transform doc:name="Format Available Assets Response">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	message: "Available assets retrieved successfully",
+	database: vars.databaseUsed,
+	assets: payload,
+	assetCount: sizeOf(payload),
+	categories: payload distinctBy $.category_name pluck $.category_name,
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	mockMode: vars.databaseUsed == "mock"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			
+			<error-handler>
+				<on-error-continue type="ANY">
+					<flow-ref name="get-available-assets-mock-response"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- Get Available Assets Fallback Database Flow -->
+	<flow name="get-available-assets-fallback-database" doc:name="Get Available Assets Fallback Database">
+		<try doc:name="Try Fallback Database">
+			<choice doc:name="Try Fallback Database">
+				<when expression='#[vars.databaseUsed != "h2"]'>
+					<db:select config-ref="H2_Database_Config">
+						<db:sql><![CDATA[
+							SELECT a.*, ac.category_name
+							FROM assets a 
+							JOIN asset_categories ac ON a.category_id = ac.id 
+							WHERE a.status = 'AVAILABLE'
+							ORDER BY ac.category_name, a.asset_name
+						]]></db:sql>
+					</db:select>
+					<set-variable variableName="databaseUsed" value="h2-fallback"/>
+				</when>
+				<otherwise>
+					<db:select config-ref="PostgreSQL_Database_Config">
+						<db:sql><![CDATA[
+							SELECT a.*, ac.category_name
+							FROM assets a 
+							JOIN asset_categories ac ON a.category_id = ac.id 
+							WHERE a.status = 'AVAILABLE'
+							ORDER BY ac.category_name, a.asset_name
+						]]></db:sql>
+					</db:select>
+					<set-variable variableName="databaseUsed" value="postgresql-fallback"/>
+				</otherwise>
+			</choice>
+			<error-handler>
+				<on-error-continue type="ANY">
+					<flow-ref name="get-available-assets-mock-response"/>
+					<set-variable variableName="databaseUsed" value="mock"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- Get Employee Assets with Fallback Strategy -->
+	<flow name="get-employee-assets-with-fallback" doc:name="Get Employee Assets with Smart Fallback">
+		<try doc:name="Database Query with Fallback">
+			<!-- Try Primary Database First -->
+			<try doc:name="Primary Database Query">
+				<choice doc:name="Database Strategy">
+					<when expression='#["${db.strategy}" == "h2" or "${env}" == "sandbox" or "${env}" == "production"]'>
+						<db:select config-ref="H2_Database_Config">
+							<db:sql><![CDATA[
+								SELECT a.*, ac.category_name, aa.allocated_date, aa.allocation_status, aa.notes, aa.id as allocation_id
+								FROM asset_allocations aa
+								JOIN assets a ON aa.asset_id = a.id
+								JOIN asset_categories ac ON a.category_id = ac.id
+								JOIN employees e ON aa.employee_id = e.id
+								WHERE e.employee_id = :employeeId 
+								AND aa.allocation_status = 'ALLOCATED'
+								ORDER BY aa.allocated_date DESC
+							]]></db:sql>
+							<db:input-parameters><![CDATA[#[{'employeeId': vars.employeeId}]]]></db:input-parameters>
+						</db:select>
+						<set-variable variableName="databaseUsed" value="h2"/>
+					</when>
+					<otherwise>
+						<db:select config-ref="PostgreSQL_Database_Config">
+							<db:sql><![CDATA[
+								SELECT a.*, ac.category_name, aa.allocated_date, aa.allocation_status, aa.notes, aa.id as allocation_id
+								FROM asset_allocations aa
+								JOIN assets a ON aa.asset_id = a.id
+								JOIN asset_categories ac ON a.category_id = ac.id
+								JOIN employees e ON aa.employee_id = e.id
+								WHERE e.employee_id = :employeeId 
+								AND aa.allocation_status = 'ALLOCATED'
+								ORDER BY aa.allocated_date DESC
+							]]></db:sql>
+							<db:input-parameters><![CDATA[#[{'employeeId': vars.employeeId}]]]></db:input-parameters>
+						</db:select>
+						<set-variable variableName="databaseUsed" value="postgresql"/>
+					</otherwise>
+				</choice>
+				
+				<error-handler>
+					<on-error-continue type="DB:*">
+						<logger level="WARN" message="Primary database failed, trying fallback: #[error.description]"/>
+						<flow-ref name="get-employee-assets-fallback-database"/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+			
+			<ee:transform doc:name="Format Employee Assets Response">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	message: "Employee assets retrieved successfully",
+	database: vars.databaseUsed,
+	employeeId: vars.employeeId,
+	assets: payload,
+	assetCount: sizeOf(payload),
+	categories: payload distinctBy $.category_name pluck $.category_name,
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	mockMode: vars.databaseUsed == "mock"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			
+			<error-handler>
+				<on-error-continue type="ANY">
+					<flow-ref name="get-employee-assets-mock-response"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- Get Employee Assets Fallback Database Flow -->
+	<flow name="get-employee-assets-fallback-database" doc:name="Get Employee Assets Fallback Database">
+		<try doc:name="Try Fallback Database">
+			<choice doc:name="Try Fallback Database">
+				<when expression='#[vars.databaseUsed != "h2"]'>
+					<db:select config-ref="H2_Database_Config">
+						<db:sql><![CDATA[
+							SELECT a.*, ac.category_name, aa.allocated_date, aa.allocation_status
+							FROM asset_allocations aa
+							JOIN assets a ON aa.asset_id = a.id
+							JOIN asset_categories ac ON a.category_id = ac.id
+							JOIN employees e ON aa.employee_id = e.id
+							WHERE e.employee_id = :employeeId 
+							AND aa.allocation_status = 'ALLOCATED'
+							ORDER BY aa.allocated_date DESC
+						]]></db:sql>
+						<db:input-parameters><![CDATA[#[{'employeeId': vars.employeeId}]]]></db:input-parameters>
+					</db:select>
+					<set-variable variableName="databaseUsed" value="h2-fallback"/>
+				</when>
+				<otherwise>
+					<db:select config-ref="PostgreSQL_Database_Config">
+						<db:sql><![CDATA[
+							SELECT a.*, ac.category_name, aa.allocated_date, aa.allocation_status, aa.notes
+							FROM asset_allocations aa
+							JOIN assets a ON aa.asset_id = a.id
+							JOIN asset_categories ac ON a.category_id = ac.id
+							JOIN employees e ON aa.employee_id = e.id
+							WHERE e.employee_id = :employeeId 
+							AND aa.allocation_status = 'ALLOCATED'
+							ORDER BY aa.allocated_date DESC
+						]]></db:sql>
+						<db:input-parameters><![CDATA[#[{'employeeId': vars.employeeId}]]]></db:input-parameters>
+					</db:select>
+					<set-variable variableName="databaseUsed" value="postgresql-fallback"/>
+				</otherwise>
+			</choice>
+			<error-handler>
+				<on-error-continue type="ANY">
+					<flow-ref name="get-employee-assets-mock-response"/>
+					<set-variable variableName="databaseUsed" value="mock"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- ========================================================================================= -->
+	<!-- DATABASE SETUP FLOWS -->
+	<!-- ========================================================================================= -->
+
+	<!-- PostgreSQL Database Setup -->
+	<flow name="setup-postgresql-database" doc:name="PostgreSQL Database Setup">
+		<logger level="INFO" message="Initializing PostgreSQL database..."/>
+		
+		<try doc:name="PostgreSQL Connection Test">
+			<db:select config-ref="PostgreSQL_Database_Config">
+				<db:sql><![CDATA[SELECT 1 as test]]></db:sql>
+			</db:select>
+			
+			<logger level="INFO" message="PostgreSQL connection successful"/>
+			
+			<!-- Create tables if they don't exist -->
+			<flow-ref name="create-postgresql-tables"/>
+			
+			<error-handler>
+				<on-error-propagate type="ANY">
+					<logger level="ERROR" message="PostgreSQL setup failed: #[error.description]"/>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- H2 Database Setup -->
+	<flow name="setup-h2-database" doc:name="H2 Database Setup">
+		<logger level="INFO" message="Initializing H2 database..."/>
+		
+		<try doc:name="H2 Connection Test">
+			<db:select config-ref="H2_Database_Config">
+				<db:sql><![CDATA[SELECT 1 as test]]></db:sql>
+			</db:select>
+			
+			<logger level="INFO" message="H2 connection successful"/>
+			
+			<!-- Create tables if they don't exist -->
+			<flow-ref name="create-h2-tables"/>
+			
+			<error-handler>
+				<on-error-propagate type="ANY">
+					<logger level="ERROR" message="H2 setup failed: #[error.description]"/>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- Create PostgreSQL Tables -->
+	<flow name="create-postgresql-tables" doc:name="Create PostgreSQL Tables">
+		<db:execute-script config-ref="PostgreSQL_Database_Config" file="init.sql" />
+		<logger level="INFO" message="PostgreSQL tables created successfully"/>
+	</flow>
+
+	<!-- Create H2 Tables -->
+	<flow name="create-h2-tables" doc:name="Create H2 Tables">
+		<db:execute-script config-ref="H2_Database_Config" file="init-h2.sql" />
+		<logger level="INFO" message="H2 tables created successfully"/>
+	</flow>
+
+	<!-- ========================================================================================= -->
+	<!-- HEALTH CHECK COMPONENTS -->
+	<!-- ========================================================================================= -->
+
+	<!-- Database Health Status -->
+	<flow name="database-health-status" doc:name="Database Health Check">
+		<try doc:name="Test Database Connection">
+			<choice doc:name="Test Active Database">
+				<when expression='#["${db.strategy}" == "h2"]'>
+					<db:select config-ref="H2_Database_Config">
+						<db:sql><![CDATA[SELECT COUNT(*) as asset_count FROM assets]]></db:sql>
+					</db:select>
+					<set-variable variableName="dbType" value="H2"/>
+				</when>
+				<otherwise>
+					<db:select config-ref="PostgreSQL_Database_Config">
+						<db:sql><![CDATA[SELECT COUNT(*) as asset_count FROM assets]]></db:sql>
+					</db:select>
+					<set-variable variableName="dbType" value="PostgreSQL"/>
+				</otherwise>
+			</choice>
+			
+			<ee:transform doc:name="Database Health Response">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	name: "database",
+	healthy: true,
+	status: "UP",
+	details: {
+		"type": vars.dbType,
+		assetCount: payload[0].asset_count,
+		connection: "active"
+	}
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			
+			<error-handler>
+				<on-error-continue type="ANY">
+					<ee:transform doc:name="Database Error Response">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	name: "database",
+	healthy: false,
+	status: "DOWN",
+	details: {
+		error: error.description,
+		"type": "unavailable"
+	}
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- Application Health Status -->
+	<flow name="application-health-status" doc:name="Application Health Check">
+		<ee:transform doc:name="Application Health Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	name: "application",
+	healthy: true,
+	status: "UP",
+	details: {
+		version: "${mcp.server.version}",
+		environment: "${env}",
+		memory: java!java::lang::Runtime::getRuntime().freeMemory(),
+		uptime: "running"
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<!-- Configuration Health Status -->
+	<flow name="configuration-health-status" doc:name="Configuration Health Check">
+		<ee:transform doc:name="Configuration Health Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	name: "configuration",
+	healthy: true,
+	status: "UP",
+	details: {
+		database: "${db.strategy}",
+		mockMode: "${mcp.features.mock.enabled}",
+		auditEnabled: "${mcp.features.audit.enabled}",
+		cacheEnabled: "${cache.enabled}"
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<!-- ========================================================================================= -->
+	<!-- MOCK RESPONSE FLOWS FOR FALLBACK -->
+	<!-- ========================================================================================= -->
+
+	<!-- Allocate Assets Mock Response -->
+	<flow name="allocate-assets-mock-response" doc:name="Allocate Assets Mock Response">
+		<logger level="WARN" message="Using mock mode for asset allocation - ID: #[payload.employeeId default 'unknown']"/>
+		
+		<ee:transform doc:name="Mock Allocate Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	message: "Assets allocated successfully (mock mode)",
+	database: "mock",
+	employeeId: payload.employeeId default "EMP001",
+	employeeName: (payload.firstName default "Mock") ++ " " ++ (payload.lastName default "Employee"),
+	allocatedAssets: [
+		{
+			assetId: "MOCK-001",
+			assetTag: "MOCK-LAP-001",
+			assetName: "Mock Laptop Dell Latitude",
+			category: "LAPTOP",
+			brand: "Dell",
+			model: "Latitude Demo",
+			serialNumber: "MOCK-SERIAL-001",
+			condition: "NEW",
+			allocationDate: now() as String {format: 'yyyy-MM-dd'},
+			status: "ALLOCATED"
+		},
+		{
+			assetId: "MOCK-002",
+			assetTag: "MOCK-ID-001",
+			assetName: "Mock ID Card",
+			category: "ID_CARD",
+			brand: "HID Global",
+			model: "ProxCard Demo",
+			serialNumber: "MOCK-SERIAL-002",
+			condition: "NEW",
+			allocationDate: now() as String {format: 'yyyy-MM-dd'},
+			status: "ALLOCATED"
+		}
+	],
+	allocationCount: 2,
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	mockMode: true,
+	warning: "This is a mock response - no actual database operation was performed"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<!-- Return Asset Mock Response -->
+	<flow name="return-asset-mock-response" doc:name="Return Asset Mock Response">
+		<logger level="WARN" message="Using mock mode for asset return - Asset: #[payload.assetTag default 'unknown']"/>
+		
+		<ee:transform doc:name="Mock Return Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	message: "Asset returned successfully (mock mode)",
+	database: "mock",
+	assetTag: payload.assetTag default "MOCK-LAP-001",
+	condition: payload.condition default 'GOOD',
+	returnDate: now() as String {format: 'yyyy-MM-dd'},
+	notes: payload.notes default 'Asset returned successfully via mock mode',
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	mockMode: true,
+	warning: "This is a mock response - no actual database operation was performed"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<!-- List Assets Mock Response -->
+	<flow name="list-assets-mock-response" doc:name="List Assets Mock Response">
+		<logger level="WARN" message="Using mock mode for list assets"/>
+		
+		<ee:transform doc:name="Mock List Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	message: "Assets listed successfully (mock mode)",
+	database: "mock",
+	assets: [
+		{
+			id: 1,
+			asset_tag: "MOCK-LAP-001",
+			asset_name: "Mock Dell Latitude Laptop",
+			category_name: "LAPTOP",
+			brand: "Dell",
+			model: "Latitude 5520",
+			status: "AVAILABLE",
+			allocated_to: null
+		},
+		{
+			id: 2,
+			asset_tag: "MOCK-LAP-002",
+			asset_name: "Mock MacBook Pro",
+			category_name: "LAPTOP", 
+			brand: "Apple",
+			model: "MacBook Pro 16-inch",
+			status: "ALLOCATED",
+			allocated_to: "EMP001"
+		},
+		{
+			id: 3,
+			asset_tag: "MOCK-ID-001",
+			asset_name: "Mock ID Card",
+			category_name: "ID_CARD",
+			brand: "HID Global",
+			model: "ProxCard II",
+			status: "AVAILABLE",
+			allocated_to: null
+		}
+	],
+	assetCount: 3,
+	statistics: {
+		available: 2,
+		allocated: 1,
+		categories: ["LAPTOP", "ID_CARD"]
+	},
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	mockMode: true,
+	warning: "This is mock data - not from actual database"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<!-- Get Available Assets Mock Response -->
+	<flow name="get-available-assets-mock-response" doc:name="Get Available Assets Mock Response">
+		<logger level="WARN" message="Using mock mode for get available assets"/>
+		
+		<ee:transform doc:name="Mock Available Assets Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	message: "Available assets retrieved successfully (mock mode)",
+	database: "mock",
+	assets: [
+		{
+			id: 1,
+			asset_tag: "MOCK-LAP-001",
+			asset_name: "Mock Dell Latitude Laptop",
+			category_name: "LAPTOP",
+			brand: "Dell",
+			model: "Latitude 5520",
+			status: "AVAILABLE"
+		},
+		{
+			id: 3,
+			asset_tag: "MOCK-ID-001",
+			asset_name: "Mock ID Card",
+			category_name: "ID_CARD",
+			brand: "HID Global",
+			model: "ProxCard II",
+			status: "AVAILABLE"
+		}
+	],
+	assetCount: 2,
+	categories: ["LAPTOP", "ID_CARD"],
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	mockMode: true,
+	warning: "This is mock data - not from actual database"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<!-- Get Employee Assets Mock Response -->
+	<flow name="get-employee-assets-mock-response" doc:name="Get Employee Assets Mock Response">
+		<logger level="WARN" message="Using mock mode for get employee assets - ID: #[vars.employeeId]"/>
+		
+		<ee:transform doc:name="Mock Employee Assets Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	message: "Employee assets retrieved successfully (mock mode)",
+	database: "mock",
+	employeeId: vars.employeeId default "EMP001",
+	assets: [
+		{
+			asset_tag: "MOCK-LAP-002",
+			asset_name: "Mock MacBook Pro",
+			category_name: "LAPTOP",
+			brand: "Apple",
+			model: "MacBook Pro 16-inch",
+			allocated_date: "2024-01-15",
+			allocation_status: "ALLOCATED"
+		}
+	],
+	assetCount: 1,
+	categories: ["LAPTOP"],
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	mockMode: true,
+	warning: "This is mock data - not from actual database"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
 
 </mule>

@@ -39,7 +39,7 @@
         <mule.http.connector.version>1.9.0</mule.http.connector.version>
         <mule.db.connector.version>1.14.17</mule.db.connector.version>  <!-- FIXED: Java 17 -->
         <mule.email.connector.version>1.7.4</mule.email.connector.version>
-        <mule.file.connector.version>1.5.0</mule.file.connector.version>
+        <mule.file.connector.version>1.5.2</mule.file.connector.version>
         <mule.apikit.connector.version>1.6.3</mule.apikit.connector.version>
         <mule.secure.configuration.property.version>1.2.6</mule.secure.configuration.property.version>
         <postgresql.version>42.7.4</postgresql.version>

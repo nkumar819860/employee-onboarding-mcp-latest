@@ -1,830 +1,339 @@
-openapi: 3.0.3
-info:
-  title: Asset Allocation MCP Server API
-  description: |
-    MCP Server for Asset Allocation Operations - Managing laptops, ID cards, mobile phones, and other company assets.
-    
-    This service provides comprehensive asset allocation capabilities including:
-    - Asset management for laptops, ID cards, mobile phones, monitors, and other IT equipment
-    - Employee assignment with approval workflows
-    - Return processing with condition tracking
-    - Inventory tracking and status monitoring
-    - Multi-database support with PostgreSQL primary and H2 fallback
-    
-    ## Key Features
-    - Complete asset lifecycle management from allocation to return
-    - Support for multiple asset categories with custom rules
-    - Employee assignment tracking with detailed history
-    - Approval workflow management for restricted assets
-    - Comprehensive database schema with relational integrity
-    - Automatic failover between PostgreSQL and H2 databases
-    
-    ## Asset Categories Supported
-    - Laptops and desktop computers
-    - Employee ID cards and access cards
-    - Mobile phones and tablets
-    - Monitors and peripherals
-    - Other IT equipment with custom specifications
-    
-    ## Database Schema
-    The system uses a comprehensive relational database with tables for departments, employees, asset categories, assets, allocations, and maintenance records.
-  version: 1.0.0
-  contact:
-    name: MuleSoft Asset Management Team
-    email: mcp-dev@company.com
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
+#%RAML 1.0
+title: Asset Allocation MCP Server API
+version: v1.0.2
+baseUri: https://asset-allocation-mcp.cloudhub.io/api
+description: |
+  The Asset Allocation MCP (Model Context Protocol) Server provides intelligent IT asset management capabilities for employee onboarding processes. This API enables automated allocation, tracking, and management of company assets such as laptops, ID cards, and other equipment.
 
-servers:
-  - url: http://localhost:8083
-    description: Local development server
-  - url: https://asset-allocation-mcp.cloudhub.io
-    description: Production CloudHub server
+  Key Features:
+  - Automated asset allocation during employee onboarding
+  - Real-time asset availability tracking  
+  - Multi-database support (PostgreSQL, H2, Mock mode)
+  - Intelligent fallback strategies for high availability
+  - Comprehensive health monitoring and status reporting
+  - RESTful API design with JSON responses
 
-tags:
-  - name: Health
-    description: Service health and database status
-  - name: MCP Info
-    description: MCP server information and capabilities
-  - name: Asset Management
-    description: Core asset allocation and management operations
-  - name: Asset Information
-    description: Asset lookup and information retrieval
-  - name: Employee Assets
-    description: Employee-specific asset operations
+mediaType: application/json
 
-paths:
-  /health:
+documentation:
+  - title: Getting Started
+    content: |
+      ## Authentication
+      This API currently uses basic authentication or API key authentication depending on deployment.
+      
+      ## Base URL
+      - Development: http://localhost:8082
+      - Production: https://asset-allocation-mcp.cloudhub.io
+      
+      ## Rate Limiting  
+      Standard rate limiting applies: 1000 requests per hour per client.
+
+types:
+  Employee:
+    type: object
+    properties:
+      employeeId: string
+      firstName: string
+      lastName: string
+      department?: string
+      position?: string
+    example:
+      employeeId: "EMP001"
+      firstName: "John"
+      lastName: "Doe"
+      department: "Engineering"
+      position: "Software Developer"
+
+  Asset:
+    type: object
+    properties:
+      assetId: string
+      assetTag: string
+      assetName: string
+      category: string
+      brand: string
+      model: string
+      serialNumber: string
+      condition: string
+      status: string
+      allocationDate?: string
+    example:
+      assetId: "AST001"
+      assetTag: "LAP-001"
+      assetName: "Dell Latitude 5520"
+      category: "LAPTOP"
+      brand: "Dell"
+      model: "Latitude 5520"
+      serialNumber: "DL123456789"
+      condition: "NEW"
+      status: "AVAILABLE"
+
+  AllocationRequest:
+    type: object
+    properties:
+      employeeId: string
+      firstName?: string
+      lastName?: string
+      department?: string
+      position?: string
+      assets?: string[]
+    example:
+      employeeId: "EMP001"
+      firstName: "John"
+      lastName: "Doe"
+      department: "Engineering"
+      assets: ["laptop", "id-card"]
+
+  AllocationResponse:
+    type: object
+    properties:
+      success: boolean
+      message: string
+      database: string
+      employeeId: string
+      employeeName: string
+      allocatedAssets: Asset[]
+      allocationCount: integer
+      timestamp: string
+      mockMode: boolean
+    example:
+      success: true
+      message: "Assets allocated successfully"
+      database: "h2"
+      employeeId: "EMP001"
+      employeeName: "John Doe"
+      allocatedAssets:
+        - assetId: "AST001"
+          assetTag: "LAP-001"
+          assetName: "Dell Latitude 5520"
+          category: "LAPTOP"
+          status: "ALLOCATED"
+      allocationCount: 1
+      timestamp: "2024-01-15 10:30:00"
+      mockMode: false
+
+  HealthStatus:
+    type: object
+    properties:
+      status: string
+      service: string
+      version: string
+      timestamp: string
+      environment: string
+      checks: object[]
+      uptime: number
+      features: object
+    example:
+      status: "HEALTHY"
+      service: "Asset Allocation MCP Server"
+      version: "1.0.2"
+      timestamp: "2024-01-15T10:30:00Z"
+      environment: "development"
+      uptime: 3600
+      features:
+        mockMode: false
+        databaseRequired: true
+
+/health:
+  displayName: Health Check
+  description: Returns the current health status of the Asset Allocation MCP Server
+  get:
+    description: Get comprehensive health status including database connectivity, application state, and configuration details
+    responses:
+      200:
+        description: Service is healthy
+        body:
+          type: HealthStatus
+      503:
+        description: Service is degraded or unhealthy
+        body:
+          type: object
+          properties:
+            status: string
+            message: string
+          example:
+            status: "DEGRADED"
+            message: "Database connection failed"
+
+/mcp:
+  /info:
+    displayName: MCP Server Information
+    description: Returns detailed information about the MCP server capabilities and available tools
     get:
-      tags:
-        - Health
-      summary: Health check endpoint
-      description: Returns the current health status and active database connection
-      operationId: healthCheck
+      description: Get MCP server metadata, capabilities, and tool definitions
       responses:
-        '200':
-          description: Service is healthy
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum: [UP, DOWN]
-                    example: UP
-                  service:
-                    type: string
-                    example: Asset Allocation MCP Server
-                  activeDatabase:
-                    type: string
-                    enum: [postgres, h2, unknown]
-                    example: postgres
-                  timestamp:
-                    type: string
-                    format: date-time
-                    example: "2024-01-15 10:30:45"
-
-  /mcp/info:
-    get:
-      tags:
-        - MCP Info
-      summary: Get MCP server information
-      description: Returns comprehensive information about the asset allocation MCP server capabilities
-      operationId: getMcpInfo
-      responses:
-        '200':
+        200:
           description: MCP server information
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  name:
-                    type: string
-                    example: Asset Allocation MCP Server
-                  version:
-                    type: string
-                    example: "1.0.0"
-                  description:
-                    type: string
-                    example: MCP Server for Asset Allocation Operations (Laptops, ID Cards, etc.)
-                  tools:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        name:
-                          type: string
-                        description:
-                          type: string
-                        endpoint:
-                          type: string
-                    example:
-                      - name: allocate-asset
-                        description: Allocates assets to employees
-                        endpoint: /mcp/tools/allocate-asset
-                      - name: return-asset
-                        description: Returns assets from employees
-                        endpoint: /mcp/tools/return-asset
+          body:
+            type: object
+            properties:
+              name: string
+              version: string
+              description: string
+              baseUrl: string
+              environment: string
+              capabilities: object
+              endpoints: object
+              tools: object[]
 
-  /mcp/tools/allocate-asset:
-    post:
-      tags:
-        - Asset Management
-      summary: Allocate asset to employee
-      description: |
-        Assigns an available asset to an employee. The system:
-        - Validates asset availability and employee existence
-        - Creates allocation record with approval tracking
-        - Updates asset status to ALLOCATED
-        - Supports approval workflow for restricted categories
-      operationId: allocateAsset
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
+  /tools:
+    displayName: MCP Tools
+    description: Asset allocation and management tools
+    
+    /allocate-assets:
+      displayName: Allocate Assets
+      description: Allocate one or more assets to an employee during onboarding
+      post:
+        description: |
+          Allocates available assets to the specified employee. The system will:
+          1. Validate employee information
+          2. Find available assets matching the requested types
+          3. Update asset status to 'ALLOCATED'
+          4. Create allocation records
+          5. Return detailed allocation results
+        body:
+          type: AllocationRequest
+        responses:
+          200:
+            description: Assets allocated successfully
+            body:
+              type: AllocationResponse
+          400:
+            description: Invalid request parameters
+            body:
               type: object
-              required:
-                - assetTag
-                - employeeId
               properties:
-                assetTag:
-                  type: string
-                  description: Unique asset tag identifier
-                  example: LAPTOP-001
-                employeeId:
-                  type: string
-                  description: Employee ID to allocate asset to
-                  example: EMP001
-                allocatedDate:
-                  type: string
-                  format: date
-                  description: Allocation date (defaults to current date)
-                  example: "2024-01-15"
-                reason:
-                  type: string
-                  description: Reason for asset allocation
-                  example: New employee onboarding
-                approvedBy:
-                  type: string
-                  description: Person who approved the allocation
-                  example: John Manager
-                notes:
-                  type: string
-                  description: Additional allocation notes
-                  example: Urgent allocation for immediate start
-      responses:
-        '200':
-          description: Asset allocated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
-                  message:
-                    type: string
-                    example: Asset allocated successfully
-                  assetTag:
-                    type: string
-                    example: LAPTOP-001
-                  assetName:
-                    type: string
-                    example: MacBook Pro 16"
-                  employeeId:
-                    type: string
-                    example: EMP001
-                  database:
-                    type: string
-                    example: PostgreSQL
-                  timestamp:
-                    type: string
-                    format: date-time
-        '404':
-          description: Asset not available or employee not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Database or server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '503':
-          description: Service unavailable due to database connectivity
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /mcp/tools/return-asset:
-    post:
-      tags:
-        - Asset Management
-      summary: Return asset from employee
-      description: |
-        Processes asset return from an employee. The system:
-        - Updates allocation record with return date and condition
-        - Changes allocation status to RETURNED
-        - Updates asset status to AVAILABLE
-        - Records return condition for tracking
-      operationId: returnAsset
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
+                success: boolean
+                error: string
+                message: string
+              example:
+                success: false
+                error: "INVALID_REQUEST"
+                message: "Employee ID is required"
+          404:
+            description: No available assets found
+            body:
               type: object
-              required:
-                - assetTag
               properties:
-                assetTag:
-                  type: string
-                  description: Unique asset tag identifier
-                  example: LAPTOP-001
-                returnDate:
-                  type: string
-                  format: date
-                  description: Return date (defaults to current date)
-                  example: "2024-06-15"
-                condition:
-                  type: string
-                  enum: [EXCELLENT, GOOD, FAIR, POOR, DAMAGED]
-                  description: Condition of returned asset
-                  example: GOOD
-                notes:
-                  type: string
-                  description: Return notes and observations
-                  example: Minor wear on keyboard, otherwise excellent condition
-      responses:
-        '200':
-          description: Asset returned successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
-                  message:
-                    type: string
-                    example: Asset returned successfully
-                  assetTag:
-                    type: string
-                    example: LAPTOP-001
-                  condition:
-                    type: string
-                    example: GOOD
-                  database:
-                    type: string
-                    example: PostgreSQL
-                  timestamp:
-                    type: string
-                    format: date-time
-        '404':
-          description: No active allocation found for asset
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Database or server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                success: boolean
+                error: string
+                message: string
+                availableAssets: Asset[]
 
-  /mcp/tools/list-assets:
-    get:
-      tags:
-        - Asset Information
-      summary: List assets with filtering
-      description: |
-        Retrieves a list of assets with optional filtering by status and category.
-        Supports pagination with a maximum of 100 results per request.
-      operationId: listAssets
-      parameters:
-        - name: status
-          in: query
-          description: Filter by asset status
-          required: false
-          schema:
-            type: string
-            enum: [ALL, AVAILABLE, ALLOCATED, MAINTENANCE, RETIRED]
-            default: ALL
-        - name: category
-          in: query
-          description: Filter by asset category
-          required: false
-          schema:
-            type: string
-            enum: [ALL, LAPTOP, DESKTOP, ID_CARD, ACCESS_CARD, MOBILE_PHONE, TABLET, MONITOR, KEYBOARD, MOUSE, HEADSET, DOCKING_STATION, PARKING_PASS]
-            default: ALL
-      responses:
-        '200':
-          description: Assets retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
-                  assets:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Asset'
-                  count:
-                    type: integer
-                    example: 15
-                  filters:
-                    type: object
-                    properties:
-                      status:
-                        type: string
-                        example: AVAILABLE
-                      category:
-                        type: string
-                        example: LAPTOP
-                  database:
-                    type: string
-                    example: PostgreSQL
-                  timestamp:
-                    type: string
-                    format: date-time
-        '500':
-          description: Database or server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /mcp/tools/get-asset-details:
-    get:
-      tags:
-        - Asset Information
-      summary: Get detailed asset information
-      description: |
-        Retrieves comprehensive information about a specific asset including:
-        - Basic asset details and specifications
-        - Category information and allocation rules
-        - Complete allocation history with employee details
-        - Current status and condition
-      operationId: getAssetDetails
-      parameters:
-        - name: assetTag
-          in: query
-          description: Unique asset tag identifier
-          required: true
-          schema:
-            type: string
-            example: LAPTOP-001
-      responses:
-        '200':
-          description: Asset details retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
-                  asset:
-                    allOf:
-                      - $ref: '#/components/schemas/Asset'
-                      - type: object
-                        properties:
-                          category_name:
-                            type: string
-                            example: LAPTOP
-                          requires_approval:
-                            type: boolean
-                            example: true
-                          max_allocation_per_employee:
-                            type: integer
-                            example: 1
-                          allocation_history:
-                            type: array
-                            items:
-                              $ref: '#/components/schemas/AllocationHistory'
-                  database:
-                    type: string
-                    example: PostgreSQL
-                  timestamp:
-                    type: string
-                    format: date-time
-        '404':
-          description: Asset not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Database or server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /mcp/tools/get-employee-assets:
-    get:
-      tags:
-        - Employee Assets
-      summary: Get all assets allocated to an employee
-      description: |
-        Retrieves all currently allocated assets for a specific employee including:
-        - Asset details and specifications
-        - Allocation dates and reasons
-        - Asset categories and conditions
-      operationId: getEmployeeAssets
-      parameters:
-        - name: employeeId
-          in: query
-          description: Employee ID to get assets for
-          required: true
-          schema:
-            type: string
-            example: EMP001
-      responses:
-        '200':
-          description: Employee assets retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
-                  employeeId:
-                    type: string
-                    example: EMP001
-                  assets:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        asset_tag:
-                          type: string
-                          example: LAPTOP-001
-                        asset_name:
-                          type: string
-                          example: MacBook Pro 16"
-                        brand:
-                          type: string
-                          example: Apple
-                        model:
-                          type: string
-                          example: MacBook Pro 16" M2
-                        serial_number:
-                          type: string
-                          example: ABC123456789
-                        category_name:
-                          type: string
-                          example: LAPTOP
-                        allocated_date:
-                          type: string
-                          format: date
-                          example: "2024-01-15"
-                        allocation_status:
-                          type: string
-                          example: ALLOCATED
-                        allocation_reason:
-                          type: string
-                          example: New employee onboarding
-                        notes:
-                          type: string
-                          example: Standard issue laptop
-                  count:
-                    type: integer
-                    example: 3
-                  database:
-                    type: string
-                    example: PostgreSQL
-                  timestamp:
-                    type: string
-                    format: date-time
-        '500':
-          description: Database or server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /mcp/tools/add-asset:
-    post:
-      tags:
-        - Asset Management
-      summary: Add new asset to inventory
-      description: |
-        Adds a new asset to the inventory system with comprehensive details.
-        Validates category existence and enforces unique constraints on asset tags and serial numbers.
-      operationId: addAsset
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
+    /return-asset:
+      displayName: Return Asset
+      description: Return an allocated asset and make it available for reassignment
+      post:
+        description: |
+          Returns a previously allocated asset to available status. The system will:
+          1. Validate asset tag
+          2. Update asset status to 'AVAILABLE'
+          3. Record return details and condition
+          4. Update allocation history
+        body:
+          type: object
+          properties:
+            assetTag: string
+            condition?: string
+            notes?: string
+          example:
+            assetTag: "LAP-001"
+            condition: "GOOD"
+            notes: "Asset returned in good condition"
+        responses:
+          200:
+            description: Asset returned successfully
+            body:
               type: object
-              required:
-                - assetTag
-                - assetName
-                - category
               properties:
-                assetTag:
-                  type: string
-                  description: Unique asset tag identifier
-                  example: LAPTOP-002
-                assetName:
-                  type: string
-                  description: Human-readable asset name
-                  example: MacBook Pro 14"
-                category:
-                  type: string
-                  description: Asset category name
-                  example: LAPTOP
-                brand:
-                  type: string
-                  example: Apple
-                model:
-                  type: string
-                  example: MacBook Pro 14" M2
-                serialNumber:
-                  type: string
-                  description: Manufacturer serial number
-                  example: XYZ987654321
-                purchaseDate:
-                  type: string
-                  format: date
-                  description: Purchase date
-                  example: "2024-01-10"
-                purchaseCost:
-                  type: number
-                  format: decimal
-                  description: Purchase cost in USD
-                  example: 2499.99
-                warrantyExpiry:
-                  type: string
-                  format: date
-                  description: Warranty expiration date
-                  example: "2027-01-10"
-                status:
-                  type: string
-                  enum: [AVAILABLE, ALLOCATED, MAINTENANCE, RETIRED]
-                  default: AVAILABLE
-                  example: AVAILABLE
-                conditionStatus:
-                  type: string
-                  enum: [NEW, GOOD, FAIR, POOR]
-                  default: NEW
-                  example: NEW
-                location:
-                  type: string
-                  description: Physical location of the asset
-                  example: IT Storage Room A
-                vendor:
-                  type: string
-                  description: Asset vendor/supplier
-                  example: Apple Authorized Reseller
-                specifications:
-                  type: string
-                  description: Detailed technical specifications
-                  example: 14" Liquid Retina XDR, M2 Pro chip, 16GB RAM, 512GB SSD
-      responses:
-        '200':
-          description: Asset added successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
-                  message:
-                    type: string
-                    example: Asset added successfully
-                  assetTag:
-                    type: string
-                    example: LAPTOP-002
-                  assetName:
-                    type: string
-                    example: MacBook Pro 14"
-                  category:
-                    type: string
-                    example: LAPTOP
-                  database:
-                    type: string
-                    example: PostgreSQL
-                  timestamp:
-                    type: string
-                    format: date-time
-        '409':
-          description: Conflict - Asset tag or serial number already exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Database or server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                success: boolean
+                message: string
+                assetTag: string
+                condition: string
+                returnDate: string
+                timestamp: string
 
-  /mcp/tools/update-asset-status:
-    post:
-      tags:
-        - Asset Management
-      summary: Update asset status
-      description: |
-        Updates the status and condition of an asset. Useful for marking assets as:
-        - MAINTENANCE when under repair
-        - RETIRED when no longer in service
-        - AVAILABLE when ready for allocation
-      operationId: updateAssetStatus
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
+    /list-assets:
+      displayName: List Assets
+      description: Retrieve a list of assets with optional filtering
+      get:
+        description: |
+          Returns a paginated list of assets with optional filters:
+          - Status filter: AVAILABLE, ALLOCATED, MAINTENANCE, RETIRED
+          - Category filter: LAPTOP, ID_CARD, PHONE, etc.
+        queryParameters:
+          status?:
+            type: string
+            enum: [AVAILABLE, ALLOCATED, MAINTENANCE, RETIRED]
+            description: Filter by asset status
+          category?:
+            type: string
+            description: Filter by asset category
+        responses:
+          200:
+            description: Assets retrieved successfully
+            body:
               type: object
-              required:
-                - assetTag
-                - status
               properties:
-                assetTag:
-                  type: string
-                  description: Unique asset tag identifier
-                  example: LAPTOP-001
-                status:
-                  type: string
-                  enum: [AVAILABLE, ALLOCATED, MAINTENANCE, RETIRED]
-                  description: New asset status
-                  example: MAINTENANCE
-                condition:
-                  type: string
-                  enum: [NEW, GOOD, FAIR, POOR]
-                  description: Asset condition (defaults to status if not provided)
-                  example: FAIR
-      responses:
-        '200':
-          description: Asset status updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: success
-                  message:
-                    type: string
-                    example: Asset status updated successfully
-                  assetTag:
-                    type: string
-                    example: LAPTOP-001
-                  newStatus:
-                    type: string
-                    example: MAINTENANCE
-                  database:
-                    type: string
-                    example: PostgreSQL
-                  timestamp:
-                    type: string
-                    format: date-time
-        '404':
-          description: Asset not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Database or server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                success: boolean
+                message: string
+                database: string
+                assets: Asset[]
+                assetCount: integer
+                statistics: object
+                timestamp: string
+                mockMode: boolean
 
-components:
-  schemas:
-    Asset:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        asset_tag:
-          type: string
-          example: LAPTOP-001
-        asset_name:
-          type: string
-          example: MacBook Pro 16"
-        category_id:
-          type: integer
-          example: 1
-        brand:
-          type: string
-          example: Apple
-        model:
-          type: string
-          example: MacBook Pro 16" M2
-        serial_number:
-          type: string
-          example: ABC123456789
-        purchase_date:
-          type: string
-          format: date
-          example: "2024-01-10"
-        purchase_cost:
-          type: number
-          format: decimal
-          example: 2999.99
-        warranty_expiry:
-          type: string
-          format: date
-          example: "2027-01-10"
-        status:
-          type: string
-          enum: [AVAILABLE, ALLOCATED, MAINTENANCE, RETIRED]
-          example: AVAILABLE
-        condition_status:
-          type: string
-          enum: [NEW, GOOD, FAIR, POOR]
-          example: NEW
-        location:
-          type: string
-          example: IT Storage Room A
-        vendor:
-          type: string
-          example: Apple Authorized Reseller
-        specifications:
-          type: string
-          example: 16" Liquid Retina XDR, M2 Max chip, 32GB RAM, 1TB SSD
-        created_at:
-          type: string
-          format: date-time
-          example: "2024-01-10T09:00:00Z"
-        updated_at:
-          type: string
-          format: date-time
-          example: "2024-01-15T14:30:00Z"
+    /get-available-assets:
+      displayName: Get Available Assets
+      description: Retrieve all assets currently available for allocation
+      get:
+        description: Returns only assets with 'AVAILABLE' status, ready for allocation to employees
+        responses:
+          200:
+            description: Available assets retrieved successfully
+            body:
+              type: object
+              properties:
+                success: boolean
+                message: string
+                database: string
+                assets: Asset[]
+                assetCount: integer
+                categories: string[]
+                timestamp: string
 
-    AllocationHistory:
-      type: object
-      properties:
-        employee_id:
-          type: string
-          example: EMP001
-        first_name:
-          type: string
-          example: John
-        last_name:
-          type: string
-          example: Smith
-        allocated_date:
-          type: string
-          format: date
-          example: "2024-01-15"
-        status:
-          type: string
-          enum: [ALLOCATED, RETURNED]
-          example: ALLOCATED
-
-    ErrorResponse:
-      type: object
-      properties:
-        error:
-          type: string
-          example: Asset Not Found
-        message:
-          type: string
-          example: Asset not found or not available for allocation
-        timestamp:
-          type: string
-          format: date-time
-          example: "2024-01-15 10:30:45"
-
-  securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: API key for authentication
-
-security:
-  - ApiKeyAuth: []
-
-externalDocs:
-  description: Asset Allocation MCP Server Documentation
-  url: https://github.com/mulesoft/asset-allocation-mcp/blob/main/README.md
+    /get-employee-assets:
+      displayName: Get Employee Assets
+      description: Retrieve all assets allocated to a specific employee
+      post:
+        description: Returns all currently allocated assets for the specified employee
+        body:
+          type: object
+          properties:
+            employeeId: string
+          example:
+            employeeId: "EMP001"
+        responses:
+          200:
+            description: Employee assets retrieved successfully
+            body:
+              type: object
+              properties:
+                success: boolean
+                message: string
+                database: string
+                employeeId: string
+                assets: Asset[]
+                assetCount: integer
+                categories: string[]
+                timestamp: string
+          404:
+            description: Employee not found or no assets allocated
+            body:
+              type: object
+              properties:
+                success: boolean
+                error: string
+                message: string
+                employeeId: string

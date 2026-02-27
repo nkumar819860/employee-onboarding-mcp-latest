@@ -25,93 +25,85 @@
 		<cloudhub.workers>1</cloudhub.workers>
 		<cloudhub.worker.type>MICRO</cloudhub.worker.type>
 		<application.name>asset-allocation-mcp-server</application.name>
-		
 		<!-- Connected App Authentication Properties -->
 		<anypoint.platform.client_id>${env:CONNECTED_APP_CLIENT_ID}</anypoint.platform.client_id>
 		<anypoint.platform.client_secret>${env:CONNECTED_APP_CLIENT_SECRET}</anypoint.platform.client_secret>
-		
-		
 	</properties>
 
-<build>
-    <plugins>
-        <plugin>
-            <groupId>org.mule.tools.maven</groupId>
-            <artifactId>mule-maven-plugin</artifactId>
-            <!-- ✅ Inherits ${mule.maven.plugin.version} from parent -->
-            <extensions>true</extensions>
-            
-            <configuration>
-                <!-- ✅ Shared libraries - CORRECTLY inside configuration -->
-                <sharedLibraries>
-                    <sharedLibrary>
-                        <groupId>com.h2database</groupId>
-                        <artifactId>h2</artifactId>
-                    </sharedLibrary>
-                    <sharedLibrary>
-                        <groupId>org.postgresql</groupId>
-                        <artifactId>postgresql</artifactId>
-                    </sharedLibrary>
-                </sharedLibraries>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.mule.tools.maven</groupId>
+				<artifactId>mule-maven-plugin</artifactId>
+				<!-- ✅ Inherits ${mule.maven.plugin.version} from parent -->
+				<extensions>true</extensions>
+				<configuration>
+					<!-- ✅ Shared libraries - CORRECTLY inside configuration -->
+					<sharedLibraries>
+						<sharedLibrary>
+							<groupId>com.h2database</groupId>
+							<artifactId>h2</artifactId>
+						</sharedLibrary>
+						<sharedLibrary>
+							<groupId>org.postgresql</groupId>
+							<artifactId>postgresql</artifactId>
+						</sharedLibrary>
+					</sharedLibraries>
 
-                <!-- ✅ CloudHub deployment (used by mule:deploy command) -->
-                <cloudHubDeployment>
-    <uri>https://anypoint.mulesoft.com</uri>
-    <muleVersion>${mule.runtime.version}</muleVersion>
-    <javaVersion>${java.version}</javaVersion>
-    
-    <!-- ✅ FIXED: Correct property -->
-    <businessGroupId>${anypoint.business.group}</businessGroupId>
-    
-    <!-- ✅ Connected App (REQUIRED) -->
-    <connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
-    <connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
-    <connectedAppGrantType>client_credentials</connectedAppGrantType>
-    <connectedAppGrantType>client_credentials</connectedAppGrantType>
-    <applicationName>${application.name}</applicationName>
-    <environment>${anypoint.platform.env}</environment>
-    <region>${cloudhub.region}</region>
-    <workers>${cloudhub.workers}</workers>
-    <workerType>${cloudhub.worker.type}</workerType>
-    <objectStoreV2>true</objectStoreV2>
-    
-    <!-- ✅ Properties OK -->
-    <properties>
-        <env>${anypoint.platform.env}</env>
-        <http.port>8081</http.port>
-    </properties>
-</cloudHubDeployment>
-            </configuration>
-        </plugin>
+					<!-- ✅ CloudHub deployment (used by mule:deploy command) -->
+					<cloudHubDeployment>
+						<uri>https://anypoint.mulesoft.com</uri>
+						<muleVersion>${mule.runtime.version}</muleVersion>
+						<javaVersion>${java.version}</javaVersion>
+						<!-- ✅ FIXED: Correct property -->
+						<businessGroupId>${anypoint.business.group}</businessGroupId>
+						<!-- ✅ Connected App (REQUIRED) -->
+						<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
+						<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
+						<connectedAppGrantType>client_credentials</connectedAppGrantType>
+						<connectedAppGrantType>client_credentials</connectedAppGrantType>
+						<applicationName>${application.name}</applicationName>
+						<environment>${anypoint.platform.env}</environment>
+						<region>${cloudhub.region}</region>
+						<workers>${cloudhub.workers}</workers>
+						<workerType>${cloudhub.worker.type}</workerType>
+						<objectStoreV2>true</objectStoreV2>
+						<!-- ✅ Properties OK -->
+						<properties>
+							<env>${anypoint.platform.env}</env>
+							<http.port>8081</http.port>
+						</properties>
+					</cloudHubDeployment>
+				</configuration>
+			</plugin>
 
-        <!-- ✅ Exchange Plugin for MCP Asset Publishing -->
-        <plugin>
-            <groupId>org.mule.tools.maven</groupId>
-            <artifactId>exchange-mule-maven-plugin</artifactId>
-            <version>0.1.4</version>
-            <executions>
-                <execution>
-                    <id>validate</id>
-                    <phase>validate</phase>
-                    <goals>
-                        <goal>exchange-pre-deploy</goal>
-                    </goals>
-                </execution>
-                <execution>
-                    <id>deploy</id>
-                    <phase>deploy</phase>
-                    <goals>
-                        <goal>exchange-deploy</goal>
-                    </goals>
-                    <configuration>
-                        <classifier>mule-application</classifier>
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
-    </plugins>
-</build>
-
+			<!-- ✅ Exchange Plugin for MCP Asset Publishing -->
+			<plugin>
+				<groupId>org.mule.tools.maven</groupId>
+				<artifactId>exchange-mule-maven-plugin</artifactId>
+				<version>0.1.4</version>
+				<executions>
+					<execution>
+						<id>validate</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>exchange-pre-deploy</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>deploy</id>
+						<phase>deploy</phase>
+						<goals>
+							<goal>exchange-deploy</goal>
+						</goals>
+						<configuration>
+							<classifier>mule-application</classifier>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 
 	<!-- ✅ SIMPLIFIED: Inherits ALL versions from parent dependencyManagement -->
 	<dependencies>
@@ -158,4 +150,12 @@
 			<url>https://maven.anypoint.mulesoft.com/api/v1/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
 		</repository>
 	</distributionManagement>
+	<repositories>
+		<repository>
+			<id>anypoint-exchange-v3</id>
+			<name>Anypoint Exchange V3</name>
+			<url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+			<layout>default</layout>
+		</repository>
+	</repositories>
 </project>

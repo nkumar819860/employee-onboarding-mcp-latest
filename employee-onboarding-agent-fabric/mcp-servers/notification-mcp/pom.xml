@@ -123,6 +123,13 @@
 			<!-- Uses ${mule.http.connector.version} from parent -->
 		</dependency>
 
+		<!-- Database Connector -->
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-db-connector</artifactId>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+
 		<!-- Email Connector -->
 		<dependency>
 			<groupId>org.mule.connectors</groupId>

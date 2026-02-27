@@ -1,4 +1,5 @@
 {
-  "minMuleVersion": "4.9.5",
-  "name": "asset-allocation-mcp-server"
+    "name": "asset-allocation-mcp-server",
+    "minMuleVersion": "4.9.5",
+    "javaSpecificationVersions": ["17"]
 }

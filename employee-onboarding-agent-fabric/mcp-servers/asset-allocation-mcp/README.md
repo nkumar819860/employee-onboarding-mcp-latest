@@ -1,217 +1,287 @@
 # Asset Allocation MCP Server
 
-A comprehensive MuleSoft MCP (Model Context Protocol) server for managing asset allocation operations including laptops, ID cards, mobile phones, and other company assets.
+## Overview
 
-## 🏗️ Project Structure
+The Asset Allocation MCP (Model Context Protocol) Server is an intelligent IT asset management system designed specifically for employee onboarding workflows. It provides automated allocation, tracking, and management of company assets such as laptops, ID cards, mobile devices, and other IT equipment.
 
-```
-asset-allocation-mcp/
-├── src/
-│   ├── main/
-│   │   ├── mule/
-│   │   │   ├── asset-allocation-mcp-server.xml  # Main flow definitions
-│   │   │   └── global.xml                       # Global configurations
-│   │   └── resources/
-│   │       └── config.properties               # Configuration properties
-│   └── test/
-│       ├── munit/                              # MUnit test files
-│       └── resources/                          # Test resources
-├── database/
-│   └── init.sql                               # Database initialization script
-├── pom.xml                                    # Maven project configuration
-├── mule-artifact.json                         # Mule artifact configuration
-├── exchange.json                              # Anypoint Exchange metadata
-└── README.md                                  # This file
-```
+## Key Features
 
-## 🚀 Features
+- **🤖 Automated Asset Allocation**: Intelligently allocates available assets to new employees during onboarding
+- **📊 Real-time Asset Tracking**: Monitors asset availability and allocation status in real-time
+- **🔄 Multi-Database Support**: Supports PostgreSQL (production), H2 (development), and mock mode with intelligent fallback
+- **⚡ High Availability**: Built-in fallback strategies ensure service continuity
+- **🏥 Health Monitoring**: Comprehensive health checks and status reporting
+- **🔧 RESTful API**: Clean, well-documented REST API for easy integration
+- **🔍 MCP Protocol**: Implements Model Context Protocol for agent-based interactions
 
-### Asset Management
-- **Multi-Category Support**: Laptops, desktops, ID cards, access cards, mobile phones, tablets, monitors, keyboards, mice, headsets, docking stations, parking passes
-- **Comprehensive Tracking**: Asset tags, serial numbers, purchase information, warranty details
-- **Status Management**: Available, allocated, maintenance, retired statuses
-- **Condition Tracking**: New, good, fair, poor, damaged conditions
+## API Specification
 
-### Employee Operations
-- **Asset Allocation**: Assign assets to employees with approval workflows
-- **Asset Returns**: Process returns with condition assessment
-- **Employee Asset View**: List all assets assigned to specific employees
-- **Allocation History**: Complete audit trail of asset movements
+This service exposes a RAML-based API specification that can be published to Anypoint Exchange. The API includes:
 
-### Database Support
-- **Primary**: PostgreSQL for production environments
-- **Fallback**: H2 in-memory database for CloudHub deployment
-- **Auto-Failover**: Automatic database selection based on availability
+- **Health Check Endpoint**: `/health` - Service status monitoring
+- **MCP Info Endpoint**: `/mcp/info` - Server capabilities and tool definitions
+- **Asset Management Tools**:
+  - Allocate assets to employees
+  - Return allocated assets
+  - List all assets with filtering
+  - Get available assets
+  - Retrieve employee-specific asset allocations
 
-## 🛠️ API Endpoints
+## Database Strategy Configuration
 
-| Endpoint | Method | Description |
-|----------|---------|-------------|
-| `/health` | GET | Health check status |
-| `/mcp/info` | GET | MCP server information |
-| `/mcp/tools/allocate-asset` | POST | Allocate asset to employee |
-| `/mcp/tools/return-asset` | POST | Return asset from employee |
-| `/mcp/tools/list-assets` | GET | List assets with filtering |
-| `/mcp/tools/get-asset-details` | GET | Get detailed asset information |
-| `/mcp/tools/get-employee-assets` | GET | Get assets for employee |
-| `/mcp/tools/add-asset` | POST | Add new asset to inventory |
-| `/mcp/tools/update-asset-status` | POST | Update asset status |
+The service supports multiple database strategies via the `db.strategy` property:
 
-## 📊 Database Schema
-
-### Core Tables
-- **departments**: Organization departments
-- **employees**: Employee information
-- **asset_categories**: Asset type definitions
-- **assets**: Asset inventory
-- **asset_allocations**: Assignment tracking
-- **asset_maintenance**: Maintenance records
-
-### Sample Asset Categories
-- LAPTOP, DESKTOP, ID_CARD, ACCESS_CARD
-- MOBILE_PHONE, TABLET, MONITOR, KEYBOARD
-- MOUSE, HEADSET, DOCKING_STATION, PARKING_PASS
-
-## 🔧 Configuration
-
-### Database Configuration
+### For Local Development (Recommended)
 ```properties
-# PostgreSQL (Primary)
-db.postgres.url=jdbc:postgresql://localhost:5432/asset_allocation
-db.postgres.username=postgres
-db.postgres.password=postgres123
+db.strategy=h2
+env=development
+```
 
-# H2 (Fallback)
+### For Production Deployment
+```properties
+db.strategy=postgresql
+env=production
+```
+
+### For Flexible Environments
+```properties
+db.strategy=auto
+env=sandbox
+```
+
+## Quick Start
+
+### 1. Local Development Setup
+1. Import the project into Anypoint Studio
+2. Ensure `db.strategy=h2` in `config.properties`
+3. Run the application (`Run As` → `Mule Application`)
+4. Test health endpoint: `GET http://localhost:8082/health`
+
+### 2. Asset Allocation Example
+```bash
+curl -X POST http://localhost:8082/mcp/tools/allocate-assets \
+  -H "Content-Type: application/json" \
+  -d '{
+    "employeeId": "EMP001",
+    "firstName": "John",
+    "lastName": "Doe",
+    "assets": ["laptop", "id-card"]
+  }'
+```
+
+### 3. List Available Assets
+```bash
+curl http://localhost:8082/mcp/tools/get-available-assets
+```
+
+## Configuration
+
+### Database Settings
+```properties
+# H2 In-Memory Database (Development)
 db.h2.url=jdbc:h2:mem:asset_allocation;DB_CLOSE_DELAY=-1
+db.h2.username=sa
+db.h2.password=
+
+# PostgreSQL Database (Production)
+db.postgres.url=jdbc:postgresql://postgres:5432/asset_allocation
+db.postgres.username=postgres
+db.postgres.password=postgres_pass
 ```
 
-### Application Properties
+### Server Settings
 ```properties
-# Server Configuration
+http.host=0.0.0.0
 http.port=8082
-mcp.serverName=Asset Allocation MCP Server
-mcp.serverVersion=1.0.0
-
-# Asset Management
-asset.approval.required.categories=LAPTOP,DESKTOP,MOBILE_PHONE,TABLET,ACCESS_CARD
-asset.auto.approval.limit=500.00
 ```
 
-## 🚀 Getting Started
+### Asset Business Rules
+```properties
+asset.allocation.default.laptop=true
+asset.allocation.default.id_card=true
+asset.allocation.approval.required=false
+asset.allocation.max.per.employee=5
+```
 
-### Prerequisites
-- Java 17+
-- Maven 3.6+
-- PostgreSQL 12+ (optional, H2 fallback available)
-- Mule Runtime 4.11.1+
+## Deployment
 
-### Local Development
-1. **Clone the project**
-2. **Setup database** (optional):
-   ```sql
-   CREATE DATABASE asset_allocation;
-   ```
-3. **Configure properties** in `config.properties`
-4. **Run the application**:
-   ```bash
-   mvn clean install
-   mvn mule:run
-   ```
-5. **Test health endpoint**:
-   ```bash
-   curl http://localhost:8082/health
-   ```
+### CloudHub Deployment
+1. Configure connected app credentials in `.env`
+2. Update database connection for cloud environment
+3. Deploy using: `mvn clean package deploy -DmuleDeploy`
 
-### Sample API Calls
+### Exchange Publication
+This asset can be published to Anypoint Exchange as a reusable MCP component:
 
-#### Allocate Asset
 ```bash
-curl -X POST http://localhost:8082/mcp/tools/allocate-asset \
-  -H "Content-Type: application/json" \
-  -d '{
-    "assetTag": "LAP-003",
-    "employeeId": "EMP006",
-    "reason": "New hire laptop allocation",
-    "approvedBy": "John Mitchell",
-    "notes": "Standard business laptop"
-  }'
+# Publish to Exchange
+mvn clean deploy -DaltDeploymentRepository=anypoint-exchange::default::https://maven.anypoint.mulesoft.com/api/v2/organizations/{orgId}/maven
 ```
 
-#### List Available Assets
+## Architecture
+
+### Component Overview
+```
+┌─────────────────────────────────────────┐
+│           Asset Allocation              │
+│              MCP Server                 │
+├─────────────────────────────────────────┤
+│  HTTP Listener (Port 8082)             │
+│  ├── Health Check (/health)            │
+│  ├── MCP Info (/mcp/info)              │
+│  └── Asset Tools (/mcp/tools/*)        │
+├─────────────────────────────────────────┤
+│         Business Logic Layer           │
+│  ├── Asset Allocation Engine           │
+│  ├── Database Fallback Handler         │
+│  └── Mock Response Generator           │
+├─────────────────────────────────────────┤
+│          Data Access Layer             │
+│  ├── PostgreSQL Connector              │
+│  ├── H2 Database Connector             │
+│  └── Connection Pool Management        │
+├─────────────────────────────────────────┤
+│            Database Layer              │
+│  ├── PostgreSQL (Production)           │
+│  ├── H2 In-Memory (Development)        │
+│  └── Mock Data (Fallback)              │
+└─────────────────────────────────────────┘
+```
+
+### Database Schema
+```sql
+-- Asset Categories
+CREATE TABLE asset_categories (
+    id INT PRIMARY KEY,
+    category_name VARCHAR(50) UNIQUE NOT NULL,
+    description TEXT
+);
+
+-- Assets
+CREATE TABLE assets (
+    id INT PRIMARY KEY,
+    asset_tag VARCHAR(50) UNIQUE NOT NULL,
+    asset_name VARCHAR(100) NOT NULL,
+    category_id INT REFERENCES asset_categories(id),
+    brand VARCHAR(50),
+    model VARCHAR(50),
+    serial_number VARCHAR(100),
+    status VARCHAR(20) DEFAULT 'AVAILABLE',
+    condition_status VARCHAR(20) DEFAULT 'GOOD',
+    purchase_date DATE,
+    specifications JSONB
+);
+
+-- Asset Allocations
+CREATE TABLE asset_allocations (
+    id INT PRIMARY KEY,
+    asset_id INT REFERENCES assets(id),
+    employee_id INT NOT NULL,
+    allocated_date DATE NOT NULL,
+    expected_return_date DATE,
+    actual_return_date DATE,
+    allocation_status VARCHAR(20) DEFAULT 'ALLOCATED',
+    allocation_reason TEXT,
+    return_condition VARCHAR(20),
+    notes TEXT
+);
+```
+
+## Error Handling & Resilience
+
+### Database Fallback Strategy
+1. **Primary**: Try configured database (PostgreSQL/H2)
+2. **Secondary**: Fall back to alternative database
+3. **Tertiary**: Use mock responses for service continuity
+
+### Health Monitoring
+- **Database Health**: Connection status and query performance
+- **Application Health**: Memory usage and service uptime
+- **Configuration Health**: Property validation and feature flags
+
+## Testing
+
+### Unit Tests
 ```bash
-curl "http://localhost:8082/mcp/tools/list-assets?status=AVAILABLE&category=LAPTOP"
+mvn test
 ```
 
-#### Get Employee Assets
+### Integration Tests
 ```bash
-curl "http://localhost:8082/mcp/tools/get-employee-assets?employeeId=EMP001"
+mvn verify -Pintegration-tests
 ```
 
-#### Return Asset
+### Health Check Validation
 ```bash
-curl -X POST http://localhost:8082/mcp/tools/return-asset \
-  -H "Content-Type: application/json" \
-  -d '{
-    "assetTag": "LAP-001",
-    "condition": "GOOD",
-    "notes": "Employee resignation - laptop returned in good condition"
-  }'
+curl http://localhost:8082/health
 ```
 
-## 🏷️ Asset Categories & Sample Data
+Expected healthy response:
+```json
+{
+  "status": "HEALTHY",
+  "service": "Asset Allocation MCP Server",
+  "version": "1.0.2",
+  "checks": [
+    {
+      "name": "database",
+      "healthy": true,
+      "details": {
+        "type": "H2",
+        "assetCount": 10,
+        "connection": "active"
+      }
+    }
+  ]
+}
+```
 
-The system comes pre-loaded with sample data including:
-- **5 Laptops**: Dell, Apple, HP, Lenovo models
-- **5 ID Cards**: Employee identification cards
-- **3 Mobile Phones**: iPhone and Samsung devices
-- **3 Access Cards**: Building access cards
-- **3 Monitors**: Dell, LG, ASUS displays
+## Troubleshooting
 
-## 📈 Monitoring & Logging
+### Common Issues
 
-- Health check endpoint: `/health`
-- Comprehensive logging at INFO level
-- Database connectivity monitoring
-- Error handling with detailed messages
+#### 1. Database Script Execution Error
+**Error**: "One of the following fields must be set [file], [sql]"
+**Solution**: Ensure proper `db:execute-script` syntax in Mule flows
 
-## 🔐 Security Features
+#### 2. Port Already in Use
+**Error**: "Address already in use: 8082"
+**Solution**: Change port in config.properties or kill process using the port
 
-- Input validation and sanitization
-- SQL injection prevention
-- Error handling without sensitive data exposure
-- Configurable approval workflows
+#### 3. Database Connection Failed
+**Error**: "Connection refused to database"
+**Solution**: 
+- For H2: Ensure `db.strategy=h2` 
+- For PostgreSQL: Verify database server is running and credentials are correct
 
-## 🚢 Deployment
+### Debugging
+Enable debug logging:
+```xml
+<Logger name="org.mule.extension.db" level="DEBUG"/>
+<Logger name="com.mulesoft.mule.runtime.plugin.db" level="DEBUG"/>
+```
 
-### CloudHub 2.0
-The application is configured for CloudHub deployment with:
-- Worker Type: MICRO
-- Region: us-east-1
-- H2 database fallback
-- Environment-specific property overrides
+## Contributing
 
-### Runtime Fabric
-Supports deployment to Runtime Fabric with PostgreSQL connectivity.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
 
-## 🤝 Contributing
+## License
 
-1. Follow MuleSoft coding standards
-2. Include comprehensive tests
-3. Update documentation
-4. Test with both PostgreSQL and H2 databases
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 📄 License
+## Support
 
-MIT License - see LICENSE file for details
+For support and questions:
+- Create an issue in the project repository
+- Contact the development team via email
+- Check the troubleshooting section above
 
-## 🆘 Support
+## Version History
 
-For support and issues:
-- Check the health endpoint: `/health`
-- Review application logs
-- Validate database connectivity
-- Ensure proper configuration properties
-
----
-
-**Built with ❤️ using MuleSoft MCP Framework**
+- **v1.0.2**: Fixed database script execution issues, added comprehensive API documentation
+- **v1.0.1**: Added multi-database support with intelligent fallback
+- **v1.0.0**: Initial release with basic asset allocation functionality

@@ -1,5 +1,0 @@
-env: "local"
-db.url: "jdbc:h2:file:./data/employeeDB;DB_CLOSE_DELAY=-1"
-db.driver: "org.h2.Driver"
-db.user: "sa"
-db.password: ""

@@ -15,24 +15,24 @@
     <configuration-properties file="config.properties" doc:name="Configuration properties"/>
 
     <!-- HTTP Listener Configuration -->
-    <http:listener-config doc:name="HTTP Config" name="http-config">
+    <http:listener-config doc:name="HTTP Config" name="HTTP_Listener_config">
         <http:listener-connection host="${http.host}" port="${http.port}"/>
     </http:listener-config>
 
-    <!-- PostgreSQL Database Configuration -->
-    <db:config doc:name="PostgreSQL Config" name="postgres-config">
-        <db:generic-connection driverClassName="${db.postgres.driverClassName}" 
-                             password="${db.postgres.password}" 
-                             url="${db.postgres.url}" 
-                             user="${db.postgres.username}"/>
-    </db:config>
-
-    <!-- H2 Database Configuration (Fallback) -->
-    <db:config doc:name="H2 Config" name="h2-config">
+    <!-- H2 Database Configuration (Primary for CloudHub) -->
+    <db:config doc:name="H2 Config" name="H2_Database_Config">
         <db:generic-connection driverClassName="${db.h2.driverClassName}" 
                              password="${db.h2.password}" 
                              url="${db.h2.url}" 
                              user="${db.h2.username}"/>
+    </db:config>
+
+    <!-- PostgreSQL Database Configuration (For local Docker environment) -->
+    <db:config doc:name="PostgreSQL Config" name="PostgreSQL_Database_Config">
+        <db:generic-connection driverClassName="${db.postgres.driverClassName}" 
+                             password="${db.postgres.password}" 
+                             url="${db.postgres.url}" 
+                             user="${db.postgres.username}"/>
     </db:config>
 
 </mule>

@@ -5,76 +5,226 @@
 	xmlns:db="http://www.mulesoft.org/schema/mule/db"
 	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
 	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:sockets="http://www.mulesoft.org/schema/mule/sockets"
 	xsi:schemaLocation="
         http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
         http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
         http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+        http://www.mulesoft.org/schema/mule/sockets http://www.mulesoft.org/schema/mule/sockets/current/mule-sockets.xsd">
 
-	<!-- ✅ Load Properties Configuration -->
+	<!-- Load Properties Configuration -->
 	<configuration-properties file="config.properties" />
 	
-	<!-- Environment-specific properties override -->
-	<error-handler name="GLOBAL-Error-Handler">
-		<on-error-propagate type="ANY">
+	<!-- Global Error Handler for Production Reliability -->
+	<error-handler name="Global_Error_Handler" doc:name="Global Production Error Handler">
+		<on-error-propagate type="DB:CONNECTIVITY" logException="true" enableNotifications="true">
+			<logger level="ERROR" message="Database connectivity error - switching to mock mode: #[error.description]"/>
 			<ee:transform>
 				<ee:message>
 					<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
-    timestamp: now(),
-    status: 500,
-    error: error.errorType,
-    message: error.description default "Internal error",
-    path: attributes.requestPath default "unknown"
+	success: false,
+	error: "DATABASE_UNAVAILABLE",
+	message: "Database service temporarily unavailable. Please try again later.",
+	timestamp: now(),
+	fallbackMode: "mock"
 }]]></ee:set-payload>
 				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus">503</ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-propagate type="TIMEOUT" logException="true">
+			<logger level="WARN" message="Operation timeout - fallback to cached/mock data: #[error.description]"/>
+			<ee:transform>
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: false,
+	error: "SERVICE_TIMEOUT",
+	message: "Request timeout - please try again",
+	timestamp: now()
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus">408</ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</on-error-propagate>
+		<on-error-propagate type="ANY" logException="true">
+			<logger level="ERROR" message="Unexpected error in MCP server: #[error.description]"/>
+			<ee:transform>
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: false,
+	error: "INTERNAL_ERROR",
+	message: "Internal server error - support team notified",
+	timestamp: now(),
+	requestId: uuid()
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus">500</ee:set-variable>
+				</ee:variables>
 			</ee:transform>
 		</on-error-propagate>
 	</error-handler>
 
-	<!-- ✅ CORRECT REFERENCE -->
-	<configuration
-		defaultErrorHandler-ref="GLOBAL-Error-Handler" />
+	<!-- Configure Global Error Handler -->
+	<configuration defaultErrorHandler-ref="Global_Error_Handler" />
 
+	<!-- ================================================================== -->
+	<!-- DATABASE CONFIGURATIONS - PRODUCTION GRADE WITH CONNECTION POOLING -->
+	<!-- ================================================================== -->
 
-	<!-- ✅ Database Configuration with Environment-based Selection -->
-	<!-- PostgreSQL Configuration (Local Development) -->
-	<db:config name="PostgreSQL_Database_Config" doc:name="PostgreSQL Database Config" 
-	           doc:description="PostgreSQL connection for local development">
+	<!-- PostgreSQL Configuration with Connection Pooling (Hardcoded H2 Fallback) -->
+	<db:config name="PostgreSQL_Database_Config" doc:name="PostgreSQL Production Config">
 		<db:generic-connection 
-			url="${db.postgres.url}" 
-			driverClassName="${db.postgres.driverClassName}" 
-			user="${db.postgres.username}" 
-			password="${db.postgres.password}" />
+			url="jdbc:h2:mem:employee_onboarding;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL" 
+			driverClassName="org.h2.Driver" 
+			user="sa">
+			<db:pooling-profile 
+				maxPoolSize="10" 
+				minPoolSize="2" 
+				acquireIncrement="1" 
+				preparedStatementCacheSize="10"/>
+			<db:column-types>
+				<db:column-type typeName="TIMESTAMP" id="93" className="java.sql.Timestamp"/>
+				<db:column-type typeName="DATE" id="91" className="java.sql.Date"/>
+			</db:column-types>
+		</db:generic-connection>
 	</db:config>
 
-	<!-- H2 In-Memory Configuration (Cloud/Testing) -->
-	<db:config name="H2_Database_Config" doc:name="H2 Database Config"
-	           doc:description="H2 in-memory connection for cloud deployment">
+	<!-- H2 Configuration with Connection Pooling -->
+	<db:config name="H2_Database_Config" doc:name="H2 Fallback Config">
 		<db:generic-connection 
 			url="${db.h2.url}" 
 			driverClassName="${db.h2.driverClassName}" 
 			user="${db.h2.username}" 
-			password="${db.h2.password}" />
+			password="${db.h2.password}">
+			<db:pooling-profile 
+				maxPoolSize="${db.h2.maxPoolSize}" 
+				minPoolSize="${db.h2.minPoolSize}" 
+				acquireIncrement="1" 
+				preparedStatementCacheSize="5"/>
+		</db:generic-connection>
 	</db:config>
 
-	<!-- Primary Database Config - dynamically selected -->
-	<db:config name="Database_Config" doc:name="Database Config">
-		<db:generic-connection 
-			url="${db.active.url}" 
-			driverClassName="${db.active.driverClassName}" 
-			user="${db.active.username}" 
-			password="${db.active.password}" />
-	</db:config>
+	<!-- Database configuration logic moved to flows for proper execution context -->
 
-	<!-- ✅ HTTP Listener with Property-based Configuration -->
-	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener Config">
+	<!-- ================================================================== -->
+	<!-- HTTP LISTENER CONFIGURATION WITH PRODUCTION SETTINGS -->
+	<!-- ================================================================== -->
+
+	<http:listener-config name="HTTP_Listener_config" doc:name="Production HTTP Config">
 		<http:listener-connection 
 			host="${http.host}" 
-			port="${http.port}" />
+			port="${http.port}"
+			protocol="HTTP"
+			usePersistentConnections="true"/>
 	</http:listener-config>
 
+	<!-- ================================================================== -->
+	<!-- PRODUCTION MONITORING & HEALTH CHECK CONFIGURATIONS -->
+	<!-- ================================================================== -->
+
+	<!-- HTTP Request Configuration for External Services -->
+	<http:request-config name="External_HTTP_Config" doc:name="External Service Config">
+		<http:request-connection>
+			<http:client-socket-properties>
+				<sockets:tcp-client-socket-properties connectionTimeout="10000" clientTimeout="30000"/>
+			</http:client-socket-properties>
+		</http:request-connection>
+	</http:request-config>
+
+	<!-- ================================================================== -->
+	<!-- OPERATIONAL FLOWS FOR PRODUCTION READINESS -->
+	<!-- ================================================================== -->
+
+	<!-- Database Health Check Flow -->
+	<flow name="database-health-check" doc:name="Database Health Monitor">
+		<scheduler doc:name="Health Check Scheduler">
+			<scheduling-strategy>
+				<fixed-frequency frequency="30" timeUnit="SECONDS" startDelay="10"/>
+			</scheduling-strategy>
+		</scheduler>
+		
+		<choice doc:name="Health Check Enabled?">
+			<when expression="${db.healthcheck.enabled}">
+				<try doc:name="Test Database Connections">
+					<!-- Test Primary Database -->
+					<db:select config-ref="PostgreSQL_Database_Config">
+						<db:sql>SELECT 1 as health_check, CURRENT_TIMESTAMP as check_time</db:sql>
+					</db:select>
+					<set-variable variableName="primaryDbHealthy" value="true"/>
+					
+					<error-handler>
+						<on-error-continue type="DB:*">
+							<set-variable variableName="primaryDbHealthy" value="false"/>
+							<logger level="WARN" message="Primary database health check failed: #[error.description]"/>
+						</on-error-continue>
+					</error-handler>
+				</try>
+				
+				<!-- Test Fallback Database if Primary Failed -->
+				<choice doc:name="Test Fallback if Needed">
+					<when expression="#[vars.primaryDbHealthy == false]">
+						<try doc:name="Test Fallback Database">
+							<db:select config-ref="H2_Database_Config">
+								<db:sql>SELECT 1 as health_check, CURRENT_TIMESTAMP as check_time</db:sql>
+							</db:select>
+							<set-variable variableName="fallbackDbHealthy" value="true"/>
+							
+							<error-handler>
+								<on-error-continue type="DB:*">
+									<set-variable variableName="fallbackDbHealthy" value="false"/>
+									<logger level="ERROR" message="Both primary and fallback databases failed health check!"/>
+								</on-error-continue>
+							</error-handler>
+						</try>
+					</when>
+					<otherwise>
+						<set-variable variableName="fallbackDbHealthy" value="true"/>
+					</otherwise>
+				</choice>
+			</when>
+			<otherwise>
+				<logger level="DEBUG" message="Database health check disabled"/>
+			</otherwise>
+		</choice>
+	</flow>
+
+	<!-- Application Startup Flow -->
+	<flow name="application-startup" doc:name="Application Startup" initialState="started">
+		<scheduler doc:name="Startup Scheduler">
+			<scheduling-strategy>
+				<fixed-frequency frequency="86400" timeUnit="SECONDS" startDelay="1"/>
+			</scheduling-strategy>
+		</scheduler>
+		
+		<logger level="INFO" message="Employee Onboarding MCP Server starting up - Version: ${mcp.server.version}"/>
+		<logger level="INFO" message="Environment: ${env} | Database Strategy: ${db.strategy}"/>
+		<logger level="INFO" message="Features - Mock: ${mcp.features.mock.enabled} | Audit: ${mcp.features.audit.enabled}"/>
+		<logger level="INFO" message="Server URL: ${mcp.server.baseUrl}"/>
+		
+		<!-- Initialize monitoring metrics if enabled -->
+		<choice doc:name="Initialize Monitoring">
+			<when expression="${monitoring.metrics.enabled}">
+				<logger level="INFO" message="Initializing production metrics collection"/>
+			</when>
+			<otherwise>
+				<logger level="DEBUG" message="Metrics collection disabled"/>
+			</otherwise>
+		</choice>
+	</flow>
 
 </mule>

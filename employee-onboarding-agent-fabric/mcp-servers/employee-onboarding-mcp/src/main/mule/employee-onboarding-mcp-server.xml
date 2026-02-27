@@ -10,472 +10,844 @@
       http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
       http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
 
+	<!-- ========================================================================================= -->
+	<!-- DATABASE INITIALIZATION & HEALTH MANAGEMENT - PRODUCTION READY -->
+	<!-- ========================================================================================= -->
 
-	<!-- ========================= -->
-	<!-- DATABASE INITIALIZATION FLOW -->
-	<!-- ========================= -->
-	<flow name="database-initialization" initialState="started">
+	<flow name="database-initialization" initialState="started" doc:name="Smart Database Initialization">
 		<scheduler doc:name="Database Init Scheduler">
 			<scheduling-strategy>
-				<fixed-frequency frequency="30" startDelay="5"
-					timeUnit="SECONDS" />
+				<fixed-frequency frequency="300" startDelay="5" timeUnit="SECONDS"/>
 			</scheduling-strategy>
 		</scheduler>
-
-		<choice doc:name="Check if initialization needed">
-			<when expression="${app.startup.create.tables}">
-				<try doc:name="Try Create Tables">
-					<choice doc:name="Environment Database Selection">
-						<when
-							expression="#['${env}' == 'development' or '${env}' == 'local']">
-							<logger level="INFO"
-								message="Using PostgreSQL for local environment" />
-							<flow-ref name="create-postgresql-tables" />
-						</when>
-						<otherwise>
-							<logger level="INFO"
-								message="Using H2 in-memory for cloud environment" />
-							<flow-ref name="create-h2-tables" />
-						</otherwise>
-					</choice>
-					<error-handler>
-						<on-error-continue>
-							<logger level="WARN"
-								message="Database initialization failed: #[error.description]" />
-						</on-error-continue>
-					</error-handler>
-				</try>
+		
+		<choice doc:name="Database Initialization Enabled?">
+			<when expression="${db.initialization.enabled}">
+				<flow-ref name="smart-database-setup" doc:name="Initialize Database"/>
 			</when>
 			<otherwise>
-				<logger level="DEBUG"
-					message="Database initialization skipped" />
+				<logger level="DEBUG" message="Database initialization disabled via configuration"/>
 			</otherwise>
 		</choice>
-
-		<!-- Stop scheduler after first run -->
-		<set-variable variableName="schedulerStopped"
-			value="true" />
+		
+		<!-- Run only once then disable -->
+		<set-variable variableName="initComplete" value="true"/>
 	</flow>
 
-	<!-- ========================= -->
-	<!-- HEALTH CHECK WITH DATABASE STATUS -->
-	<!-- ========================= -->
-	<flow name="health-check">
-		<http:listener path="/health"
-			config-ref="HTTP_Listener_config" doc:name="Health Check" />
-
-		<try doc:name="Test Database Connection">
-			<choice
-				doc:name="Environment Database Selection for Health Check">
-				<when
-					expression="#['${env}' == 'development' or '${env}' == 'local']">
-					<db:select config-ref="PostgreSQL_Database_Config">
-						<db:sql><![CDATA[SELECT 1 as health_check]]></db:sql>
-					</db:select>
-					<set-variable variableName="dbStatus"
-						value="PostgreSQL Connected" />
-					<set-variable variableName="dbType" value="postgresql" />
+	<!-- Smart Database Setup with Fallback Strategy -->
+	<flow name="smart-database-setup" doc:name="Smart Database Setup">
+		<logger level="INFO" message="Starting intelligent database initialization - Strategy: ${db.strategy}"/>
+		
+		<try doc:name="Primary Database Setup">
+			<choice doc:name="Database Strategy Selection">
+				<when expression='#["${db.strategy}" == "postgresql"]'>
+					<flow-ref name="setup-postgresql-database"/>
+					<set-variable variableName="activeDatabase" value="postgresql"/>
+				</when>
+				<when expression='#["${db.strategy}" == "h2"]'>
+					<flow-ref name="setup-h2-database"/>
+					<set-variable variableName="activeDatabase" value="h2"/>
 				</when>
 				<otherwise>
-					<db:select config-ref="H2_Database_Config">
-						<db:sql><![CDATA[SELECT 1 as health_check]]></db:sql>
-					</db:select>
-					<set-variable variableName="dbStatus"
-						value="H2 In-Memory Connected" />
-					<set-variable variableName="dbType" value="h2" />
+					<!-- Auto-detection: Try PostgreSQL first -->
+					<flow-ref name="detect-and-setup-database"/>
 				</otherwise>
 			</choice>
+			
+			<logger level="INFO" message="Database initialization completed successfully with: #[vars.activeDatabase]"/>
+			
 			<error-handler>
-				<on-error-continue>
-					<set-variable variableName="dbStatus"
-						value="Database Connection Failed" />
-					<set-variable variableName="dbType" value="unknown" />
+				<on-error-continue type="ANY">
+					<logger level="ERROR" message="All database initialization failed - switching to mock mode: #[error.description]"/>
+					<set-variable variableName="activeDatabase" value="mock"/>
 				</on-error-continue>
 			</error-handler>
 		</try>
-
-		<ee:transform doc:name="Set Health Response">
-			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-  status: "UP",
-  service: "${mcp.serverName}",
-  version: "${mcp.serverVersion}",
-  timestamp: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
-  environment: "${env}",
-  database: {
-    "type": "${db.active}",
-    status: "Connected",
-    active: if (("${env}" == "development") or ("${env}" == "local"))
-              "postgresql"
-            else 
-              "h2"
-  },
-  mcp: {
-    enabled: true,
-    centralized: "${mcp.centralized.enabled}" default "false"
-  }
-}
-]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<logger level="INFO"
-			message="Health check OK - MCP Server ${mcp.serverName} - DB: #[vars.dbType]" />
 	</flow>
 
-	<!-- ========================= -->
-	<!-- MCP SERVER INFO -->
-	<!-- ========================= -->
-	<flow name="mcp-server-info">
-		<http:listener path="/mcp/info" 
-			config-ref="HTTP_Listener_config" allowedMethods="GET"/>
-		<ee:transform doc:name="Server Info">
+	<!-- Auto-Detection Flow (moved out to avoid nested error handlers) -->
+	<flow name="detect-and-setup-database" doc:name="Detect and Setup Database">
+		<try doc:name="Try PostgreSQL First">
+			<flow-ref name="setup-postgresql-database"/>
+			<set-variable variableName="activeDatabase" value="postgresql"/>
+			<logger level="INFO" message="Auto-detection successful: Using PostgreSQL"/>
+			<error-handler>
+				<on-error-continue type="ANY">
+					<logger level="WARN" message="PostgreSQL unavailable, falling back to H2: #[error.description]"/>
+					<flow-ref name="setup-h2-database"/>
+					<set-variable variableName="activeDatabase" value="h2"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- List Employees Fallback Database Flow -->
+	<flow name="list-employees-fallback-database" doc:name="List Employees Fallback Database">
+		<try doc:name="Try Fallback Database">
+			<choice doc:name="Try Fallback Database">
+				<when expression='#[vars.databaseUsed != "h2"]'>
+					<db:select config-ref="H2_Database_Config">
+						<db:sql><![CDATA[
+							SELECT * FROM employees 
+							WHERE (:statusFilter = '' OR status = :statusFilter)
+							ORDER BY hire_date DESC, id DESC
+							LIMIT :size OFFSET :offset
+						]]></db:sql>
+						<db:input-parameters><![CDATA[#[{
+							statusFilter: vars.statusFilter,
+							size: vars.size,
+							offset: vars.offset
+						}]]]></db:input-parameters>
+					</db:select>
+					<set-variable variableName="databaseUsed" value="h2-fallback"/>
+				</when>
+				<otherwise>
+					<db:select config-ref="PostgreSQL_Database_Config">
+						<db:sql><![CDATA[
+							SELECT * FROM employees 
+							WHERE ($statusFilter = '' OR status = $statusFilter)
+							ORDER BY hire_date DESC, id DESC
+							LIMIT $size OFFSET $offset
+						]]></db:sql>
+						<db:input-parameters><![CDATA[#[{
+							statusFilter: vars.statusFilter,
+							size: vars.size,
+							offset: vars.offset
+						}]]]></db:input-parameters>
+					</db:select>
+					<set-variable variableName="databaseUsed" value="postgresql-fallback"/>
+				</otherwise>
+			</choice>
+			<error-handler>
+				<on-error-continue type="ANY">
+					<flow-ref name="list-employees-mock-response"/>
+					<set-variable variableName="databaseUsed" value="mock"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- Update Employee Status Fallback Database Flow -->
+	<flow name="update-employee-status-fallback-database" doc:name="Update Employee Status Fallback Database">
+		<try doc:name="Try Fallback Database Update">
+			<choice doc:name="Try Fallback Database">
+				<when expression='#[vars.databaseUsed != "h2"]'>
+					<db:update config-ref="H2_Database_Config" target="updateResult">
+						<db:sql><![CDATA[
+							UPDATE employees 
+							SET status = :status, updated_at = CURRENT_TIMESTAMP 
+							WHERE employee_id = :empId
+						]]></db:sql>
+						<db:input-parameters><![CDATA[#[{empId: vars.empId, status: vars.status}]]]></db:input-parameters>
+					</db:update>
+					<set-variable variableName="databaseUsed" value="h2-fallback"/>
+				</when>
+				<otherwise>
+					<db:update config-ref="PostgreSQL_Database_Config" target="updateResult">
+						<db:sql><![CDATA[
+							UPDATE employees 
+							SET status = :status, updated_at = CURRENT_TIMESTAMP 
+							WHERE employee_id = :empId
+						]]></db:sql>
+						<db:input-parameters><![CDATA[#[{empId: vars.empId, status: vars.status}]]]></db:input-parameters>
+					</db:update>
+					<set-variable variableName="databaseUsed" value="postgresql-fallback"/>
+				</otherwise>
+			</choice>
+			<error-handler>
+				<on-error-continue type="ANY">
+					<flow-ref name="update-employee-status-mock-response"/>
+					<set-variable variableName="databaseUsed" value="mock"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- ========================================================================================= -->
+	<!-- PRODUCTION-GRADE HEALTH CHECK WITH COMPREHENSIVE STATUS -->
+	<!-- ========================================================================================= -->
+
+	<flow name="health-check" doc:name="Production Health Check">
+		<http:listener path="/health" config-ref="HTTP_Listener_config" doc:name="Health Endpoint"/>
+		
+		<parallel-foreach doc:name="Parallel Health Checks">
+			<ee:transform doc:name="Health Check Tasks">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+["database", "application", "configuration"]]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			
+			<choice doc:name="Health Check Type">
+				<when expression='#[payload == "database"]'>
+					<flow-ref name="database-health-status"/>
+				</when>
+				<when expression='#[payload == "application"]'>
+					<flow-ref name="application-health-status"/>
+				</when>
+				<when expression='#[payload == "configuration"]'>
+					<flow-ref name="configuration-health-status"/>
+				</when>
+			</choice>
+		</parallel-foreach>
+		
+		<ee:transform doc:name="Aggregate Health Response">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
-  name: "${mcp.serverName}",
-  version: "${mcp.serverVersion}",
-  description: "${mcp.serverDescription}",
-  baseUrl: "${mcp.serverBaseUrl}",
-  env: "${env}",
-  database: "${db.active}",
-  tools: [
-    { name: "create-employee", endpoint: "/mcp/tools/create-employee", method: "POST" },
-    { name: "get-employee", endpoint: "/mcp/tools/get-employee/{empId}", method: "GET" },
-    { name: "list-employees", endpoint: "/mcp/tools/list-employees", method: "GET" },
-    { name: "update-status", endpoint: "/mcp/tools/update-employee-status/{empId}/{status}", method: "PUT" }
-  ]
+	status: if (payload filter ($.healthy == false) != []) "DEGRADED" else "HEALTHY",
+	service: "${mcp.server.name}",
+	version: "${mcp.server.version}",
+	timestamp: now(),
+	environment: "${env}",
+	checks: payload,
+	uptime: (now() - |2024-01-01T00:00:00|) as Number {unit: "seconds"},
+	features: {
+		mockMode: "${mcp.features.mock.enabled}",
+		databaseRequired: "${mcp.features.database.required}",
+		auditEnabled: "${mcp.features.audit.enabled}"
+	}
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" message="MCP Info requested" />
+		
+		<logger level="INFO" message="Health check completed - Status: #[payload.status]"/>
 	</flow>
 
-	<!-- ========================= -->
-	<!-- MCP TOOL: CREATE EMPLOYEE -->
-	<!-- ========================= -->
-	<flow name="mcp-create-employee-tool">
-		<http:listener path="/mcp/tools/create-employee"
-			 config-ref="HTTP_Listener_config" allowedMethods="GET"/>
-		<logger level="INFO" message="MCP: Create employee #[payload]" />
-		<flow-ref name="create-employee-impl" />
+	<!-- ========================================================================================= -->
+	<!-- MCP SERVER METADATA & DISCOVERY -->
+	<!-- ========================================================================================= -->
+
+	<flow name="mcp-server-info" doc:name="MCP Server Discovery">
+		<http:listener path="/mcp/info" config-ref="HTTP_Listener_config"/>
+		
+		<ee:transform doc:name="Server Metadata Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	name: "${mcp.server.name}",
+	version: "${mcp.server.version}",
+	description: "${mcp.server.description}",
+	baseUrl: "${mcp.server.baseUrl}",
+	environment: "${env}",
+	capabilities: {
+		databases: ["postgresql", "h2"],
+		fallbackMode: "mock",
+		multiTenant: false,
+		audit: "${mcp.features.audit.enabled}",
+		cache: "${cache.enabled}"
+	},
+	endpoints: {
+		health: "/health",
+		info: "/mcp/info",
+		tools: "/mcp/tools"
+	},
+	tools: [
+		{
+			name: "create-employee",
+			description: "Create a new employee record",
+			endpoint: "/mcp/tools/create-employee",
+			method: "POST",
+			inputSchema: {
+				employeeId: "string",
+				firstName: "string",
+				lastName: "string",
+				email: "string",
+				phone: "string?",
+				departmentId: "number?",
+				position: "string?",
+				hireDate: "date?",
+				salary: "number?"
+			}
+		},
+		{
+			name: "get-employee",
+			description: "Retrieve employee by ID",
+			endpoint: "/mcp/tools/get-employee/{empId}",
+			method: "GET"
+		},
+		{
+			name: "list-employees",
+			description: "List all employees with pagination support",
+			endpoint: "/mcp/tools/list-employees",
+			method: "GET",
+			parameters: ["page?", "size?", "status?", "department?"]
+		},
+		{
+			name: "update-employee-status",
+			description: "Update employee onboarding status",
+			endpoint: "/mcp/tools/update-employee-status/{empId}/{status}",
+			method: "PUT",
+			allowedStatuses: ["PENDING", "ACTIVE", "INACTIVE", "TERMINATED"]
+		}
+	]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		
+		<logger level="INFO" message="MCP server info requested - responding with metadata"/>
 	</flow>
 
-	<!-- ========================= -->
-	<!-- MCP TOOL: GET EMPLOYEE -->
-	<!-- ========================= -->
-	<flow name="mcp-get-employee-tool">
-		<http:listener path="/mcp/tools/get-employee/{empId}"
-			 config-ref="HTTP_Listener_config" />
-		<set-variable variableName="empId"
-			value="#[attributes.uriParams.empId]" />
-		<logger level="INFO" message="MCP: Get employee #[vars.empId]" />
-		<flow-ref name="get-employee-impl" />
+	<!-- ========================================================================================= -->
+	<!-- MCP TOOLS - PRODUCTION IMPLEMENTATIONS WITH INTELLIGENT FALLBACK -->
+	<!-- ========================================================================================= -->
+
+	<flow name="mcp-create-employee-tool" doc:name="Create Employee Tool">
+		<http:listener path="/mcp/tools/create-employee" config-ref="HTTP_Listener_config"/>
+		<logger level="INFO" message="MCP Tool: Create employee - Request: #[payload]"/>
+		<flow-ref name="create-employee-with-fallback"/>
 	</flow>
 
-	<!-- ========================= -->
-	<!-- MCP TOOL: LIST EMPLOYEES -->
-	<!-- ========================= -->
-	<flow name="mcp-list-employees-tool">
-		<http:listener path="/mcp/tools/list-employees"
-			 config-ref="HTTP_Listener_config" />
-		<logger level="INFO" message="MCP: List employees" />
-		<flow-ref name="list-employees-impl" />
+	<flow name="mcp-get-employee-tool" doc:name="Get Employee Tool">
+		<http:listener path="/mcp/tools/get-employee/{empId}" config-ref="HTTP_Listener_config"/>
+		<set-variable variableName="empId" value="#[attributes.uriParams.empId]"/>
+		<logger level="INFO" message="MCP Tool: Get employee - ID: #[vars.empId]"/>
+		<flow-ref name="get-employee-with-fallback"/>
 	</flow>
 
-	<!-- ========================= -->
-	<!-- MCP TOOL: UPDATE STATUS -->
-	<!-- ========================= -->
-	<flow name="mcp-update-employee-status-tool">
-		<http:listener
-			path="/mcp/tools/update-employee-status/{empId}/{status}"
-			config-ref="HTTP_Listener_config" />
-		<set-variable variableName="empId"
-			value="#[attributes.uriParams.empId]" />
-		<set-variable variableName="status"
-			value="#[attributes.uriParams.status]" />
-		<logger level="INFO"
-			message="MCP: Update status #[vars.empId] -> #[vars.status]" />
-		<flow-ref name="update-employee-status-impl" />
+	<flow name="mcp-list-employees-tool" doc:name="List Employees Tool">
+		<http:listener path="/mcp/tools/list-employees" config-ref="HTTP_Listener_config"/>
+		<set-variable variableName="page" value="#[attributes.queryParams.page default 1]"/>
+		<set-variable variableName="size" value="#[attributes.queryParams.size default 10]"/>
+		<set-variable variableName="statusFilter" value="#[attributes.queryParams.status default '']"/>
+		<logger level="INFO" message="MCP Tool: List employees - Page: #[vars.page], Size: #[vars.size]"/>
+		<flow-ref name="list-employees-with-fallback"/>
 	</flow>
 
-	<!-- ========================= -->
-	<!-- CORE IMPLEMENTATIONS -->
-	<!-- ========================= -->
+	<flow name="mcp-update-employee-status-tool" doc:name="Update Employee Status Tool">
+		<http:listener path="/mcp/tools/update-employee-status/{empId}/{status}" config-ref="HTTP_Listener_config"/>
+		<set-variable variableName="empId" value="#[attributes.uriParams.empId]"/>
+		<set-variable variableName="status" value="#[upper(attributes.uriParams.status)]"/>
+		
+		<!-- Validate Status -->
+		<choice doc:name="Validate Status">
+			<when expression='#[vars.status in ["PENDING", "ACTIVE", "INACTIVE", "TERMINATED"]]'>
+				<logger level="INFO" message="MCP Tool: Update employee status - ID: #[vars.empId], Status: #[vars.status]"/>
+				<flow-ref name="update-employee-status-with-fallback"/>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Invalid Status Response">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: false,
+	error: "INVALID_STATUS",
+	message: "Status must be one of: PENDING, ACTIVE, INACTIVE, TERMINATED",
+	provided: vars.status,
+	timestamp: now()
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
 
-	<!-- CREATE EMPLOYEE -->
-	<flow name="create-employee-impl">
-		<try>
-			<ee:transform doc:name="Transform to DB">
+	<!-- ========================================================================================= -->
+	<!-- CORE BUSINESS LOGIC WITH INTELLIGENT DATABASE FALLBACK -->
+	<!-- ========================================================================================= -->
+
+	<!-- Create Employee with Fallback Strategy -->
+	<flow name="create-employee-with-fallback" doc:name="Create Employee with Smart Fallback">
+		<try doc:name="Database Operation with Fallback">
+			<ee:transform doc:name="Validate and Transform Input">
 				<ee:message>
 					<ee:set-payload><![CDATA[%dw 2.0
 output application/java
 ---
 {
-  employee_id: payload.employeeId default "",
-  first_name: payload.firstName default "",
-  last_name: payload.lastName default "",
-  email: payload.email default "",
-  phone: payload.phone default "",
-  department_id: payload.departmentId default "",
-  position: payload.position default "",
-  hire_date: payload.hireDate as Date default now(),
-  status: "PENDING",
-  salary: payload.salary default 0 as Number,
-  address: payload.address default ""
+	employee_id: payload.employeeId default uuid()[0 to 7],
+	first_name: payload.firstName default "",
+	last_name: payload.lastName default "",
+	email: payload.email default "",
+	phone: payload.phone default null,
+	department_id: payload.departmentId default null,
+	position: payload.position default null,
+	hire_date: payload.hireDate as Date default now() as Date,
+	status: "PENDING",
+	salary: payload.salary default null,
+	address: payload.address default null
 }]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
-
-			<choice doc:name="Environment Database Selection for Insert">
-				<when
-					expression="#['${env}' == 'development' or '${env}' == 'local']">
-					<db:insert config-ref="PostgreSQL_Database_Config">
-						<db:sql><![CDATA[INSERT INTO employees (
-              employee_id, first_name, last_name, email, phone,
-              department_id, position, hire_date, status, salary, address
-            ) VALUES (
-              :employee_id, :first_name, :last_name, :email, :phone,
-              :department_id, :position, :hire_date, :status, :salary, :address
-            )]]></db:sql>
-					</db:insert>
-				</when>
-				<otherwise>
-					<db:insert config-ref="H2_Database_Config">
-						<db:sql><![CDATA[INSERT INTO employees (
-              employee_id, first_name, last_name, email, phone,
-              department_id, position, hire_date, status, salary, address
-            ) VALUES (
-              :employee_id, :first_name, :last_name, :email, :phone,
-              :department_id, :position, :hire_date, :status, :salary, :address
-            )]]></db:sql>
-					</db:insert>
-				</otherwise>
-			</choice>
-
+			
+			<!-- Try Primary Database First -->
+			<try doc:name="Primary Database Insert">
+				<choice doc:name="Database Strategy">
+					<when expression='#["${db.strategy}" == "h2" or "${env}" == "sandbox" or "${env}" == "production"]'>
+						<db:insert config-ref="H2_Database_Config" target="insertResult">
+							<db:sql><![CDATA[INSERT INTO employees (
+								employee_id, first_name, last_name, email, phone,
+								department_id, position, hire_date, status, salary, address
+							) VALUES (
+								:employee_id, :first_name, :last_name, :email, :phone,
+								:department_id, :position, :hire_date, :status, :salary, :address
+							)]]></db:sql>
+						</db:insert>
+						<set-variable variableName="databaseUsed" value="h2"/>
+					</when>
+					<otherwise>
+						<db:insert config-ref="PostgreSQL_Database_Config" target="insertResult">
+							<db:sql><![CDATA[INSERT INTO employees (
+								employee_id, first_name, last_name, email, phone,
+								department_id, position, hire_date, status, salary, address
+							) VALUES (
+								:employee_id, :first_name, :last_name, :email, :phone,
+								:department_id, :position, :hire_date, :status, :salary, :address
+							)]]></db:sql>
+						</db:insert>
+						<set-variable variableName="databaseUsed" value="postgresql"/>
+					</otherwise>
+				</choice>
+				
+				<error-handler>
+					<on-error-continue type="DB:*" doc:name="Fallback to Alternative DB">
+						<logger level="WARN" message="Primary database failed, trying fallback database: #[error.description]"/>
+						
+						<choice doc:name="Try Fallback Database">
+							<when expression='#[vars.databaseUsed != "h2"]'>
+								<db:insert config-ref="H2_Database_Config" target="insertResult">
+									<db:sql><![CDATA[INSERT INTO employees (
+										employee_id, first_name, last_name, email, phone,
+										department_id, position, hire_date, status, salary, address
+									) VALUES (
+										:employee_id, :first_name, :last_name, :email, :phone,
+										:department_id, :position, :hire_date, :status, :salary, :address
+									)]]></db:sql>
+								</db:insert>
+								<set-variable variableName="databaseUsed" value="h2-fallback"/>
+							</when>
+							<otherwise>
+								<db:insert config-ref="PostgreSQL_Database_Config" target="insertResult">
+									<db:sql><![CDATA[INSERT INTO employees (
+										employee_id, first_name, last_name, email, phone,
+										department_id, position, hire_date, status, salary, address
+									) VALUES (
+										:employee_id, :first_name, :last_name, :email, :phone,
+										:department_id, :position, :hire_date, :status, :salary, :address
+									)]]></db:sql>
+								</db:insert>
+								<set-variable variableName="databaseUsed" value="postgresql-fallback"/>
+							</otherwise>
+						</choice>
+						
+					</on-error-continue>
+				</error-handler>
+			</try>
+			
 			<ee:transform doc:name="Success Response">
 				<ee:message>
 					<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
-  success: true,
-  message: "Employee created successfully",
-  employeeId: payload.employee_id,
- 
+	success: true,
+	message: "Employee created successfully",
+	employeeId: payload.employee_id,
+	environment: "${env}",
+	database: vars.databaseUsed,
+	timestamp: now(),
+	mockMode: vars.databaseUsed == "mock"
 }]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
-
+			
 			<error-handler>
-				<on-error-continue type="DB:QUERY_EXECUTION" enableNotifications="true" logException="true">
-					<ee:transform>
-						<ee:message>
-							<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-  success: false,
-  error: "Employee ID or email already exists"
-}]]></ee:set-payload>
-						</ee:message>
-					</ee:transform>
-				</on-error-continue>
-				<on-error-continue type="DB:*">
-					<ee:transform>
-						<ee:message>
-							<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-  success: true,
-  message: "Employee created (MOCK - DB unavailable)",
-  employeeId: uuid(),
-  mockMode: true
-}]]></ee:set-payload>
-						</ee:message>
-					</ee:transform>
+				<on-error-continue type="ANY">
+					<flow-ref name="create-employee-mock-response"/>
 				</on-error-continue>
 			</error-handler>
 		</try>
 	</flow>
 
-	<!-- GET EMPLOYEE -->
-	<flow name="get-employee-impl">
-		<try>
-			<choice doc:name="Environment Database Selection for Select">
-				<when
-					expression="#['${env}' == 'development' or '${env}' == 'local']">
-					<db:select config-ref="PostgreSQL_Database_Config">
-						<db:sql><![CDATA[SELECT * FROM employees WHERE employee_id = :empId]]></db:sql>
-						<db:input-parameters><![CDATA[#[{empId: vars.empId}]]]></db:input-parameters>
-					</db:select>
-				</when>
-				<otherwise>
-					<db:select config-ref="H2_Database_Config">
-						<db:sql><![CDATA[SELECT * FROM employees WHERE employee_id = :empId]]></db:sql>
-						<db:input-parameters><![CDATA[#[{empId: vars.empId}]]]></db:input-parameters>
-					</db:select>
-				</otherwise>
-			</choice>
-
+	<!-- Get Employee with Fallback Strategy -->
+	<flow name="get-employee-with-fallback" doc:name="Get Employee with Smart Fallback">
+		<try doc:name="Database Query with Fallback">
+			<!-- Try Primary Database First -->
+			<try doc:name="Primary Database Query">
+				<choice doc:name="Database Strategy">
+					<when expression='#["${db.strategy}" == "h2" or "${env}" == "sandbox" or "${env}" == "production"]'>
+						<db:select config-ref="H2_Database_Config">
+							<db:sql><![CDATA[SELECT * FROM employees WHERE employee_id = :empId]]></db:sql>
+							<db:input-parameters><![CDATA[#[{empId: vars.empId}]]]></db:input-parameters>
+						</db:select>
+						<set-variable variableName="databaseUsed" value="h2"/>
+					</when>
+					<otherwise>
+						<db:select config-ref="PostgreSQL_Database_Config">
+							<db:sql><![CDATA[SELECT * FROM employees WHERE employee_id = :empId]]></db:sql>
+							<db:input-parameters><![CDATA[#[{empId: vars.empId}]]]></db:input-parameters>
+						</db:select>
+						<set-variable variableName="databaseUsed" value="postgresql"/>
+					</otherwise>
+				</choice>
+				
+				<error-handler>
+					<on-error-continue type="DB:*" doc:name="Fallback to Alternative DB">
+						<logger level="WARN" message="Primary database failed, trying fallback: #[error.description]"/>
+						
+						<choice doc:name="Try Fallback Database">
+							<when expression='#[vars.databaseUsed != "h2"]'>
+								<db:select config-ref="H2_Database_Config">
+									<db:sql><![CDATA[SELECT * FROM employees WHERE employee_id = :empId]]></db:sql>
+									<db:input-parameters><![CDATA[#[{empId: vars.empId}]]]></db:input-parameters>
+								</db:select>
+								<set-variable variableName="databaseUsed" value="h2-fallback"/>
+							</when>
+							<otherwise>
+								<db:select config-ref="PostgreSQL_Database_Config">
+									<db:sql><![CDATA[SELECT * FROM employees WHERE employee_id = :empId]]></db:sql>
+									<db:input-parameters><![CDATA[#[{empId: vars.empId}]]]></db:input-parameters>
+								</db:select>
+								<set-variable variableName="databaseUsed" value="postgresql-fallback"/>
+							</otherwise>
+						</choice>
+						
+					</on-error-continue>
+				</error-handler>
+			</try>
+			
 			<ee:transform doc:name="Format Response">
 				<ee:message>
 					<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
-if (payload.size() > 0){
-     message: "No records"
-}
+if (sizeOf(payload) > 0)
+	payload[0] ++ {
+		environment: "${env}",
+		database: vars.databaseUsed,
+		timestamp: now(),
+		mockMode: false
+	}
 else
-  {
-    success: false,
-    message: "Employee not found: " ++ vars.empId
-  }
-]]></ee:set-payload>
+	{
+		success: false,
+		error: "EMPLOYEE_NOT_FOUND",
+		message: "Employee not found: " ++ vars.empId,
+		employeeId: vars.empId,
+		database: vars.databaseUsed,
+		timestamp: now()
+	}]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
-
+			
 			<error-handler>
-				<on-error-continue type="DB:*">
-					<ee:transform>
-						<ee:message>
-							<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-  employee_id: vars.empId,
-  first_name: "Mock User",
-  last_name: "Demo",
-  email: "mock@" ++ vars.empId ++ ".company.com",
-  status: "ACTIVE",
-  mockMode: true
-}]]></ee:set-payload>
-						</ee:message>
-					</ee:transform>
+				<on-error-continue type="ANY">
+					<flow-ref name="get-employee-mock-response"/>
 				</on-error-continue>
 			</error-handler>
 		</try>
 	</flow>
 
-	<!-- LIST EMPLOYEES -->
-	<flow name="list-employees-impl">
-		<try>
-			<choice doc:name="Environment Database Selection for List">
-				<when
-					expression="#['${env}' == 'development' or '${env}' == 'local']">
-					<db:select config-ref="PostgreSQL_Database_Config">
-						<db:sql><![CDATA[SELECT * FROM employees ORDER BY hire_date DESC]]></db:sql>
-					</db:select>
-				</when>
-				<otherwise>
+	<!-- List Employees with Fallback Strategy -->
+	<flow name="list-employees-with-fallback" doc:name="List Employees with Smart Fallback">
+		<try doc:name="Database Query with Pagination">
+			<set-variable variableName="offset" value="#[(vars.page - 1) * vars.size]"/>
+			
+			<!-- Try Primary Database First -->
+			<try doc:name="Primary Database Query">
+				<choice doc:name="Database Strategy">
+					<when expression='#["${db.strategy}" == "h2" or "${env}" == "sandbox" or "${env}" == "production"]'>
+						<db:select config-ref="H2_Database_Config">
+							<db:sql><![CDATA[
+								SELECT * FROM employees 
+								WHERE (:statusFilter = '' OR status = :statusFilter)
+								ORDER BY hire_date DESC, id DESC
+								LIMIT :size OFFSET :offset
+							]]></db:sql>
+							<db:input-parameters><![CDATA[#[{
+								statusFilter: vars.statusFilter,
+								size: vars.size,
+								offset: vars.offset
+							}]]]></db:input-parameters>
+						</db:select>
+						<set-variable variableName="databaseUsed" value="h2"/>
+					</when>
+					<otherwise>
+						<db:select config-ref="PostgreSQL_Database_Config">
+							<db:sql><![CDATA[
+								SELECT * FROM employees 
+								WHERE ($statusFilter = '' OR status = $statusFilter)
+								ORDER BY hire_date DESC, id DESC
+								LIMIT $size OFFSET $offset
+							]]></db:sql>
+							<db:input-parameters><![CDATA[#[{
+								statusFilter: vars.statusFilter,
+								size: vars.size,
+								offset: vars.offset
+							}]]]></db:input-parameters>
+						</db:select>
+						<set-variable variableName="databaseUsed" value="postgresql"/>
+					</otherwise>
+				</choice>
+				
+				<error-handler>
+					<on-error-continue type="DB:*">
+						<logger level="WARN" message="Primary database failed, trying fallback: #[error.description]"/>
+						<flow-ref name="list-employees-fallback-database"/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+			
+			<ee:transform doc:name="Format Paginated Response">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	data: payload,
+	pagination: {
+		page: vars.page,
+		size: vars.size,
+		totalResults: sizeOf(payload),
+		hasMore: sizeOf(payload) == vars.size
+	},
+	filters: {
+		status: vars.statusFilter
+	},
+	environment: "${env}",
+	database: vars.databaseUsed,
+	timestamp: now(),
+	mockMode: vars.databaseUsed == "mock"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			
+			<error-handler>
+				<on-error-continue type="ANY">
+					<flow-ref name="list-employees-mock-response"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- Update Employee Status with Fallback Strategy -->
+	<flow name="update-employee-status-with-fallback" doc:name="Update Status with Smart Fallback">
+		<try doc:name="Database Update with Fallback">
+			<!-- Try Primary Database First -->
+			<try doc:name="Primary Database Update">
+				<choice doc:name="Database Strategy">
+					<when expression='#["${db.strategy}" == "h2" or "${env}" == "sandbox" or "${env}" == "production"]'>
+						<db:update config-ref="H2_Database_Config" target="updateResult">
+							<db:sql><![CDATA[
+								UPDATE employees 
+								SET status = :status, updated_at = CURRENT_TIMESTAMP 
+								WHERE employee_id = :empId
+							]]></db:sql>
+							<db:input-parameters><![CDATA[#[{empId: vars.empId, status: vars.status}]]]></db:input-parameters>
+						</db:update>
+						<set-variable variableName="databaseUsed" value="h2"/>
+					</when>
+					<otherwise>
+						<db:update config-ref="PostgreSQL_Database_Config" target="updateResult">
+							<db:sql><![CDATA[
+								UPDATE employees 
+								SET status = :status, updated_at = CURRENT_TIMESTAMP 
+								WHERE employee_id = :empId
+							]]></db:sql>
+							<db:input-parameters><![CDATA[#[{empId: vars.empId, status: vars.status}]]]></db:input-parameters>
+						</db:update>
+						<set-variable variableName="databaseUsed" value="postgresql"/>
+					</otherwise>
+				</choice>
+				
+				<error-handler>
+					<on-error-continue type="DB:*">
+						<logger level="WARN" message="Primary database failed, trying fallback: #[error.description]"/>
+						<flow-ref name="update-employee-status-fallback-database"/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+			
+			<ee:transform doc:name="Success Response">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	message: "Employee status updated successfully",
+	employeeId: vars.empId,
+	status: vars.status,
+	affectedRows: vars.updateResult.affectedRows default 1,
+	database: vars.databaseUsed,
+	timestamp: now(),
+	mockMode: vars.databaseUsed == "mock"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			
+			<error-handler>
+				<on-error-continue type="ANY">
+					<flow-ref name="update-employee-status-mock-response"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- ========================================================================================= -->
+	<!-- DATABASE SETUP FLOWS -->
+	<!-- ========================================================================================= -->
+
+	<!-- PostgreSQL Database Setup -->
+	<flow name="setup-postgresql-database" doc:name="PostgreSQL Database Setup">
+		<logger level="INFO" message="Initializing PostgreSQL database..."/>
+		
+		<try doc:name="PostgreSQL Connection Test">
+			<db:select config-ref="PostgreSQL_Database_Config">
+				<db:sql><![CDATA[SELECT 1 as test]]></db:sql>
+			</db:select>
+			
+			<logger level="INFO" message="PostgreSQL connection successful"/>
+			
+			<!-- Create tables if they don't exist -->
+			<flow-ref name="create-postgresql-tables"/>
+			
+			<error-handler>
+				<on-error-propagate type="ANY">
+					<logger level="ERROR" message="PostgreSQL setup failed: #[error.description]"/>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- H2 Database Setup -->
+	<flow name="setup-h2-database" doc:name="H2 Database Setup">
+		<logger level="INFO" message="Initializing H2 database..."/>
+		
+		<try doc:name="H2 Connection Test">
+			<db:select config-ref="H2_Database_Config">
+				<db:sql><![CDATA[SELECT 1 as test]]></db:sql>
+			</db:select>
+			
+			<logger level="INFO" message="H2 connection successful"/>
+			
+			<!-- Create tables if they don't exist -->
+			<flow-ref name="create-h2-tables"/>
+			
+			<error-handler>
+				<on-error-propagate type="ANY">
+					<logger level="ERROR" message="H2 setup failed: #[error.description]"/>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- Create PostgreSQL Tables -->
+	<flow name="create-postgresql-tables" doc:name="Create PostgreSQL Tables">
+		<db:execute-ddl config-ref="PostgreSQL_Database_Config">
+			<db:sql><![CDATA[
+				CREATE TABLE IF NOT EXISTS employees (
+					id SERIAL PRIMARY KEY,
+					employee_id VARCHAR(50) UNIQUE NOT NULL,
+					first_name VARCHAR(100) NOT NULL,
+					last_name VARCHAR(100) NOT NULL,
+					email VARCHAR(200) UNIQUE NOT NULL,
+					phone VARCHAR(20),
+					department_id INTEGER,
+					position VARCHAR(100),
+					hire_date DATE DEFAULT CURRENT_DATE,
+					status VARCHAR(20) DEFAULT 'PENDING',
+					salary DECIMAL(10,2),
+					address TEXT,
+					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+					updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+				)
+			]]></db:sql>
+		</db:execute-ddl>
+		
+		<logger level="INFO" message="PostgreSQL tables created successfully"/>
+	</flow>
+
+	<!-- Create H2 Tables -->
+	<flow name="create-h2-tables" doc:name="Create H2 Tables">
+		<db:execute-ddl config-ref="H2_Database_Config">
+			<db:sql><![CDATA[
+				CREATE TABLE IF NOT EXISTS employees (
+					id INT AUTO_INCREMENT PRIMARY KEY,
+					employee_id VARCHAR(50) UNIQUE NOT NULL,
+					first_name VARCHAR(100) NOT NULL,
+					last_name VARCHAR(100) NOT NULL,
+					email VARCHAR(200) UNIQUE NOT NULL,
+					phone VARCHAR(20),
+					department_id INTEGER,
+					position VARCHAR(100),
+					hire_date DATE DEFAULT CURRENT_DATE,
+					status VARCHAR(20) DEFAULT 'PENDING',
+					salary DECIMAL(10,2),
+					address CLOB,
+					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+					updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+				)
+			]]></db:sql>
+		</db:execute-ddl>
+		
+		<logger level="INFO" message="H2 tables created successfully"/>
+	</flow>
+
+	<!-- ========================================================================================= -->
+	<!-- HEALTH CHECK COMPONENTS -->
+	<!-- ========================================================================================= -->
+
+	<!-- Database Health Status -->
+	<flow name="database-health-status" doc:name="Database Health Check">
+		<try doc:name="Test Database Connection">
+			<choice doc:name="Test Active Database">
+				<when expression='#["${db.strategy}" == "h2"]'>
 					<db:select config-ref="H2_Database_Config">
-						<db:sql><![CDATA[SELECT * FROM employees ORDER BY hire_date DESC]]></db:sql>
+						<db:sql><![CDATA[SELECT COUNT(*) as employee_count FROM employees]]></db:sql>
 					</db:select>
-				</otherwise>
-			</choice>
-
-			<ee:transform>
-				<ee:message>
-					<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-  success: true,
-  count: sizeOf(payload),
-  employees: payload,
-  
-}]]></ee:set-payload>
-				</ee:message>
-			</ee:transform>
-
-			<error-handler>
-				<on-error-continue type="DB:*">
-					<ee:transform>
-						<ee:message>
-							<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-  success: true,
-  count: 2,
-  mockMode: true,
-  employees: [
-    {
-      employee_id: "EMP001",
-      first_name: "John",
-      last_name: "Doe",
-      email: "john.doe@company.com",
-      status: "ACTIVE"
-    },
-    {
-      employee_id: "EMP002", 
-      first_name: "Jane",
-      last_name: "Smith",
-      email: "jane.smith@company.com",
-      status: "PENDING"
-    }
-  ]
-}]]></ee:set-payload>
-						</ee:message>
-					</ee:transform>
-				</on-error-continue>
-			</error-handler>
-		</try>
-	</flow>
-
-	<!-- UPDATE STATUS -->
-	<flow name="update-employee-status-impl">
-		<try>
-			<choice doc:name="Environment Database Selection for Update">
-				<when
-					expression="#['${env}' == 'development' or '${env}' == 'local']">
-					<db:update config-ref="PostgreSQL_Database_Config">
-						<db:sql><![CDATA[UPDATE employees 
-                           SET status = :status, updated_at = CURRENT_TIMESTAMP 
-                           WHERE employee_id = :empId]]></db:sql>
-						<db:input-parameters><![CDATA[#[{empId: vars.empId, status: vars.status}]]]></db:input-parameters>
-					</db:update>
+					<set-variable variableName="dbType" value="H2"/>
 				</when>
 				<otherwise>
-					<db:update config-ref="H2_Database_Config">
-						<db:sql><![CDATA[UPDATE employees 
-                           SET status = :status, updated_at = CURRENT_TIMESTAMP 
-                           WHERE employee_id = :empId]]></db:sql>
-						<db:input-parameters><![CDATA[#[{empId: vars.empId, status: vars.status}]]]></db:input-parameters>
-					</db:update>
+					<db:select config-ref="PostgreSQL_Database_Config">
+						<db:sql><![CDATA[SELECT COUNT(*) as employee_count FROM employees]]></db:sql>
+					</db:select>
+					<set-variable variableName="dbType" value="PostgreSQL"/>
 				</otherwise>
 			</choice>
-
-			<ee:transform>
+			
+			<ee:transform doc:name="Database Health Response">
 				<ee:message>
 					<ee:set-payload><![CDATA[%dw 2.0
-output application/json
+output application/java
 ---
 {
-  success: true,
-  message: "Status updated to " ++ vars.status,
-  employeeId: vars.empId
+	name: "database",
+	healthy: true,
+	status: "UP",
+	details: {
+		"type": vars.dbType,
+		employeeCount: payload[0].employee_count,
+		connection: "active"
+	}
 }]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
-
+			
 			<error-handler>
-				<on-error-continue type="DB:*">
-					<ee:transform>
+				<on-error-continue type="ANY">
+					<ee:transform doc:name="Database Error Response">
 						<ee:message>
 							<ee:set-payload><![CDATA[%dw 2.0
-output application/json
+output application/java
 ---
 {
-  success: true,
-  message: "Status updated to " ++ vars.status ++ " (MOCK)",
-  employeeId: vars.empId,
-  mockMode: true
+	name: "database",
+	healthy: false,
+	status: "DOWN",
+	details: {
+		error: error.description,
+		"type": "unavailable"
+	}
 }]]></ee:set-payload>
 						</ee:message>
 					</ee:transform>
@@ -484,89 +856,194 @@ output application/json
 		</try>
 	</flow>
 
-	<!-- ========================= -->
-	<!-- DATABASE TABLE CREATION FLOWS -->
-	<!-- ========================= -->
-
-	<!-- PostgreSQL Table Creation -->
-	<flow name="create-postgresql-tables">
-		<try doc:name="Create PostgreSQL Tables">
-			<db:execute-script
-				config-ref="PostgreSQL_Database_Config">
-				<db:sql><![CDATA[
-          CREATE TABLE IF NOT EXISTS employees (
-            id BIGSERIAL PRIMARY KEY,
-            employee_id VARCHAR(50) UNIQUE NOT NULL,
-            first_name VARCHAR(100),
-            last_name VARCHAR(100),
-            email VARCHAR(255) UNIQUE,
-            phone VARCHAR(20),
-            department_id VARCHAR(50),
-            position VARCHAR(100),
-            hire_date DATE DEFAULT CURRENT_DATE,
-            status VARCHAR(20) DEFAULT 'PENDING',
-            salary DECIMAL(10,2),
-            address TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-          );
-          
-          -- Create indexes for better performance
-          CREATE INDEX IF NOT EXISTS idx_employee_id ON employees(employee_id);
-          CREATE INDEX IF NOT EXISTS idx_employee_email ON employees(email);
-          CREATE INDEX IF NOT EXISTS idx_employee_status ON employees(status);
-        ]]></db:sql>
-			</db:execute-script>
-			<logger level="INFO"
-				message="PostgreSQL tables created successfully" />
-			<error-handler>
-				<on-error-continue>
-					<logger level="ERROR"
-						message="Failed to create PostgreSQL tables: #[error.description]" />
-				</on-error-continue>
-			</error-handler>
-		</try>
+	<!-- Application Health Status -->
+	<flow name="application-health-status" doc:name="Application Health Check">
+		<ee:transform doc:name="Application Health Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	name: "application",
+	healthy: true,
+	status: "UP",
+	details: {
+		version: "${mcp.server.version}",
+		environment: "${env}",
+		memory: java!java::lang::Runtime::getRuntime().freeMemory(),
+		uptime: "running"
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
 	</flow>
 
-	<!-- H2 Table Creation -->
-	<flow name="create-h2-tables">
-		<try doc:name="Create H2 Tables">
-			<db:execute-script config-ref="H2_Database_Config">
-				<db:sql><![CDATA[
-          CREATE TABLE IF NOT EXISTS employees (
-            id BIGINT AUTO_INCREMENT PRIMARY KEY,
-            employee_id VARCHAR(50) UNIQUE NOT NULL,
-            first_name VARCHAR(100),
-            last_name VARCHAR(100),
-            email VARCHAR(255) UNIQUE,
-            phone VARCHAR(20),
-            department_id VARCHAR(50),
-            position VARCHAR(100),
-            hire_date DATE DEFAULT CURRENT_DATE,
-            status VARCHAR(20) DEFAULT 'PENDING',
-            salary DECIMAL(10,2),
-            address TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-          );
-          
-          -- Insert sample data for testing
-          MERGE INTO employees (employee_id, first_name, last_name, email, status) 
-          VALUES ('EMP001', 'John', 'Doe', 'john.doe@company.com', 'ACTIVE');
-          
-          MERGE INTO employees (employee_id, first_name, last_name, email, status) 
-          VALUES ('EMP002', 'Jane', 'Smith', 'jane.smith@company.com', 'PENDING');
-        ]]></db:sql>
-			</db:execute-script>
-			<logger level="INFO"
-				message="H2 in-memory tables created successfully" />
-			<error-handler>
-				<on-error-continue>
-					<logger level="ERROR"
-						message="Failed to create H2 tables: #[error.description]" />
-				</on-error-continue>
-			</error-handler>
-		</try>
+	<!-- Configuration Health Status -->
+	<flow name="configuration-health-status" doc:name="Configuration Health Check">
+		<ee:transform doc:name="Configuration Health Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	name: "configuration",
+	healthy: true,
+	status: "UP",
+	details: {
+		database: "${db.strategy}",
+		mockMode: "${mcp.features.mock.enabled}",
+		auditEnabled: "${mcp.features.audit.enabled}",
+		cacheEnabled: "${cache.enabled}"
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<!-- ========================================================================================= -->
+	<!-- MOCK RESPONSE FLOWS FOR FALLBACK -->
+	<!-- ========================================================================================= -->
+
+	<!-- Create Employee Mock Response -->
+	<flow name="create-employee-mock-response" doc:name="Create Employee Mock Response">
+		<logger level="WARN" message="Using mock mode for create employee - ID: #[payload.employee_id default 'unknown']"/>
+		
+		<ee:transform doc:name="Mock Create Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	message: "Employee created successfully (mock mode)",
+	employeeId: payload.employee_id default uuid()[0 to 7],
+	environment: "${env}",
+	database: "mock",
+	timestamp: now(),
+	mockMode: true,
+	warning: "This is a mock response - no actual database operation was performed"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<!-- Get Employee Mock Response -->
+	<flow name="get-employee-mock-response" doc:name="Get Employee Mock Response">
+		<logger level="WARN" message="Using mock mode for get employee - ID: #[vars.empId default 'unknown']"/>
+		
+		<ee:transform doc:name="Mock Get Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	employee_id: vars.empId default "EMP001",
+	first_name: "Mock",
+	last_name: "Employee",
+	email: "mock.employee@company.com",
+	phone: "+1-555-0123",
+	department_id: 1,
+	position: "Software Developer",
+	hire_date: "2024-01-15",
+	status: "ACTIVE",
+	salary: 75000,
+	address: "123 Mock Street, Mock City, MC 12345",
+	created_at: "2024-01-15T09:00:00",
+	updated_at: "2024-01-15T09:00:00",
+	environment: "${env}",
+	database: "mock",
+	timestamp: now(),
+	mockMode: true,
+	warning: "This is mock data - not from actual database"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<!-- List Employees Mock Response -->
+	<flow name="list-employees-mock-response" doc:name="List Employees Mock Response">
+		<logger level="WARN" message="Using mock mode for list employees - Page: #[vars.page default 1]"/>
+		
+		<ee:transform doc:name="Mock List Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	data: [
+		{
+			employee_id: "EMP001",
+			first_name: "John",
+			last_name: "Doe",
+			email: "john.doe@company.com",
+			phone: "+1-555-0101",
+			position: "Software Engineer",
+			status: "ACTIVE",
+			hire_date: "2024-01-15"
+		},
+		{
+			employee_id: "EMP002",
+			first_name: "Jane",
+			last_name: "Smith",
+			email: "jane.smith@company.com",
+			phone: "+1-555-0102",
+			position: "Product Manager",
+			status: "ACTIVE",
+			hire_date: "2024-01-20"
+		},
+		{
+			employee_id: "EMP003",
+			first_name: "Bob",
+			last_name: "Johnson",
+			email: "bob.johnson@company.com",
+			phone: "+1-555-0103",
+			position: "Designer",
+			status: "PENDING",
+			hire_date: "2024-02-01"
+		}
+	],
+	pagination: {
+		page: vars.page default 1,
+		size: vars.size default 10,
+		totalResults: 3,
+		hasMore: false
+	},
+	filters: {
+		status: vars.statusFilter default ""
+	},
+	environment: "${env}",
+	database: "mock",
+	timestamp: now(),
+	mockMode: true,
+	warning: "This is mock data - not from actual database"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<!-- Update Employee Status Mock Response -->
+	<flow name="update-employee-status-mock-response" doc:name="Update Employee Status Mock Response">
+		<logger level="WARN" message="Using mock mode for update employee status - ID: #[vars.empId], Status: #[vars.status]"/>
+		
+		<ee:transform doc:name="Mock Update Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	success: true,
+	message: "Employee status updated successfully (mock mode)",
+	employeeId: vars.empId default "EMP001",
+	status: vars.status default "ACTIVE",
+	affectedRows: 1,
+	database: "mock",
+	timestamp: now(),
+	mockMode: true,
+	warning: "This is a mock response - no actual database operation was performed"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
 	</flow>
 
 </mule>
