@@ -272,16 +272,10 @@ if "%SKIP_EXCHANGE%"=="false" (
                 echo 📈 Incremented parent to version: !NEW_PARENT_VERSION!
                 
                 REM Update exchange.json with new version
-                powershell -Command ^
-                    "$content = Get-Content 'exchange.json' -Raw; ^
-                     $content = $content -replace '\"version\":\s*\"[^\"]*\"', '\"version\": \"!NEW_PARENT_VERSION!\"'; ^
-                     Set-Content 'exchange.json' $content -NoNewline"
+                powershell -Command "& { $content = Get-Content 'exchange.json' -Raw; $content = $content -replace '\"version\":\s*\"[^\"]*\"', '\"version\": \"!NEW_PARENT_VERSION!\"'; Set-Content 'exchange.json' $content -NoNewline }"
                 
                 REM Also update pom.xml parent version
-                powershell -Command ^
-                    "$content = Get-Content 'pom.xml' -Raw; ^
-                     $content = $content -replace '<version>[^<]*</version>', '<version>!NEW_PARENT_VERSION!</version>'; ^
-                     Set-Content 'pom.xml' $content -NoNewline"
+                powershell -Command "& { $content = Get-Content 'pom.xml' -Raw; $content = $content -replace '<version>[^<]*</version>', '<version>!NEW_PARENT_VERSION!</version>'; Set-Content 'pom.xml' $content -NoNewline }"
                 
                 echo 📝 Updated parent exchange.json and pom.xml with version !NEW_PARENT_VERSION!
                 
@@ -304,10 +298,7 @@ if "%SKIP_EXCHANGE%"=="false" (
                     echo 📝 Updating child module parent references to !NEW_PARENT_VERSION!...
                     for /d %%d in (mcp-servers\*) do (
                         if exist "%%d\pom.xml" (
-                            powershell -Command ^
-                                "$content = Get-Content '%%d\pom.xml' -Raw; ^
-                                 $content = $content -replace '<parent>[\s\S]*?<version>[^<]*</version>[\s\S]*?</parent>', ('<parent>' + [Environment]::NewLine + '        <groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>' + [Environment]::NewLine + '        <artifactId>employee-onboarding-mcp-parent</artifactId>' + [Environment]::NewLine + '        <version>!NEW_PARENT_VERSION!</version>' + [Environment]::NewLine + '    </parent>'); ^
-                                 Set-Content '%%d\pom.xml' $content -NoNewline"
+                            powershell -Command "& { $content = Get-Content '%%d\pom.xml' -Raw; $content = $content -replace '<parent>[\s\S]*?<version>[^<]*</version>[\s\S]*?</parent>', ('<parent>' + [Environment]::NewLine + '        <groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>' + [Environment]::NewLine + '        <artifactId>employee-onboarding-mcp-parent</artifactId>' + [Environment]::NewLine + '        <version>!NEW_PARENT_VERSION!</version>' + [Environment]::NewLine + '    </parent>'); Set-Content '%%d\pom.xml' $content -NoNewline }"
                             echo   ✅ Updated %%d parent reference
                         )
                     )
@@ -369,10 +360,7 @@ if "%SKIP_EXCHANGE%"=="false" (
                 echo   📈 Incremented to version: !NEW_VERSION!
                 
                 REM Update exchange.json with new version
-                powershell -Command ^
-                    "$content = Get-Content 'exchange.json' -Raw; ^
-                     $content = $content -replace '\"version\":\s*\"[^\"]*\"', '\"version\": \"!NEW_VERSION!\"'; ^
-                     Set-Content 'exchange.json' $content -NoNewline"
+                powershell -Command "& { $content = Get-Content 'exchange.json' -Raw; $content = $content -replace '\"version\":\s*\"[^\"]*\"', '\"version\": \"!NEW_VERSION!\"'; Set-Content 'exchange.json' $content -NoNewline }"
                 
                 echo   📝 Updated exchange.json with version !NEW_VERSION!
                 
@@ -481,17 +469,7 @@ for /l %%i in (1,1,%SERVER_COUNT%) do (
     call set "SRV=%%SERVER%%i%%"
     echo   Testing !SRV!-server...
     
-    powershell -Command ^
-        "try { ^
-            $response = Invoke-WebRequest -Uri 'https://!SRV!-server.us-e1.cloudhub.io/health' -UseBasicParsing -TimeoutSec 10 -Method GET; ^
-            if ($response.StatusCode -eq 200) { ^
-                Write-Host '    ✅ !SRV!-server: HEALTHY' -ForegroundColor Green ^
-            } else { ^
-                Write-Host '    ⚠️  !SRV!-server: HTTP $($response.StatusCode)' -ForegroundColor Yellow ^
-            } ^
-        } catch { ^
-            Write-Host '    ⏳ !SRV!-server: Starting or not accessible...' -ForegroundColor Cyan ^
-        }"
+    powershell -Command "& { try { $response = Invoke-WebRequest -Uri 'https://!SRV!-server.us-e1.cloudhub.io/health' -UseBasicParsing -TimeoutSec 10 -Method GET; if ($response.StatusCode -eq 200) { Write-Host '    ✅ !SRV!-server: HEALTHY' -ForegroundColor Green } else { Write-Host '    ⚠️  !SRV!-server: HTTP $($response.StatusCode)' -ForegroundColor Yellow } } catch { Write-Host '    ⏳ !SRV!-server: Starting or not accessible...' -ForegroundColor Cyan } }"
 )
 
 echo.
@@ -502,19 +480,20 @@ echo 🎉 DEPLOYMENT COMPLETED
 echo ==============================
 
 echo.
-echo SERVICE URLS:
-for /l %%i in (1,1,%SERVER_COUNT%) do (
-    call set "SRV=%%SERVER%%i%%"
-    echo   🌐 !SRV!-server: https://!SRV!-server.us-e1.cloudhub.io
-)
+echo ✅ DEPLOYED SERVICE URLS (ACTUAL CLOUDHUB APPLICATIONS):
+echo   🌐 agent-broker-mcp-server: https://agent-broker-mcp-server.us-e1.cloudhub.io
+echo   🌐 employee-onboarding-mcp: https://employee-onboarding-mcp.us-e1.cloudhub.io
+echo   🌐 asset-allocation-mcp: https://asset-allocation-mcp.us-e1.cloudhub.io
+echo   🌐 notification-mcp-server: https://notification-mcp-server.us-e1.cloudhub.io
+echo   🌐 employee-onboarding-mcp-server: https://employee-onboarding-mcp-server.us-e1.cloudhub.io
+echo   🌐 asset-allocation-mcp-server: https://asset-allocation-mcp-server.us-e1.cloudhub.io
 
 echo.
-echo TESTING ENDPOINTS:
-for /l %%i in (1,1,%SERVER_COUNT%) do (
-    call set "SRV=%%SERVER%%i%%"
-    echo   🧪 !SRV! Health: https://!SRV!-server.us-e1.cloudhub.io/health
-    echo   📋 !SRV! Info: https://!SRV!-server.us-e1.cloudhub.io/mcp/info
-)
+echo 📋 KEY ENDPOINTS:
+echo   🔗 Main API: https://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/tools/orchestrate-employee-onboarding
+echo   🔗 Employee MCP: https://employee-onboarding-mcp-server.us-e1.cloudhub.io/mcp
+echo   🔗 Asset MCP: https://asset-allocation-mcp-server.us-e1.cloudhub.io/mcp
+echo   🔗 Notification MCP: https://notification-mcp-server.us-e1.cloudhub.io/mcp
 
 if exist "mcp-servers\agent-broker-mcp" (
     echo.

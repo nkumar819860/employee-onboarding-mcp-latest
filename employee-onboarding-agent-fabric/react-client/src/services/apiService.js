@@ -2,10 +2,11 @@ import axios from 'axios';
 
 class APIService {
   constructor() {
-    this.baseURL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
-    this.employeeAPI = process.env.REACT_APP_EMPLOYEE_API_URL || 'http://localhost:8081';
-    this.assetAPI = process.env.REACT_APP_ASSET_API_URL || 'http://localhost:8082';
-    this.notificationAPI = process.env.REACT_APP_NOTIFICATION_API_URL || 'http://localhost:8083';
+    // CloudHub Production URLs (deployed services)
+    this.baseURL = process.env.REACT_APP_API_BASE_URL || 'https://agent-broker-mcp-server.us-e1.cloudhub.io';
+    this.employeeAPI = process.env.REACT_APP_EMPLOYEE_API_URL || 'https://employee-onboarding-mcp-server.us-e1.cloudhub.io';
+    this.assetAPI = process.env.REACT_APP_ASSET_API_URL || 'https://asset-allocation-mcp-server.us-e1.cloudhub.io';
+    this.notificationAPI = process.env.REACT_APP_NOTIFICATION_API_URL || 'https://notification-mcp-server.us-e1.cloudhub.io';
     
     // Create axios instances for each service
     this.agentBroker = axios.create({

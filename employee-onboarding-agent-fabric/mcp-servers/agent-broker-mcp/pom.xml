@@ -42,10 +42,9 @@
 		
 		<!-- Authentication Properties - Load from command line parameters -->
 		<!-- These will be provided by the deploy script via -D parameters -->
-		<anypoint.platform.client_id></anypoint.platform.client_id>
-		<anypoint.platform.client_secret></anypoint.platform.client_secret>
-		<anypoint.username></anypoint.username>
-		<anypoint.password></anypoint.password>
+		<anypoint.platform.client_id>aec0b3117f7d4d4e8433a7d3d23bc80e</anypoint.platform.client_id>
+		<anypoint.platform.client_secret>9bc9D86a77b343b98a148C0313239aDA</anypoint.platform.client_secret>
+		
 	</properties>
 
 	<!-- Repositories -->
@@ -128,29 +127,33 @@
 
 					<!-- CloudHub deployment -->
 					<cloudHubDeployment>
-						<uri>https://anypoint.mulesoft.com</uri>
-						<muleVersion>${mule.runtime.version}</muleVersion>
-						<javaVersion>${java.version}</javaVersion>
-						<server>CloudHub</server>
-						<applicationName>${application.name}</applicationName>
-						<businessGroupId>${anypoint.business.group}</businessGroupId>
-						<environment>${anypoint.platform.env}</environment>
-						<region>${cloudhub.region}</region>
-						<workers>${cloudhub.workers}</workers>
-						<workerType>${cloudhub.worker.type}</workerType>
-						<objectStoreV2>true</objectStoreV2>
-						
-						<!-- Connected App Authentication Configuration -->
-						<clientId>${anypoint.platform.client_id}</clientId>
-						<clientSecret>${anypoint.platform.client_secret}</clientSecret>
-						
-						<!-- Application Properties -->
-						<properties>
-							<env>${anypoint.platform.env}</env>
-							<http.port>8082</http.port>
-						</properties>
-					</cloudHubDeployment>
-				</configuration>
+    <uri>https://anypoint.mulesoft.com</uri>
+    <muleVersion>${mule.runtime.version}</muleVersion>
+    <javaVersion>${java.version}</javaVersion>
+    
+    <!-- ✅ FIXED: Correct property -->
+    <businessGroupId>${anypoint.business.group}</businessGroupId>
+    
+    <!-- ✅ Connected App (REQUIRED) -->
+    <connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
+    <connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
+    <connectedAppGrantType>client_credentials</connectedAppGrantType>
+    
+    <applicationName>${application.name}</applicationName>
+    <environment>${anypoint.platform.env}</environment>
+    <region>${cloudhub.region}</region>
+    <workers>${cloudhub.workers}</workers>
+    <workerType>${cloudhub.worker.type}</workerType>
+    <objectStoreV2>true</objectStoreV2>
+    
+    <!-- ✅ Properties OK -->
+    <properties>
+        <env>${anypoint.platform.env}</env>
+        <http.port>8081</http.port>
+    </properties>
+</cloudHubDeployment>
+            </configuration>
+
 			</plugin>
 		</plugins>
 	</build>

@@ -13,6 +13,19 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 
 	<!-- ========================= -->
+	<!-- HEALTH CHECK ENDPOINT -->
+	<!-- ========================= -->
+
+	<flow name="health-check">
+		<http:listener config-ref="HTTP_Listener_config" path="/health" allowedMethods="GET" doc:name="Health Check Listener">
+		</http:listener>
+		<set-payload
+			value="#[{'status': 'UP', 'service': 'Employee Onboarding MCP Server', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}, 'database': 'Connected', 'version': '${mcp.serverVersion}'}]"
+			mimeType="application/json" />
+		<logger level="INFO" message="Health check requested for Employee Onboarding MCP" />
+	</flow>
+
+	<!-- ========================= -->
 	<!-- MCP SERVER INFO ENDPOINT -->
 	<!-- ========================= -->
 
