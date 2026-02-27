@@ -1,6 +1,0 @@
-mvn clean package -DskipTests
-mvn clean deploy -DmuleDeploy ^
-    -Dconnected.app.client.id="25bb2da884004ff6af264101e535c5f9" ^
-    -Dconnected.app.client.secret="758185C9B0964D2b961f066F582379a2" ^
-    -Danypoint.platform.org.id="980c5346-1838-46a0-a1d9-42a6f8bf34a5" ^
-    -Danypoint.platform.env="Sandbox"

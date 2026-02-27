@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                               http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
@@ -22,22 +24,18 @@
 		<mule.maven.plugin.version>4.5.0</mule.maven.plugin.version>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
-		<tags/>
-		<categories>[]</categories>
-		<fields>[]</fields>
-		
-		<!-- CloudHub deployment properties - can be overridden by -D parameters or .env -->
+
+		<!-- ✅ CloudHub + Exchange Properties -->
 		<anypoint.business.group>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</anypoint.business.group>
 		<anypoint.platform.env>Sandbox</anypoint.platform.env>
 		<cloudhub.region>us-east-1</cloudhub.region>
 		<cloudhub.workers>1</cloudhub.workers>
 		<cloudhub.worker.type>MICRO</cloudhub.worker.type>
 		<application.name>employee-onboarding-mcp-server</application.name>
-		
-		<!-- Connected App Authentication Properties -->
+
+		<!-- ✅ Connected App (CLI Override) -->
 		<anypoint.platform.client_id>aec0b3117f7d4d4e8433a7d3d23bc80e</anypoint.platform.client_id>
 		<anypoint.platform.client_secret>9bc9D86a77b343b98a148C0313239aDA</anypoint.platform.client_secret>
-		
 	</properties>
 
 	<dependencies>
@@ -71,14 +69,14 @@
 
 	<build>
 		<plugins>
+			<!-- ✅ SINGLE Mule Maven Plugin (CloudHub Deploy) -->
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>mule-maven-plugin</artifactId>
-				<!-- ✅ Inherits ${mule.maven.plugin.version} from parent -->
+				<version>${mule.maven.plugin.version}</version>
 				<extensions>true</extensions>
-
 				<configuration>
-					<!-- ✅ Shared libraries - CORRECTLY inside configuration -->
+					<!-- ✅ Shared Libraries -->
 					<sharedLibraries>
 						<sharedLibrary>
 							<groupId>com.h2database</groupId>
@@ -90,58 +88,41 @@
 						</sharedLibrary>
 					</sharedLibraries>
 
-					<!-- ✅ CloudHub deployment (used by mule:deploy command) -->
-					  <cloudHubDeployment>
-    <uri>https://anypoint.mulesoft.com</uri>
-    <muleVersion>${mule.runtime.version}</muleVersion>
-    <javaVersion>${java.version}</javaVersion>
-    
-    <!-- ✅ FIXED: Correct property -->
-    <businessGroupId>${anypoint.business.group}</businessGroupId>
-    
-    <!-- ✅ Connected App (REQUIRED) -->
-    <connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
-    <connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
-    <connectedAppGrantType>client_credentials</connectedAppGrantType>
-    
-    <applicationName>${application.name}</applicationName>
-    <environment>${anypoint.platform.env}</environment>
-    <region>${cloudhub.region}</region>
-    <workers>${cloudhub.workers}</workers>
-    <workerType>${cloudhub.worker.type}</workerType>
-    <objectStoreV2>true</objectStoreV2>
-    
-    <!-- ✅ Properties OK -->
-    <properties>
-        <env>${anypoint.platform.env}</env>
-        <http.port>8081</http.port>
-    </properties>
-</cloudHubDeployment>
+					<!-- ✅ CloudHub Deployment -->
+					<cloudHubDeployment>
+						<uri>https://anypoint.mulesoft.com</uri>
+						<muleVersion>${mule.runtime.version}</muleVersion>
+						<javaVersion>17</javaVersion>
+						<businessGroupId>${anypoint.business.group}</businessGroupId>
+						<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
+						<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
+						<connectedAppGrantType>client_credentials</connectedAppGrantType>
+						<applicationName>${application.name}</applicationName>
+						<environment>${anypoint.platform.env}</environment>
+						<region>${cloudhub.region}</region>
+						<workers>${cloudhub.workers}</workers>
+						<workerType>${cloudhub.worker.type}</workerType>
+						<objectStoreV2>true</objectStoreV2>
+						<properties>
+							<env>${anypoint.platform.env}</env>
+							<http.port>8081</http.port>
+						</properties>
+					</cloudHubDeployment>
 				</configuration>
 			</plugin>
 
-			<!-- ✅ Exchange Plugin for MCP Asset Publishing -->
+			<!-- ✅ Exchange Publish Plugin -->
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
-				<artifactId>exchange-mule-maven-plugin</artifactId>
-				<version>0.1.4</version>
+				<artifactId>exchange-maven-plugin</artifactId>
+				<version>1.2.4</version>
 				<executions>
 					<execution>
-						<id>validate</id>
-						<phase>validate</phase>
-						<goals>
-							<goal>exchange-pre-deploy</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>deploy</id>
+						<id>push</id>
 						<phase>deploy</phase>
 						<goals>
-							<goal>exchange-deploy</goal>
+							<goal>push</goal>
 						</goals>
-						<configuration>
-							<classifier>mcp</classifier>
-						</configuration>
 					</execution>
 				</executions>
 			</plugin>

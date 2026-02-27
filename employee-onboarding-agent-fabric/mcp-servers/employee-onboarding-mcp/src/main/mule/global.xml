@@ -15,7 +15,7 @@
 	<configuration-properties file="config.properties" />
 	
 	<!-- Environment-specific properties override -->
-	<global-property doc:name="Global Property" doc:id="084073d4-b919-4860-8243-7463949fc13a" name="env" value="${env:local}" />
+	<global-property doc:name="Global Property" doc:id="084073d4-b919-4860-8243-7463949fc13a" name="env" value="${env:sandbox}" />
 	<error-handler name="GLOBAL-Error-Handler">
 		<on-error-propagate type="ANY">
 			<ee:transform>

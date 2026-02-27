@@ -4,7 +4,7 @@ REM COMPREHENSIVE DEPLOYMENT SCRIPT
 REM ✅ Load .env variables
 REM ✅ Clean target folders (fix locking issues)
 REM ✅ Compile projects
-REM ✅ Publish assets to Exchange
+REM ✅ Publish assets to Exchange (OPTIONAL)
 REM ✅ Deploy to CloudHub
 REM ========================================
 
@@ -22,7 +22,7 @@ echo.
 
 REM === STEP 1: LOAD ENVIRONMENT VARIABLES ===
 echo ==============================
-echo 🔧 LOADING ENVIRONMENT VARIABLES
+echo [LOADING] ENVIRONMENT VARIABLES
 echo ==============================
 
 if not exist ".env" (
@@ -123,7 +123,7 @@ if %SERVER_COUNT% EQU 0 (
 )
 
 echo.
-echo ✅ Discovered %SERVER_COUNT% MCP services:%SERVER_LIST%
+echo ✅ Discovered %SERVER_COUNT% MCP services: !SERVER_LIST!
 echo.
 
 REM === STEP 4: CLEAN TARGET FOLDERS (FIX LOCKING ISSUES) ===
@@ -207,194 +207,66 @@ REM === STEP 6: PUBLISH TO EXCHANGE (OPTIONAL) ===
 echo ==============================
 echo 📤 EXCHANGE PUBLICATION OPTIONS
 echo ==============================
-
 echo Do you want to publish assets to Anypoint Exchange?
 echo [Y] Yes - Publish to Exchange (requires proper Exchange permissions)
-echo [N] No  - Skip Exchange publication (CloudHub deployment only)
+echo [N] No  - Skip to CloudHub deployment
 echo.
 set /p PUBLISH_CHOICE=Enter your choice (Y/N): 
+if "%PUBLISH_CHOICE%"=="" set "PUBLISH_CHOICE=N"
 
 if /i "%PUBLISH_CHOICE%"=="Y" (
-    set SKIP_EXCHANGE=false
     echo ✅ Exchange publication ENABLED
-) else if /i "%PUBLISH_CHOICE%"=="N" (
-    set SKIP_EXCHANGE=true
-    echo ℹ️  Exchange publication SKIPPED - CloudHub deployment only
+    goto :PUBLISH_EXCHANGE
 ) else (
-    echo ❌ Invalid choice. Defaulting to SKIP Exchange publication
-    set SKIP_EXCHANGE=true
+    echo [INFO] Exchange publication SKIPPED - Going directly to CloudHub deployment
+    goto :CLOUDHUB_DEPLOYMENT
 )
 
+:PUBLISH_EXCHANGE
+REM Exchange publishing logic (runs only if Y chosen)
 echo.
+echo ==============================
+echo 📤 PUBLISHING TO EXCHANGE
+echo ==============================
+echo 📤 Publishing MCP assets to Anypoint Exchange...
 
-if "%SKIP_EXCHANGE%"=="false" (
-    echo ==============================
-    echo 📤 PUBLISHING TO EXCHANGE
-    echo ==============================
-    
-    echo 📤 Publishing MCP assets to Anypoint Exchange...
-    echo ℹ️  Using MCP classifier with automatic version handling
-    echo.
+REM Interactive credentials
+echo ==============================
+echo 👤 ENTER CREDENTIALS
+echo ==============================
+set /p EXCHANGE_USERNAME=Username: 
+set /p EXCHANGE_PASSWORD=Password: 
+set /p EXCHANGE_MFA=MFA ^(Enter if none^): 
 
-    REM === PARENT POM PUBLICATION ===
-    echo ==============================
-    echo 📦 PUBLISHING PARENT POM
-    echo ==============================
-    
-    if exist "exchange.json" (
-        echo ✅ Found parent exchange.json
-        
-        REM Extract parent version
-        for /f "tokens=2 delims=: " %%v in ('findstr /C:"version" exchange.json') do (
-            set "PARENT_VERSION=%%v"
-            set "PARENT_VERSION=!PARENT_VERSION:"=!"
-            set "PARENT_VERSION=!PARENT_VERSION:,=!"
-            set "PARENT_VERSION=!PARENT_VERSION: =!"
-            echo 📌 Parent POM version: !PARENT_VERSION!
-        )
-        
-        REM First attempt: Try publishing parent with current version
-        echo 📦 Attempting to publish parent POM v!PARENT_VERSION! with MCP classifier...
-        call mvn deploy -DskipMuleApplicationDeployment -DskipTests -q ^
-            -Danypoint.client.id="!ANYPOINT_CLIENT_ID!" ^
-            -Danypoint.client.secret="!ANYPOINT_CLIENT_SECRET!" ^
-            -Danypoint.businessGroup.id="!ANYPOINT_ORG_ID!" ^
-            -Danypoint.platform.base.uri="https://anypoint.mulesoft.com" ^
-            -Danypoint.exchange.base.uri="https://anypoint.mulesoft.com/exchange"
-        
-        if !errorlevel! neq 0 (
-            echo ⚠️  Parent version !PARENT_VERSION! may already exist, incrementing version...
-            
-            REM Extract version components and increment patch version
-            for /f "tokens=1,2,3 delims=." %%a in ("!PARENT_VERSION!") do (
-                set /a PATCH_NUM=%%c+1
-                set "NEW_PARENT_VERSION=%%a.%%b.!PATCH_NUM!"
-                echo 📈 Incremented parent to version: !NEW_PARENT_VERSION!
-                
-                REM Update exchange.json with new version
-                powershell -Command "& { $content = Get-Content 'exchange.json' -Raw; $content = $content -replace '\"version\":\s*\"[^\"]*\"', '\"version\": \"!NEW_PARENT_VERSION!\"'; Set-Content 'exchange.json' $content -NoNewline }"
-                
-                REM Also update pom.xml parent version
-                powershell -Command "& { $content = Get-Content 'pom.xml' -Raw; $content = $content -replace '<version>[^<]*</version>', '<version>!NEW_PARENT_VERSION!</version>'; Set-Content 'pom.xml' $content -NoNewline }"
-                
-                echo 📝 Updated parent exchange.json and pom.xml with version !NEW_PARENT_VERSION!
-                
-                REM Retry publishing parent with new version
-                echo 📦 Retrying parent POM publication with version !NEW_PARENT_VERSION!...
-                call mvn deploy -DskipMuleApplicationDeployment -DskipTests -q ^
-                    -Danypoint.client.id="!ANYPOINT_CLIENT_ID!" ^
-                    -Danypoint.client.secret="!ANYPOINT_CLIENT_SECRET!" ^
-                    -Danypoint.businessGroup.id="!ANYPOINT_ORG_ID!" ^
-                    -Danypoint.platform.base.uri="https://anypoint.mulesoft.com" ^
-                    -Danypoint.exchange.base.uri="https://anypoint.mulesoft.com/exchange"
-                
-                if !errorlevel! neq 0 (
-                    echo ❌ ERROR: Failed to publish parent POM even after version increment
-                    echo ℹ️  Check: EXCHANGE_401_AUTHENTICATION_FIX.md for troubleshooting
-                ) else (
-                    echo ✅ Parent POM v!NEW_PARENT_VERSION! published to Exchange successfully ^(MCP classifier^)
-                    
-                    REM Update child POMs to reference new parent version
-                    echo 📝 Updating child module parent references to !NEW_PARENT_VERSION!...
-                    for /d %%d in (mcp-servers\*) do (
-                        if exist "%%d\pom.xml" (
-                            powershell -Command "& { $content = Get-Content '%%d\pom.xml' -Raw; $content = $content -replace '<parent>[\s\S]*?<version>[^<]*</version>[\s\S]*?</parent>', ('<parent>' + [Environment]::NewLine + '        <groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>' + [Environment]::NewLine + '        <artifactId>employee-onboarding-mcp-parent</artifactId>' + [Environment]::NewLine + '        <version>!NEW_PARENT_VERSION!</version>' + [Environment]::NewLine + '    </parent>'); Set-Content '%%d\pom.xml' $content -NoNewline }"
-                            echo   ✅ Updated %%d parent reference
-                        )
-                    )
-                )
-            )
-        ) else (
-            echo ✅ Parent POM v!PARENT_VERSION! published to Exchange successfully ^(MCP classifier^)
-        )
-    ) else (
-        echo ⚠️  Warning: Parent exchange.json not found, skipping parent publication
-    )
-    
-    echo.
-    echo ==============================
-    echo 📦 PUBLISHING CHILD MODULES
-    echo ==============================
-
-    for /l %%i in (1,1,%SERVER_COUNT%) do (
-        call set "SRV=%%SERVER%%i%%"
-        echo.
-        echo [%%i/%SERVER_COUNT%] 📤 Publishing !SRV! to Exchange...
-        echo ================================
-        
-        cd /d "%SCRIPT_DIR%"
-        cd "mcp-servers\!SRV!"
-        echo 📁 Publishing from: %CD%
-        
-        REM Check if exchange.json exists and extract current version
-        if exist "exchange.json" (
-            echo   📋 Reading version from exchange.json...
-            for /f "tokens=2 delims=: " %%v in ('findstr /C:"version" exchange.json') do (
-                set "CURRENT_VERSION=%%v"
-                set "CURRENT_VERSION=!CURRENT_VERSION:"=!"
-                set "CURRENT_VERSION=!CURRENT_VERSION:,=!"
-                set "CURRENT_VERSION=!CURRENT_VERSION: =!"
-                echo   📌 Current version: !CURRENT_VERSION!
-            )
-        ) else (
-            echo   ⚠️  Warning: exchange.json not found, using default version 1.0.1
-            set "CURRENT_VERSION=1.0.1"
-        )
-        
-        REM First attempt: Try publishing with current version
-        echo   📦 Attempting to publish !SRV! v!CURRENT_VERSION! with MCP classifier...
-        call mvn deploy -DskipMuleApplicationDeployment -DskipTests -q ^
-            -Danypoint.client.id="!ANYPOINT_CLIENT_ID!" ^
-            -Danypoint.client.secret="!ANYPOINT_CLIENT_SECRET!" ^
-            -Danypoint.businessGroup.id="!ANYPOINT_ORG_ID!" ^
-            -Danypoint.platform.base.uri="https://anypoint.mulesoft.com" ^
-            -Danypoint.exchange.base.uri="https://anypoint.mulesoft.com/exchange"
-        
-        if !errorlevel! neq 0 (
-            echo   ⚠️  Version !CURRENT_VERSION! may already exist, incrementing version...
-            
-            REM Extract version components and increment patch version
-            for /f "tokens=1,2,3 delims=." %%a in ("!CURRENT_VERSION!") do (
-                set /a PATCH_NUM=%%c+1
-                set "NEW_VERSION=%%a.%%b.!PATCH_NUM!"
-                echo   📈 Incremented to version: !NEW_VERSION!
-                
-                REM Update exchange.json with new version
-                powershell -Command "& { $content = Get-Content 'exchange.json' -Raw; $content = $content -replace '\"version\":\s*\"[^\"]*\"', '\"version\": \"!NEW_VERSION!\"'; Set-Content 'exchange.json' $content -NoNewline }"
-                
-                echo   📝 Updated exchange.json with version !NEW_VERSION!
-                
-                REM Retry publishing with new version
-                echo   📦 Retrying publication with version !NEW_VERSION!...
-                call mvn deploy -DskipMuleApplicationDeployment -DskipTests -q ^
-                    -Danypoint.client.id="!ANYPOINT_CLIENT_ID!" ^
-                    -Danypoint.client.secret="!ANYPOINT_CLIENT_SECRET!" ^
-                    -Danypoint.businessGroup.id="!ANYPOINT_ORG_ID!" ^
-                    -Danypoint.platform.base.uri="https://anypoint.mulesoft.com" ^
-                    -Danypoint.exchange.base.uri="https://anypoint.mulesoft.com/exchange"
-                
-                if !errorlevel! neq 0 (
-                    echo   ❌ ERROR: Failed to publish !SRV! even after version increment
-                    echo   ℹ️  Check: EXCHANGE_401_AUTHENTICATION_FIX.md for troubleshooting
-                ) else (
-                    echo   ✅ !SRV! v!NEW_VERSION! published to Exchange successfully ^(MCP classifier^)
-                )
-            )
-        ) else (
-            echo   ✅ !SRV! v!CURRENT_VERSION! published to Exchange successfully ^(MCP classifier^)
-        )
-        
-        cd /d "%SCRIPT_DIR%"
-    )
-
-    echo.
-    echo ✅ Exchange publishing phase completed with automatic version handling
-) else (
-    echo ℹ️  Exchange publication skipped as requested
+REM Parent POM publication
+if exist "exchange.json" (
+    echo 📦 Publishing parent POM...
+    call mvn deploy -DskipMuleApplicationDeployment -DskipTests -q ^
+        -Danypoint.username="!EXCHANGE_USERNAME!" ^
+        -Danypoint.password="!EXCHANGE_PASSWORD!" ^
+        -Danypoint.businessGroup.id="%ANYPOINT_ORG_ID%" ^
+        -Danypoint.platform.base.uri="https://anypoint.mulesoft.com" ^
+        -Danypoint.exchange.base.uri="https://anypoint.mulesoft.com/exchange"
 )
 
-echo.
+REM Child modules
+for /l %%i in (1,1,%SERVER_COUNT%) do (
+    call set "SRV=%%SERVER%%i%%"
+    echo 📤 Publishing !SRV! to Exchange...
+    cd "mcp-servers\!SRV!"
+    call mvn deploy -DskipMuleApplicationDeployment -DskipTests -q ^
+        -Danypoint.username="!EXCHANGE_USERNAME!" ^
+        -Danypoint.password="!EXCHANGE_PASSWORD!" ^
+        -Danypoint.businessGroup.id="%ANYPOINT_ORG_ID%" ^
+        -Danypoint.platform.base.uri="https://anypoint.mulesoft.com" ^
+        -Danypoint.exchange.base.uri="https://anypoint.mulesoft.com/exchange"
+    cd /d "%SCRIPT_DIR%"
+)
 
+echo ✅ Exchange publishing completed
+goto :CLOUDHUB_DEPLOYMENT
+
+:CLOUDHUB_DEPLOYMENT
 REM === STEP 7: DEPLOY TO CLOUDHUB ===
 echo ==============================
 echo ☁️  DEPLOYING TO CLOUDHUB
@@ -418,24 +290,22 @@ for /l %%i in (1,1,%SERVER_COUNT%) do (
     cd "mcp-servers\!SRV!"
     echo 📁 Deploying from: %CD%
     
-    echo   Running CloudHub deployment for !SRV!-server...
-    call mvn clean deploy ^
+    call mvn clean package mule:deploy ^
         -DmuleDeploy ^
-        -Danypoint.client.id="!ANYPOINT_CLIENT_ID!" ^
-        -Danypoint.client.secret="!ANYPOINT_CLIENT_SECRET!" ^
-        -Danypoint.businessGroup.id="!ANYPOINT_ORG_ID!" ^
-        -Danypoint.environment="!ANYPOINT_ENV!" ^
+        -Danypoint.client.id="%ANYPOINT_CLIENT_ID%" ^
+        -Danypoint.client.secret="%ANYPOINT_CLIENT_SECRET%" ^
+        -Danypoint.businessGroup.id="%ANYPOINT_ORG_ID%" ^
+        -Danypoint.environment="%ANYPOINT_ENV%" ^
         -Dcloudhub.applicationName="!SRV!-server" ^
-        -Dcloudhub.muleVersion="!MULE_VERSION!" ^
-        -Dcloudhub.region="!CLOUDHUB_REGION!" ^
-        -Dcloudhub.workers="!CLOUDHUB_WORKERS!" ^
-        -Dcloudhub.workerType="!CLOUDHUB_WORKER_TYPE!" ^
+        -Dcloudhub.muleVersion="%MULE_VERSION%" ^
+        -Dcloudhub.region="%CLOUDHUB_REGION%" ^
+        -Dcloudhub.workers="%CLOUDHUB_WORKERS%" ^
+        -Dcloudhub.workerType="%CLOUDHUB_WORKER_TYPE%" ^
         -Dcloudhub.objectStoreV2=true ^
-        -Danypoint.platform.client_id="!ANYPOINT_CLIENT_ID!" ^
-        -Danypoint.platform.client_secret="!ANYPOINT_CLIENT_SECRET!" ^
-        -Danypoint.username="!ANYPOINT_USERNAME!" ^
-        -Danypoint.password="!ANYPOINT_PASSWORD!" ^
+        -Danypoint.platform.client_id="%ANYPOINT_CLIENT_ID%" ^
+        -Danypoint.platform.client_secret="%ANYPOINT_CLIENT_SECRET%" ^
         -DskipTests ^
+        -DskipMuleApplicationDeployment=false ^
         -U
     
     if !errorlevel! neq 0 (
@@ -446,8 +316,7 @@ for /l %%i in (1,1,%SERVER_COUNT%) do (
     )
     
     echo ✅ !SRV!-server deployed successfully
-    echo 🌐 URL: https://!SRV!-server.us-e1.cloudhub.io
-    
+    echo 🌐 URL: https://!SRV!-server.%CLOUDHUB_REGION%.cloudhub.io
     cd /d "%SCRIPT_DIR%"
 )
 
@@ -469,7 +338,7 @@ for /l %%i in (1,1,%SERVER_COUNT%) do (
     call set "SRV=%%SERVER%%i%%"
     echo   Testing !SRV!-server...
     
-    powershell -Command "& { try { $response = Invoke-WebRequest -Uri 'https://!SRV!-server.us-e1.cloudhub.io/health' -UseBasicParsing -TimeoutSec 10 -Method GET; if ($response.StatusCode -eq 200) { Write-Host '    ✅ !SRV!-server: HEALTHY' -ForegroundColor Green } else { Write-Host '    ⚠️  !SRV!-server: HTTP $($response.StatusCode)' -ForegroundColor Yellow } } catch { Write-Host '    ⏳ !SRV!-server: Starting or not accessible...' -ForegroundColor Cyan } }"
+    powershell -Command "& { try { $response = Invoke-WebRequest -Uri 'https://!SRV!-server.%CLOUDHUB_REGION%.cloudhub.io/health' -UseBasicParsing -TimeoutSec 10 -Method GET; if ($response.StatusCode -eq 200) { Write-Host '    ✅ !SRV!-server: HEALTHY' -ForegroundColor Green } else { Write-Host '    ⚠️  !SRV!-server: HTTP $($response.StatusCode)' -ForegroundColor Yellow } } catch { Write-Host '    ⏳ !SRV!-server: Starting or not accessible...' -ForegroundColor Cyan } }"
 )
 
 echo.
@@ -480,25 +349,21 @@ echo 🎉 DEPLOYMENT COMPLETED
 echo ==============================
 
 echo.
-echo ✅ DEPLOYED SERVICE URLS (ACTUAL CLOUDHUB APPLICATIONS):
-echo   🌐 agent-broker-mcp-server: https://agent-broker-mcp-server.us-e1.cloudhub.io
-echo   🌐 employee-onboarding-mcp: https://employee-onboarding-mcp.us-e1.cloudhub.io
-echo   🌐 asset-allocation-mcp: https://asset-allocation-mcp.us-e1.cloudhub.io
-echo   🌐 notification-mcp-server: https://notification-mcp-server.us-e1.cloudhub.io
-echo   🌐 employee-onboarding-mcp-server: https://employee-onboarding-mcp-server.us-e1.cloudhub.io
-echo   🌐 asset-allocation-mcp-server: https://asset-allocation-mcp-server.us-e1.cloudhub.io
+echo ✅ DEPLOYED SERVICE URLS:
+for /l %%i in (1,1,%SERVER_COUNT%) do (
+    call set "SRV=%%SERVER%%i%%"
+    echo   🌐 !SRV!-server: https://!SRV!-server.%CLOUDHUB_REGION%.cloudhub.io
+)
 
 echo.
 echo 📋 KEY ENDPOINTS:
-echo   🔗 Main API: https://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/tools/orchestrate-employee-onboarding
-echo   🔗 Employee MCP: https://employee-onboarding-mcp-server.us-e1.cloudhub.io/mcp
-echo   🔗 Asset MCP: https://asset-allocation-mcp-server.us-e1.cloudhub.io/mcp
-echo   🔗 Notification MCP: https://notification-mcp-server.us-e1.cloudhub.io/mcp
+echo   🔗 Main API: https://agent-broker-mcp-server.%CLOUDHUB_REGION%.cloudhub.io/mcp/tools/orchestrate-employee-onboarding
+echo   🔗 Employee MCP: https://employee-onboarding-mcp-server.%CLOUDHUB_REGION%.cloudhub.io/mcp
 
 if exist "mcp-servers\agent-broker-mcp" (
     echo.
     echo 🚀 SAMPLE TEST COMMAND:
-    echo curl -X POST https://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/tools/orchestrate-employee-onboarding ^
+    echo curl -X POST https://agent-broker-mcp-server.%CLOUDHUB_REGION%.cloudhub.io/mcp/tools/orchestrate-employee-onboarding ^
     echo      -H "Content-Type: application/json" ^
     echo      -d "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"email\":\"john.doe@test.com\",\"department\":\"Engineering\"}"
 )
@@ -507,8 +372,8 @@ echo.
 echo ✅ DEPLOYMENT SCRIPT COMPLETED SUCCESSFULLY
 echo   - %SERVER_COUNT% services compiled
 echo   - Target folders cleaned
-if "%SKIP_EXCHANGE%"=="false" (
-    echo   - Exchange publishing attempted ^(with corrected credentials^)
+if /i "%PUBLISH_CHOICE%"=="Y" (
+    echo   - Exchange publishing completed
 ) else (
     echo   - Exchange publishing skipped ^(as requested^)
 )

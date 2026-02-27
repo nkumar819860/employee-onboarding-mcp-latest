@@ -67,7 +67,7 @@
     <connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
     <connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
     <connectedAppGrantType>client_credentials</connectedAppGrantType>
-    
+    <connectedAppGrantType>client_credentials</connectedAppGrantType>
     <applicationName>${application.name}</applicationName>
     <environment>${anypoint.platform.env}</environment>
     <region>${cloudhub.region}</region>

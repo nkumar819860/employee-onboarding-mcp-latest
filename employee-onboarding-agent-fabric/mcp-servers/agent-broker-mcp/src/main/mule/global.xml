@@ -16,15 +16,15 @@
 
 	<!-- HTTP Request Configurations for CloudHub MCP Servers -->
 	<http:request-config name="employee-onboarding-mcp-config" doc:name="Employee Onboarding MCP Config" doc:id="8f0e1d79-9de0-410d-bf6e-28c4dc96d230">
-		<http:request-connection protocol="HTTPS" host="employee-onboarding-mcp-1-0-0.us-e1.cloudhub.io" port="443"/>
+		<http:request-connection protocol="HTTP" host="employee-onboarding-mcp-1-0-0.us-e1.cloudhub.io" port="80"/>
 	</http:request-config>
 
 	<http:request-config name="asset-allocation-mcp-config" doc:name="Asset Allocation MCP Config" doc:id="942ef3cb-22c9-46a5-b663-cba533e3327f">
-		<http:request-connection protocol="HTTPS" host="asset-allocation-mcp-1-0-0.us-e1.cloudhub.io" port="443"/>
+		<http:request-connection protocol="HTTP" host="asset-allocation-mcp-1-0-0.us-e1.cloudhub.io" port="80"/>
 	</http:request-config>
 
 	<http:request-config name="notification-mcp-config" doc:name="Notification MCP Config" doc:id="8d19821d-30e2-4cdc-ad68-415115672d37">
-		<http:request-connection protocol="HTTPS" host="notification-mcp-1-0-0.us-e1.cloudhub.io" port="443"/>
+		<http:request-connection protocol="HTTP" host="notification-mcp-1-0-0.us-e1.cloudhub.io" port="80"/>
 	</http:request-config>
 
 	<!-- Global Error Handler -->
