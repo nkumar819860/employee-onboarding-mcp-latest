@@ -1,2 +1,0 @@
-The request could not be processed at this time
-{http_code}

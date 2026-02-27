@@ -28,7 +28,7 @@ echo.
 
 REM Test Agent Broker MCP
 echo Testing Agent Broker MCP...
-curl -s -f https://employee-onboarding-agent-broker.us-e1.cloudhub.io/health >nul 2>&1
+curl -s -f http://agent-broker-mcp-server.us-e2.cloudhub.io/health >nul 2>&1
 if %ERRORLEVEL% equ 0 (
     echo ✅ Agent Broker MCP: HEALTHY
     set BROKER_CLOUD=1
@@ -39,7 +39,7 @@ if %ERRORLEVEL% equ 0 (
 
 REM Test Employee Onboarding MCP
 echo Testing Employee Onboarding MCP...
-curl -s -f https://employee-onboarding-service.us-e1.cloudhub.io/health >nul 2>&1
+curl -s -f http://employee-onboarding-mcp-server.us-e2.cloudhub.io/health >nul 2>&1
 if %ERRORLEVEL% equ 0 (
     echo ✅ Employee Onboarding MCP: HEALTHY
     set EMPLOYEE_CLOUD=1
@@ -50,7 +50,7 @@ if %ERRORLEVEL% equ 0 (
 
 REM Test Asset Allocation MCP
 echo Testing Asset Allocation MCP...
-curl -s -f https://asset-allocation-service.us-e1.cloudhub.io/health >nul 2>&1
+curl -s -f http://asset-allocation-mcp-server.us-e2.cloudhub.io/health >nul 2>&1
 if %ERRORLEVEL% equ 0 (
     echo ✅ Asset Allocation MCP: HEALTHY
     set ASSET_CLOUD=1
@@ -61,7 +61,7 @@ if %ERRORLEVEL% equ 0 (
 
 REM Test Notification MCP
 echo Testing Employee Notification Service...
-curl -s -f https://employee-notification-service.us-e1.cloudhub.io/health >nul 2>&1
+curl -s -f http://notification-mcp-server.us-e2.cloudhub.io/health >nul 2>&1
 if %ERRORLEVEL% equ 0 (
     echo ✅ Employee Notification Service: HEALTHY
     set NOTIFICATION_CLOUD=1
@@ -79,7 +79,7 @@ if %BROKER_CLOUD%==1 (
     echo.
     echo --- Agent Broker MCP Information ---
     echo Getting MCP server capabilities...
-    curl -s -X GET https://employee-onboarding-agent-broker.us-e1.cloudhub.io/mcp/info
+    curl -s -X GET http://agent-broker-mcp-server.us-e2.cloudhub.io/mcp/info
     echo.
     echo.
 ) else (
@@ -102,7 +102,7 @@ if %BROKER_CLOUD%==1 (
     curl -X POST ^
         -H "Content-Type: application/json" ^
         -d "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"email\":\"john.doe@testcompany.com\",\"phone\":\"555-0123\",\"department\":\"Engineering\",\"position\":\"Software Developer\",\"startDate\":\"2024-03-01\",\"salary\":75000,\"manager\":\"Jane Smith\",\"managerEmail\":\"jane.smith@testcompany.com\",\"companyName\":\"Test Company Inc\",\"assets\":[\"laptop\",\"phone\",\"id-card\"]}" ^
-        https://employee-onboarding-agent-broker.us-e1.cloudhub.io/mcp/tools/orchestrate-employee-onboarding
+        http://agent-broker-mcp-server.us-e2.cloudhub.io/mcp/tools/orchestrate-employee-onboarding
     
     echo.
     echo ✅ CloudHub orchestration request sent
@@ -114,7 +114,7 @@ if %BROKER_CLOUD%==1 (
     echo.
     echo Testing onboarding status check...
     curl -X GET ^
-        "https://employee-onboarding-agent-broker.us-e1.cloudhub.io/mcp/tools/get-onboarding-status?email=john.doe@testcompany.com"
+        "http://agent-broker-mcp-server.us-e2.cloudhub.io/mcp/tools/get-onboarding-status?email=john.doe@testcompany.com"
     echo.
     
 ) else (
@@ -134,7 +134,7 @@ if %EMPLOYEE_CLOUD%==1 (
     curl -X POST ^
         -H "Content-Type: application/json" ^
         -d "{\"firstName\":\"Jane\",\"lastName\":\"Smith\",\"email\":\"jane.smith@testcompany.com\",\"department\":\"Marketing\",\"position\":\"Marketing Manager\",\"startDate\":\"2024-03-15\"}" ^
-        https://employee-onboarding-service.us-e1.cloudhub.io/mcp/tools/create-employee
+        http://employee-onboarding-mcp-server.us-e2.cloudhub.io/mcp/tools/create-employee
     echo.
 )
 
@@ -146,7 +146,7 @@ if %ASSET_CLOUD%==1 (
     curl -X POST ^
         -H "Content-Type: application/json" ^
         -d "{\"employeeId\":\"EMP001\",\"assetType\":\"laptop\",\"specifications\":{\"brand\":\"MacBook Pro\",\"model\":\"16-inch M3\",\"ram\":\"32GB\",\"storage\":\"1TB SSD\"}}" ^
-        https://asset-allocation-service.us-e1.cloudhub.io/mcp/tools/allocate-asset
+        http://asset-allocation-mcp-server.us-e2.cloudhub.io/mcp/tools/allocate-asset
     echo.
 )
 
@@ -158,7 +158,7 @@ if %NOTIFICATION_CLOUD%==1 (
     curl -X POST ^
         -H "Content-Type: application/json" ^
         -d "{\"employeeId\":\"EMP001\",\"email\":\"test@testcompany.com\",\"firstName\":\"Test\",\"lastName\":\"User\",\"department\":\"Engineering\",\"startDate\":\"2024-03-01\",\"manager\":\"Jane Smith\"}" ^
-        https://employee-notification-service.us-e1.cloudhub.io/mcp/tools/send-welcome-email
+        http://notification-mcp-server.us-e2.cloudhub.io/mcp/tools/send-welcome-email
     echo.
 )
 
@@ -174,7 +174,7 @@ if %BROKER_CLOUD%==1 (
     curl -X POST ^
         -H "Content-Type: application/json" ^
         -d "{}" ^
-        https://employee-onboarding-agent-broker.us-e1.cloudhub.io/mcp/tools/check-system-health
+        http://agent-broker-mcp-server.us-e2.cloudhub.io/mcp/tools/check-system-health
     echo.
     echo.
 )
@@ -189,13 +189,13 @@ echo.
 
 if %BROKER_CLOUD%==1 (
     echo --- Agent Broker Metrics ---
-    curl -s https://employee-onboarding-agent-broker.us-e1.cloudhub.io/metrics 2>nul
+    curl -s http://agent-broker-mcp-server.us-e2.cloudhub.io/metrics 2>nul
     echo.
 )
 
 if %EMPLOYEE_CLOUD%==1 (
     echo --- Employee Service Metrics ---
-    curl -s https://employee-onboarding-service.us-e1.cloudhub.io/metrics 2>nul
+    curl -s http://employee-onboarding-mcp-server.us-e2.cloudhub.io/metrics 2>nul
     echo.
 )
 
@@ -237,16 +237,16 @@ echo 🌐 CloudHub Runtime Manager:
 echo    https://anypoint.mulesoft.com/cloudhub/
 echo.
 echo 🤖 Agent Broker MCP:
-echo    https://employee-onboarding-agent-broker.us-e1.cloudhub.io/mcp/info
+echo    http://agent-broker-mcp-server.us-e2.cloudhub.io/mcp/info
 echo.
 echo 👥 Employee Onboarding Service:
-echo    https://employee-onboarding-service.us-e1.cloudhub.io/mcp/info
+echo    http://employee-onboarding-mcp-server.us-e2.cloudhub.io/mcp/info
 echo.
 echo 💼 Asset Allocation Service:
-echo    https://asset-allocation-service.us-e1.cloudhub.io/mcp/info
+echo    http://asset-allocation-mcp-server.us-e2.cloudhub.io/mcp/info
 echo.
 echo 📧 Employee Notification Service:
-echo    https://employee-notification-service.us-e1.cloudhub.io/mcp/info
+echo    http://notification-mcp-server.us-e2.cloudhub.io/mcp/info
 echo.
 
 REM Calculate overall health score

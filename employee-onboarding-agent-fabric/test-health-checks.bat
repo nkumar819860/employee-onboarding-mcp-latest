@@ -14,18 +14,18 @@ set EMPLOYEE_ONBOARDING_PORT=8083
 set NOTIFICATION_PORT=8084
 
 REM Check if running on CloudHub (production URLs)
-if "%TEST_MODE%"=="CLOUDHUB" (
-    echo Testing CloudHub deployed services...
-    set AGENT_BROKER_URL=http://agent-broker-mcp-server.us-e2.cloudhub.io
-    set ASSET_ALLOCATION_URL=http://asset-allocation-mcp-server.us-e2.cloudhub.io
-    set EMPLOYEE_ONBOARDING_URL=http://employee-onboarding-mcp-server.us-e2.cloudhub.io
-    set NOTIFICATION_URL=http://notification-mcp-server.us-e2.cloudhub.io
-) else (
+if "%TEST_MODE%"=="LOCALHOST" (
     echo Testing local deployed services...
     set AGENT_BROKER_URL=http://localhost:%AGENT_BROKER_PORT%
     set ASSET_ALLOCATION_URL=http://localhost:%ASSET_ALLOCATION_PORT%
     set EMPLOYEE_ONBOARDING_URL=http://localhost:%EMPLOYEE_ONBOARDING_PORT%
     set NOTIFICATION_URL=http://localhost:%NOTIFICATION_PORT%
+) else (
+    echo Testing CloudHub deployed services...
+    set AGENT_BROKER_URL=http://agent-broker-mcp-server.us-e2.cloudhub.io
+    set ASSET_ALLOCATION_URL=http://asset-allocation-mcp-server.us-e2.cloudhub.io
+    set EMPLOYEE_ONBOARDING_URL=http://employee-onboarding-mcp-server.us-e2.cloudhub.io
+    set NOTIFICATION_URL=http://notification-mcp-server.us-e2.cloudhub.io
 )
 
 echo.
@@ -116,8 +116,8 @@ echo.
 REM Usage instructions
 echo USAGE INSTRUCTIONS:
 echo.
-echo For local testing: test-health-checks.bat
-echo For CloudHub testing: set TEST_MODE=CLOUDHUB && test-health-checks.bat
+echo For CloudHub testing (default): test-health-checks.bat
+echo For local testing: set TEST_MODE=LOCALHOST && test-health-checks.bat
 echo.
 echo You can also test individual services by setting custom URLs:
 echo set AGENT_BROKER_URL=http://your-custom-url.com
