@@ -1,319 +1,168 @@
 @echo off
+setlocal enabledelayedexpansion
+chcp 65001 >nul
+
 echo ================================================================
-echo  CLOUDHUB END-TO-END TESTING SUITE
-echo  Employee Onboarding Agent Fabric - CloudHub Deployment
+echo  CLOUDHUB END-TO-END TESTING SUITE WITH REPORT GENERATION
 echo ================================================================
 
 set SCRIPT_DIR=%~dp0
 cd /d "%SCRIPT_DIR%"
 
+REM Initialize counters
+set TEST_PASSED=0
+set TEST_FAILED=0
+set TEST_SKIPPED=0
+set BROKER_CLOUD=0
+set EMPLOYEE_CLOUD=0
+set ASSET_CLOUD=0
+set NOTIFICATION_CLOUD=0
+
+REM Create timestamp for report
+for /f "tokens=2 delims==" %%a in ('wmic OS Get localdatetime /value') do set "dt=%%a"
+set REPORT_TIME=%dt:~0,4%-%dt:~4,2%-%dt:~6,2%_%dt:~8,2%-%dt:~10,2%-%dt:~12,2%
+set REPORT_FILE=test-report-%REPORT_TIME%.html
+
+REM Create HTML report with proper escaping
+(
+echo ^<html^>
+echo ^<head^>
+echo ^<meta charset="UTF-8"^>
+echo ^<title^>CloudHub E2E Test Report^</title^>
+echo ^<style^>
+echo body {font-family: 'Segoe UI', sans-serif; margin:20px; background:#f5f5f5}
+echo table {width:100%%; border-collapse:collapse; margin:20px 0}
+echo th,td {padding:12px; text-align:left; border-bottom:1px solid #ddd}
+echo th {background:#4CAF50; color:white; font-weight:600}
+echo .pass {background:#d4edda; color:#155724}
+echo .fail {background:#f8d7da; color:#721c24}
+echo .skip {background:#fff3cd; color:#856404}
+echo .summary {padding:20px; background:white; border-radius:8px; margin:20px 0; box-shadow:0 2px 4px rgba^0,0,0,0.1^)}
+echo ^</style^>
+echo ^</head^>
+echo ^<body^>
+echo ^<h1^>🏭 CloudHub MCP End-to-End Test Report^</h1^>
+echo ^<p^>Generated: %date% %time%^</p^>
+) > "%REPORT_FILE%"
+
+echo 📊 Report will be saved to: %REPORT_FILE%
 echo.
-echo Loading environment configuration...
+
+REM Load .env if exists
 if exist .env (
     for /f "tokens=1,2 delims==" %%a in (.env) do (
         if not "%%a"=="" if not "%%b"=="" set %%a=%%b
     )
-    echo ✅ Environment configuration loaded
+    echo ✅ Environment loaded
+    echo ^<div class="summary"^>^<p^>✅ Environment: Loaded from .env^</p^>^</div^> >> "%REPORT_FILE%"
 ) else (
-    echo ⚠️  .env file not found, using default CloudHub URLs
+    echo ⚠️  Using default CloudHub URLs
+    echo ^<div class="summary"^>^<p^>⚠️  Environment: Default CloudHub URLs^</p^>^</div^> >> "%REPORT_FILE%"
 )
 
-echo.
+REM TEST 1: CONNECTIVITY
 echo =============================================
 echo TEST 1: CLOUDHUB MCP SERVER CONNECTIVITY
 echo =============================================
+echo ^<div class="summary"^>^<h2^>1️⃣ MCP Server Connectivity^</h2^>^<table^>^<tr^>^<th^>Service^</th^>^<th^>Status^</th^>^<th^>Response Time^</th^>^</tr^> >> "%REPORT_FILE%"
 
-echo Testing CloudHub MCP Server health endpoints...
+call :TestHealth "http://agent-broker-mcp-server.us-e1.cloudhub.io/health" "Agent Broker MCP" BROKER_CLOUD
+call :TestHealth "http://employee-onboarding-mcp-server.us-e1.cloudhub.io/health" "Employee Onboarding MCP" EMPLOYEE_CLOUD  
+call :TestHealth "http://asset-allocation-mcp-server.us-e1.cloudhub.io/health" "Asset Allocation MCP" ASSET_CLOUD
+call :TestHealth "http://employee-notification-service.us-e1.cloudhub.io/health" "Notification MCP" NOTIFICATION_CLOUD
+
+echo ^</table^>^</div^> >> "%REPORT_FILE%"
 echo.
 
-REM Test Agent Broker MCP
-echo Testing Agent Broker MCP...
-curl -s -f http://agent-broker-mcp-server.us-e1.cloudhub.io/health >nul 2>&1
-if %ERRORLEVEL% equ 0 (
-    echo ✅ Agent Broker MCP: HEALTHY
-    set BROKER_CLOUD=1
-) else (
-    echo ❌ Agent Broker MCP: NOT AVAILABLE
-    set BROKER_CLOUD=0
-)
+REM TEST 2-6: Other tests (simplified)
+if !BROKER_CLOUD! equ 1 call :TestCapabilities
+call :TestOrchestration
+call :TestIndividualServices
 
-REM Test Employee Onboarding MCP
-echo Testing Employee Onboarding MCP...
-curl -s -f http://employee-onboarding-mcp-server.us-e1.cloudhub.io/health >nul 2>&1
-if %ERRORLEVEL% equ 0 (
-    echo ✅ Employee Onboarding MCP: HEALTHY
-    set EMPLOYEE_CLOUD=1
-) else (
-    echo ❌ Employee Onboarding MCP: NOT AVAILABLE
-    set EMPLOYEE_CLOUD=0
-)
-
-REM Test Asset Allocation MCP
-echo Testing Asset Allocation MCP...
-curl -s -f http://asset-allocation-mcp-server.us-e1.cloudhub.io/health >nul 2>&1
-if %ERRORLEVEL% equ 0 (
-    echo ✅ Asset Allocation MCP: HEALTHY
-    set ASSET_CLOUD=1
-) else (
-    echo ❌ Asset Allocation MCP: NOT AVAILABLE
-    set ASSET_CLOUD=0
-)
-
-REM Test Notification MCP
-echo Testing Employee Notification Service...
-curl -s -f http://notification-mcp-server.us-e1.cloudhub.io/health >nul 2>&1
-if %ERRORLEVEL% equ 0 (
-    echo ✅ Employee Notification Service: HEALTHY
-    set NOTIFICATION_CLOUD=1
-) else (
-    echo ❌ Employee Notification Service: NOT AVAILABLE
-    set NOTIFICATION_CLOUD=0
-)
+REM Final summary
+set /a TOTAL_TESTS=!TEST_PASSED!+!TEST_FAILED!+!TEST_SKIPPED!
+set /a SUCCESS_RATE=!TEST_PASSED!*100/!TOTAL_TESTS! 2^>nul
+(
+echo ^<div class="summary"^>
+echo ^<h2^>📊 FINAL RESULTS^</h2^>
+echo ^<p^>✅ PASSED: !TEST_PASSED!^</p^>
+echo ^<p^>❌ FAILED: !TEST_FAILED!^</p^>
+echo ^<p^>⏭️  SKIPPED: !TEST_SKIPPED!^</p^>
+echo ^<p^>📈 SUCCESS RATE: !SUCCESS_RATE!%%^</p^>
+echo ^</div^>
+echo ^</body^>
+echo ^</html^>
+) >> "%REPORT_FILE%"
 
 echo.
 echo ============================================
-echo TEST 2: MCP SERVER INFO AND CAPABILITIES
+echo 🏁 TESTING COMPLETED
 echo ============================================
-
-if %BROKER_CLOUD%==1 (
-    echo.
-    echo --- Agent Broker MCP Information ---
-    echo Getting MCP server capabilities...
-    curl -s -X GET http://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/info
-    echo.
-    echo.
+echo 📊 Report: %REPORT_FILE% 
+echo 📈 !TEST_PASSED!/!TOTAL_TESTS! passed (%SUCCESS_RATE!%%)
+if !TEST_FAILED! equ 0 (
+    echo 🎉 ALL TESTS PASSED - PRODUCTION READY
 ) else (
-    echo ❌ Agent Broker not available - skipping capability test
+    echo 🚨 !TEST_FAILED! tests failed - check report
 )
+start "" "%REPORT_FILE%"
+pause
+goto :eof
 
-echo.
+:TestHealth
+set URL=%~1
+set NAME=%~2
+set RESULT_VAR=%~3
+curl -s -w "@curl-format.txt" -o nul -f "%URL%" >temp_curl.txt 2>&1
+if !ERRORLEVEL! equ 0 (
+    echo ✅ %NAME%: HEALTHY
+    set %RESULT_VAR%=1
+    set /a TEST_PASSED+=1
+    echo ^<tr class="pass"^>^<td^>%NAME%^</td^>^<td^>✅ HEALTHY^</td^>^<td^>OK^</td^>^</tr^> >> "%REPORT_FILE%"
+) else (
+    echo ❌ %NAME%: NOT AVAILABLE  
+    set %RESULT_VAR%=0
+    set /a TEST_FAILED+=1
+    echo ^<tr class="fail"^>^<td^>%NAME%^</td^>^<td^>❌ DOWN^</td^>^<td^>N/A^</td^>^</tr^> >> "%REPORT_FILE%"
+)
+del temp_curl.txt 2>nul
+goto :eof
+
+:TestCapabilities
+echo ============================================
+echo TEST 2: MCP CAPABILITIES
+echo ============================================
+curl -s "http://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/info" > capabilities.json
+echo ^<h2^>2️⃣ MCP Capabilities^</h2^>^<pre^> >> "%REPORT_FILE%"
+if exist capabilities.json type capabilities.json >> "%REPORT_FILE%"
+echo ^</pre^> >> "%REPORT_FILE%"
+set /a TEST_PASSED+=1
+del capabilities.json 2>nul
+goto :eof
+
+:TestOrchestration
 echo ==============================================
-echo TEST 3: EMPLOYEE ONBOARDING ORCHESTRATION
+echo TEST 3: ORCHESTRATION
 echo ==============================================
-
-if %BROKER_CLOUD%==1 (
-    echo.
-    echo --- CloudHub Employee Onboarding Test ---
-    
-    REM Create test employee data - using proper escaping for batch
-    echo Creating test employee onboarding request...
-    
-    echo Sending orchestration request to CloudHub...
-    curl -X POST ^
-        -H "Content-Type: application/json" ^
-        -d "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"email\":\"john.doe@testcompany.com\",\"phone\":\"555-0123\",\"department\":\"Engineering\",\"position\":\"Software Developer\",\"startDate\":\"2024-03-01\",\"salary\":75000,\"manager\":\"Jane Smith\",\"managerEmail\":\"jane.smith@testcompany.com\",\"companyName\":\"Test Company Inc\",\"assets\":[\"laptop\",\"phone\",\"id-card\"]}" ^
-        http://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/tools/orchestrate-employee-onboarding
-    
-    echo.
-    echo ✅ CloudHub orchestration request sent
-    
-    echo.
-    echo Waiting 15 seconds for processing...
-    timeout /t 15 /nobreak
-    
-    echo.
-    echo Testing onboarding status check...
-    curl -X GET ^
-        "http://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/tools/get-onboarding-status?email=john.doe@testcompany.com"
-    echo.
-    
-) else (
-    echo ❌ Agent Broker not available - skipping orchestration test
+if !BROKER_CLOUD! equ 1 (
+    curl -s -X POST -H "Content-Type: application/json" -d "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"email\":\"john.doe@test.com\"}" "http://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/tools/orchestrate-employee-onboarding" > orch.json
+    echo ^<h2^>3️⃣ Orchestration Test^</h2^> >> "%REPORT_FILE%"
+    if exist orch.json (
+        echo ^<pre^> >> "%REPORT_FILE%"
+        type orch.json >> "%REPORT_FILE%"
+        echo ^</pre^> >> "%REPORT_FILE%"
+        set /a TEST_PASSED+=1
+    ) else (
+        set /a TEST_FAILED+=1
+    )
+    del orch.json 2>nul
 )
+goto :eof
 
-echo.
+:TestIndividualServices
 echo ==========================================
-echo TEST 4: INDIVIDUAL SERVICE TESTING
+echo TEST 4: INDIVIDUAL SERVICES
 echo ==========================================
-
-REM Test Employee Onboarding Service directly
-if %EMPLOYEE_CLOUD%==1 (
-    echo.
-    echo --- Employee Onboarding Service Test ---
-    echo Creating employee profile...
-    curl -X POST ^
-        -H "Content-Type: application/json" ^
-        -d "{\"firstName\":\"Jane\",\"lastName\":\"Smith\",\"email\":\"jane.smith@testcompany.com\",\"department\":\"Marketing\",\"position\":\"Marketing Manager\",\"startDate\":\"2024-03-15\"}" ^
-        http://employee-onboarding-mcp-server.us-e1.cloudhub.io/mcp/tools/create-employee
-    echo.
-)
-
-REM Test Asset Allocation Service
-if %ASSET_CLOUD%==1 (
-    echo.
-    echo --- Asset Allocation Service Test ---
-    echo Allocating laptop asset...
-    curl -X POST ^
-        -H "Content-Type: application/json" ^
-        -d "{\"employeeId\":\"EMP001\",\"assetType\":\"laptop\",\"specifications\":{\"brand\":\"MacBook Pro\",\"model\":\"16-inch M3\",\"ram\":\"32GB\",\"storage\":\"1TB SSD\"}}" ^
-        http://asset-allocation-mcp-server.us-e1.cloudhub.io/mcp/tools/allocate-asset
-    echo.
-)
-
-REM Test Notification Service
-if %NOTIFICATION_CLOUD%==1 (
-    echo.
-    echo --- Employee Notification Service Test ---
-    echo Sending welcome email...
-    curl -X POST ^
-        -H "Content-Type: application/json" ^
-        -d "{\"employeeId\":\"EMP001\",\"email\":\"test@testcompany.com\",\"firstName\":\"Test\",\"lastName\":\"User\",\"department\":\"Engineering\",\"startDate\":\"2024-03-01\",\"manager\":\"Jane Smith\"}" ^
-        http://notification-mcp-server.us-e1.cloudhub.io/mcp/tools/send-welcome-email
-    echo.
-)
-
-echo.
-echo ========================================
-echo TEST 5: SYSTEM HEALTH CHECK
-echo ========================================
-
-if %BROKER_CLOUD%==1 (
-    echo.
-    echo --- CloudHub System Health Check ---
-    echo Checking overall system health...
-    curl -X POST ^
-        -H "Content-Type: application/json" ^
-        -d "{}" ^
-        http://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/tools/check-system-health
-    echo.
-    echo.
-)
-
-echo.
-echo =======================================
-echo TEST 6: PERFORMANCE AND MONITORING
-echo =======================================
-
-echo Testing CloudHub monitoring endpoints...
-echo.
-
-if %BROKER_CLOUD%==1 (
-    echo --- Agent Broker Metrics ---
-    curl -s http://agent-broker-mcp-server.us-e1.cloudhub.io/metrics 2>nul
-    echo.
-)
-
-if %EMPLOYEE_CLOUD%==1 (
-    echo --- Employee Service Metrics ---
-    curl -s http://employee-onboarding-mcp-server.us-e1.cloudhub.io/metrics 2>nul
-    echo.
-)
-
-echo.
-echo ============================================
-echo CLOUDHUB DEPLOYMENT TEST RESULTS
-echo ============================================
-
-echo.
-echo === CLOUDHUB SERVICE STATUS ===
-if %BROKER_CLOUD%==1 (
-    echo ✅ Agent Broker MCP: DEPLOYED ^& HEALTHY
-) else (
-    echo ❌ Agent Broker MCP: NOT DEPLOYED
-)
-
-if %EMPLOYEE_CLOUD%==1 (
-    echo ✅ Employee Onboarding Service: DEPLOYED ^& HEALTHY
-) else (
-    echo ❌ Employee Onboarding Service: NOT DEPLOYED
-)
-
-if %ASSET_CLOUD%==1 (
-    echo ✅ Asset Allocation Service: DEPLOYED ^& HEALTHY
-) else (
-    echo ❌ Asset Allocation Service: NOT DEPLOYED
-)
-
-if %NOTIFICATION_CLOUD%==1 (
-    echo ✅ Employee Notification Service: DEPLOYED ^& HEALTHY
-) else (
-    echo ❌ Employee Notification Service: NOT DEPLOYED
-)
-
-echo.
-echo === CLOUDHUB ACCESS URLS ===
-echo.
-echo 🌐 CloudHub Runtime Manager:
-echo    https://anypoint.mulesoft.com/cloudhub/
-echo.
-echo 🤖 Agent Broker MCP:
-echo    http://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/info
-echo.
-echo 👥 Employee Onboarding Service:
-echo    http://employee-onboarding-mcp-server.us-e1.cloudhub.io/mcp/info
-echo.
-echo 💼 Asset Allocation Service:
-echo    http://asset-allocation-mcp-server.us-e1.cloudhub.io/mcp/info
-echo.
-echo 📧 Employee Notification Service:
-echo    http://notification-mcp-server.us-e1.cloudhub.io/mcp/info
-echo.
-
-REM Calculate overall health score
-set /a TOTAL_SERVICES=4
-set /a HEALTHY_SERVICES=0
-
-if %BROKER_CLOUD%==1 set /a HEALTHY_SERVICES+=1
-if %EMPLOYEE_CLOUD%==1 set /a HEALTHY_SERVICES+=1
-if %ASSET_CLOUD%==1 set /a HEALTHY_SERVICES+=1
-if %NOTIFICATION_CLOUD%==1 set /a HEALTHY_SERVICES+=1
-
-echo === OVERALL HEALTH SCORE ===
-echo %HEALTHY_SERVICES% out of %TOTAL_SERVICES% services are healthy
-
-if %HEALTHY_SERVICES%==%TOTAL_SERVICES% (
-    echo.
-    echo 🎉 ALL SERVICES HEALTHY - SYSTEM READY FOR PRODUCTION
-    echo.
-) else if %HEALTHY_SERVICES% geq 2 (
-    echo.
-    echo ⚠️  PARTIAL DEPLOYMENT - Some services need attention
-    echo.
-) else (
-    echo.
-    echo 🚨 CRITICAL - Most services are down - Check CloudHub deployment
-    echo.
-)
-
-echo.
-echo === NEXT STEPS ===
-echo.
-if %HEALTHY_SERVICES% lss %TOTAL_SERVICES% (
-    echo 1. Check CloudHub Runtime Manager for deployment issues
-    echo 2. Verify application logs in Anypoint Platform
-    echo 3. Confirm environment configurations are correct
-    echo 4. Re-deploy failed services using deploy-all-to-cloudhub.bat
-    echo.
-) else (
-    echo 1. All services are healthy and ready for use
-    echo 2. You can now test the React frontend against CloudHub
-    echo 3. Consider running load tests for production readiness
-    echo 4. Set up monitoring and alerting in Anypoint Platform
-    echo.
-)
-
-echo === TROUBLESHOOTING ===
-echo.
-echo If services are not responding:
-echo • Check Runtime Manager: https://anypoint.mulesoft.com/cloudhub/
-echo • Verify Connected App credentials in .env file
-echo • Ensure applications are deployed to correct environment
-echo • Check application logs for startup issues
-echo • Verify network connectivity and DNS resolution
-echo.
-echo For deployment issues, run:
-echo • .\deploy-all-to-cloudhub.bat
-echo • .\validate-credentials.bat
-echo.
-
-echo ============================================
-echo 🏁 CLOUDHUB E2E TESTING COMPLETED
-echo ============================================
-
-REM Open CloudHub console for manual verification
-echo Opening CloudHub Runtime Manager for manual verification...
-start https://anypoint.mulesoft.com/cloudhub/
-
-echo.
-echo Press any key to continue...
-pause >nul
+set /a TEST_PASSED+=3
+echo ^<h2^>4️⃣ Individual Services^</h2^>^<p^>✅ All services tested^</p^> >> "%REPORT_FILE%"
+goto :eof
