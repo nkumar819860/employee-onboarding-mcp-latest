@@ -22,10 +22,10 @@ if "%TEST_MODE%"=="LOCALHOST" (
     set NOTIFICATION_URL=http://localhost:%NOTIFICATION_PORT%
 ) else (
     echo Testing CloudHub deployed services...
-    set AGENT_BROKER_URL=http://agent-broker-mcp-server.us-e2.cloudhub.io
-    set ASSET_ALLOCATION_URL=http://asset-allocation-mcp-server.us-e2.cloudhub.io
-    set EMPLOYEE_ONBOARDING_URL=http://employee-onboarding-mcp-server.us-e2.cloudhub.io
-    set NOTIFICATION_URL=http://notification-mcp-server.us-e2.cloudhub.io
+    set AGENT_BROKER_URL=http://agent-broker-mcp-server.us-e1.cloudhub.io
+    set ASSET_ALLOCATION_URL=http://asset-allocation-mcp-server.us-e1.cloudhub.io
+    set EMPLOYEE_ONBOARDING_URL=http://employee-onboarding-mcp-server.us-e1.cloudhub.io
+    set NOTIFICATION_URL=http://notification-mcp-server.us-e1.cloudhub.io
 )
 
 echo.
