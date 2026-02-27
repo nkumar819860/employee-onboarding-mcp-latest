@@ -1,415 +1,290 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns="http://www.mulesoft.org/schema/mule/core"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
 	xmlns:http="http://www.mulesoft.org/schema/mule/http"
-	xsi:schemaLocation="
-http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
-http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+      http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+
 
 	<!-- ========================= -->
-	<!-- HEALTH CHECK ENDPOINT -->
+	<!-- DATABASE INITIALIZATION FLOW -->
 	<!-- ========================= -->
+	<flow name="database-initialization" initialState="started">
+		<scheduler doc:name="Database Init Scheduler">
+			<scheduling-strategy>
+				<fixed-frequency frequency="30" startDelay="5"
+					timeUnit="SECONDS" />
+			</scheduling-strategy>
+		</scheduler>
 
-	<flow name="health-check">
-		<http:listener config-ref="HTTP_Listener_config" path="/health" allowedMethods="GET" doc:name="Health Check Listener">
-		</http:listener>
-		<set-payload
-			value="#[{'status': 'UP', 'service': 'Employee Onboarding MCP Server', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}, 'database': 'Connected', 'version': '${mcp.serverVersion}'}]"
-			mimeType="application/json" />
-		<logger level="INFO" message="Health check requested for Employee Onboarding MCP" />
+		<choice doc:name="Check if initialization needed">
+			<when expression="${app.startup.create.tables}">
+				<try doc:name="Try Create Tables">
+					<choice doc:name="Environment Database Selection">
+						<when
+							expression="#['${env}' == 'development' or '${env}' == 'local']">
+							<logger level="INFO"
+								message="Using PostgreSQL for local environment" />
+							<flow-ref name="create-postgresql-tables" />
+						</when>
+						<otherwise>
+							<logger level="INFO"
+								message="Using H2 in-memory for cloud environment" />
+							<flow-ref name="create-h2-tables" />
+						</otherwise>
+					</choice>
+					<error-handler>
+						<on-error-continue>
+							<logger level="WARN"
+								message="Database initialization failed: #[error.description]" />
+						</on-error-continue>
+					</error-handler>
+				</try>
+			</when>
+			<otherwise>
+				<logger level="DEBUG"
+					message="Database initialization skipped" />
+			</otherwise>
+		</choice>
+
+		<!-- Stop scheduler after first run -->
+		<set-variable variableName="schedulerStopped"
+			value="true" />
 	</flow>
 
 	<!-- ========================= -->
-	<!-- MCP SERVER INFO ENDPOINT -->
+	<!-- HEALTH CHECK WITH DATABASE STATUS -->
 	<!-- ========================= -->
+	<flow name="health-check">
+		<http:listener path="/health"
+			config-ref="HTTP_Listener_config" doc:name="Health Check" />
 
-	<flow name="mcp-server-info">
-		<http:listener config-ref="HTTP_Listener_config"
-			path="/mcp/info" allowedMethods="GET" />
+		<try doc:name="Test Database Connection">
+			<choice
+				doc:name="Environment Database Selection for Health Check">
+				<when
+					expression="#['${env}' == 'development' or '${env}' == 'local']">
+					<db:select config-ref="PostgreSQL_Database_Config">
+						<db:sql><![CDATA[SELECT 1 as health_check]]></db:sql>
+					</db:select>
+					<set-variable variableName="dbStatus"
+						value="PostgreSQL Connected" />
+					<set-variable variableName="dbType" value="postgresql" />
+				</when>
+				<otherwise>
+					<db:select config-ref="H2_Database_Config">
+						<db:sql><![CDATA[SELECT 1 as health_check]]></db:sql>
+					</db:select>
+					<set-variable variableName="dbStatus"
+						value="H2 In-Memory Connected" />
+					<set-variable variableName="dbType" value="h2" />
+				</otherwise>
+			</choice>
+			<error-handler>
+				<on-error-continue>
+					<set-variable variableName="dbStatus"
+						value="Database Connection Failed" />
+					<set-variable variableName="dbType" value="unknown" />
+				</on-error-continue>
+			</error-handler>
+		</try>
 
-		<ee:transform>
+		<ee:transform doc:name="Set Health Response">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
-    name: "${mcp.serverName}",
-    version: "${mcp.serverVersion}",
-    description: "${mcp.serverDescription}",
-    baseUrl: "${mcp.serverBaseUrl}",
-    environment: "${env}",
-    cloudhub: {
-        workerType: "${cloudhub.worker.type}",
-        region: "${cloudhub.region}",
-        environment: "${cloudhub.environment}"
-    },
-    tools: [
-        {
-            name: "create-employee",
-            description: "Create a new employee profile",
-            endpoint: "/mcp/tools/create-employee"
-        },
-        {
-            name: "get-employee",
-            description: "Get employee details by ID",
-            endpoint: "/mcp/tools/get-employee/{empId}"
-        },
-        {
-            name: "list-employees",
-            description: "List all employees",
-            endpoint: "/mcp/tools/list-employees"
-        },
-        {
-            name: "update-employee-status",
-            description: "Update employee onboarding status",
-            endpoint: "/mcp/tools/update-employee-status/{empId}/{status}"
-        }
-    ],
-    database: {
-        type: "PostgreSQL with H2 fallback",
-        initialized: "${app.startup.database.init}"
-    },
-    health: {
-        status: "UP",
-        timestamp: now()
-    }
+  status: "UP",
+  service: "${mcp.serverName}",
+  version: "${mcp.serverVersion}",
+  timestamp: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
+  environment: "${env}",
+  database: {
+    "type": "${db.active}",
+    status: "Connected",
+    active: if (("${env}" == "development") or ("${env}" == "local"))
+              "postgresql"
+            else 
+              "h2"
+  },
+  mcp: {
+    enabled: true,
+    centralized: "${mcp.centralized.enabled}" default "false"
+  }
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO"
+			message="Health check OK - MCP Server ${mcp.serverName} - DB: #[vars.dbType]" />
+	</flow>
+
+	<!-- ========================= -->
+	<!-- MCP SERVER INFO -->
+	<!-- ========================= -->
+	<flow name="mcp-server-info">
+		<http:listener path="/mcp/info" 
+			config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+		<ee:transform doc:name="Server Info">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  name: "${mcp.serverName}",
+  version: "${mcp.serverVersion}",
+  description: "${mcp.serverDescription}",
+  baseUrl: "${mcp.serverBaseUrl}",
+  env: "${env}",
+  database: "${db.active}",
+  tools: [
+    { name: "create-employee", endpoint: "/mcp/tools/create-employee", method: "POST" },
+    { name: "get-employee", endpoint: "/mcp/tools/get-employee/{empId}", method: "GET" },
+    { name: "list-employees", endpoint: "/mcp/tools/list-employees", method: "GET" },
+    { name: "update-status", endpoint: "/mcp/tools/update-employee-status/{empId}/{status}", method: "PUT" }
+  ]
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-
-		<logger level="INFO"
-			message="MCP Server info requested - Name: ${mcp.serverName}, Version: ${mcp.serverVersion}, Environment: ${env}" />
+		<logger level="INFO" message="MCP Info requested" />
 	</flow>
 
 	<!-- ========================= -->
 	<!-- MCP TOOL: CREATE EMPLOYEE -->
 	<!-- ========================= -->
-
 	<flow name="mcp-create-employee-tool">
-		<http:listener config-ref="HTTP_Listener_config"
-			path="/mcp/tools/create-employee" allowedMethods="POST" />
-
-		<logger level="INFO"
-			message="MCP Tool: Creating employee via MCP interface" />
-
-		<flow-ref name="create-employee-flow" />
+		<http:listener path="/mcp/tools/create-employee"
+			 config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+		<logger level="INFO" message="MCP: Create employee #[payload]" />
+		<flow-ref name="create-employee-impl" />
 	</flow>
 
 	<!-- ========================= -->
 	<!-- MCP TOOL: GET EMPLOYEE -->
 	<!-- ========================= -->
-
 	<flow name="mcp-get-employee-tool">
-		<http:listener config-ref="HTTP_Listener_config"
-			path="/mcp/tools/get-employee/{empId}" allowedMethods="GET" />
-
-		<logger level="INFO"
-			message="MCP Tool: Getting employee #[attributes.uriParams.empId] via MCP interface" />
-
-		<flow-ref name="get-employee-flow" />
+		<http:listener path="/mcp/tools/get-employee/{empId}"
+			 config-ref="HTTP_Listener_config" />
+		<set-variable variableName="empId"
+			value="#[attributes.uriParams.empId]" />
+		<logger level="INFO" message="MCP: Get employee #[vars.empId]" />
+		<flow-ref name="get-employee-impl" />
 	</flow>
 
 	<!-- ========================= -->
 	<!-- MCP TOOL: LIST EMPLOYEES -->
 	<!-- ========================= -->
-
 	<flow name="mcp-list-employees-tool">
-		<http:listener config-ref="HTTP_Listener_config"
-			path="/mcp/tools/list-employees" allowedMethods="GET" />
-
-		<logger level="INFO"
-			message="MCP Tool: Listing employees via MCP interface" />
-
-		<flow-ref name="list-employees-flow" />
+		<http:listener path="/mcp/tools/list-employees"
+			 config-ref="HTTP_Listener_config" />
+		<logger level="INFO" message="MCP: List employees" />
+		<flow-ref name="list-employees-impl" />
 	</flow>
 
 	<!-- ========================= -->
 	<!-- MCP TOOL: UPDATE STATUS -->
 	<!-- ========================= -->
-
 	<flow name="mcp-update-employee-status-tool">
-		<http:listener config-ref="HTTP_Listener_config"
+		<http:listener
 			path="/mcp/tools/update-employee-status/{empId}/{status}"
-			allowedMethods="PUT" />
-
-		<logger level="INFO"
-			message="MCP Tool: Updating employee status via MCP interface" />
-
-		<flow-ref name="update-employee-status-flow" />
-	</flow>
-
-	<!-- ========================= -->
-	<!-- CREATE EMPLOYEE (POST) -->
-	<!-- ========================= -->
-
-	<flow name="create-employee-flow">
-		<http:listener config-ref="HTTP_Listener_config"
-			path="/employees" allowedMethods="POST" />
-
-		<try>
-
-			<ee:transform>
-				<ee:message>
-					<ee:set-payload><![CDATA[%dw 2.0
-output application/db
----
-{
-    employee_id: payload.employeeId,
-    first_name: payload.firstName,
-    last_name: payload.lastName,
-    email: payload.email,
-    phone: payload.phone,
-    department_id: payload.departmentId,
-    position: payload.position,
-    hire_date: payload.hireDate,
-    status: "PENDING",
-    salary: payload.salary,
-    address: payload.address,
-    emergency_contact_name: payload.emergencyContactName,
-    emergency_contact_phone: payload.emergencyContactPhone
-}]]></ee:set-payload>
-				</ee:message>
-			</ee:transform>
-
-			<db:insert config-ref="Database_Config">
-				<db:sql><![CDATA[
-                    INSERT INTO employees
-                    (employee_id, first_name, last_name, email, phone,
-                     department_id, position, hire_date, status, salary,
-                     address, emergency_contact_name, emergency_contact_phone)
-                    VALUES
-                    (:employee_id, :first_name, :last_name, :email, :phone,
-                     :department_id, :position, :hire_date, :status, :salary,
-                     :address, :emergency_contact_name, :emergency_contact_phone)
-                ]]></db:sql>
-			</db:insert>
-
-			<ee:transform>
-				<ee:message>
-					<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-    message: "Employee created successfully",
-    employeeId: payload.employee_id
-}]]></ee:set-payload>
-				</ee:message>
-			</ee:transform>
-
-			<error-handler>
-
-				<!-- Duplicate key -->
-				<on-error-continue type="DB:QUERY_EXECUTION"
-					when="#[error.description contains 'Duplicate' or error.description contains 'duplicate']">
-					<ee:transform>
-						<ee:message>
-							<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-    error: "Employee ID or email already exists"
-}]]></ee:set-payload>
-						</ee:message>
-					</ee:transform>
-				</on-error-continue>
-
-				<!-- DB Down → Mock -->
-				<on-error-continue type="DB:*">
-					<ee:transform>
-						<ee:message>
-							<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-    message: "Employee created (MOCK MODE)",
-    employeeId: uuid(),
-    mockMode: true
-}]]></ee:set-payload>
-						</ee:message>
-					</ee:transform>
-				</on-error-continue>
-
-			</error-handler>
-		</try>
-	</flow>
-
-
-	<!-- ========================= -->
-	<!-- GET EMPLOYEE (GET) -->
-	<!-- ========================= -->
-
-	<flow name="get-employee-flow">
-		<http:listener config-ref="HTTP_Listener_config"
-			path="/employees/{empId}" allowedMethods="GET" />
-
+			config-ref="HTTP_Listener_config" />
 		<set-variable variableName="empId"
 			value="#[attributes.uriParams.empId]" />
-
-		<try>
-
-			<db:select config-ref="Database_Config">
-				<db:sql>
-                    SELECT * FROM employees
-                    WHERE employee_id = :empId
-                </db:sql>
-				<db:input-parameters>
-                    #[{empId: vars.empId}]
-                </db:input-parameters>
-			</db:select>
-
-			<ee:transform>
-				<ee:message>
-					<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-if (payload.size() > 0)
-    payload[0]
-else
-    { message: "Employee not found" }
-]]></ee:set-payload>
-				</ee:message>
-			</ee:transform>
-
-			<error-handler>
-
-				<!-- DB Down → Mock -->
-				<on-error-continue type="DB:*">
-					<ee:transform>
-						<ee:message>
-							<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-    employee_id: vars.empId,
-    first_name: "Mock",
-    last_name: "User",
-    email: "mock.user@company.com",
-    status: "ACTIVE",
-    mockMode: true
-}]]></ee:set-payload>
-						</ee:message>
-					</ee:transform>
-				</on-error-continue>
-
-			</error-handler>
-		</try>
-	</flow>
-
-
-	<!-- ========================= -->
-	<!-- LIST EMPLOYEES (GET) -->
-	<!-- ========================= -->
-
-	<flow name="list-employees-flow">
-		<http:listener config-ref="HTTP_Listener_config"
-			path="/employees" allowedMethods="GET" />
-
-		<try>
-
-			<db:select config-ref="Database_Config">
-				<db:sql>
-                    SELECT * FROM employees
-                    ORDER BY created_at DESC
-                </db:sql>
-			</db:select>
-
-			<ee:transform>
-				<ee:message>
-					<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-payload
-]]></ee:set-payload>
-				</ee:message>
-			</ee:transform>
-
-			<error-handler>
-
-				<!-- DB Down → Mock -->
-				<on-error-continue type="DB:*">
-					<ee:transform>
-						<ee:message>
-							<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-[
- {
-   employee_id: "EMP001",
-   first_name: "John",
-   last_name: "Smith",
-   email: "john.smith@company.com",
-   status: "ACTIVE",
-   mockMode: true
- },
- {
-   employee_id: "EMP002",
-   first_name: "Maria",
-   last_name: "Garcia",
-   email: "maria.garcia@company.com",
-   status: "PENDING",
-   mockMode: true
- }
-]
-]]></ee:set-payload>
-						</ee:message>
-					</ee:transform>
-				</on-error-continue>
-
-			</error-handler>
-		</try>
-	</flow>
-
-
-	<!-- ========================= -->
-	<!-- UPDATE STATUS (PUT) -->
-	<!-- ========================= -->
-
-	<flow name="update-employee-status-flow">
-		<http:listener config-ref="HTTP_Listener_config"
-			path="/employees/{empId}/status/{status}" allowedMethods="PUT" />
-
-		<set-variable variableName="empId"
-			value="#[attributes.uriParams.empId]" />
-
 		<set-variable variableName="status"
 			value="#[attributes.uriParams.status]" />
+		<logger level="INFO"
+			message="MCP: Update status #[vars.empId] -> #[vars.status]" />
+		<flow-ref name="update-employee-status-impl" />
+	</flow>
 
+	<!-- ========================= -->
+	<!-- CORE IMPLEMENTATIONS -->
+	<!-- ========================= -->
+
+	<!-- CREATE EMPLOYEE -->
+	<flow name="create-employee-impl">
 		<try>
+			<ee:transform doc:name="Transform to DB">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+  employee_id: payload.employeeId default "",
+  first_name: payload.firstName default "",
+  last_name: payload.lastName default "",
+  email: payload.email default "",
+  phone: payload.phone default "",
+  department_id: payload.departmentId default "",
+  position: payload.position default "",
+  hire_date: payload.hireDate as Date default now(),
+  status: "PENDING",
+  salary: payload.salary default 0 as Number,
+  address: payload.address default ""
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
 
-			<db:update config-ref="Database_Config">
-				<db:sql>
-                    UPDATE employees
-                    SET status = :status,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE employee_id = :empId
-                </db:sql>
-				<db:input-parameters>
-                    #[{empId: vars.empId, status: vars.status}]
-                </db:input-parameters>
-			</db:update>
+			<choice doc:name="Environment Database Selection for Insert">
+				<when
+					expression="#['${env}' == 'development' or '${env}' == 'local']">
+					<db:insert config-ref="PostgreSQL_Database_Config">
+						<db:sql><![CDATA[INSERT INTO employees (
+              employee_id, first_name, last_name, email, phone,
+              department_id, position, hire_date, status, salary, address
+            ) VALUES (
+              :employee_id, :first_name, :last_name, :email, :phone,
+              :department_id, :position, :hire_date, :status, :salary, :address
+            )]]></db:sql>
+					</db:insert>
+				</when>
+				<otherwise>
+					<db:insert config-ref="H2_Database_Config">
+						<db:sql><![CDATA[INSERT INTO employees (
+              employee_id, first_name, last_name, email, phone,
+              department_id, position, hire_date, status, salary, address
+            ) VALUES (
+              :employee_id, :first_name, :last_name, :email, :phone,
+              :department_id, :position, :hire_date, :status, :salary, :address
+            )]]></db:sql>
+					</db:insert>
+				</otherwise>
+			</choice>
 
-			<ee:transform>
+			<ee:transform doc:name="Success Response">
 				<ee:message>
 					<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
-    message: "Status updated to " ++ vars.status,
-    employeeId: vars.empId
-}
-]]></ee:set-payload>
+  success: true,
+  message: "Employee created successfully",
+  employeeId: payload.employee_id,
+ 
+}]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
 
 			<error-handler>
-
-				<!-- DB Down → Mock -->
+				<on-error-continue type="DB:QUERY_EXECUTION" enableNotifications="true" logException="true">
+					<ee:transform>
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  success: false,
+  error: "Employee ID or email already exists"
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
 				<on-error-continue type="DB:*">
 					<ee:transform>
 						<ee:message>
@@ -417,15 +292,279 @@ output application/json
 output application/json
 ---
 {
-    message: "Status updated to " ++ vars.status ++ " (MOCK)",
-    employeeId: vars.empId,
-    mockMode: true
-}
-]]></ee:set-payload>
+  success: true,
+  message: "Employee created (MOCK - DB unavailable)",
+  employeeId: uuid(),
+  mockMode: true
+}]]></ee:set-payload>
 						</ee:message>
 					</ee:transform>
 				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
 
+	<!-- GET EMPLOYEE -->
+	<flow name="get-employee-impl">
+		<try>
+			<choice doc:name="Environment Database Selection for Select">
+				<when
+					expression="#['${env}' == 'development' or '${env}' == 'local']">
+					<db:select config-ref="PostgreSQL_Database_Config">
+						<db:sql><![CDATA[SELECT * FROM employees WHERE employee_id = :empId]]></db:sql>
+						<db:input-parameters><![CDATA[#[{empId: vars.empId}]]]></db:input-parameters>
+					</db:select>
+				</when>
+				<otherwise>
+					<db:select config-ref="H2_Database_Config">
+						<db:sql><![CDATA[SELECT * FROM employees WHERE employee_id = :empId]]></db:sql>
+						<db:input-parameters><![CDATA[#[{empId: vars.empId}]]]></db:input-parameters>
+					</db:select>
+				</otherwise>
+			</choice>
+
+			<ee:transform doc:name="Format Response">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+if (payload.size() > 0){
+     message: "No records"
+}
+else
+  {
+    success: false,
+    message: "Employee not found: " ++ vars.empId
+  }
+]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+
+			<error-handler>
+				<on-error-continue type="DB:*">
+					<ee:transform>
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  employee_id: vars.empId,
+  first_name: "Mock User",
+  last_name: "Demo",
+  email: "mock@" ++ vars.empId ++ ".company.com",
+  status: "ACTIVE",
+  mockMode: true
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- LIST EMPLOYEES -->
+	<flow name="list-employees-impl">
+		<try>
+			<choice doc:name="Environment Database Selection for List">
+				<when
+					expression="#['${env}' == 'development' or '${env}' == 'local']">
+					<db:select config-ref="PostgreSQL_Database_Config">
+						<db:sql><![CDATA[SELECT * FROM employees ORDER BY hire_date DESC]]></db:sql>
+					</db:select>
+				</when>
+				<otherwise>
+					<db:select config-ref="H2_Database_Config">
+						<db:sql><![CDATA[SELECT * FROM employees ORDER BY hire_date DESC]]></db:sql>
+					</db:select>
+				</otherwise>
+			</choice>
+
+			<ee:transform>
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  success: true,
+  count: sizeOf(payload),
+  employees: payload,
+  
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+
+			<error-handler>
+				<on-error-continue type="DB:*">
+					<ee:transform>
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  success: true,
+  count: 2,
+  mockMode: true,
+  employees: [
+    {
+      employee_id: "EMP001",
+      first_name: "John",
+      last_name: "Doe",
+      email: "john.doe@company.com",
+      status: "ACTIVE"
+    },
+    {
+      employee_id: "EMP002", 
+      first_name: "Jane",
+      last_name: "Smith",
+      email: "jane.smith@company.com",
+      status: "PENDING"
+    }
+  ]
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- UPDATE STATUS -->
+	<flow name="update-employee-status-impl">
+		<try>
+			<choice doc:name="Environment Database Selection for Update">
+				<when
+					expression="#['${env}' == 'development' or '${env}' == 'local']">
+					<db:update config-ref="PostgreSQL_Database_Config">
+						<db:sql><![CDATA[UPDATE employees 
+                           SET status = :status, updated_at = CURRENT_TIMESTAMP 
+                           WHERE employee_id = :empId]]></db:sql>
+						<db:input-parameters><![CDATA[#[{empId: vars.empId, status: vars.status}]]]></db:input-parameters>
+					</db:update>
+				</when>
+				<otherwise>
+					<db:update config-ref="H2_Database_Config">
+						<db:sql><![CDATA[UPDATE employees 
+                           SET status = :status, updated_at = CURRENT_TIMESTAMP 
+                           WHERE employee_id = :empId]]></db:sql>
+						<db:input-parameters><![CDATA[#[{empId: vars.empId, status: vars.status}]]]></db:input-parameters>
+					</db:update>
+				</otherwise>
+			</choice>
+
+			<ee:transform>
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  success: true,
+  message: "Status updated to " ++ vars.status,
+  employeeId: vars.empId
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+
+			<error-handler>
+				<on-error-continue type="DB:*">
+					<ee:transform>
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  success: true,
+  message: "Status updated to " ++ vars.status ++ " (MOCK)",
+  employeeId: vars.empId,
+  mockMode: true
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- ========================= -->
+	<!-- DATABASE TABLE CREATION FLOWS -->
+	<!-- ========================= -->
+
+	<!-- PostgreSQL Table Creation -->
+	<flow name="create-postgresql-tables">
+		<try doc:name="Create PostgreSQL Tables">
+			<db:execute-script
+				config-ref="PostgreSQL_Database_Config">
+				<db:sql><![CDATA[
+          CREATE TABLE IF NOT EXISTS employees (
+            id BIGSERIAL PRIMARY KEY,
+            employee_id VARCHAR(50) UNIQUE NOT NULL,
+            first_name VARCHAR(100),
+            last_name VARCHAR(100),
+            email VARCHAR(255) UNIQUE,
+            phone VARCHAR(20),
+            department_id VARCHAR(50),
+            position VARCHAR(100),
+            hire_date DATE DEFAULT CURRENT_DATE,
+            status VARCHAR(20) DEFAULT 'PENDING',
+            salary DECIMAL(10,2),
+            address TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+          
+          -- Create indexes for better performance
+          CREATE INDEX IF NOT EXISTS idx_employee_id ON employees(employee_id);
+          CREATE INDEX IF NOT EXISTS idx_employee_email ON employees(email);
+          CREATE INDEX IF NOT EXISTS idx_employee_status ON employees(status);
+        ]]></db:sql>
+			</db:execute-script>
+			<logger level="INFO"
+				message="PostgreSQL tables created successfully" />
+			<error-handler>
+				<on-error-continue>
+					<logger level="ERROR"
+						message="Failed to create PostgreSQL tables: #[error.description]" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- H2 Table Creation -->
+	<flow name="create-h2-tables">
+		<try doc:name="Create H2 Tables">
+			<db:execute-script config-ref="H2_Database_Config">
+				<db:sql><![CDATA[
+          CREATE TABLE IF NOT EXISTS employees (
+            id BIGINT AUTO_INCREMENT PRIMARY KEY,
+            employee_id VARCHAR(50) UNIQUE NOT NULL,
+            first_name VARCHAR(100),
+            last_name VARCHAR(100),
+            email VARCHAR(255) UNIQUE,
+            phone VARCHAR(20),
+            department_id VARCHAR(50),
+            position VARCHAR(100),
+            hire_date DATE DEFAULT CURRENT_DATE,
+            status VARCHAR(20) DEFAULT 'PENDING',
+            salary DECIMAL(10,2),
+            address TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+          );
+          
+          -- Insert sample data for testing
+          MERGE INTO employees (employee_id, first_name, last_name, email, status) 
+          VALUES ('EMP001', 'John', 'Doe', 'john.doe@company.com', 'ACTIVE');
+          
+          MERGE INTO employees (employee_id, first_name, last_name, email, status) 
+          VALUES ('EMP002', 'Jane', 'Smith', 'jane.smith@company.com', 'PENDING');
+        ]]></db:sql>
+			</db:execute-script>
+			<logger level="INFO"
+				message="H2 in-memory tables created successfully" />
+			<error-handler>
+				<on-error-continue>
+					<logger level="ERROR"
+						message="Failed to create H2 tables: #[error.description]" />
+				</on-error-continue>
 			</error-handler>
 		</try>
 	</flow>

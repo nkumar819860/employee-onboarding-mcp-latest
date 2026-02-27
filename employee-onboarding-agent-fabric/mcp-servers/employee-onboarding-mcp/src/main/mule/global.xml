@@ -15,7 +15,6 @@
 	<configuration-properties file="config.properties" />
 	
 	<!-- Environment-specific properties override -->
-	<global-property doc:name="Global Property" doc:id="084073d4-b919-4860-8243-7463949fc13a" name="env" value="${env:sandbox}" />
 	<error-handler name="GLOBAL-Error-Handler">
 		<on-error-propagate type="ANY">
 			<ee:transform>
@@ -41,12 +40,33 @@ output application/json
 
 
 	<!-- ✅ Database Configuration with Environment-based Selection -->
-	<db:config name="Database_Config" doc:name="Database Config">
+	<!-- PostgreSQL Configuration (Local Development) -->
+	<db:config name="PostgreSQL_Database_Config" doc:name="PostgreSQL Database Config" 
+	           doc:description="PostgreSQL connection for local development">
 		<db:generic-connection 
 			url="${db.postgres.url}" 
 			driverClassName="${db.postgres.driverClassName}" 
 			user="${db.postgres.username}" 
 			password="${db.postgres.password}" />
+	</db:config>
+
+	<!-- H2 In-Memory Configuration (Cloud/Testing) -->
+	<db:config name="H2_Database_Config" doc:name="H2 Database Config"
+	           doc:description="H2 in-memory connection for cloud deployment">
+		<db:generic-connection 
+			url="${db.h2.url}" 
+			driverClassName="${db.h2.driverClassName}" 
+			user="${db.h2.username}" 
+			password="${db.h2.password}" />
+	</db:config>
+
+	<!-- Primary Database Config - dynamically selected -->
+	<db:config name="Database_Config" doc:name="Database Config">
+		<db:generic-connection 
+			url="${db.active.url}" 
+			driverClassName="${db.active.driverClassName}" 
+			user="${db.active.username}" 
+			password="${db.active.password}" />
 	</db:config>
 
 	<!-- ✅ HTTP Listener with Property-based Configuration -->
