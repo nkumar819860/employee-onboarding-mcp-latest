@@ -66,7 +66,7 @@ if %errorlevel% equ 0 (
 echo.
 echo --- Testing CloudHub Deployment ---
 
-curl -s -f https://employee-onboarding-mcp-server.us-e1.cloudhub.io/health >nul 2>&1
+curl -s -f http://employee-onboarding-mcp-server.us-e1.cloudhub.io/health >nul 2>&1
 if %errorlevel% equ 0 (
     echo ✅ Employee Onboarding MCP (CloudHub): HEALTHY
     set EMPLOYEE_CLOUD=1
@@ -75,7 +75,7 @@ if %errorlevel% equ 0 (
     set EMPLOYEE_CLOUD=0
 )
 
-curl -s -f https://asset-allocation-mcp-server.us-e1.cloudhub.io/health >nul 2>&1
+curl -s -f http://asset-allocation-mcp-server.us-e1.cloudhub.io/health >nul 2>&1
 if %errorlevel% equ 0 (
     echo ✅ Asset Allocation MCP (CloudHub): HEALTHY
     set ASSET_CLOUD=1
@@ -84,7 +84,7 @@ if %errorlevel% equ 0 (
     set ASSET_CLOUD=0
 )
 
-curl -s -f https://notification-mcp-server.us-e1.cloudhub.io/health >nul 2>&1
+curl -s -f http://notification-mcp-server.us-e1.cloudhub.io/health >nul 2>&1
 if %errorlevel% equ 0 (
     echo ✅ Notification MCP (CloudHub): HEALTHY
     set NOTIFICATION_CLOUD=1
@@ -93,7 +93,7 @@ if %errorlevel% equ 0 (
     set NOTIFICATION_CLOUD=0
 )
 
-curl -s -f https://agent-broker-mcp-server.us-e1.cloudhub.io/health >nul 2>&1
+curl -s -f http://agent-broker-mcp-server.us-e1.cloudhub.io/health >nul 2>&1
 if %errorlevel% equ 0 (
     echo ✅ Agent Broker MCP (CloudHub): HEALTHY
     set BROKER_CLOUD=1
@@ -120,7 +120,7 @@ if %BROKER_CLOUD%==1 (
     echo.
     echo --- Testing CloudHub MCP Info Endpoints ---
     echo Getting Agent Broker MCP Info...
-    curl -s -X GET https://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/info
+    curl -s -X GET http://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/info
     echo.
 )
 
@@ -161,7 +161,7 @@ if %BROKER_CLOUD%==1 (
     echo Employee Data: %CLOUD_EMPLOYEE_DATA%
     echo.
     echo Sending orchestration request...
-    curl -X POST -H "Content-Type: application/json" -d "%CLOUD_EMPLOYEE_DATA%" https://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/tools/orchestrate-employee-onboarding
+    curl -X POST -H "Content-Type: application/json" -d "%CLOUD_EMPLOYEE_DATA%" http://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/tools/orchestrate-employee-onboarding
     echo.
     echo ✅ CloudHub orchestration request sent successfully
     
@@ -170,7 +170,7 @@ if %BROKER_CLOUD%==1 (
     timeout /t 10
     
     echo Testing status check...
-    curl -X POST -H "Content-Type: application/json" -d "{\"email\":\"jane.smith@testcompany.com\"}" https://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/tools/get-onboarding-status
+    curl -X POST -H "Content-Type: application/json" -d "{\"email\":\"jane.smith@testcompany.com\"}" http://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/tools/get-onboarding-status
     echo.
 )
 
@@ -189,7 +189,7 @@ if %BROKER_LOCAL%==1 (
 if %BROKER_CLOUD%==1 (
     echo.
     echo --- CloudHub System Health ---
-    curl -X POST -H "Content-Type: application/json" -d "{}" https://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/tools/check-system-health
+    curl -X POST -H "Content-Type: application/json" -d "{}" http://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/tools/check-system-health
     echo.
 )
 
@@ -271,10 +271,10 @@ if %BROKER_LOCAL%==1 (
 )
 echo.
 if %BROKER_CLOUD%==1 (
-    echo 🤖 Agent Broker (CloudHub):     https://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/info
-    echo 👥 Employee MCP (CloudHub):     https://employee-onboarding-mcp-server.us-e1.cloudhub.io/mcp/info
-    echo 💼 Asset MCP (CloudHub):        https://asset-allocation-mcp-server.us-e1.cloudhub.io/mcp/info
-    echo 🔔 Notification MCP (CloudHub): https://notification-mcp-server.us-e1.cloudhub.io/mcp/info
+    echo 🤖 Agent Broker (CloudHub):     http://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/info
+    echo 👥 Employee MCP (CloudHub):     http://employee-onboarding-mcp-server.us-e1.cloudhub.io/mcp/info
+    echo 💼 Asset MCP (CloudHub):        http://asset-allocation-mcp-server.us-e1.cloudhub.io/mcp/info
+    echo 🔔 Notification MCP (CloudHub): http://notification-mcp-server.us-e1.cloudhub.io/mcp/info
 )
 
 echo.

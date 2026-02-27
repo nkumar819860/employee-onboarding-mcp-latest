@@ -48,10 +48,10 @@ if %ERRORLEVEL% equ 0 (
     echo ✅ DEPLOYMENT SUCCESSFUL!
     echo.
     echo Your application should now be available at:
-    echo https://notification-mcp-server.us-e1.cloudhub.io/health
+    echo http://notification-mcp-server.us-e1.cloudhub.io/health
     echo.
     echo To test the MCP server info:
-    echo https://notification-mcp-server.us-e1.cloudhub.io/mcp/info
+    echo http://notification-mcp-server.us-e1.cloudhub.io/mcp/info
 ) else (
     echo ❌ DEPLOYMENT FAILED with error code: %ERRORLEVEL%
     echo Check the Maven output above for error details.

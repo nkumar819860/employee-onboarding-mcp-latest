@@ -69,13 +69,13 @@ info:
   x-multi-module: true
 
 servers:
-  - url: https://agent-broker-mcp-server.us-e1.cloudhub.io
+  - url: http://agent-broker-mcp-server.us-e1.cloudhub.io
     description: Agent Broker MCP - Central Orchestrator
-  - url: https://employee-onboarding-mcp-server.us-e1.cloudhub.io
+  - url: http://employee-onboarding-mcp-server.us-e1.cloudhub.io
     description: Employee Onboarding MCP - Profile Management
-  - url: https://asset-allocation-mcp-server.us-e1.cloudhub.io
+  - url: http://asset-allocation-mcp-server.us-e1.cloudhub.io
     description: Asset Allocation MCP - IT Asset Management
-  - url: https://notification-mcp-server.us-e1.cloudhub.io
+  - url: http://notification-mcp-server.us-e1.cloudhub.io
     description: Notification MCP - Email Communications
 
 paths:
@@ -639,7 +639,7 @@ components:
       type: oauth2
       flows:
         clientCredentials:
-          tokenUrl: https://anypoint.mulesoft.com/accounts/oauth2/token
+          tokenUrl: http://anypoint.mulesoft.com/accounts/oauth2/token
           scopes:
             read: Read access to employee data
             write: Write access for employee operations

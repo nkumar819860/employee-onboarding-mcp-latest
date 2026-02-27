@@ -10,7 +10,7 @@
 	</parent>
 
 	<artifactId>asset-allocation-mcp</artifactId>
-	<version>1.0.2</version>
+	<version>1.0.3</version>
 	<packaging>mule-application</packaging>
 
 	<name>Asset Allocation MCP Server</name>
@@ -28,6 +28,9 @@
 		<!-- Connected App Authentication Properties -->
 		<anypoint.platform.client_id>${env:CONNECTED_APP_CLIENT_ID}</anypoint.platform.client_id>
 		<anypoint.platform.client_secret>${env:CONNECTED_APP_CLIENT_SECRET}</anypoint.platform.client_secret>
+		<tags>asset-allocation,mcp,employee-onbaording-agent</tags>
+		<categories>[]</categories>
+		<fields>[]</fields>
 	</properties>
 
 	<build>
@@ -158,4 +161,5 @@
 			<layout>default</layout>
 		</repository>
 	</repositories>
+	<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
 </project>
