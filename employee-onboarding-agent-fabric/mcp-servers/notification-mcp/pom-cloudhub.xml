@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
+	<artifactId>notification-mcp</artifactId>
+	<version>1.0.3</version>
+	<packaging>mule-application</packaging>
+
+	<name>Notification MCP Server - CloudHub Compatible</name>
+	<description>MCP Server for Employee Notifications - Java 11 Compatible for CloudHub</description>
+
+	<properties>
+		<!-- ✅ CLOUDHUB COMPATIBLE: Java 11 -->
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		
+		<!-- ✅ CloudHub Compatible Mule Runtime -->
+		<mule.version>4.8.0</mule.version>
+		<mule.runtime.version>4.8</mule.runtime.version>
+		<java.version>11</java.version>
+		<mule.maven.plugin.version>4.4.0</mule.maven.plugin.version>
+
+		<!-- ✅ Java 11 Compatible Connector Versions -->
+		<mule.http.connector.version>1.9.0</mule.http.connector.version>
+		<mule.db.connector.version>1.14.0</mule.db.connector.version>
+		<mule.email.connector.version>1.7.0</mule.email.connector.version>
+		<mule.file.connector.version>1.5.0</mule.file.connector.version>
+		<mule.secure.configuration.property.version>1.2.5</mule.secure.configuration.property.version>
+		<postgresql.version>42.7.4</postgresql.version>
+		<h2.version>2.2.224</h2.version>
+
+		<!-- CloudHub deployment properties -->
+		<anypoint.business.group>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</anypoint.business.group>
+		<anypoint.platform.env>Sandbox</anypoint.platform.env>
+		<cloudhub.region>us-east-1</cloudhub.region>
+		<cloudhub.workers>1</cloudhub.workers>
+		<cloudhub.worker.type>MICRO</cloudhub.worker.type>
+		<application.name>notification-mcp-server</application.name>
+
+		<!-- Connected App Authentication Properties -->
+		<anypoint.platform.client_id>aec0b3117f7d4d4e8433a7d3d23bc80e</anypoint.platform.client_id>
+		<anypoint.platform.client_secret>9bc9D86a77b343b98a148C0313239aDA</anypoint.platform.client_secret>
+	</properties>
+
+	<repositories>
+		<repository>
+			<id>mulesoft-releases</id>
+			<url>https://repository.mulesoft.org/releases/</url>
+		</repository>
+		<repository>
+			<id>mulesoft-public</id>
+			<url>https://repository.mulesoft.org/nexus/content/repositories/public/</url>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>mulesoft-releases</id>
+			<url>https://repository.mulesoft.org/releases/</url>
+		</pluginRepository>
+	</pluginRepositories>
+
+	<dependencies>
+		<!-- HTTP Connector -->
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-http-connector</artifactId>
+			<version>${mule.http.connector.version}</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+
+		<!-- Database Connector -->
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-db-connector</artifactId>
+			<version>${mule.db.connector.version}</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+
+		<!-- Email Connector -->
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-email-connector</artifactId>
+			<version>${mule.email.connector.version}</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+
+		<!-- File Connector -->
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-file-connector</artifactId>
+			<version>${mule.file.connector.version}</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+
+		<!-- PostgreSQL -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>${postgresql.version}</version>
+		</dependency>
+
+		<!-- H2 Database -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<version>${h2.version}</version>
+		</dependency>
+
+		<!-- Secure Configuration Property Module -->
+		<dependency>
+			<groupId>com.mulesoft.modules</groupId>
+			<artifactId>mule-secure-configuration-property-module</artifactId>
+			<version>${mule.secure.configuration.property.version}</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.mule.tools.maven</groupId>
+				<artifactId>mule-maven-plugin</artifactId>
+				<version>${mule.maven.plugin.version}</version>
+				<extensions>true</extensions>
+
+				<configuration>
+					<!-- ✅ Shared libraries -->
+					<sharedLibraries>
+						<sharedLibrary>
+							<groupId>com.h2database</groupId>
+							<artifactId>h2</artifactId>
+						</sharedLibrary>
+						<sharedLibrary>
+							<groupId>org.postgresql</groupId>
+							<artifactId>postgresql</artifactId>
+						</sharedLibrary>
+					</sharedLibraries>
+
+					<!-- ✅ CloudHub deployment -->
+					<cloudHubDeployment>
+						<uri>https://anypoint.mulesoft.com</uri>
+						<muleVersion>${mule.runtime.version}</muleVersion>
+						<javaVersion>${java.version}</javaVersion>
+
+						<businessGroupId>${anypoint.business.group}</businessGroupId>
+
+						<!-- ✅ Connected App -->
+						<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
+						<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
+						<connectedAppGrantType>client_credentials</connectedAppGrantType>
+						<applicationName>${application.name}</applicationName>
+						<environment>${anypoint.platform.env}</environment>
+						<region>${cloudhub.region}</region>
+						<workers>${cloudhub.workers}</workers>
+						<workerType>${cloudhub.worker.type}</workerType>
+						<objectStoreV2>true</objectStoreV2>
+
+						<properties>
+							<env>${anypoint.platform.env}</env>
+							<http.port>8081</http.port>
+						</properties>
+					</cloudHubDeployment>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<distributionManagement>
+		<repository>
+			<id>anypoint-exchange</id>
+			<name>Anypoint Exchange</name>
+			<url>https://maven.anypoint.mulesoft.com/api/v1/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
+		</repository>
+	</distributionManagement>
+</project>
