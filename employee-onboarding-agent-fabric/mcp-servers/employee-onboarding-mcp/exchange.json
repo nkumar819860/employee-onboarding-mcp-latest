@@ -1,11 +1,11 @@
 {
     "name": "Employee Onboarding MCP Server",
-    "description": "MCP Server for Employee Database Operations with PostgreSQL/H2 Fallback Support",
-    "version": "1.0.1",
+    "description": "MCP Server for Employee Database Operations with PostgreSQL/H2 Fallback Support - Complete employee profile management and lifecycle operations",
+    "version": "1.0.0",
     "main": "employee-onboarding-mcp-server.xml",
-    "groupId": "COE",
+    "groupId": "47562e5d-bf49-440a-a0f5-a9cea0a89aa9",
     "assetId": "employee-onboarding-mcp",
-    "classifier": "mcp",
+    "classifier": "mule-application",
     "keywords": [
         "mcp",
         "employee",
@@ -14,30 +14,75 @@
         "postgresql",
         "h2",
         "fallback",
-        "agent-fabric"
+        "agent-fabric",
+        "profile-management",
+        "mulesoft"
     ],
-    "contactName": "Development Team",
-    "contactEmail": "dev@company.com",
+    "author": "MCP Development Team",
+    "license": "MIT",
+    "homepage": "https://github.com/mulesoft/employee-onboarding-mcp",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mulesoft/employee-onboarding-mcp.git"
+    },
+    "bugs": {
+        "url": "https://github.com/mulesoft/employee-onboarding-mcp/issues"
+    },
+    "contactName": "MCP Development Team",
+    "contactEmail": "mcp-dev@company.com",
     "tags": [
+        "Employee Management",
+        "MCP Server", 
+        "Database Operations",
+        "Profile Management",
+        "Multi-Database Support"
+    ],
+    "categories": [
+        "Integration",
+        "Database",
+        "Human Resources", 
+        "Agent Network"
+    ],
+    "dependencies": [
         {
-            "key": "category",
-            "value": "integration"
+            "groupId": "org.mule.connectors",
+            "artifactId": "mule-db-connector",
+            "version": "1.15.0"
         },
         {
-            "key": "type",
-            "value": "mcp-server"
+            "groupId": "org.postgresql",
+            "artifactId": "postgresql",
+            "version": "42.7.4"
         },
         {
-            "key": "database",
-            "value": "postgresql-h2"
-        },
-        {
-            "key": "agent-fabric",
-            "value": "enabled"
+            "groupId": "com.h2database", 
+            "artifactId": "h2",
+            "version": "2.2.224"
         }
     ],
+    "properties": {
+        "apiVersion": "v1",
+        "databaseSupport": "postgresql-h2-fallback",
+        "secure": "true",
+        "monitoring": "enabled"
+    },
+    "documentation": {
+        "summary": "Employee profile and data management MCP server with multi-database support and comprehensive CRUD operations.",
+        "description": "This MCP server provides complete employee data management capabilities with robust database operations:\n\n## Key Features\n\n### Database Architecture\n- **Primary Database**: PostgreSQL for production environments\n- **Fallback Database**: H2 in-memory for development and testing\n- **Automatic Failover**: Seamless switching between databases\n- **Connection Pooling**: Optimized database connections\n\n### Employee Operations\n- **Profile Creation**: Complete employee profile creation with validation\n- **Profile Management**: Update, retrieve, and manage employee records\n- **Data Validation**: Comprehensive input validation and sanitization\n- **Lifecycle Management**: Employee status tracking and updates\n\n### Integration Capabilities\n- **MCP Protocol**: Full Model Context Protocol compliance\n- **RESTful APIs**: HTTP-based endpoints for all operations\n- **Event-Driven**: Supports asynchronous processing patterns\n- **Agent Fabric**: Seamless integration with other MCP servers\n\n## API Endpoints\n\n- `/mcp/tools/create-employee` - Create new employee profiles\n- `/mcp/tools/get-employee` - Retrieve employee information\n- `/mcp/tools/update-employee` - Update existing employee records\n- `/mcp/tools/delete-employee` - Remove employee profiles\n- `/mcp/tools/list-employees` - Query and list employee records\n\n## Database Schema\n\n### Employee Table Structure\n- **employee_id**: Unique identifier (Primary Key)\n- **first_name**: Employee first name (Required)\n- **last_name**: Employee last name (Required) \n- **email**: Email address (Unique, Required)\n- **phone**: Phone number\n- **department**: Department assignment\n- **position**: Job title/position\n- **start_date**: Employment start date\n- **salary**: Annual salary (Encrypted)\n- **manager**: Manager name\n- **status**: Employee status (active/inactive/pending)\n- **created_date**: Record creation timestamp\n- **updated_date**: Last update timestamp\n\n## Configuration\n\n### Database Configuration\n```properties\n# PostgreSQL Primary Database\ndb.primary.url=jdbc:postgresql://localhost:5432/employee_onboarding\ndb.primary.username=${DB_USERNAME}\ndb.primary.password=${secure::DB_PASSWORD}\n\n# H2 Fallback Database  \ndb.fallback.url=jdbc:h2:mem:employee_onboarding\ndb.fallback.driver=org.h2.Driver\n```\n\n### Security Configuration\n- **Encrypted Properties**: Database passwords and sensitive data\n- **Input Validation**: SQL injection prevention\n- **Access Control**: Role-based permissions\n- **Audit Logging**: Complete activity tracking\n\n## Monitoring and Observability\n\n- **Health Checks**: Database connectivity monitoring\n- **Performance Metrics**: Query performance tracking\n- **Error Logging**: Comprehensive error reporting\n- **Connection Monitoring**: Database pool status\n\n## Integration Patterns\n\nDesigned to integrate with:\n- HR management systems\n- Employee onboarding portals\n- Asset allocation systems\n- Notification services\n- Agent orchestration platforms"
+    },
+    "apiSpecification": {
+        "type": "OpenAPI",
+        "version": "3.0.3", 
+        "location": "api/employee-onboarding-mcp-api.yaml",
+        "description": "Complete OpenAPI specification with employee management operations, database schemas, and comprehensive examples",
+        "main": "api/employee-onboarding-mcp-api.yaml"
+    },
+    "readme": {
+        "location": "README.md",
+        "format": "markdown"
+    },
     "transport": {
-        "kind": "streamableHttp",
-        "path": "/assets"
+        "kind": "mule-application",
+        "path": "/mcp/tools"
     }
 }

@@ -1,77 +1,90 @@
 {
-    "name":  "Employee Notification Service",
-    "description":  "MCP Server for Email Notifications - Employee Onboarding \u0026 Asset Allocation confirmations using Gmail SMTP",
-    "version":  "1.0.7",
-    "main":  "notification-mcp-server.xml",
-    "groupId":  "47562e5d-bf49-440a-a0f5-a9cea0a89aa9",
-    "assetId":  "employee-notification-service",
-    "classifier":  "mcp",
-    "keywords":  [
-                     "mcp",
-                     "notification",
-                     "email",
-                     "gmail",
-                     "onboarding",
-                     "asset-allocation",
-                     "smtp",
-                     "mulesoft"
-                 ],
-    "author":  "MuleSoft Notification Team",
-    "license":  "MIT",
-    "homepage":  "https://github.com/mulesoft/notification-mcp",
-    "repository":  {
-                       "type":  "git",
-                       "url":  "https://github.com/mulesoft/notification-mcp.git"
-                   },
-    "bugs":  {
-                 "url":  "https://github.com/mulesoft/notification-mcp/issues"
-             },
-    "tags":  [
-                 "Email Notifications",
-                 "MCP Server",
-                 "HR Automation",
-                 "Gmail Integration"
-             ],
-    "categories":  [
-                       "Human Resources",
-                       "Communication",
-                       "Notification Systems"
-                   ],
-    "dependencies":  [
-                         {
-                             "groupId":  "org.mule.connectors",
-                             "artifactId":  "mule-http-connector",
-                             "version":  "1.9.3"
-                         },
-                         {
-                             "groupId":  "org.mule.connectors",
-                             "artifactId":  "mule-email-connector",
-                             "version":  "1.7.1"
-                         },
-                         {
-                             "groupId":  "com.mulesoft.connectors",
-                             "artifactId":  "mule-mcp-connector",
-                             "version":  "1.3.0"
-                         }
-                     ],
-    "properties":  {
-                       "apiVersion":  "v1",
-                       "secure":  "true",
-                       "monitoring":  "basic",
-                       "emailProvider":  "Gmail SMTP"
-                   },
-    "documentation":  {
-                          "summary":  "Comprehensive email notification system for employee onboarding and asset allocation processes using Gmail SMTP integration.",
-                          "description":  "This MCP server provides automated email notification capabilities for HR and IT processes:\n\n- **Employee Welcome Emails**: Professional onboarding emails with company information\n- **Asset Allocation Notifications**: Detailed equipment assignment confirmations\n- **Onboarding Complete Messages**: Comprehensive completion notifications with asset summaries\n- **Gmail SMTP Integration**: Secure email delivery using Gmail\u0027s SMTP service\n\n## Key Features\n\n### Email Templates\n- **Welcome Email**: Professional HTML template for new employee onboarding\n- **Asset Notification**: Detailed equipment allocation confirmations\n- **Completion Email**: Comprehensive onboarding completion summary\n- **Responsive Design**: Mobile-friendly email templates\n\n### Gmail Integration\n- **SMTP Configuration**: Secure Gmail SMTP integration\n- **App Password Support**: Enhanced security with Gmail app passwords\n- **TLS Encryption**: Secure email transmission\n- **Error Handling**: Comprehensive email delivery error management\n\n### Notification Operations\n- Welcome email for new employees\n- Asset allocation confirmation emails\n- Onboarding completion notifications\n- Email configuration testing\n\n### API Endpoints\n- `/mcp/tools/send-welcome-email` - Send employee welcome notification\n- `/mcp/tools/send-asset-notification` - Send asset allocation confirmation\n- `/mcp/tools/send-onboarding-complete` - Send completion notification\n- `/mcp/tools/test-email-config` - Test Gmail SMTP configuration\n\n## API Specification\n\n**OpenAPI 3.0 Specification Available**: `src/main/resources/api/notification-mcp-api.yaml`\n\nComprehensive API documentation including:\n- Complete endpoint definitions with request/response schemas\n- Authentication and security requirements\n- Error handling and status codes\n- Interactive API documentation and examples\n- Data models and validation rules\n\n## Configuration Requirements\n\n### Gmail Setup\nRequires Gmail account with:\n- Two-factor authentication enabled\n- App password generated for SMTP access\n- SMTP access enabled\n\n### Environment Variables\n- `gmail.username` - Gmail account username\n- `gmail.password` - Gmail app password (secure property)\n- `notification.cc.hr` - HR team CC email\n- `notification.cc.it` - IT team CC email\n\n## Template Variables\n\nSupports dynamic content replacement:\n- Employee information (name, ID, department, position)\n- Asset details (tag, brand, model, specifications)\n- Company information (name, contacts, policies)\n- Dates and timestamps\n\n## Security Features\n\n- Secure property handling for Gmail credentials\n- TLS encryption for SMTP connections\n- Input validation and sanitization\n- Error handling without credential exposure\n\n## Integration\n\nDesigned to integrate with:\n- Employee onboarding MCP servers\n- Asset allocation MCP servers\n- HR management systems\n- IT asset management platforms"
-                      },
-    "apiSpecification":  {
-                             "type":  "OpenAPI",
-                             "version":  "3.0.3",
-                             "location":  "src/main/resources/api/notification-mcp-api.yaml",
-                             "description":  "Complete OpenAPI specification with all endpoint definitions, schemas, and examples"
-                         },
+    "name": "Notification MCP Server",
+    "description": "MCP Server for Email Notifications - Employee Onboarding & Asset Allocation confirmations using Gmail SMTP with professional HTML templates",
+    "version": "1.0.0",
+    "main": "notification-mcp-server.xml",
+    "groupId": "47562e5d-bf49-440a-a0f5-a9cea0a89aa9",
+    "assetId": "notification-mcp",
+    "classifier": "mule-application",
+    "keywords": [
+        "mcp",
+        "notification",
+        "email",
+        "gmail",
+        "onboarding",
+        "asset-allocation",
+        "smtp",
+        "template-based",
+        "mulesoft"
+    ],
+    "author": "MCP Development Team",
+    "license": "MIT",
+    "homepage": "https://github.com/mulesoft/notification-mcp",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mulesoft/notification-mcp.git"
+    },
+    "bugs": {
+        "url": "https://github.com/mulesoft/notification-mcp/issues"
+    },
+    "contactName": "MCP Development Team",
+    "contactEmail": "mcp-dev@company.com",
+    "tags": [
+        "Email Notifications",
+        "MCP Server",
+        "HR Automation",
+        "Gmail Integration",
+        "Template Engine"
+    ],
+    "categories": [
+        "Integration",
+        "Communication",
+        "Human Resources",
+        "Notification Systems",
+        "Agent Network"
+    ],
+    "dependencies": [
+        {
+            "groupId": "org.mule.connectors",
+            "artifactId": "mule-http-connector",
+            "version": "1.10.0"
+        },
+        {
+            "groupId": "org.mule.connectors",
+            "artifactId": "mule-email-connector",
+            "version": "1.8.0"
+        },
+        {
+            "groupId": "org.mule.modules",
+            "artifactId": "mule-scripting-module",
+            "version": "2.0.4"
+        }
+    ],
+    "properties": {
+        "apiVersion": "v1",
+        "secure": "true",
+        "monitoring": "advanced",
+        "emailProvider": "Gmail SMTP",
+        "templateEngine": "velocity",
+        "multiRecipient": "true"
+    },
+    "documentation": {
+        "summary": "Comprehensive email notification system for employee onboarding and asset allocation processes using Gmail SMTP integration with professional HTML templates.",
+        "description": "This MCP server provides automated email notification capabilities for HR and IT processes with enterprise-grade features:\n\n## Key Features\n\n### Professional Email Templates\n- **Employee Welcome Emails**: Branded onboarding emails with company information and next steps\n- **Asset Allocation Notifications**: Detailed equipment assignment confirmations with asset details\n- **Onboarding Complete Messages**: Comprehensive completion notifications with asset summaries\n- **Responsive Design**: Mobile-friendly HTML email templates with consistent branding\n- **Dynamic Content**: Template variables for personalized messaging\n\n### Gmail SMTP Integration\n- **Secure SMTP Configuration**: Enterprise-grade Gmail SMTP integration with TLS encryption\n- **App Password Support**: Enhanced security using Gmail app passwords instead of account passwords\n- **Authentication Methods**: OAuth 2.0 and app password authentication support\n- **Delivery Tracking**: Email delivery status monitoring and error handling\n- **Rate Limiting**: Intelligent rate limiting to comply with Gmail sending limits\n\n### Template Engine\n- **Velocity Templates**: Apache Velocity template engine for dynamic content generation\n- **Variable Substitution**: Support for complex data structures and conditional logic\n- **Template Inheritance**: Base templates with customizable sections\n- **Localization Support**: Multi-language template support with resource bundles\n- **Template Validation**: Pre-send template validation and error checking\n\n## API Endpoints\n\n### Core Notification Operations\n- `/mcp/tools/send-welcome-email` - Send employee welcome notification with onboarding information\n- `/mcp/tools/send-asset-notification` - Send asset allocation confirmation with device details\n- `/mcp/tools/send-onboarding-complete` - Send completion notification with process summary\n- `/mcp/tools/send-bulk-notification` - Send bulk notifications to multiple recipients\n\n### Configuration and Testing\n- `/mcp/tools/test-email-config` - Test Gmail SMTP configuration and connectivity\n- `/mcp/tools/validate-template` - Validate email template syntax and variables\n- `/mcp/tools/preview-email` - Generate email preview without sending\n- `/mcp/tools/get-delivery-status` - Check email delivery status and metrics\n\n### Template Management\n- `/mcp/tools/list-templates` - List available email templates\n- `/mcp/tools/get-template` - Retrieve specific template content\n- `/mcp/tools/update-template` - Update template content (admin only)\n\n## Email Templates\n\n### Welcome Email Template\n```html\n<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Welcome to ${companyName}</title>\n</head>\n<body>\n    <div style=\"max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;\">\n        <h1>Welcome ${firstName}!</h1>\n        <p>We're excited to have you join our ${department} team as a ${position}.</p>\n        <p>Your start date is ${startDate}. Your manager ${manager} will contact you shortly.</p>\n    </div>\n</body>\n</html>\n```\n\n### Asset Allocation Template\n```html\n<h2>Asset Allocation Confirmation</h2>\n<p>Dear ${firstName},</p>\n<p>The following assets have been allocated to you:</p>\n<ul>\n#foreach($asset in $assets)\n    <li>${asset.category}: ${asset.brand} ${asset.model} (Tag: ${asset.assetTag})</li>\n#end\n</ul>\n<p>Please take care of these assets and report any issues immediately.</p>\n```\n\n## Configuration\n\n### Gmail SMTP Configuration\n```properties\n# Gmail SMTP Settings\ngmail.smtp.host=smtp.gmail.com\ngmail.smtp.port=587\ngmail.smtp.auth=true\ngmail.smtp.starttls.enable=true\ngmail.username=${GMAIL_USERNAME}\ngmail.password=${secure::GMAIL_APP_PASSWORD}\n\n# Email Defaults\nemail.from.name=${COMPANY_NAME} HR Team\nemail.from.address=${GMAIL_USERNAME}\nemail.reply.to=${HR_EMAIL}\n```\n\n### Template Configuration\n```properties\n# Template Engine Settings\ntemplate.engine=velocity\ntemplate.encoding=UTF-8\ntemplate.cache.enabled=true\ntemplate.validation.enabled=true\n\n# Template Locations\ntemplate.welcome=templates/employee-welcome.html\ntemplate.asset=templates/asset-allocation.html\ntemplate.complete=templates/onboarding-complete.html\n```\n\n### Notification Recipients\n```properties\n# Default Recipients\nnotification.cc.hr=${HR_EMAIL}\nnotification.cc.it=${IT_EMAIL}\nnotification.cc.manager=${MANAGER_EMAIL}\n\n# Notification Rules\nnotification.welcome.cc=hr\nnotification.asset.cc=hr,it\nnotification.complete.cc=hr,manager\n```\n\n## Security Features\n\n### Credential Management\n- **Secure Properties**: Gmail credentials stored using MuleSoft secure property placeholder\n- **Environment Variables**: Support for environment-based configuration\n- **Credential Rotation**: Easy credential rotation without application restart\n- **Access Control**: Role-based access to sensitive configuration\n\n### Email Security\n- **TLS Encryption**: All SMTP communications encrypted using TLS 1.2+\n- **Authentication**: Multiple authentication methods (OAuth 2.0, App Passwords)\n- **Input Validation**: Comprehensive email address and content validation\n- **Sanitization**: HTML content sanitization to prevent injection attacks\n\n### Privacy and Compliance\n- **GDPR Compliance**: Support for data privacy regulations\n- **Audit Logging**: Complete audit trail of all email notifications\n- **Data Retention**: Configurable email log retention policies\n- **Opt-out Support**: Unsubscribe and preference management\n\n## Monitoring and Observability\n\n### Performance Metrics\n- **Email Delivery Rates**: Track successful vs. failed deliveries\n- **Response Times**: Monitor SMTP response times and throughput\n- **Template Rendering**: Performance metrics for template processing\n- **Error Rates**: Comprehensive error tracking and categorization\n\n### Health Checks\n- **SMTP Connectivity**: Continuous monitoring of Gmail SMTP connection\n- **Template Validation**: Regular validation of email templates\n- **Credential Health**: Monitoring of authentication status\n- **Queue Status**: Email queue depth and processing status\n\n### Alerting\n- **Delivery Failures**: Immediate alerts for email delivery failures\n- **Authentication Issues**: Alerts for Gmail authentication problems\n- **Rate Limiting**: Notifications when approaching Gmail sending limits\n- **Template Errors**: Alerts for template rendering failures\n\n## Integration Capabilities\n\n### MCP Protocol Support\n- **Full MCP Compliance**: Complete Model Context Protocol implementation\n- **Agent Fabric Integration**: Seamless coordination with other MCP servers\n- **Event-Driven Architecture**: Real-time notification triggering\n- **Orchestration Support**: Integration with workflow orchestrators\n\n### External System Integration\n- **HR Information Systems**: Employee data synchronization for personalization\n- **Asset Management Systems**: Asset details integration for notifications\n- **Identity Providers**: Single sign-on integration for template management\n- **CRM Systems**: Contact management and preference synchronization\n- **Monitoring Systems**: Integration with enterprise monitoring platforms\n\n## Template Variables\n\n### Employee Variables\n- `${firstName}`, `${lastName}` - Employee name components\n- `${email}` - Employee email address\n- `${employeeId}` - Unique employee identifier\n- `${department}` - Department assignment\n- `${position}` - Job title/position\n- `${startDate}` - Employment start date\n- `${manager}` - Manager name and contact information\n\n### Asset Variables\n- `${assets}` - Collection of allocated assets\n- `${asset.category}` - Asset type (laptop, phone, etc.)\n- `${asset.brand}` - Asset manufacturer\n- `${asset.model}` - Asset model name\n- `${asset.assetTag}` - Unique asset identifier\n- `${asset.specifications}` - Technical specifications\n\n### Company Variables\n- `${companyName}` - Organization name\n- `${companyAddress}` - Company address\n- `${hrEmail}` - HR contact email\n- `${itEmail}` - IT support email\n- `${companyLogo}` - Logo URL for branding\n\n## Business Rules\n\n### Email Routing Rules\n- **Welcome Emails**: Sent to employee with CC to HR and manager\n- **Asset Notifications**: Sent to employee with CC to HR and IT\n- **Completion Emails**: Sent to employee, manager, HR, and IT\n- **Error Notifications**: Sent to system administrators\n\n### Delivery Policies\n- **Retry Logic**: Exponential backoff for failed deliveries\n- **Rate Limiting**: Respect Gmail API quotas and limits\n- **Priority Queuing**: High-priority notifications processed first\n- **Duplicate Prevention**: Prevent duplicate notifications\n\n## Integration Patterns\n\nDesigned to integrate with:\n- Employee onboarding and offboarding systems\n- HR information systems (HRIS)\n- IT asset management platforms\n- Customer relationship management (CRM) systems\n- Enterprise service management tools\n- Business process automation platforms\n- Identity and access management systems"
+    },
+    "apiSpecification": {
+        "type": "OpenAPI",
+        "version": "3.0.3",
+        "location": "api/notification-mcp-api.yaml",
+        "description": "Complete OpenAPI specification with all endpoint definitions, email template schemas, delivery tracking, and comprehensive examples",
+        "main": "api/notification-mcp-api.yaml"
+    },
+    "readme": {
+        "location": "README.md",
+        "format": "markdown"
+    },
     "transport": {
-        "kind": "streamableHttp",
-        "path": "/assets"
+        "kind": "mule-application",
+        "path": "/mcp/tools"
     }
 }

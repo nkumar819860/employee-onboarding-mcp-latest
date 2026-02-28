@@ -10,27 +10,46 @@
 	</parent>
 
 	<artifactId>asset-allocation-mcp</artifactId>
-	<version>1.0.3</version>
+	<version>1.0.0</version>
 	<packaging>mule-application</packaging>
 
 	<name>Asset Allocation MCP Server</name>
 	<description>MCP Server for Asset Allocation Operations</description>
 
 	<!-- Additional properties for CloudHub deployment -->
+	<!-- Self-contained properties -->
 	<properties>
-		<!-- CloudHub deployment properties - can be overridden by -D parameters or .env -->
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<mule.version>4.9.14</mule.version>
+		<mule.runtime.version>4.9-java17</mule.runtime.version>
+		<java.version>17</java.version>
+		<mule.maven.plugin.version>4.5.0</mule.maven.plugin.version>
+		<mule.http.connector.version>1.9.0</mule.http.connector.version>
+		<mule.db.connector.version>1.14.17</mule.db.connector.version>
+		<mule.email.connector.version>1.7.4</mule.email.connector.version>
+		<mule.file.connector.version>1.5.0</mule.file.connector.version>
+		<postgresql.version>42.7.4</postgresql.version>
+		<h2.version>2.2.224</h2.version>
+		<application.name>asset-allocation-mcp-server</application.name>
+		<!-- CloudHub deployment properties - can be overridden by -D parameters 
+			or .env -->
 		<anypoint.business.group>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</anypoint.business.group>
 		<anypoint.platform.env>Sandbox</anypoint.platform.env>
 		<cloudhub.region>us-east-1</cloudhub.region>
 		<cloudhub.workers>1</cloudhub.workers>
 		<cloudhub.worker.type>MICRO</cloudhub.worker.type>
-		<application.name>asset-allocation-mcp-server</application.name>
-		<!-- Connected App Authentication Properties -->
-		<anypoint.platform.client_id>${env:CONNECTED_APP_CLIENT_ID}</anypoint.platform.client_id>
-		<anypoint.platform.client_secret>${env:CONNECTED_APP_CLIENT_SECRET}</anypoint.platform.client_secret>
-		<tags>asset-allocation,mcp,employee-onbaording-agent</tags>
-		<categories>[]</categories>
-		<fields>[]</fields>
+		<!-- Authentication Properties - Load from command line parameters -->
+		<!-- These will be provided by the deploy script via -D parameters -->
+		<anypoint.platform.client_id>aec0b3117f7d4d4e8433a7d3d23bc80e</anypoint.platform.client_id>
+		<anypoint.platform.client_secret>9bc9D86a77b343b98a148C0313239aDA</anypoint.platform.client_secret>
+		<!-- ✅ Exchange Metadata -->
+		<exchange.skip>false</exchange.skip>
+		<exchange.publish>true</exchange.publish>
+		<tags>asset-allocation,mcp-server,asset-management,equipment-management,inventory</tags>
+		<categories>Integration,Asset Management,Human Resources,Agent Network</categories>
+		<fields>["mcp","asset-allocation","asset-management","equipment","inventory","onboarding","agent-fabric","mulesoft"]</fields>
 	</properties>
 
 	<build>
@@ -80,11 +99,11 @@
 				</configuration>
 			</plugin>
 
-			<!-- ✅ Exchange Plugin for MCP Asset Publishing -->
+			<!-- ✅ Exchange Maven Plugin (Publications) -->
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>exchange-mule-maven-plugin</artifactId>
-				<version>0.1.4</version>
+				<version>0.0.21</version>
 				<executions>
 					<execution>
 						<id>validate</id>
@@ -100,7 +119,12 @@
 							<goal>exchange-deploy</goal>
 						</goals>
 						<configuration>
-							<classifier>mule-application</classifier>
+							<skip>${exchange.skip}</skip>
+							<authenticationMethod>connected-app</authenticationMethod>
+							<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
+							<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
+							<connectedAppGrantType>client_credentials</connectedAppGrantType>
+							<businessGroupId>${anypoint.business.group}</businessGroupId>
 						</configuration>
 					</execution>
 				</executions>

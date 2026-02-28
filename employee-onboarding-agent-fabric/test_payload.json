@@ -1,0 +1,21 @@
+{
+  "firstName": "John",
+  "lastName": "Doe", 
+  "email": "john.doe@example.com",
+  "phone": "+1-555-123-4567",
+  "department": "Engineering",
+  "position": "Software Developer",
+  "startDate": "2024-03-01",
+  "salary": 75000,
+  "manager": "Jane Smith",
+  "managerName": "Jane Smith",
+  "managerEmail": "jane.smith@example.com",
+  "companyName": "TechCorp Inc",
+  "orientationDate": "2024-03-01",
+  "assets": [
+    "laptop",
+    "phone", 
+    "id-card",
+    "parking-pass"
+  ]
+}

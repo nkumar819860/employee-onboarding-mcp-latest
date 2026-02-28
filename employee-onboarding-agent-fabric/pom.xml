@@ -24,12 +24,13 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         
-        <!-- ✅ EXCHANGE PLUGIN FIX: Skip exchange publishing to avoid connectivity issues -->
-        <exchange.skip>true</exchange.skip>
+        <!-- ✅ EXCHANGE PLUGIN FIX: Enable exchange publishing -->
+        <exchange.skip>false</exchange.skip>
+        <exchange.publish>true</exchange.publish>
         
         <!-- ✅ Java 17 Compatible RUNTIME -->
-       <mule.version>4.9.0</mule.version> 
-       <mule.runtime.version>4.9.0</mule.runtime.version>
+       <mule.version>4.9.14</mule.version> 
+       <mule.runtime.version>4.9-java17</mule.runtime.version>
 	   <java.version>17</java.version>
 
 
