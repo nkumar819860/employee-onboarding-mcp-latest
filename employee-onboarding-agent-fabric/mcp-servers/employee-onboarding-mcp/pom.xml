@@ -111,21 +111,7 @@
 				</configuration>
 			</plugin>
 
-			<!-- ✅ Exchange Publish Plugin -->
-			<plugin>
-				<groupId>org.mule.tools.maven</groupId>
-				<artifactId>exchange-maven-plugin</artifactId>
-				<version>1.2.4</version>
-				<executions>
-					<execution>
-						<id>push</id>
-						<phase>deploy</phase>
-						<goals>
-							<goal>push</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+			
 		</plugins>
 	</build>
 

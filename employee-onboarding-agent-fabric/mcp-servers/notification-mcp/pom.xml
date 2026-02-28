@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
@@ -10,7 +12,7 @@
 	</parent>
 
 	<artifactId>notification-mcp</artifactId>
-	<version>1.0.3</version>
+	<version>1.0.4</version>
 	<packaging>mule-application</packaging>
 
 	<name>Notification MCP Server</name>
@@ -80,37 +82,11 @@
 							<http.port>8081</http.port>
 						</properties>
 					</cloudHubDeployment>
-					<classifier>---- select project type ----</classifier>
 				</configuration>
 			</plugin>
 
-			<!-- ✅ Exchange Plugin for MCP Asset Publishing -->
-			<plugin>
-				<groupId>org.mule.tools.maven</groupId>
-				<artifactId>exchange-mule-maven-plugin</artifactId>
-				<version>0.1.4</version>
-				<executions>
-					<execution>
-						<id>validate</id>
-						<phase>validate</phase>
-						<goals>
-							<goal>exchange-pre-deploy</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>deploy</id>
-						<phase>deploy</phase>
-						<goals>
-							<goal>exchange-deploy</goal>
-						</goals>
-						<configuration>
-							<classifier>mule-application</classifier>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
+			</plugins>
+			</build>
 
 	<!-- ✅ SIMPLIFIED: Inherits ALL versions from parent dependencyManagement -->
 	<dependencies>
@@ -163,13 +139,4 @@
 		</dependency>
 	</dependencies>
 
-	<!-- ✅ Exchange Repository -->
-	<distributionManagement>
-		<repository>
-			<id>anypoint-exchange</id>
-			<name>Anypoint Exchange</name>
-			<url>https://maven.anypoint.mulesoft.com/api/v1/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
-		</repository>
-	</distributionManagement>
-	<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
 </project>
