@@ -144,6 +144,9 @@
 						<properties>
 							<env>${anypoint.platform.env}</env>
 							<http.port>8081</http.port>
+							<anypoint.platform.visualizer>true</anypoint.platform.visualizer>
+							<anypoint.platform.visualizer.displayName>Agent Broker MCP Server</anypoint.platform.visualizer.displayName>
+							<anypoint.platform.visualizer.layer>Process</anypoint.platform.visualizer.layer>
 						</properties>
 					</cloudHubDeployment>
 				</configuration>

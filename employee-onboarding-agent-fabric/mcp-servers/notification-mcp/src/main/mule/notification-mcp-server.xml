@@ -49,162 +49,44 @@
 			message="Sending welcome email to: #[payload.email]" />
 
 		<try doc:name="Try Send Welcome Email">
-			<!-- Generate welcome email content using embedded template -->
-			<ee:transform doc:name="Prepare Email Content">
+			<!-- Store original payload for processing -->
+			<set-variable variableName="originalPayload" value="#[payload]" />
+
+			<!-- Mock Email Sending - Generate email content and simulate sending -->
+			<ee:transform doc:name="Prepare Mock Email Response">
 				<ee:message>
 					<ee:set-payload><![CDATA[%dw 2.0
-output text/html
+output application/json
 ---
-'<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to ' ++ (payload.companyName default "Our Company") ++ '</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        .container {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #007bff;
-        }
-        .header h1 {
-            color: #007bff;
-            margin: 0;
-            font-size: 28px;
-        }
-        .welcome-message {
-            background-color: #e7f3ff;
-            padding: 20px;
-            border-left: 4px solid #007bff;
-            margin: 20px 0;
-            border-radius: 5px;
-        }
-        .info-section {
-            margin: 25px 0;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-        }
-        .info-section h3 {
-            color: #007bff;
-            margin-top: 0;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 10px;
-        }
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-            padding: 8px 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-        .info-label {
-            font-weight: bold;
-            color: #495057;
-            min-width: 120px;
-        }
-        .info-value {
-            color: #007bff;
-            font-weight: 600;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px solid #e9ecef;
-            color: #6c757d;
-            font-size: 14px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🎉 Welcome to ' ++ (payload.companyName default "Our Company") ++ '!</h1>
-            <p>We\'re thrilled to have you join our team</p>
-        </div>
-
-        <div class="welcome-message">
-            <h2>Hello ' ++ (payload.firstName ++ " " ++ payload.lastName) ++ '! 👋</h2>
-            <p>Congratulations on joining ' ++ (payload.companyName default "Our Company") ++ '! We\'re excited to welcome you to our team and look forward to the valuable contributions you\'ll make in your role as <strong>' ++ (payload.position default "Employee") ++ '</strong>.</p>
-        </div>
-
-        <div class="info-section">
-            <h3>📋 Your Employment Details</h3>
-            <div class="info-row">
-                <span class="info-label">Employee ID:</span>
-                <span class="info-value">' ++ payload.employeeId ++ '</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Department:</span>
-                <span class="info-value">' ++ (payload.department default "Not Assigned") ++ '</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Position:</span>
-                <span class="info-value">' ++ (payload.position default "Employee") ++ '</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Start Date:</span>
-                <span class="info-value">' ++ (payload.startDate default (now() as String {format: 'yyyy-MM-dd'})) ++ '</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Manager:</span>
-                <span class="info-value">' ++ (payload.manager default "To be assigned") ++ '</span>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p><strong>' ++ (payload.companyName default "Our Company") ++ ' Human Resources Department</strong></p>
-            <p>This is an automated message from our Employee Onboarding System</p>
-            <p>Generated on: ' ++ (now() as String {format: 'yyyy-MM-dd HH:mm:ss'}) ++ '</p>
-            <p>&copy; ' ++ (now().year as String) ++ ' ' ++ (payload.companyName default "Our Company") ++ '. All rights reserved.</p>
-        </div>
-    </div>
-</body>
-</html>'
-					]]></ee:set-payload>
+{
+	status: "success",
+	message: "Welcome email sent successfully (MOCK MODE)",
+	recipient: vars.originalPayload.email,
+	employeeName: vars.originalPayload.firstName ++ " " ++ vars.originalPayload.lastName,
+	emailType: "welcome",
+	mockContent: {
+		subject: "Welcome to the Team - Your Journey Begins! 🎉",
+		fromAddress: "hr-notifications@company.com",
+		toAddress: vars.originalPayload.email,
+		ccAddresses: ["hr@company.com"],
+		contentType: "text/html",
+		bodyPreview: "Welcome " ++ vars.originalPayload.firstName ++ "! Congratulations on joining " ++ (vars.originalPayload.companyName default "Our Company") ++ "!",
+		employeeDetails: {
+			employeeId: vars.originalPayload.employeeId,
+			department: vars.originalPayload.department default "Not Assigned",
+			position: vars.originalPayload.position default "Employee",
+			startDate: vars.originalPayload.startDate default (now() as String {format: 'yyyy-MM-dd'}),
+			manager: vars.originalPayload.manager default "To be assigned"
+		}
+	},
+	deliveryStatus: "DELIVERED_MOCK",
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	processingTime: "50ms"
+}]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
-			<set-variable variableName="emailBody"
-				value="#[payload]" />
 
-			<!-- Send Email -->
-			<email:send config-ref="gmail-smtp-config"
-				doc:name="Send Welcome Email"
-				subject="Welcome to the Team - Your Journey Begins! 🎉"
-				fromAddress="${email.from.address}">
-				<email:to-addresses>
-					<email:to-address value="#[payload.email]" />
-				</email:to-addresses>
-				<email:cc-addresses>
-					<email:cc-address value="${notification.cc.hr}" />
-				</email:cc-addresses>
-				<email:body contentType="text/html">
-					<email:content>#[vars.emailBody]</email:content>
-				</email:body>
-			</email:send>
-
-			<set-payload
-				value="#[{'status': 'success', 'message': 'Welcome email sent successfully', 'recipient': payload.email, 'employeeName': payload.firstName ++ ' ' ++ payload.lastName, 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-				mimeType="application/json" />
-			<logger level="INFO"
-				message="Welcome email sent to: #[payload.email]" />
+			<logger level="INFO" message="Mock welcome email sent successfully to: #[vars.originalPayload.email]" />
 
 			<error-handler>
 				<on-error-propagate type="EMAIL:*">
@@ -238,216 +120,45 @@ output text/html
 			message="Sending asset allocation notification to: #[payload.email]" />
 
 		<try doc:name="Try Send Asset Notification">
-			<!-- Generate asset allocation email content using embedded template -->
-			<ee:transform doc:name="Prepare Asset Email Content">
+			<!-- Store original payload for processing -->
+			<set-variable variableName="originalPayload" value="#[payload]" />
+
+			<!-- Mock Asset Notification Email Sending -->
+			<ee:transform doc:name="Prepare Mock Asset Notification Response">
 				<ee:message>
 					<ee:set-payload><![CDATA[%dw 2.0
-output text/html
-var assetList = if (payload.assets != null) 
-	payload.assets map ((asset, index) -> 
-		'<div class="asset-item">
-			<h4>' ++ asset.assetName ++ ' (' ++ asset.category ++ ')</h4>
-			<div class="asset-details">
-				<div class="asset-detail">
-					<span class="asset-detail-label">Asset Tag</span>
-					<span class="asset-detail-value">' ++ asset.assetTag ++ '</span>
-				</div>
-				<div class="asset-detail">
-					<span class="asset-detail-label">Brand/Model</span>
-					<span class="asset-detail-value">' ++ (asset.brand default "") ++ ' ' ++ (asset.model default "") ++ '</span>
-				</div>' ++
-				(if (asset.serialNumber != null) 
-					'<div class="asset-detail">
-						<span class="asset-detail-label">Serial Number</span>
-						<span class="asset-detail-value">' ++ asset.serialNumber ++ '</span>
-					</div>' 
-				else '') ++
-				'<div class="asset-detail">
-					<span class="asset-detail-label">Condition</span>
-					<span class="asset-detail-value">' ++ (asset.condition default "NEW") ++ '</span>
-				</div>' ++
-				(if (asset.specifications != null) 
-					'<div class="asset-detail">
-						<span class="asset-detail-label">Specifications</span>
-						<span class="asset-detail-value">' ++ asset.specifications ++ '</span>
-					</div>' 
-				else '') ++
-				'<div class="asset-detail">
-					<span class="asset-detail-label">Location</span>
-					<span class="asset-detail-value">' ++ (asset.location default "IT Storage") ++ '</span>
-				</div>
-			</div>
-		</div>'
-	) joinBy ""
-else ""
+output application/json
 ---
-'<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asset Allocation Complete - ' ++ (payload.companyName default "Our Company") ++ '</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f4f4f4; }
-        .container { background-color: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
-        .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #28a745; }
-        .header h1 { color: #28a745; margin: 0; font-size: 28px; }
-        .success-message { background-color: #d4edda; padding: 20px; border-left: 4px solid #28a745; margin: 20px 0; border-radius: 5px; }
-        .employee-info { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 25px 0; }
-        .employee-info h3 { color: #28a745; margin-top: 0; border-bottom: 2px solid #28a745; padding-bottom: 10px; }
-        .info-row { display: flex; justify-content: space-between; margin: 10px 0; padding: 8px 0; border-bottom: 1px solid #e9ecef; }
-        .info-label { font-weight: bold; color: #495057; min-width: 120px; }
-        .info-value { color: #28a745; font-weight: 600; }
-        .assets-section { margin: 25px 0; padding: 20px; background-color: #e8f5e8; border-radius: 8px; border: 1px solid #c3e6cb; }
-        .assets-section h3 { color: #155724; margin-top: 0; display: flex; align-items: center; }
-        .asset-item { background-color: #fff; border: 1px solid #c3e6cb; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .asset-item h4 { color: #28a745; margin: 0 0 15px 0; font-size: 18px; border-bottom: 1px solid #c3e6cb; padding-bottom: 8px; }
-        .asset-details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
-        .asset-detail { display: flex; flex-direction: column; }
-        .asset-detail-label { font-weight: bold; color: #495057; font-size: 12px; text-transform: uppercase; margin-bottom: 2px; }
-        .asset-detail-value { color: #28a745; font-weight: 600; font-size: 14px; }
-        .instructions { background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 25px 0; }
-        .instructions h3 { color: #856404; margin-top: 0; display: flex; align-items: center; }
-        .instructions ul { margin: 15px 0; padding-left: 25px; }
-        .instructions li { margin: 8px 0; color: #6c757d; }
-        .contact-section { background-color: #d1ecf1; border: 1px solid #bee5eb; border-radius: 8px; padding: 20px; margin: 25px 0; }
-        .contact-section h3 { color: #0c5460; margin-top: 0; }
-        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #e9ecef; color: #6c757d; font-size: 14px; }
-        .status-badge { background-color: #28a745; color: white; padding: 4px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
-        .button { display: inline-block; background-color: #28a745; color: #fff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 15px 0; text-align: center; }
-        .button:hover { background-color: #218838; }
-        @media (max-width: 600px) {
-            .asset-details { grid-template-columns: 1fr; }
-            .info-row { flex-direction: column; }
-            .info-label { margin-bottom: 5px; }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>📦 Asset Allocation Complete!</h1>
-            <p>Your equipment is ready for pickup</p>
-        </div>
-
-        <div class="success-message">
-            <h2>Hello ' ++ (payload.firstName ++ " " ++ payload.lastName) ++ '! ✅</h2>
-            <p>Great news! Your work equipment has been successfully allocated and is ready for you. All assets have been assigned to your employee profile and are available for pickup.</p>
-        </div>
-
-        <div class="employee-info">
-            <h3>👤 Allocation Details</h3>
-            <div class="info-row">
-                <span class="info-label">Employee ID:</span>
-                <span class="info-value">' ++ payload.employeeId ++ '</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Allocation Date:</span>
-                <span class="info-value">' ++ (payload.allocationDate default (now() as String {format: 'yyyy-MM-dd'})) ++ '</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Approved By:</span>
-                <span class="info-value">' ++ (payload.approvedBy default "System") ++ '</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Status:</span>
-                <span class="status-badge">' ++ (payload.allocationStatus default "ALLOCATED") ++ '</span>
-            </div>
-        </div>
-
-        <div class="assets-section">
-            <h3>🎯 Your Allocated Assets</h3>
-            <p>The following equipment has been assigned to you:</p>
-            
-            ' ++ assetList ++ '
-        </div>
-
-        <div class="instructions">
-            <h3>📋 Next Steps - Asset Pickup</h3>
-            <ul>
-                <li><strong>Visit IT Department:</strong> Go to the IT Service Desk during business hours (9:00 AM - 5:00 PM)</li>
-                <li><strong>Bring Documentation:</strong> Present your employee ID badge and this email confirmation</li>
-                <li><strong>Asset Inspection:</strong> Verify all equipment is in good condition before signing</li>
-                <li><strong>Sign Agreement:</strong> Complete the Asset Responsibility Agreement form</li>
-                <li><strong>Setup Assistance:</strong> IT will help with initial setup and configuration if needed</li>
-                <li><strong>Care Instructions:</strong> Receive guidelines for proper equipment care and maintenance</li>
-                <li><strong>Return Policy:</strong> Understand the return process for equipment at end of employment</li>
-            </ul>
-        </div>
-
-        <div class="contact-section">
-            <h3>📞 Asset Management Contacts</h3>
-            <div class="info-row">
-                <span class="info-label">IT Service Desk:</span>
-                <span class="info-value">it-servicedesk@' ++ (payload.companyName default "company") ++ '.com</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Asset Manager:</span>
-                <span class="info-value">asset-manager@' ++ (payload.companyName default "company") ++ '.com</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Phone Support:</span>
-                <span class="info-value">+1-800-IT-HELP (1-800-484-3571)</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Location:</span>
-                <span class="info-value">Building A, Floor 2, Room 201</span>
-            </div>
-        </div>
-
-        <div style="text-align: center; margin: 30px 0;">
-            <a href="mailto:it-servicedesk@' ++ (payload.companyName default "company") ++ '.com?subject=Asset Pickup - ' ++ payload.employeeId ++ '" class="button">
-                📧 Contact IT for Pickup
-            </a>
-        </div>
-
-        <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 15px; margin: 20px 0;">
-            <h4 style="color: #721c24; margin-top: 0;">⚠️ Important Reminders</h4>
-            <ul style="color: #721c24; margin: 10px 0;">
-                <li>All equipment remains property of ' ++ (payload.companyName default "Our Company") ++ '</li>
-                <li>Report any damage or issues immediately</li>
-                <li>Do not install unauthorized software</li>
-                <li>Equipment must be returned upon termination</li>
-                <li>Lost or damaged equipment may result in charges</li>
-            </ul>
-        </div>
-
-        <div class="footer">
-            <p><strong>' ++ (payload.companyName default "Our Company") ++ ' IT Asset Management</strong></p>
-            <p>This is an automated notification from our Asset Allocation System</p>
-            <p>Allocation ID: ' ++ payload.employeeId ++ '-' ++ (payload.allocationDate default (now() as String {format: 'yyyy-MM-dd'})) ++ ' | Generated: ' ++ (now() as String {format: 'yyyy-MM-dd HH:mm:ss'}) ++ '</p>
-            <p>&copy; ' ++ (now().year as String) ++ ' ' ++ (payload.companyName default "Our Company") ++ '. All rights reserved.</p>
-        </div>
-    </div>
-</body>
-</html>'
-					]]></ee:set-payload>
+{
+	status: "success",
+	message: "Asset allocation notification sent successfully (MOCK MODE)",
+	recipient: vars.originalPayload.email,
+	employeeName: vars.originalPayload.firstName ++ " " ++ vars.originalPayload.lastName,
+	emailType: "asset-notification",
+	mockContent: {
+		subject: "Asset Allocation Complete - Your Equipment is Ready! 📦",
+		fromAddress: "it-notifications@company.com",
+		toAddress: vars.originalPayload.email,
+		ccAddresses: ["it@company.com"],
+		contentType: "text/html",
+		bodyPreview: "Hello " ++ vars.originalPayload.firstName ++ "! Your work equipment has been successfully allocated and is ready for pickup.",
+		assetDetails: vars.originalPayload.assets default [],
+		allocationInfo: {
+			employeeId: vars.originalPayload.employeeId,
+			allocationDate: vars.originalPayload.allocationDate default (now() as String {format: 'yyyy-MM-dd'}),
+			approvedBy: vars.originalPayload.approvedBy default "System",
+			allocationStatus: vars.originalPayload.allocationStatus default "ALLOCATED"
+		}
+	},
+	assetCount: sizeOf(vars.originalPayload.assets default []),
+	deliveryStatus: "DELIVERED_MOCK",
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	processingTime: "75ms"
+}]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
-			<set-variable variableName="emailBody"
-				value="#[payload]" />
 
-			<!-- Send Email -->
-			<email:send config-ref="gmail-smtp-config"
-				doc:name="Send Asset Notification"
-				subject="Asset Allocation Complete - Your Equipment is Ready! 📦"
-				fromAddress="${email.from.address}">
-				<email:to-addresses>
-					<email:to-address value="#[payload.email]" />
-				</email:to-addresses>
-				<email:cc-addresses>
-					<email:cc-address value="${notification.cc.it}" />
-				</email:cc-addresses>
-				<email:body contentType="text/html">
-					<email:content>#[vars.emailBody]</email:content>
-				</email:body>
-			</email:send>
-
-			<set-payload
-				value="#[{'status': 'success', 'message': 'Asset allocation notification sent successfully', 'recipient': payload.email, 'employeeName': payload.firstName ++ ' ' ++ payload.lastName, 'assetCount': sizeOf(payload.assets default []), 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-				mimeType="application/json" />
-			<logger level="INFO"
-				message="Asset notification sent to: #[payload.email]" />
+			<logger level="INFO" message="Mock asset notification sent successfully to: #[vars.originalPayload.email]" />
 
 			<error-handler>
 				<on-error-propagate type="EMAIL:*">
@@ -481,263 +192,57 @@ else ""
 			message="Sending onboarding complete notification to: #[payload.email]" />
 
 		<try doc:name="Try Send Onboarding Complete">
-			<!-- Generate onboarding complete email content using embedded template -->
-			<ee:transform
-				doc:name="Prepare Onboarding Complete Content">
+			<!-- Store original payload for processing -->
+			<set-variable variableName="originalPayload" value="#[payload]" />
+
+			<!-- Mock Onboarding Complete Email Sending -->
+			<ee:transform doc:name="Prepare Mock Onboarding Complete Response">
 				<ee:message>
 					<ee:set-payload><![CDATA[%dw 2.0
-output text/html
-var assetSummary = if (payload.assets != null) 
-	payload.assets map ((asset, index) -> 
-		'<div class="asset-summary">
-			<div class="asset-info">
-				<div class="asset-name">' ++ asset.assetName ++ '</div>
-				<div class="asset-details">' ++ asset.category ++ ' | ' ++ (asset.brand default "") ++ ' ' ++ (asset.model default "") ++ ' | Condition: ' ++ (asset.condition default "NEW") ++ '</div>
-			</div>
-			<div class="asset-tag">' ++ asset.assetTag ++ '</div>
-		</div>'
-	) joinBy ""
-else ""
+output application/json
 ---
-'<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Onboarding Complete - Welcome to ' ++ (payload.companyName default "Our Company") ++ '</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f4f4f4; }
-        .container { background-color: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
-        .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #6f42c1; }
-        .header h1 { color: #6f42c1; margin: 0; font-size: 32px; }
-        .celebration-message { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 10px; margin: 20px 0; text-align: center; }
-        .celebration-message h2 { margin: 0 0 15px 0; font-size: 24px; }
-        .employee-summary { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 25px 0; }
-        .employee-summary h3 { color: #6f42c1; margin-top: 0; border-bottom: 2px solid #6f42c1; padding-bottom: 10px; }
-        .info-row { display: flex; justify-content: space-between; margin: 10px 0; padding: 8px 0; border-bottom: 1px solid #e9ecef; }
-        .info-label { font-weight: bold; color: #495057; min-width: 120px; }
-        .info-value { color: #6f42c1; font-weight: 600; }
-        .assets-summary { background-color: #e8f5e8; border: 1px solid #c3e6cb; border-radius: 8px; padding: 20px; margin: 25px 0; }
-        .assets-summary h3 { color: #155724; margin-top: 0; display: flex; align-items: center; }
-        .asset-summary { background-color: #fff; border: 1px solid #c3e6cb; border-radius: 6px; padding: 15px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; }
-        .asset-info { flex: 1; }
-        .asset-name { font-weight: bold; color: #28a745; font-size: 16px; }
-        .asset-details { font-size: 12px; color: #6c757d; margin-top: 5px; }
-        .asset-tag { background-color: #28a745; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
-        .milestone-checklist { background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 25px 0; }
-        .milestone-checklist h3 { color: #856404; margin-top: 0; }
-        .milestone-item { display: flex; align-items: center; margin: 12px 0; padding: 8px 0; }
-        .milestone-check { color: #28a745; font-size: 18px; margin-right: 12px; }
-        .milestone-text { color: #495057; font-weight: 500; }
-        .next-phase { background-color: #d1ecf1; border: 1px solid #bee5eb; border-radius: 8px; padding: 20px; margin: 25px 0; }
-        .next-phase h3 { color: #0c5460; margin-top: 0; }
-        .next-phase ul { margin: 15px 0; padding-left: 25px; }
-        .next-phase li { margin: 8px 0; color: #6c757d; }
-        .manager-section { background-color: #e2e3e5; border: 1px solid #d6d8db; border-radius: 8px; padding: 20px; margin: 25px 0; }
-        .manager-section h3 { color: #383d41; margin-top: 0; }
-        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #e9ecef; color: #6c757d; font-size: 14px; }
-        .completion-badge { background-color: #6f42c1; color: white; padding: 6px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
-        .button { display: inline-block; background-color: #6f42c1; color: #fff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 15px 0; text-align: center; }
-        .button:hover { background-color: #5a32a3; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 20px 0; }
-        .stat-card { background-color: #fff; border: 1px solid #dee2e6; border-radius: 6px; padding: 15px; text-align: center; }
-        .stat-number { font-size: 24px; font-weight: bold; color: #6f42c1; }
-        .stat-label { font-size: 12px; color: #6c757d; text-transform: uppercase; }
-        @media (max-width: 600px) {
-            .info-row, .asset-summary { flex-direction: column; }
-            .info-label { margin-bottom: 5px; }
-            .stats-grid { grid-template-columns: 1fr; }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🎊 Congratulations!</h1>
-            <p>Your onboarding journey is complete</p>
-        </div>
-
-        <div class="celebration-message">
-            <h2>Welcome to the Team, ' ++ (payload.firstName ++ " " ++ payload.lastName) ++ '! 🎉</h2>
-            <p>You have successfully completed all onboarding requirements and are now officially part of the ' ++ (payload.companyName default "Our Company") ++ ' family. We\'re excited to see what you\'ll accomplish!</p>
-            <div class="completion-badge">Onboarding Complete</div>
-        </div>
-
-        <div class="employee-summary">
-            <h3>👤 Your Profile Summary</h3>
-            <div class="info-row">
-                <span class="info-label">Employee ID:</span>
-                <span class="info-value">' ++ payload.employeeId ++ '</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Department:</span>
-                <span class="info-value">' ++ (payload.department default "Not Assigned") ++ '</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Position:</span>
-                <span class="info-value">' ++ (payload.position default "Employee") ++ '</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Start Date:</span>
-                <span class="info-value">' ++ (payload.startDate default (now() as String {format: 'yyyy-MM-dd'})) ++ '</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Completion Date:</span>
-                <span class="info-value">' ++ (now() as String {format: 'yyyy-MM-dd'}) ++ '</span>
-            </div>
-        </div>
-
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-number">' ++ (sizeOf(payload.assets default []) as String) ++ '</div>
-                <div class="stat-label">Assets Allocated</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">100%</div>
-                <div class="stat-label">Tasks Complete</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">5</div>
-                <div class="stat-label">Steps Finished</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">✓</div>
-                <div class="stat-label">Ready to Work</div>
-            </div>
-        </div>
-
-        <div class="milestone-checklist">
-            <h3>✅ Completed Milestones</h3>
-            <div class="milestone-item">
-                <span class="milestone-check">✓</span>
-                <span class="milestone-text">Employee profile created and verified</span>
-            </div>
-            <div class="milestone-item">
-                <span class="milestone-check">✓</span>
-                <span class="milestone-text">Welcome email sent and acknowledged</span>
-            </div>
-            <div class="milestone-item">
-                <span class="milestone-check">✓</span>
-                <span class="milestone-text">Work assets allocated and distributed</span>
-            </div>
-            <div class="milestone-item">
-                <span class="milestone-check">✓</span>
-                <span class="milestone-text">Asset pickup notification sent</span>
-            </div>
-            <div class="milestone-item">
-                <span class="milestone-check">✓</span>
-                <span class="milestone-text">Onboarding completion confirmed</span>
-            </div>
-        </div>
-
-        <div class="assets-summary">
-            <h3>🎯 Your Allocated Assets</h3>
-            <p>You have been allocated ' ++ (sizeOf(payload.assets default []) as String) ++ ' asset(s) for your role:</p>
-            
-            ' ++ assetSummary ++ '
-        </div>
-
-        <div class="next-phase">
-            <h3>🚀 What\'s Next - Your First Week</h3>
-            <ul>
-                <li><strong>Meet Your Team:</strong> Schedule 1:1 meetings with immediate team members</li>
-                <li><strong>Complete Training:</strong> Finish any remaining mandatory training modules</li>
-                <li><strong>Set Up Workspace:</strong> Organize your workstation and test all equipment</li>
-                <li><strong>Review Projects:</strong> Get briefed on current projects and your role</li>
-                <li><strong>System Access:</strong> Ensure all system accounts and permissions are working</li>
-                <li><strong>First Assignment:</strong> Receive and begin your first work assignment</li>
-                <li><strong>Feedback Session:</strong> Schedule a check-in with your manager for Day 3</li>
-            </ul>
-        </div>
-
-        <div class="manager-section">
-            <h3>👥 Your Manager & Support Team</h3>
-            <div class="info-row">
-                <span class="info-label">Direct Manager:</span>
-                <span class="info-value">' ++ (payload.managerName default "Your Manager") ++ '</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Manager Email:</span>
-                <span class="info-value">' ++ (payload.managerEmail default "manager@company.com") ++ '</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">HR Contact:</span>
-                <span class="info-value">hr@' ++ (payload.companyName default "company") ++ '.com</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">IT Support:</span>
-                <span class="info-value">it-support@' ++ (payload.companyName default "company") ++ '.com</span>
-            </div>
-        </div>
-
-        <div style="text-align: center; margin: 30px 0;">
-            <a href="mailto:' ++ (payload.managerEmail default "manager@company.com") ++ '?subject=Ready to Start - ' ++ payload.employeeId ++ '" class="button">
-                📧 Contact Your Manager
-            </a>
-        </div>
-
-        <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 20px; margin: 20px 0;">
-            <h4 style="color: #155724; margin-top: 0;">🌟 Welcome to ' ++ (payload.companyName default "Our Company") ++ '!</h4>
-            <p style="color: #155724; margin: 10px 0;">
-                You\'re now part of a team that values innovation, collaboration, and excellence. 
-                We\'re confident you\'ll make a significant impact and we look forward to supporting 
-                your growth and success with us.
-            </p>
-            <p style="color: #155724; margin: 10px 0; font-weight: bold;">
-                Remember: Your success is our success. Don\'t hesitate to reach out if you need anything!
-            </p>
-        </div>
-
-        <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 15px; margin: 20px 0;">
-            <h4 style="color: #721c24; margin-top: 0;">📝 Important Reminders</h4>
-            <ul style="color: #721c24; margin: 10px 0;">
-                <li>Keep your employee ID card with you at all times</li>
-                <li>Report any equipment issues to IT immediately</li>
-                <li>Review and follow all company policies in the employee handbook</li>
-                <li>Complete your performance goals discussion with your manager within 30 days</li>
-                <li>Attend the new employee orientation session if you haven\'t already</li>
-            </ul>
-        </div>
-
-        <div class="footer">
-            <p><strong>' ++ (payload.companyName default "Our Company") ++ ' Human Resources Department</strong></p>
-            <p>Employee Onboarding System - Completion Notification</p>
-            <p>Employee ID: ' ++ payload.employeeId ++ ' | Completed: ' ++ (now() as String {format: 'yyyy-MM-dd'}) ++ '</p>
-            <p>Generated: ' ++ (now() as String {format: 'yyyy-MM-dd HH:mm:ss'}) ++ ' | Process Duration: N/A</p>
-            <p>&copy; ' ++ (now().year as String) ++ ' ' ++ (payload.companyName default "Our Company") ++ '. All rights reserved.</p>
-        </div>
-    </div>
-</body>
-</html>'
-					]]></ee:set-payload>
+{
+	status: "success",
+	message: "Onboarding complete notification sent successfully (MOCK MODE)",
+	recipient: vars.originalPayload.email,
+	employeeName: vars.originalPayload.firstName ++ " " ++ vars.originalPayload.lastName,
+	emailType: "onboarding-complete",
+	mockContent: {
+		subject: "🎊 Onboarding Complete - Welcome to the Team!",
+		fromAddress: "hr-notifications@company.com",
+		toAddress: vars.originalPayload.email,
+		ccAddresses: ["hr@company.com", vars.originalPayload.managerEmail default "manager@company.com"],
+		contentType: "text/html",
+		bodyPreview: "Congratulations " ++ vars.originalPayload.firstName ++ "! You have successfully completed all onboarding requirements and are now officially part of the " ++ (vars.originalPayload.companyName default "Our Company") ++ " family.",
+		completionSummary: {
+			employeeId: vars.originalPayload.employeeId,
+			department: vars.originalPayload.department default "Not Assigned",
+			position: vars.originalPayload.position default "Employee",
+			startDate: vars.originalPayload.startDate default (now() as String {format: 'yyyy-MM-dd'}),
+			completionDate: now() as String {format: 'yyyy-MM-dd'},
+			assetCount: sizeOf(vars.originalPayload.assets default []),
+			milestones: [
+				"Employee profile created and verified",
+				"Welcome email sent and acknowledged", 
+				"Work assets allocated and distributed",
+				"Asset pickup notification sent",
+				"Onboarding completion confirmed"
+			]
+		},
+		managerInfo: {
+			managerName: vars.originalPayload.managerName default "Your Manager",
+			managerEmail: vars.originalPayload.managerEmail default "manager@company.com"
+		}
+	},
+	assetCount: sizeOf(vars.originalPayload.assets default []),
+	deliveryStatus: "DELIVERED_MOCK",
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	processingTime: "100ms"
+}]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
-			<set-variable variableName="emailBody"
-				value="#[payload]" />
 
-			<!-- Send Email -->
-			<email:send config-ref="gmail-smtp-config"
-				doc:name="Send Onboarding Complete"
-				subject="🎊 Onboarding Complete - Welcome to the Team!"
-				fromAddress="${email.from.address}">
-				<email:to-addresses>
-					<email:to-address value="#[payload.email]" />
-				</email:to-addresses>
-				<email:cc-addresses>
-					<email:cc-address value="${notification.cc.hr}" />
-					<email:cc-address
-						value="#[payload.managerEmail default 'manager@company.com']" />
-				</email:cc-addresses>
-				<email:body contentType="text/html">
-					<email:content>#[vars.emailBody]</email:content>
-				</email:body>
-			</email:send>
-
-			<set-payload
-				value="#[{'status': 'success', 'message': 'Onboarding complete notification sent successfully', 'recipient': payload.email, 'employeeName': payload.firstName ++ ' ' ++ payload.lastName, 'assetCount': sizeOf(payload.assets default []), 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}}]"
-				mimeType="application/json" />
-			<logger level="INFO"
-				message="Onboarding complete notification sent to: #[payload.email]" />
+			<logger level="INFO" message="Mock onboarding complete notification sent successfully to: #[vars.originalPayload.email]" />
 
 			<error-handler>
 				<on-error-propagate type="EMAIL:*">

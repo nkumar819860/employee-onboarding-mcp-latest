@@ -86,5 +86,91 @@
     "transport": {
         "kind": "mule-application",
         "path": "/mcp/tools"
+    },
+    "visualizer": {
+        "primaryColor": "#8B5CF6",
+        "secondaryColor": "#06B6D4", 
+        "backgroundColor": "#10B981",
+        "textColor": "#FFFFFF",
+        "borderColor": "#F59E0B",
+        "icon": "🔀",
+        "category": "Process Orchestration",
+        "displayName": "Agent Broker",
+        "shortDescription": "Central orchestrator for employee onboarding process",
+        "position": {
+            "x": 100,
+            "y": 200
+        },
+        "connectionPorts": {
+            "input": [
+                {
+                    "name": "orchestration-requests",
+                    "type": "http",
+                    "position": "left",
+                    "color": "#8B5CF6"
+                },
+                {
+                    "name": "process-events", 
+                    "type": "event",
+                    "position": "top",
+                    "color": "#06B6D4"
+                }
+            ],
+            "output": [
+                {
+                    "name": "employee-service",
+                    "type": "http",
+                    "position": "right", 
+                    "color": "#10B981"
+                },
+                {
+                    "name": "asset-service",
+                    "type": "http",
+                    "position": "right",
+                    "color": "#F59E0B"
+                },
+                {
+                    "name": "notification-service",
+                    "type": "http",
+                    "position": "right",
+                    "color": "#EF4444"
+                },
+                {
+                    "name": "process-status",
+                    "type": "status",
+                    "position": "bottom",
+                    "color": "#8B5CF6"
+                }
+            ]
+        },
+        "metadata": {
+            "flowCount": 15,
+            "endpointCount": 12,
+            "serviceIntegrations": 3,
+            "supportedOperations": [
+                "ORCHESTRATE_EMPLOYEE_ONBOARDING",
+                "GET_ONBOARDING_STATUS", 
+                "RETRY_FAILED_STEP",
+                "CANCEL_ONBOARDING",
+                "LIST_ACTIVE_PROCESSES",
+                "GET_PROCESS_HISTORY",
+                "CHECK_SYSTEM_HEALTH"
+            ],
+            "orchestrationMode": "synchronous",
+            "errorHandlingStrategy": "comprehensive"
+        },
+        "healthCheck": {
+            "endpoint": "/mcp/health",
+            "expectedStatus": 200,
+            "timeout": 5000
+        },
+        "documentation": {
+            "quickStart": "Send POST to /mcp/tools/orchestrate-employee-onboarding with complete employee details",
+            "commonUses": [
+                "Complete employee onboarding orchestration across all systems",
+                "Process status tracking and monitoring", 
+                "Error handling and retry mechanisms for failed steps"
+            ]
+        }
     }
 }

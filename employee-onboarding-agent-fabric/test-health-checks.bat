@@ -59,10 +59,10 @@ echo ^<div class="summary"^>^<h2^>☁️ CLOUHHUB PRODUCTION TESTING^</h2^>^</di
 echo [1/5] Testing HEALTH endpoints...
 
 REM Test MCP Info Endpoints - Using working endpoints instead of /health
-call :TestHealth "http://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/info" "Agent Broker MCP" BROKER_CLOUD
-call :TestHealth "http://employee-onboarding-mcp-server.us-e1.cloudhub.io/mcp/info" "Employee Onboarding MCP" EMPLOYEE_CLOUD
-call :TestHealth "http://asset-allocation-mcp-server.us-e1.cloudhub.io/mcp/info" "Asset Allocation MCP" ASSET_CLOUD
-call :TestHealth "http://notification-mcp-server.us-e1.cloudhub.io/mcp/info" "Notification MCP" NOTIFICATION_CLOUD
+call :TestHealth "http://agent-broker-mcp-server.us-e1.cloudhub.io/health" "Agent Broker MCP" BROKER_CLOUD
+call :TestHealth "http://employee-onboarding-mcp-server.us-e1.cloudhub.io/health" "Employee Onboarding MCP" EMPLOYEE_CLOUD
+call :TestHealth "http://asset-allocation-mcp-server.us-e1.cloudhub.io/health" "Asset Allocation MCP" ASSET_CLOUD
+call :TestHealth "http://notification-mcp-server.us-e1.cloudhub.io/health" "Notification MCP" NOTIFICATION_CLOUD
 
 echo [2/5] Testing INFO endpoints...
 if !BROKER_CLOUD! equ 1 call :TestInfo "http://agent-broker-mcp-server.us-e1.cloudhub.io/mcp/info" "Agent Broker Info"

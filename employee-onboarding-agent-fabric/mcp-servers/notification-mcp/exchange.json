@@ -86,5 +86,93 @@
     "transport": {
         "kind": "mule-application",
         "path": "/mcp/tools"
+    },
+    "visualizer": {
+        "primaryColor": "#FF6B6B",
+        "secondaryColor": "#4ECDC4", 
+        "backgroundColor": "#45B7D1",
+        "textColor": "#FFFFFF",
+        "borderColor": "#FFA07A",
+        "icon": "📧",
+        "category": "Communication",
+        "displayName": "Email Notifier",
+        "shortDescription": "Email notifications and template management",
+        "position": {
+            "x": 600,
+            "y": 100
+        },
+        "connectionPorts": {
+            "input": [
+                {
+                    "name": "notification-requests",
+                    "type": "http",
+                    "position": "left",
+                    "color": "#FF6B6B"
+                },
+                {
+                    "name": "employee-events", 
+                    "type": "event",
+                    "position": "top",
+                    "color": "#4ECDC4"
+                },
+                {
+                    "name": "asset-events",
+                    "type": "event",
+                    "position": "left",
+                    "color": "#45B7D1"
+                }
+            ],
+            "output": [
+                {
+                    "name": "email-delivery",
+                    "type": "smtp",
+                    "position": "right", 
+                    "color": "#FF6B6B"
+                },
+                {
+                    "name": "delivery-status",
+                    "type": "status",
+                    "position": "bottom",
+                    "color": "#FFA07A"
+                },
+                {
+                    "name": "notification-logs",
+                    "type": "log",
+                    "position": "right",
+                    "color": "#4ECDC4"
+                }
+            ]
+        },
+        "metadata": {
+            "flowCount": 10,
+            "endpointCount": 7,
+            "emailTemplates": 3,
+            "supportedProviders": [
+                "GMAIL_SMTP"
+            ],
+            "supportedOperations": [
+                "SEND_WELCOME_EMAIL",
+                "SEND_ASSET_NOTIFICATION", 
+                "SEND_ONBOARDING_COMPLETE",
+                "SEND_BULK_NOTIFICATION",
+                "TEST_EMAIL_CONFIG",
+                "VALIDATE_TEMPLATE",
+                "PREVIEW_EMAIL"
+            ],
+            "templateEngine": "velocity"
+        },
+        "healthCheck": {
+            "endpoint": "/mcp/health",
+            "expectedStatus": 200,
+            "timeout": 5000
+        },
+        "documentation": {
+            "quickStart": "Send POST to /mcp/tools/send-welcome-email with employee details",
+            "commonUses": [
+                "Welcome email notifications for new employees",
+                "Asset allocation confirmation emails", 
+                "Onboarding completion notifications with summaries"
+            ]
+        }
     }
 }

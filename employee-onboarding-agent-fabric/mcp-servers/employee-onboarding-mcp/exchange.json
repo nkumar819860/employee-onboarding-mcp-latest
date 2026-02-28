@@ -84,5 +84,75 @@
     "transport": {
         "kind": "mule-application",
         "path": "/mcp/tools"
+    },
+    "visualizer": {
+        "primaryColor": "#2E86AB",
+        "secondaryColor": "#A23B72", 
+        "backgroundColor": "#F18F01",
+        "textColor": "#FFFFFF",
+        "borderColor": "#C73E1D",
+        "icon": "👤",
+        "category": "Database Management",
+        "displayName": "Employee DB Server",
+        "shortDescription": "Employee data and profile management",
+        "position": {
+            "x": 200,
+            "y": 100
+        },
+        "connectionPorts": {
+            "input": [
+                {
+                    "name": "employee-requests",
+                    "type": "http",
+                    "position": "left",
+                    "color": "#2E86AB"
+                },
+                {
+                    "name": "database-queries", 
+                    "type": "database",
+                    "position": "top",
+                    "color": "#A23B72"
+                }
+            ],
+            "output": [
+                {
+                    "name": "employee-data",
+                    "type": "json",
+                    "position": "right", 
+                    "color": "#F18F01"
+                },
+                {
+                    "name": "status-updates",
+                    "type": "event",
+                    "position": "bottom",
+                    "color": "#C73E1D"
+                }
+            ]
+        },
+        "metadata": {
+            "flowCount": 8,
+            "endpointCount": 5,
+            "databaseConnections": 2,
+            "supportedOperations": [
+                "CREATE_EMPLOYEE",
+                "GET_EMPLOYEE", 
+                "UPDATE_EMPLOYEE",
+                "DELETE_EMPLOYEE",
+                "LIST_EMPLOYEES"
+            ]
+        },
+        "healthCheck": {
+            "endpoint": "/mcp/health",
+            "expectedStatus": 200,
+            "timeout": 5000
+        },
+        "documentation": {
+            "quickStart": "Send POST to /mcp/tools/create-employee with employee data",
+            "commonUses": [
+                "Employee profile creation and management",
+                "Database CRUD operations for employee data",
+                "Integration with HR systems and onboarding workflows"
+            ]
+        }
     }
 }

@@ -90,5 +90,96 @@
     "transport": {
         "kind": "mule-application",
         "path": "/mcp/tools"
+    },
+    "visualizer": {
+        "primaryColor": "#4A90E2",
+        "secondaryColor": "#7ED321", 
+        "backgroundColor": "#F5A623",
+        "textColor": "#FFFFFF",
+        "borderColor": "#BD10E0",
+        "icon": "💼",
+        "category": "Asset Management",
+        "displayName": "Asset Allocator",
+        "shortDescription": "IT asset allocation and inventory management",
+        "position": {
+            "x": 400,
+            "y": 100
+        },
+        "connectionPorts": {
+            "input": [
+                {
+                    "name": "allocation-requests",
+                    "type": "http",
+                    "position": "left",
+                    "color": "#4A90E2"
+                },
+                {
+                    "name": "inventory-updates", 
+                    "type": "database",
+                    "position": "top",
+                    "color": "#7ED321"
+                },
+                {
+                    "name": "employee-data",
+                    "type": "json",
+                    "position": "left",
+                    "color": "#F5A623"
+                }
+            ],
+            "output": [
+                {
+                    "name": "asset-assignments",
+                    "type": "json",
+                    "position": "right", 
+                    "color": "#4A90E2"
+                },
+                {
+                    "name": "allocation-events",
+                    "type": "event",
+                    "position": "bottom",
+                    "color": "#BD10E0"
+                },
+                {
+                    "name": "inventory-status",
+                    "type": "status",
+                    "position": "right",
+                    "color": "#7ED321"
+                }
+            ]
+        },
+        "metadata": {
+            "flowCount": 12,
+            "endpointCount": 9,
+            "databaseConnections": 2,
+            "supportedAssetTypes": [
+                "LAPTOP",
+                "ID_CARD", 
+                "MOBILE_PHONE",
+                "MONITOR",
+                "PERIPHERAL"
+            ],
+            "supportedOperations": [
+                "ALLOCATE_ASSET",
+                "RETURN_ASSET",
+                "LIST_ASSETS",
+                "GET_ASSET_DETAILS",
+                "BULK_ALLOCATE",
+                "TRANSFER_ASSET",
+                "UPDATE_STATUS"
+            ]
+        },
+        "healthCheck": {
+            "endpoint": "/mcp/health",
+            "expectedStatus": 200,
+            "timeout": 5000
+        },
+        "documentation": {
+            "quickStart": "Send POST to /mcp/tools/allocate-asset with employee ID and asset details",
+            "commonUses": [
+                "Laptop and device allocation to new employees",
+                "Asset return processing and inventory management", 
+                "IT equipment tracking and lifecycle management"
+            ]
+        }
     }
 }

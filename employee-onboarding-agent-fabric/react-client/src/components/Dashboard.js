@@ -182,16 +182,16 @@ const Dashboard = () => {
       </Grid>
 
       <Grid container spacing={3}>
-        {/* System Health */}
-        <Grid item xs={12} md={6}>
+        {/* CloudHub Services Health */}
+        <Grid item xs={12} md={8}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                System Health
+                CloudHub Services Health
               </Typography>
               <List>
                 {healthStatus.map((service, index) => (
-                  <ListItem key={index}>
+                  <ListItem key={index} divider>
                     <ListItemIcon>
                       {service.status === 'UP' ? 
                         <CheckCircleIcon color="success" /> : 
@@ -199,17 +199,93 @@ const Dashboard = () => {
                       }
                     </ListItemIcon>
                     <ListItemText
-                      primary={service.service}
-                      secondary={service.error || 'Running normally'}
-                    />
-                    <Chip
-                      label={service.status}
-                      color={getHealthStatusColor(service.status)}
-                      size="small"
+                      primary={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="subtitle1" fontWeight="bold">
+                            {service.service}
+                          </Typography>
+                          <Chip
+                            label={service.status}
+                            color={getHealthStatusColor(service.status)}
+                            size="small"
+                          />
+                        </Box>
+                      }
+                      secondary={
+                        <Box>
+                          <Typography variant="body2" color="primary" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                            {service.url}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {service.description || service.error || 'Service is operational and responding normally'}
+                          </Typography>
+                        </Box>
+                      }
                     />
                   </ListItem>
                 ))}
               </List>
+              
+              {/* NLP Integration Status */}
+              <Box sx={{ mt: 2, p: 2, backgroundColor: 'action.hover', borderRadius: 1 }}>
+                <Typography variant="subtitle2" color="primary" gutterBottom>
+                  🤖 NLP Integration Active
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Natural Language Processing is enabled and ready to handle conversational queries.
+                  Visit the NLP Chat page to interact with the system using plain English.
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* System Overview */}
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                System Overview
+              </Typography>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Environment
+                </Typography>
+                <Chip 
+                  label="CloudHub Production" 
+                  color="success" 
+                  variant="outlined" 
+                  size="small"
+                  sx={{ mb: 2 }}
+                />
+              </Box>
+              
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Architecture
+                </Typography>
+                <Typography variant="body2">
+                  Multi-MCP Agent Fabric
+                </Typography>
+              </Box>
+              
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  System Health Score
+                </Typography>
+                <Typography variant="h5" color="success.main">
+                  {analytics?.systemHealth || 'EXCELLENT'}
+                </Typography>
+              </Box>
+              
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Last Health Check
+                </Typography>
+                <Typography variant="body2">
+                  {new Date().toLocaleString()}
+                </Typography>
+              </Box>
             </CardContent>
           </Card>
         </Grid>

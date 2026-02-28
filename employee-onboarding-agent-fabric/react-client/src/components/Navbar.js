@@ -5,7 +5,7 @@ import {
   Typography,
   Button,
   Box,
-  IconButton,
+  Chip,
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -13,6 +13,7 @@ import {
   Assignment as AssignmentIcon,
   Chat as ChatIcon,
   Analytics as AnalyticsIcon,
+  Cloud as CloudIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -32,8 +33,22 @@ const Navbar = () => {
     <AppBar position="static">
       <Toolbar>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          Employee Onboarding System
+          Employee Onboarding Agent Fabric
         </Typography>
+        
+        {/* CloudHub Environment Indicator */}
+        <Chip 
+          icon={<CloudIcon />}
+          label="CloudHub Production"
+          size="small"
+          variant="outlined"
+          sx={{ 
+            color: 'white', 
+            borderColor: 'rgba(255,255,255,0.3)',
+            mr: 2 
+          }}
+        />
+        
         <Box sx={{ display: 'flex', gap: 1 }}>
           {navigationItems.map((item) => (
             <Button

@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Onboarding - Enhanced Style Preview</title>
+    
+    <!-- Google Fonts - Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Professional Theme Colors and Typography */
+        :root {
+            --primary-main: #2E4C6D;
+            --primary-light: #5A7FA7;
+            --primary-dark: #1E3447;
+            --secondary-main: #FC7300;
+            --secondary-light: #FD9A33;
+            --secondary-dark: #E65100;
+            --success-main: #2E7D59;
+            --warning-main: #F57C00;
+            --error-main: #C62828;
+            --background-default: #F8FAFC;
+            --background-paper: #FFFFFF;
+            --text-primary: #2D3748;
+            --text-secondary: #4A5568;
+            --divider: #E2E8F0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #F8FAFC 0%, #EDF2F7 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-main) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0px 2px 8px rgba(46, 76, 109, 0.15);
+        }
+
+        .header h1 {
+            font-weight: 700;
+            font-size: 1.75rem;
+            margin: 0;
+        }
+
+        .header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* Professional Cards */
+        .card {
+            background: var(--background-paper);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0px 4px 12px rgba(46, 76, 109, 0.1);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(46, 76, 109, 0.15);
+            border-color: rgba(252, 115, 0, 0.2);
+        }
+
+        .card h2 {
+            color: var(--primary-main);
+            font-weight: 600;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .card p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        /* Buttons */
+        .btn {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            font-size: 0.875rem;
+            padding: 10px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            transition: all 0.2s ease;
+            margin: 0.25rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-main) 0%, var(--primary-light) 100%);
+            color: white;
+            box-shadow: 0px 4px 12px rgba(46, 76, 109, 0.15);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0px 6px 16px rgba(46, 76, 109, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary-main) 0%, var(--secondary-light) 100%);
+            color: white;
+            box-shadow: 0px 4px 12px rgba(252, 115, 0, 0.15);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0px 6px 16px rgba(252, 115, 0, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary-main);
+            border: 2px solid var(--primary-main);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-main);
+            color: white;
+        }
+
+        /* Status Indicators */
+        .status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: inline-block;
+            margin: 0.25rem;
+        }
+
+        .status-success {
+            color: var(--success-main);
+            background-color: rgba(46, 125, 89, 0.1);
+        }
+
+        .status-warning {
+            color: var(--warning-main);
+            background-color: rgba(245, 124, 0, 0.1);
+        }
+
+        .status-info {
+            color: var(--primary-main);
+            background-color: rgba(46, 76, 109, 0.1);
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--divider);
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--secondary-main);
+            box-shadow: 0 0 0 3px rgba(252, 115, 0, 0.1);
+        }
+
+        /* Text Gradients */
+        .text-gradient-primary {
+            background: linear-gradient(135deg, var(--primary-main) 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 600;
+        }
+
+        .text-gradient-secondary {
+            background: linear-gradient(135deg, var(--secondary-main) 0%, var(--secondary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 600;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background-color: rgba(226, 232, 240, 0.5);
+            border-radius: 20px;
+            height: 8px;
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            background: linear-gradient(135deg, var(--secondary-main) 0%, var(--secondary-light) 100%);
+            height: 100%;
+            border-radius: 20px;
+            transition: width 0.3s ease;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        /* Typography Showcase */
+        .typography-showcase h1 { font-size: 2.5rem; font-weight: 700; }
+        .typography-showcase h2 { font-size: 2rem; font-weight: 600; }
+        .typography-showcase h3 { font-size: 1.75rem; font-weight: 600; }
+        .typography-showcase h4 { font-size: 1.5rem; font-weight: 600; }
+        .typography-showcase h5 { font-size: 1.25rem; font-weight: 500; }
+        .typography-showcase h6 { font-size: 1rem; font-weight: 500; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 0 0.5rem; }
+            .header { padding: 1rem; }
+            .card { margin: 0.5rem 0; padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Employee Onboarding System</h1>
+        <p>Enhanced with Professional Colors & Poppins Typography</p>
+    </div>
+
+    <div class="container">
+        <!-- Typography Showcase -->
+        <div class="card fade-in typography-showcase">
+            <h2 class="text-gradient-primary">Typography Showcase</h2>
+            <h1>Heading 1 - Poppins Bold (2.5rem)</h1>
+            <h2>Heading 2 - Poppins SemiBold (2rem)</h2>
+            <h3>Heading 3 - Poppins SemiBold (1.75rem)</h3>
+            <h4>Heading 4 - Poppins SemiBold (1.5rem)</h4>
+            <h5>Heading 5 - Poppins Medium (1.25rem)</h5>
+            <h6>Heading 6 - Poppins Medium (1rem)</h6>
+            <p>Body text uses Poppins Regular with excellent readability and professional appearance.</p>
+        </div>
+
+        <!-- Color Palette -->
+        <div class="card fade-in">
+            <h2 class="text-gradient-secondary">Professional Color Palette</h2>
+            <div class="grid">
+                <div>
+                    <h3>Primary Colors</h3>
+                    <div style="background: var(--primary-main); color: white; padding: 1rem; border-radius: 8px; margin: 0.5rem 0;">
+                        Navy Blue (#2E4C6D) - Primary
+                    </div>
+                    <div style="background: var(--primary-light); color: white; padding: 1rem; border-radius: 8px; margin: 0.5rem 0;">
+                        Light Navy (#5A7FA7) - Primary Light
+                    </div>
+                </div>
+                <div>
+                    <h3>Secondary Colors</h3>
+                    <div style="background: var(--secondary-main); color: white; padding: 1rem; border-radius: 8px; margin: 0.5rem 0;">
+                        Vibrant Orange (#FC7300) - Secondary
+                    </div>
+                    <div style="background: var(--success-main); color: white; padding: 1rem; border-radius: 8px; margin: 0.5rem 0;">
+                        Professional Green (#2E7D59) - Success
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Cards -->
+        <div class="grid">
+            <div class="card fade-in">
+                <h2>Employee Onboarding</h2>
+                <p>Streamlined onboarding process with automated workflows and professional design.</p>
+                <div class="status status-success">Active</div>
+                <div class="progress-container">
+                    <div class="progress-bar" style="width: 75%;"></div>
+                </div>
+                <p><small>75% Complete</small></p>
+                <button class="btn btn-primary">Continue Process</button>
+                <button class="btn btn-outline">View Details</button>
+            </div>
+
+            <div class="card fade-in">
+                <h2>Asset Allocation</h2>
+                <p>Manage and track company assets with real-time updates and notifications.</p>
+                <div class="status status-info">Pending</div>
+                <div class="progress-container">
+                    <div class="progress-bar" style="width: 40%;"></div>
+                </div>
+                <p><small>40% Complete</small></p>
+                <button class="btn btn-secondary">Allocate Assets</button>
+                <button class="btn btn-outline">Review Queue</button>
+            </div>
+
+            <div class="card fade-in">
+                <h2>Analytics Dashboard</h2>
+                <p>Comprehensive insights into onboarding performance and system metrics.</p>
+                <div class="status status-warning">In Review</div>
+                <div class="progress-container">
+                    <div class="progress-bar" style="width: 90%;"></div>
+                </div>
+                <p><small>90% Complete</small></p>
+                <button class="btn btn-primary">View Analytics</button>
+                <button class="btn btn-outline">Export Data</button>
+            </div>
+        </div>
+
+        <!-- Form Example -->
+        <div class="card fade-in">
+            <h2>Enhanced Form Elements</h2>
+            <div class="grid">
+                <div class="form-group">
+                    <label class="form-label">Employee Name</label>
+                    <input type="text" class="form-input" placeholder="Enter full name" value="John Doe">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Department</label>
+                    <input type="text" class="form-input" placeholder="Select department" value="Engineering">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-input" value="2026-03-01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Position</label>
+                    <input type="text" class="form-input" placeholder="Job title" value="Senior Developer">
+                </div>
+            </div>
+            <button class="btn btn-primary">Save Employee</button>
+            <button class="btn btn-secondary">Send Welcome Email</button>
+        </div>
+
+        <!-- Features -->
+        <div class="card fade-in">
+            <h2>Enhanced Design Features</h2>
+            <div class="grid">
+                <div>
+                    <h3>🎨 Visual Improvements</h3>
+                    <ul style="line-height: 2;">
+                        <li>Professional Poppins typography</li>
+                        <li>Rich navy blue & vibrant orange palette</li>
+                        <li>Smooth gradient backgrounds</li>
+                        <li>Enhanced shadows and depth</li>
+                        <li>Rounded corners and modern spacing</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>⚡ User Experience</h3>
+                    <ul style="line-height: 2;">
+                        <li>Smooth hover animations</li>
+                        <li>Improved focus states</li>
+                        <li>Professional status indicators</li>
+                        <li>Responsive design patterns</li>
+                        <li>Accessible color contrasts</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add some interactive behaviors
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add fade-in animation with delay
+            const cards = document.querySelectorAll('.fade-in');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+            });
+
+            // Simulate progress bar animations
+            const progressBars = document.querySelectorAll('.progress-bar');
+            progressBars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => {
+                    bar.style.width = width;
+                }, 500);
+            });
+        });
+    </script>
+</body>
+</html>

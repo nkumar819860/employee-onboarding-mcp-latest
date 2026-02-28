@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive MCP Test Suite - Employee Onboarding System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .environment-toggle {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .environment-toggle label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .toggle {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #ccc;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .toggle.active {
+            background: #28a745;
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: white;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+        }
+
+        .toggle.active::after {
+            transform: translateX(30px);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-clear {
+            background: #6c757d;
+            color: white;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #dee2e6;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item:hover {
+            background: #e9ecef;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .nav-item .icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-pending { background: #ffc107; }
+        .status-success { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .status-idle { background: #6c757d; }
+
+        .test-content {
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .server-info {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border-left: 5px solid #2196f3;
+        }
+
+        .endpoint-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+
+        .endpoint-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .endpoint-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .endpoint-method {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .method-get { background: #28a745; }
+        .method-post { background: #007bff; }
+        .method-put { background: #ffc107; color: #212529; }
+        .method-delete { background: #dc3545; }
+
+        .endpoint-body {
+            padding: 20px;
+            display: none;
+        }
+
+        .endpoint-body.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .response-area {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #6c757d;
+        }
+
+        .response-area.success {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        .response-area.error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .summary {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            min-width: 200px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .collapsible {
+            cursor: pointer;
+        }
+
+        .collapsible:after {
+            content: '\002B';
+            color: #777;
+            font-weight: bold;
+            float: right;
+            margin-left: 5px;
+        }
+
+        .collapsible.active:after {
+            content: "\2212";
+        }
+
+        .workflow-section {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Comprehensive MCP Test Suite</h1>
+            <p>Employee Onboarding System - Complete API Testing Framework</p>
+        </div>
+
+        <div class="controls">
+            <div class="environment-toggle">
+                <label>Environment:</label>
+                <span id="env-label">Local</span>
+                <div class="toggle" id="env-toggle" onclick="toggleEnvironment()"></div>
+                <span>CloudHub</span>
+            </div>
+            
+            <button class="btn btn-primary" onclick="runAllTests()">
+                🧪 Run All Tests
+            </button>
+            
+            <button class="btn btn-success" onclick="runEndToEndWorkflow()">
+                🔄 E2E Workflow Test
+            </button>
+            
+            <button class="btn btn-warning" onclick="runHealthChecks()">
+                ❤️ Health Check All
+            </button>
+            
+            <button class="btn btn-clear" onclick="clearAllResults()">
+                🗑️ Clear Results
+            </button>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="nav-item active" data-server="overview" onclick="showServer('overview')">
+                    <div class="icon status-idle">📊</div>
+                    <div>Overview</div>
+                </div>
+                <div class="nav-item" data-server="employee-onboarding" onclick="showServer('employee-onboarding')">
+                    <div class="icon status-idle">👥</div>
+                    <div>Employee Onboarding</div>
+                </div>
+                <div class="nav-item" data-server="agent-broker" onclick="showServer('agent-broker')">
+                    <div class="icon status-idle">🤖</div>
+                    <div>Agent Broker</div>
+                </div>
+                <div class="nav-item" data-server="asset-allocation" onclick="showServer('asset-allocation')">
+                    <div class="icon status-idle">💻</div>
+                    <div>Asset Allocation</div>
+                </div>
+                <div class="nav-item" data-server="notification" onclick="showServer('notification')">
+                    <div class="icon status-idle">📧</div>
+                    <div>Notification</div>
+                </div>
+            </div>
+
+            <div class="test-content" id="test-content">
+                <!-- Content will be dynamically loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <div class="summary" id="test-summary">
+        <h4>📈 Test Summary</h4>
+        <div class="summary-item">
+            <span>Total Tests:</span>
+            <span id="total-tests">0</span>
+        </div>
+        <div class="summary-item">
+            <span>Passed:</span>
+            <span id="passed-tests" style="color: #28a745;">0</span>
+        </div>
+        <div class="summary-item">
+            <span>Failed:</span>
+            <span id="failed-tests" style="color: #dc3545;">0</span>
+        </div>
+        <div class="summary-item">
+            <span>Pending:</span>
+            <span id="pending-tests" style="color: #ffc107;">0</span>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const config = {
+            environment: 'local', // 'local' or 'cloudhub'
+            ports: {
+                'employee-onboarding': 8081,
+                'agent-broker': 8081,
+                'asset-allocation': 8081,
+                'notification': 8081
+            },
+            cloudhubUrls: {
+                'employee-onboarding': 'http://employee-onboarding-mcp-server.us-e1.cloudhub.io',
+                'agent-broker': 'http://agent-broker-mcp-server.us-e1.cloudhub.io',
+                'asset-allocation': 'http://asset-allocation-mcp-server.us-e1.cloudhub.io',
+                'notification': 'http://employee-notification-service.us-e1.cloudhub.io'
+            },
+            stagingUrls: {
+                'employee-onboarding': 'http://employee-onboarding-mcp-server-staging.us-e1.cloudhub.io',
+                'agent-broker': 'http://agent-broker-mcp-server-staging.us-e1.cloudhub.io',
+                'asset-allocation': 'http://asset-allocation-mcp-server-staging.us-e1.cloudhub.io',
+                'notification': 'http://employee-notification-service-staging.us-e1.cloudhub.io'
+            }
+        };
+
+        // Test results storage
+        let testResults = {
+            total: 0,
+            passed: 0,
+            failed: 0,
+            pending: 0
+        };
+
+        // MCP Server Definitions
+        const mcpServers = {
+            'employee-onboarding': {
+                name: 'Employee Onboarding MCP Server',
+                description: 'Manages employee profiles, onboarding processes, and lifecycle management',
+                port: 8081,
+                endpoints: [
+                    {
+                        name: 'Health Check',
+                        method: 'GET',
+                        path: '/health',
+                        description: 'Check server health status'
+                    },
+                    {
+                        name: 'Create Employee Profile',
+                        method: 'POST',
+                        path: '/api/employees',
+                        description: 'Create a new employee profile',
+                        payload: {
+                            firstName: 'John',
+                            lastName: 'Doe',
+                            email: 'john.doe@company.com',
+                            phone: '+1-555-0123',
+                            department: 'Engineering',
+                            position: 'Software Developer',
+                            startDate: '2024-03-01',
+                            salary: 75000,
+                            manager: 'Jane Smith',
+                            managerEmail: 'jane.smith@company.com',
+                            companyName: 'TechCorp Inc'
+                        }
+                    },
+                    {
+                        name: 'Get Employee Profile',
+                        method: 'GET',
+                        path: '/api/employees/{id}',
+                        description: 'Retrieve employee profile by ID',
+                        pathParams: { id: '1' }
+                    },
+                    {
+                        name: 'Update Employee Profile',
+                        method: 'PUT',
+                        path: '/api/employees/{id}',
+                        description: 'Update existing employee profile',
+                        pathParams: { id: '1' },
+                        payload: {
+                            department: 'Senior Engineering',
+                            position: 'Senior Software Developer',
+                            salary: 85000
+                        }
+                    },
+                    {
+                        name: 'List All Employees',
+                        method: 'GET',
+                        path: '/api/employees',
+                        description: 'Get all employee profiles'
+                    },
+                    {
+                        name: 'Get Employee Status',
+                        method: 'GET',
+                        path: '/api/employees/{id}/status',
+                        description: 'Get employee onboarding status',
+                        pathParams: { id: '1' }
+                    }
+                ]
+            },
+            'agent-broker': {
+                name: 'Employee Onboarding Agent Broker',
+                description: 'Orchestrates the complete employee onboarding process across all MCP servers',
+                port: 8081,
+                endpoints: [
+                    {
+                        name: 'Health Check',
+                        method: 'GET',
+                        path: '/health',
+                        description: 'Check agent broker health status'
+                    },
+                    {
+                        name: 'Orchestrate Complete Onboarding',
+                        method: 'POST',
+                        path: '/api/orchestrate-onboarding',
+                        description: 'Complete end-to-end employee onboarding orchestration',
+                        payload: {
+                            firstName: 'Alice',
+                            lastName: 'Johnson',
+                            email: 'alice.johnson@company.com',
+                            phone: '+1-555-0456',
+                            department: 'Marketing',
+                            position: 'Marketing Manager',
+                            startDate: '2024-03-15',
+                            salary: 68000,
+                            manager: 'Bob Wilson',
+                            managerEmail: 'bob.wilson@company.com',
+                            companyName: 'TechCorp Inc',
+                            assets: ['laptop', 'phone', 'id-card']
+                        }
+                    },
+                    {
+                        name: 'Get Onboarding Status',
+                        method: 'GET',
+                        path: '/api/onboarding-status',
+                        description: 'Get comprehensive onboarding status',
+                        queryParams: { email: 'alice.johnson@company.com' }
+                    },
+                    {
+                        name: 'Retry Failed Step',
+                        method: 'POST',
+                        path: '/api/retry-step',
+                        description: 'Retry a specific failed onboarding step',
+                        payload: {
+                            employeeId: '1',
+                            step: 'asset-allocation'
+                        }
+                    },
+                    {
+                        name: 'System Health Check',
+                        method: 'GET',
+                        path: '/api/system-health',
+                        description: 'Check health of all connected MCP servers'
+                    }
+                ]
+            },
+            'asset-allocation': {
+                name: 'Asset Allocation MCP Server',
+                description: 'Manages IT asset allocation and tracking for employees',
+                port: 8081,
+                endpoints: [
+                    {
+                        name: 'Health Check',
+                        method: 'GET',
+                        path: '/health',
+                        description: 'Check asset allocation server health'
+                    },
+                    {
+                        name: 'Allocate Assets',
+                        method: 'POST',
+                        path: '/api/assets/allocate',
+                        description: 'Allocate assets to an employee',
+                        payload: {
+                            employeeId: '1',
+                            assets: ['laptop', 'phone', 'id-card'],
+                            employeeEmail: 'john.doe@company.com',
+                            employeeName: 'John Doe',
+                            department: 'Engineering'
+                        }
+                    },
+                    {
+                        name: 'Get Employee Assets',
+                        method: 'GET',
+                        path: '/api/assets/employee/{id}',
+                        description: 'Get all assets allocated to an employee',
+                        pathParams: { id: '1' }
+                    },
+                    {
+                        name: 'List All Assets',
+                        method: 'GET',
+                        path: '/api/assets',
+                        description: 'Get all asset allocations'
+                    },
+                    {
+                        name: 'Update Asset Status',
+                        method: 'PUT',
+                        path: '/api/assets/{id}',
+                        description: 'Update asset allocation status',
+                        pathParams: { id: '1' },
+                        payload: {
+                            status: 'delivered',
+                            notes: 'Asset delivered to employee workspace'
+                        }
+                    },
+                    {
+                        name: 'Deallocate Assets',
+                        method: 'DELETE',
+                        path: '/api/assets/employee/{id}',
+                        description: 'Deallocate assets from employee',
+                        pathParams: { id: '1' }
+                    }
+                ]
+            },
+            'notification': {
+                name: 'Notification MCP Server',
+                description: 'Handles email notifications for employee onboarding events',
+                port: 8081,
+                endpoints: [
+                    {
+                        name: 'Health Check',
+                        method: 'GET',
+                        path: '/health',
+                        description: 'Check notification server health'
+                    },
+                    {
+                        name: 'Send Welcome Email',
+                        method: 'POST',
+                        path: '/api/notifications/welcome',
+                        description: 'Send welcome email to new employee',
+                        payload: {
+                            employeeEmail: 'john.doe@company.com',
+                            employeeName: 'John Doe',
+                            startDate: '2024-03-01',
+                            department: 'Engineering',
+                            manager: 'Jane Smith',
+                            companyName: 'TechCorp Inc'
+                        }
+                    },
+                    {
+                        name: 'Send Asset Notification',
+                        method: 'POST',
+                        path: '/api/notifications/assets',
+                        description: 'Send asset allocation notification',
+                        payload: {
+                            employeeEmail: 'john.doe@company.com',
+                            employeeName: 'John Doe',
+                            assets: ['laptop', 'phone', 'id-card'],
+                            department: 'Engineering'
+                        }
+                    },
+                    {
+                        name: 'Send Onboarding Complete',
+                        method: 'POST',
+                        path: '/api/notifications/complete',
+                        description: 'Send onboarding completion notification',
+                        payload: {
+                            employeeEmail: 'john.doe@company.com',
+                            employeeName: 'John Doe',
+                            managerEmail: 'jane.smith@company.com',
+                            department: 'Engineering'
+                        }
+                    },
+                    {
+                        name: 'Get Notification History',
+                        method: 'GET',
+                        path: '/api/notifications/history',
+                        description: 'Get notification history',
+                        queryParams: { email: 'john.doe@company.com' }
+                    }
+                ]
+            }
+        };
+
+        // Utility Functions
+        function getBaseUrl(serverName) {
+            if (config.environment === 'cloudhub') {
+                // CloudHub URLs don't include ports - they're handled by the platform
+                return config.cloudhubUrls[serverName];
+            } else {
+                // Local development uses localhost with specific ports
+                return `http://localhost:${config.ports[serverName]}`;
+            }
+        }
+
+        function buildUrl(serverName, endpoint) {
+            let url = getBaseUrl(serverName) + endpoint.path;
+            
+            // Replace path parameters
+            if (endpoint.pathParams) {
+                Object.keys(endpoint.pathParams).forEach(param => {
+                    url = url.replace(`{${param}}`, endpoint.pathParams[param]);
+                });
+            }
+            
+            // Add query parameters
+            if (endpoint.queryParams) {
+                const params = new URLSearchParams(endpoint.queryParams);
+                url += '?' + params.toString();
+            }
+            
+            return url;
+        }
+
+        // Environment Toggle
+        function toggleEnvironment() {
+            const toggle = document.getElementById('env-toggle');
+            const label = document.getElementById('env-label');
+            
+            if (config.environment === 'local') {
+                config.environment = 'cloudhub';
+                toggle.classList.add('active');
+                label.textContent = 'CloudHub';
+            } else {
+                config.environment = 'local';
+                toggle.classList.remove('active');
+                label.textContent = 'Local';
+            }
+            
+            // Refresh the current content to show updated URLs
+            const activeNavItem = document.querySelector('.nav-item.active');
+            if (activeNavItem) {
+                const serverName = activeNavItem.getAttribute('data-server');
+                if (serverName === 'overview') {
+                    loadOverviewContent();
+                } else {
+                    loadServerContent(serverName);
+                }
+            }
+        }
+
+        // Server Navigation
+        function showServer(serverName) {
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-server="${serverName}"]`).classList.add('active');
+
+            // Load content
+            if (serverName === 'overview') {
+                loadOverviewContent();
+            } else {
+                loadServerContent(serverName);
+            }
+        }
+
+        function loadOverviewContent() {
+            const content = document.getElementById('test-content');
+            content.innerHTML = `
+                <div class="server-info">
+                    <h2>🏗️ Employee Onboarding MCP System Overview</h2>
+                    <p>This comprehensive test suite covers all MCP (Model Context Protocol) servers in the Employee Onboarding System:</p>
+                    <ul style="margin: 15px 0; padding-left: 20px;">
+                        <li><strong>Employee Onboarding MCP:</strong> Core employee profile management and onboarding workflows</li>
+                        <li><strong>Agent Broker MCP:</strong> Orchestration layer that coordinates all onboarding processes</li>
+                        <li><strong>Asset Allocation MCP:</strong> IT asset management and allocation system</li>
+                        <li><strong>Notification MCP:</strong> Email notification system for onboarding events</li>
+                    </ul>
+                </div>
+
+                <div class="workflow-section">
+                    <h3>🔄 End-to-End Workflow Test</h3>
+                    <p>The E2E workflow test simulates a complete employee onboarding process:</p>
+                    <ol style="margin: 10px 0; padding-left: 20px;">
+                        <li>Create employee profile via Employee Onboarding MCP</li>
+                        <li>Allocate IT assets via Asset Allocation MCP</li>
+                        <li>Send welcome notifications via Notification MCP</li>
+                        <li>Orchestrate complete process via Agent Broker MCP</li>
+                        <li>Verify all steps completed successfully</li>
+                    </ol>
+                    <button class="btn btn-success" onclick="runEndToEndWorkflow()" style="margin-top: 15px;">
+                        🚀 Start E2E Workflow Test
+                    </button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <h4>👥 Employee Onboarding MCP</h4>
+                            <span class="endpoint-method method-get">Ready</span>
+                        </div>
+                        <div class="endpoint-body active">
+                            <p>Port: 8081</p>
+                            <p>Endpoints: 6</p>
+                            <p>Functions: Profile management, status tracking</p>
+                        </div>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <h4>🤖 Agent Broker MCP</h4>
+                            <span class="endpoint-method method-post">Ready</span>
+                        </div>
+                        <div class="endpoint-body active">
+                            <p>Port: 8081</p>
+                            <p>Endpoints: 4</p>
+                            <p>Functions: Orchestration, system health</p>
+                        </div>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <h4>💻 Asset Allocation MCP</h4>
+                            <span class="endpoint-method method-put">Ready</span>
+                        </div>
+                        <div class="endpoint-body active">
+                            <p>Port: 8081</p>
+                            <p>Endpoints: 6</p>
+                            <p>Functions: Asset management, tracking</p>
+                        </div>
+                    </div>
+
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <h4>📧 Notification MCP</h4>
+                            <span class="endpoint-method method-delete">Ready</span>
+                        </div>
+                        <div class="endpoint-body active">
+                            <p>Port: 8081</p>
+                            <p>Endpoints: 5</p>
+                            <p>Functions: Email notifications, history</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadServerContent(serverName) {
+            const server = mcpServers[serverName];
+            const content = document.getElementById('test-content');
+            
+            // Build environment info based on current environment
+            const envInfo = config.environment === 'cloudhub' 
+                ? `<strong>Environment:</strong> ${config.environment} | <strong>Base URL:</strong> ${getBaseUrl(serverName)}`
+                : `<strong>Port:</strong> ${server.port} | <strong>Environment:</strong> ${config.environment} | <strong>Base URL:</strong> ${getBaseUrl(serverName)}`;
+            
+            let html = `
+                <div class="server-info">
+                    <h2>🔧 ${server.name}</h2>
+                    <p>${server.description}</p>
+                    <p>${envInfo}</p>
+                </div>
+            `;
+
+            server.endpoints.forEach((endpoint, index) => {
+                html += `
+                    <div class="endpoint-card">
+                        <div class="endpoint-header collapsible" onclick="toggleEndpoint('${serverName}-${index}')">
+                            <div>
+                                <span class="endpoint-method method-${endpoint.method.toLowerCase()}">${endpoint.method}</span>
+                                <strong>${endpoint.name}</strong> - ${endpoint.description}
+                            </div>
+                            <button class="btn btn-primary" onclick="executeTest('${serverName}', ${index}); event.stopPropagation();">
+                                Test
+                            </button>
+                        </div>
+                        <div class="endpoint-body" id="${serverName}-${index}">
+                            <div class="form-group">
+                                <label>URL:</label>
+                                <input type="text" class="form-control" value="${buildUrl(serverName, endpoint)}" readonly>
+                            </div>
+                            
+                            ${endpoint.payload ? `
+                            <div class="form-group">
+                                <label>Request Payload:</label>
+                                <textarea class="form-control" id="${serverName}-${index}-payload">${JSON.stringify(endpoint.payload, null, 2)}</textarea>
+                            </div>
+                            ` : ''}
+                            
+                            <div class="form-group">
+                                <button class="btn btn-primary" onclick="executeTest('${serverName}', ${index})">
+                                    <span id="${serverName}-${index}-btn-text">Execute Test</span>
+                                </button>
+                            </div>
+                            
+                            <div class="response-area" id="${serverName}-${index}-response" style="display: none;">
+                                <h5>Response:</h5>
+                                <pre id="${serverName}-${index}-response-content"></pre>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            content.innerHTML = html;
+        }
+
+        // Endpoint Toggle
+        function toggleEndpoint(endpointId) {
+            const element = document.getElementById(endpointId);
+            const header = element.previousElementSibling;
+            
+            if (element.classList.contains('active')) {
+                element.classList.remove('active');
+                header.classList.remove('active');
+            } else {
+                element.classList.add('active');
+                header.classList.add('active');
+            }
+        }
+
+        // Test Execution
+        async function executeTest(serverName, endpointIndex) {
+            const endpoint = mcpServers[serverName].endpoints[endpointIndex];
+            const testId = `${serverName}-${endpointIndex}`;
+            
+            // Update UI
+            const btnText = document.getElementById(`${testId}-btn-text`);
+            const responseArea = document.getElementById(`${testId}-response`);
+            const responseContent = document.getElementById(`${testId}-response-content`);
+            
+            btnText.innerHTML = '<div class="loading"><div class="spinner"></div>Testing...</div>';
+            responseArea.style.display = 'block';
+            responseContent.textContent = 'Executing test...';
+            
+            // Update test counts
+            testResults.pending++;
+            updateTestSummary();
+            updateNavStatus(serverName, 'pending');
+            
+            try {
+                const url = buildUrl(serverName, endpoint);
+                const options = {
+                    method: endpoint.method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+                
+                // Add payload for POST/PUT requests
+                if (endpoint.payload && (endpoint.method === 'POST' || endpoint.method === 'PUT')) {
+                    const payloadElement = document.getElementById(`${testId}-payload`);
+                    if (payloadElement) {
+                        options.body = payloadElement.value;
+                    } else {
+                        options.body = JSON.stringify(endpoint.payload);
+                    }
+                }
+                
+                const response = await fetch(url, options);
+                const responseText = await response.text();
+                let responseData;
+                
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch {
+                    responseData = responseText;
+                }
+                
+                // Display results
+                const result = {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    data: responseData
+                };
+                
+                if (response.ok) {
+                    responseArea.className = 'response-area success';
+                    responseContent.textContent = JSON.stringify(result, null, 2);
+                    testResults.passed++;
+                    updateNavStatus(serverName, 'success');
+                } else {
+                    responseArea.className = 'response-area error';
+                    responseContent.textContent = JSON.stringify(result, null, 2);
+                    testResults.failed++;
+                    updateNavStatus(serverName, 'error');
+                }
+                
+            } catch (error) {
+                responseArea.className = 'response-area error';
+                responseContent.textContent = `Error: ${error.message}\n\nThis might be due to:\n- Server not running\n- CORS issues\n- Network connectivity\n- Invalid endpoint URL`;
+                testResults.failed++;
+                updateNavStatus(serverName, 'error');
+            } finally {
+                testResults.pending--;
+                btnText.textContent = 'Execute Test';
+                updateTestSummary();
+            }
+        }
+
+        // Health Check Functions
+        async function runHealthChecks() {
+            const servers = Object.keys(mcpServers);
+            
+            for (const serverName of servers) {
+                const healthEndpoint = mcpServers[serverName].endpoints.find(ep => ep.name === 'Health Check');
+                if (healthEndpoint) {
+                    const index = mcpServers[serverName].endpoints.indexOf(healthEndpoint);
+                    await executeTest(serverName, index);
+                }
+            }
+        }
+
+        // Run All Tests
+        async function runAllTests() {
+            const servers = Object.keys(mcpServers);
+            
+            for (const serverName of servers) {
+                showServer(serverName);
+                
+                for (let i = 0; i < mcpServers[serverName].endpoints.length; i++) {
+                    await executeTest(serverName, i);
+                    // Add delay between tests
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+            
+            showServer('overview');
+        }
+
+        // End-to-End Workflow Test
+        async function runEndToEndWorkflow() {
+            showServer('overview');
+            const content = document.getElementById('test-content');
+            
+            content.innerHTML = `
+                <div class="server-info">
+                    <h2>🔄 End-to-End Workflow Test in Progress</h2>
+                    <p>Testing complete employee onboarding workflow...</p>
+                </div>
+                <div class="workflow-section">
+                    <h3>Workflow Steps:</h3>
+                    <div id="workflow-steps">
+                        <div id="step-1" class="workflow-step">1. Creating Employee Profile... <span class="spinner"></span></div>
+                        <div id="step-2" class="workflow-step">2. Allocating IT Assets... ⏳</div>
+                        <div id="step-3" class="workflow-step">3. Sending Welcome Email... ⏳</div>
+                        <div id="step-4" class="workflow-step">4. Orchestrating Complete Process... ⏳</div>
+                        <div id="step-5" class="workflow-step">5. Verifying Results... ⏳</div>
+                    </div>
+                </div>
+                <div class="response-area" id="workflow-results">
+                    <h5>Workflow Results:</h5>
+                    <pre id="workflow-results-content">Starting workflow...</pre>
+                </div>
+            `;
+
+            const results = [];
+            
+            try {
+                // Step 1: Create Employee Profile
+                await updateWorkflowStep(1, 'in-progress');
+                const createResult = await executeWorkflowStep('employee-onboarding', 1);
+                results.push({ step: 'Create Employee', success: createResult.success, data: createResult.data });
+                await updateWorkflowStep(1, createResult.success ? 'success' : 'error');
+                
+                // Step 2: Allocate Assets
+                await updateWorkflowStep(2, 'in-progress');
+                const assetResult = await executeWorkflowStep('asset-allocation', 1);
+                results.push({ step: 'Allocate Assets', success: assetResult.success, data: assetResult.data });
+                await updateWorkflowStep(2, assetResult.success ? 'success' : 'error');
+                
+                // Step 3: Send Welcome Email
+                await updateWorkflowStep(3, 'in-progress');
+                const emailResult = await executeWorkflowStep('notification', 1);
+                results.push({ step: 'Send Welcome Email', success: emailResult.success, data: emailResult.data });
+                await updateWorkflowStep(3, emailResult.success ? 'success' : 'error');
+                
+                // Step 4: Orchestrate Complete Process
+                await updateWorkflowStep(4, 'in-progress');
+                const orchestrateResult = await executeWorkflowStep('agent-broker', 1);
+                results.push({ step: 'Orchestrate Process', success: orchestrateResult.success, data: orchestrateResult.data });
+                await updateWorkflowStep(4, orchestrateResult.success ? 'success' : 'error');
+                
+                // Step 5: Verify Results
+                await updateWorkflowStep(5, 'in-progress');
+                const verifyResult = await executeWorkflowStep('agent-broker', 2);
+                results.push({ step: 'Verify Results', success: verifyResult.success, data: verifyResult.data });
+                await updateWorkflowStep(5, verifyResult.success ? 'success' : 'error');
+                
+            } catch (error) {
+                results.push({ step: 'Workflow Error', success: false, error: error.message });
+            }
+            
+            // Display final results
+            document.getElementById('workflow-results-content').textContent = JSON.stringify(results, null, 2);
+        }
+
+        async function executeWorkflowStep(serverName, endpointIndex) {
+            try {
+                const endpoint = mcpServers[serverName].endpoints[endpointIndex];
+                const url = buildUrl(serverName, endpoint);
+                
+                const options = {
+                    method: endpoint.method,
+                    headers: { 'Content-Type': 'application/json' }
+                };
+                
+                if (endpoint.payload && (endpoint.method === 'POST' || endpoint.method === 'PUT')) {
+                    options.body = JSON.stringify(endpoint.payload);
+                }
+                
+                const response = await fetch(url, options);
+                const data = await response.text();
+                
+                return {
+                    success: response.ok,
+                    data: data,
+                    status: response.status
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message
+                };
+            }
+        }
+
+        async function updateWorkflowStep(stepNumber, status) {
+            const stepElement = document.getElementById(`step-${stepNumber}`);
+            const icons = {
+                'in-progress': '<div class="spinner"></div>',
+                'success': '✅',
+                'error': '❌',
+                'pending': '⏳'
+            };
+            
+            stepElement.innerHTML = stepElement.innerHTML.replace(/(<span class="spinner"><\/span>|⏳|✅|❌)/, icons[status]);
+            
+            return new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        // UI Update Functions
+        function updateNavStatus(serverName, status) {
+            const navItem = document.querySelector(`[data-server="${serverName}"] .icon`);
+            if (navItem) {
+                navItem.className = `icon status-${status}`;
+            }
+        }
+
+        function updateTestSummary() {
+            document.getElementById('total-tests').textContent = testResults.total;
+            document.getElementById('passed-tests').textContent = testResults.passed;
+            document.getElementById('failed-tests').textContent = testResults.failed;
+            document.getElementById('pending-tests').textContent = testResults.pending;
+        }
+
+        function clearAllResults() {
+            testResults = { total: 0, passed: 0, failed: 0, pending: 0 };
+            updateTestSummary();
+            
+            // Reset nav status
+            document.querySelectorAll('.nav-item .icon').forEach(icon => {
+                icon.className = 'icon status-idle';
+            });
+            
+            // Clear response areas
+            document.querySelectorAll('.response-area').forEach(area => {
+                area.style.display = 'none';
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOverviewContent();
+            updateTestSummary();
+        });
+
+    </script>
+</body>
+</html>
