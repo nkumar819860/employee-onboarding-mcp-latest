@@ -248,7 +248,7 @@ class MCPService {
     // Environment-specific URLs (fallback when EnvironmentContext isn't available)
     const environmentURLs = {
       development: 'http://localhost:8081',
-      staging: 'http://agent-broker-mcp-server-staging.us-e1.cloudhub.io',
+      staging: 'http://agent-broker-mcp-server.us-e1.cloudhub.io',
       production: 'http://agent-broker-mcp-server.us-e1.cloudhub.io'
     };
 
