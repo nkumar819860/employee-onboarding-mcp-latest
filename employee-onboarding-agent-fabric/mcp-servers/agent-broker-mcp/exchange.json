@@ -1,5 +1,5 @@
 {
-    "name": "Agent Broker MCP Server",
+    "name": "Employee Agent Broker",
     "description": "Agent Broker MCP Server for Employee Onboarding Process Orchestration - coordinates employee onboarding, asset allocation, and notifications with comprehensive workflow management",
     "version": "1.0.0",
     "main": "employee-onboarding-agent-broker.xml",

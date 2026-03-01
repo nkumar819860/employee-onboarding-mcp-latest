@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
 	<artifactId>agent-broker-mcp</artifactId>
-	<version>1.0.16</version>
+	<version>1.0.17</version>
 	<packaging>mule-application</packaging>
 
 	<name>Agent Broker MCP Server</name>
