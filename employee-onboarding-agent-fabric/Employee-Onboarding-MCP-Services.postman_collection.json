@@ -1,0 +1,503 @@
+{
+	"info": {
+		"_postman_id": "employee-onboarding-mcp-system",
+		"name": "Employee Onboarding MCP Services - Complete Collection",
+		"description": "Comprehensive Postman collection for testing all Employee Onboarding MCP services including Agent Broker orchestration, individual service endpoints, health checks, and complete workflows.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "🏥 Health Checks",
+			"item": [
+				{
+					"name": "Agent Broker Health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Service is UP\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.status).to.eql(\"UP\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{AGENT_BROKER_URL}}/health",
+							"host": [
+								"{{AGENT_BROKER_URL}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Employee Service Health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Service is UP\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.status).to.eql(\"UP\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{EMPLOYEE_SERVICE_URL}}/health",
+							"host": [
+								"{{EMPLOYEE_SERVICE_URL}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Asset Service Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{ASSET_SERVICE_URL}}/health",
+							"host": [
+								"{{ASSET_SERVICE_URL}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Notification Service Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{NOTIFICATION_SERVICE_URL}}/health",
+							"host": [
+								"{{NOTIFICATION_SERVICE_URL}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Health check endpoints for all services"
+		},
+		{
+			"name": "🚀 MCP Agent Broker Orchestration",
+			"item": [
+				{
+					"name": "Complete Employee Onboarding Orchestration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Orchestration successful\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.status).to.eql(\"success\");",
+									"});",
+									"",
+									"pm.test(\"Employee ID generated\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.employeeId).to.not.be.undefined;",
+									"    pm.environment.set(\"GENERATED_EMPLOYEE_ID\", responseJson.employeeId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-MCP-Client",
+								"value": "Postman-Testing"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"email\": \"john.smith@company.com\",\n  \"phone\": \"+1-555-0123\",\n  \"department\": \"Engineering\",\n  \"position\": \"Senior Software Developer\",\n  \"startDate\": \"2024-03-15\",\n  \"salary\": 95000,\n  \"manager\": \"Sarah Johnson\",\n  \"managerEmail\": \"sarah.johnson@company.com\",\n  \"companyName\": \"Tech Innovations Inc\",\n  \"assets\": [\"laptop\", \"phone\", \"id-card\", \"monitor\", \"keyboard-mouse\"]\n}"
+						},
+						"url": {
+							"raw": "{{AGENT_BROKER_URL}}/mcp/tools/orchestrate-employee-onboarding",
+							"host": [
+								"{{AGENT_BROKER_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"orchestrate-employee-onboarding"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Employee Onboarding Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{AGENT_BROKER_URL}}/mcp/tools/get-onboarding-status?employeeId={{GENERATED_EMPLOYEE_ID}}",
+							"host": [
+								"{{AGENT_BROKER_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"get-onboarding-status"
+							],
+							"query": [
+								{
+									"key": "employeeId",
+									"value": "{{GENERATED_EMPLOYEE_ID}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Retry Failed Onboarding Step",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"employeeId\": \"{{GENERATED_EMPLOYEE_ID}}\",\n  \"step\": \"asset-allocation\"\n}"
+						},
+						"url": {
+							"raw": "{{AGENT_BROKER_URL}}/mcp/tools/retry-failed-step",
+							"host": [
+								"{{AGENT_BROKER_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"retry-failed-step"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Check MCP System Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{AGENT_BROKER_URL}}/mcp/tools/check-system-health",
+							"host": [
+								"{{AGENT_BROKER_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"check-system-health"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "MCP Agent Broker orchestration endpoints"
+		},
+		{
+			"name": "👥 Employee Service (Individual)",
+			"item": [
+				{
+					"name": "Create Employee Profile",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"Maria\",\n  \"lastName\": \"Garcia\",\n  \"email\": \"maria.garcia@company.com\",\n  \"phone\": \"+1-555-0456\",\n  \"department\": \"Marketing\",\n  \"position\": \"Marketing Manager\",\n  \"startDate\": \"2024-03-20\",\n  \"salary\": 85000,\n  \"manager\": \"Robert Chen\",\n  \"managerEmail\": \"robert.chen@company.com\"\n}"
+						},
+						"url": {
+							"raw": "{{EMPLOYEE_SERVICE_URL}}/employees",
+							"host": [
+								"{{EMPLOYEE_SERVICE_URL}}"
+							],
+							"path": [
+								"employees"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Employees",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{EMPLOYEE_SERVICE_URL}}/employees",
+							"host": [
+								"{{EMPLOYEE_SERVICE_URL}}"
+							],
+							"path": [
+								"employees"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Direct employee service endpoints"
+		},
+		{
+			"name": "💼 Asset Allocation Service",
+			"item": [
+				{
+					"name": "Get Available Assets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{ASSET_SERVICE_URL}}/assets/available",
+							"host": [
+								"{{ASSET_SERVICE_URL}}"
+							],
+							"path": [
+								"assets",
+								"available"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Allocate Asset to Employee",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"employeeId\": \"{{DIRECT_EMPLOYEE_ID}}\",\n  \"assetType\": \"laptop\",\n  \"assetModel\": \"Dell XPS 13\",\n  \"serialNumber\": \"DXP13-2024-001\",\n  \"allocatedDate\": \"2024-03-20\",\n  \"notes\": \"Standard laptop allocation for new employee\"\n}"
+						},
+						"url": {
+							"raw": "{{ASSET_SERVICE_URL}}/assets/allocate",
+							"host": [
+								"{{ASSET_SERVICE_URL}}"
+							],
+							"path": [
+								"assets",
+								"allocate"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Asset allocation service endpoints"
+		},
+		{
+			"name": "📧 Notification Service",
+			"item": [
+				{
+					"name": "Send Welcome Email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"employeeId\": \"{{DIRECT_EMPLOYEE_ID}}\",\n  \"employeeName\": \"Maria Garcia\",\n  \"employeeEmail\": \"maria.garcia@company.com\",\n  \"notificationType\": \"welcome\",\n  \"templateData\": {\n    \"companyName\": \"Tech Innovations Inc\",\n    \"position\": \"Marketing Manager\",\n    \"startDate\": \"2024-03-20\",\n    \"manager\": \"Robert Chen\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{NOTIFICATION_SERVICE_URL}}/notifications/send",
+							"host": [
+								"{{NOTIFICATION_SERVICE_URL}}"
+							],
+							"path": [
+								"notifications",
+								"send"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Asset Allocation Notification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"employeeId\": \"{{DIRECT_EMPLOYEE_ID}}\",\n  \"employeeName\": \"Maria Garcia\",\n  \"employeeEmail\": \"maria.garcia@company.com\",\n  \"notificationType\": \"asset-allocation\",\n  \"templateData\": {\n    \"allocatedAssets\": [\n      {\n        \"type\": \"laptop\",\n        \"model\": \"Dell XPS 13\",\n        \"serialNumber\": \"DXP13-2024-001\"\n      }\n    ],\n    \"pickupLocation\": \"IT Department, Floor 3\",\n    \"pickupInstructions\": \"Please bring your employee ID for verification\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{NOTIFICATION_SERVICE_URL}}/notifications/send",
+							"host": [
+								"{{NOTIFICATION_SERVICE_URL}}"
+							],
+							"path": [
+								"notifications",
+								"send"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Notification service endpoints"
+		},
+		{
+			"name": "🔄 End-to-End Workflows",
+			"item": [
+				{
+					"name": "Complete Onboarding Workflow Test",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"Alex\",\n  \"lastName\": \"Johnson\",\n  \"email\": \"alex.johnson@company.com\",\n  \"phone\": \"+1-555-0789\",\n  \"department\": \"Sales\",\n  \"position\": \"Sales Representative\",\n  \"startDate\": \"2024-04-01\",\n  \"salary\": 75000,\n  \"manager\": \"Lisa Brown\",\n  \"managerEmail\": \"lisa.brown@company.com\",\n  \"companyName\": \"Tech Innovations Inc\",\n  \"assets\": [\"laptop\", \"phone\", \"id-card\"]\n}"
+						},
+						"url": {
+							"raw": "{{AGENT_BROKER_URL}}/mcp/tools/orchestrate-employee-onboarding",
+							"host": [
+								"{{AGENT_BROKER_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"orchestrate-employee-onboarding"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "End-to-end workflow tests"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Set default environment variables if not already set",
+					"if (!pm.environment.get('AGENT_BROKER_URL')) {",
+					"    pm.environment.set('AGENT_BROKER_URL', 'http://agent-broker-mcp-server.us-e1.cloudhub.io');",
+					"}",
+					"if (!pm.environment.get('EMPLOYEE_SERVICE_URL')) {",
+					"    pm.environment.set('EMPLOYEE_SERVICE_URL', 'http://employee-onboarding-mcp-server.us-e1.cloudhub.io');",
+					"}",
+					"if (!pm.environment.get('ASSET_SERVICE_URL')) {",
+					"    pm.environment.set('ASSET_SERVICE_URL', 'http://asset-allocation-mcp-server.us-e1.cloudhub.io');",
+					"}",
+					"if (!pm.environment.get('NOTIFICATION_SERVICE_URL')) {",
+					"    pm.environment.set('NOTIFICATION_SERVICE_URL', 'http://employee-notification-service.us-e1.cloudhub.io');",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "AGENT_BROKER_URL",
+			"value": "http://agent-broker-mcp-server.us-e1.cloudhub.io",
+			"type": "string"
+		},
+		{
+			"key": "EMPLOYEE_SERVICE_URL",
+			"value": "http://employee-onboarding-mcp-server.us-e1.cloudhub.io",
+			"type": "string"
+		},
+		{
+			"key": "ASSET_SERVICE_URL",
+			"value": "http://asset-allocation-mcp-server.us-e1.cloudhub.io",
+			"type": "string"
+		},
+		{
+			"key": "NOTIFICATION_SERVICE_URL",
+			"value": "http://employee-notification-service.us-e1.cloudhub.io",
+			"type": "string"
+		}
+	]
+}

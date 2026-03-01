@@ -8,7 +8,8 @@ import axios from 'axios';
 class MCPService {
   constructor() {
     // The MuleSoft Agent Broker acts as our MCP gateway
-    this.baseURL = process.env.REACT_APP_AGENT_BROKER_URL || 'http://localhost:8080';
+    // We'll update this dynamically based on environment context
+    this.baseURL = this.getBaseURL();
     
     this.client = axios.create({
       baseURL: this.baseURL,
@@ -49,20 +50,31 @@ class MCPService {
     try {
       console.log('🚀 Initiating MCP-orchestrated employee onboarding for:', employeeData.email);
       
-      const response = await this.client.post('/mcp/tools/orchestrate-employee-onboarding', {
-        firstName: employeeData.firstName,
-        lastName: employeeData.lastName,
-        email: employeeData.email,
-        phone: employeeData.phone,
-        department: employeeData.department,
-        position: employeeData.position,
-        startDate: employeeData.startDate,
-        salary: employeeData.salary,
-        manager: employeeData.manager,
-        managerEmail: employeeData.managerEmail,
-        companyName: employeeData.companyName || 'Our Company',
-        assets: employeeData.assets || ['laptop', 'phone', 'id-card']
-      });
+      // Create the exact payload structure that works in Postman
+      const payload = {
+        firstName: employeeData.firstName || "John",
+        lastName: employeeData.lastName || "Smith",
+        email: employeeData.email || "john.smith@company.com",
+        department: employeeData.department || "Engineering",
+        position: employeeData.position || "Senior Software Engineer",
+        startDate: employeeData.startDate || new Date().toISOString().split('T')[0],
+        manager: employeeData.manager || "Sarah Johnson",
+        managerName: employeeData.managerName || employeeData.manager || "Sarah Johnson",
+        managerEmail: employeeData.managerEmail || "sarah.johnson@company.com",
+        orientationDate: employeeData.orientationDate || new Date(Date.now() + 86400000).toISOString().split('T')[0], // Next day
+        companyName: employeeData.companyName || "TechCorp Inc",
+        assets: employeeData.assets || [
+          {
+            assetTag: "LAPTOP-001",
+            category: "LAPTOP",
+            priority: "HIGH"
+          }
+        ]
+      };
+
+      console.log('📤 Sending payload to MCP:', JSON.stringify(payload, null, 2));
+      
+      const response = await this.client.post('/mcp/tools/orchestrate-employee-onboarding', payload);
 
       console.log('✅ MCP orchestration completed successfully:', response.data);
       return {
@@ -221,6 +233,51 @@ class MCPService {
   }
 
   /**
+   * Get the base URL for MCP service based on current environment
+   */
+  getBaseURL() {
+    // Try to get from environment variables first (for .env files)
+    const envURL = process.env.REACT_APP_AGENT_BROKER_URL;
+    if (envURL) {
+      return envURL;
+    }
+
+    // Get from localStorage to check current environment setting
+    const selectedEnvironment = localStorage.getItem('selectedEnvironment') || 'production';
+    
+    // Environment-specific URLs (fallback when EnvironmentContext isn't available)
+    const environmentURLs = {
+      development: 'http://localhost:8081',
+      staging: 'http://agent-broker-mcp-server-staging.us-e1.cloudhub.io',
+      production: 'http://agent-broker-mcp-server.us-e1.cloudhub.io'
+    };
+
+    return environmentURLs[selectedEnvironment] || environmentURLs.production;
+  }
+
+  /**
+   * Update the base URL and recreate the axios client
+   */
+  updateBaseURL(newBaseURL) {
+    if (this.baseURL !== newBaseURL) {
+      console.log(`🔄 MCP Service: Switching from ${this.baseURL} to ${newBaseURL}`);
+      this.baseURL = newBaseURL;
+      
+      // Recreate the axios client with the new base URL
+      this.client = axios.create({
+        baseURL: this.baseURL,
+        timeout: 30000,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-MCP-Client': 'React-Employee-Onboarding'
+        },
+      });
+      
+      this.setupInterceptors();
+    }
+  }
+
+  /**
    * Helper method to create employee data structure for MCP
    */
   createEmployeeDataForMCP(formData) {
@@ -244,17 +301,66 @@ class MCPService {
    * Helper method to determine default assets based on department and position
    */
   getDefaultAssets(department, position) {
-    const baseAssets = ['laptop', 'id-card'];
-    
+    // Return assets in the format expected by the MCP service (matching Postman structure)
     if (department === 'Engineering' || department === 'IT') {
-      return [...baseAssets, 'phone', 'monitor', 'keyboard-mouse'];
+      return [
+        {
+          assetTag: "LAPTOP-001",
+          category: "LAPTOP", 
+          priority: "HIGH"
+        },
+        {
+          assetTag: "PHONE-001",
+          category: "PHONE",
+          priority: "MEDIUM"
+        },
+        {
+          assetTag: "MONITOR-001", 
+          category: "MONITOR",
+          priority: "LOW"
+        }
+      ];
     } else if (department === 'Sales' || department === 'Marketing') {
-      return [...baseAssets, 'phone', 'tablet'];
+      return [
+        {
+          assetTag: "LAPTOP-002",
+          category: "LAPTOP",
+          priority: "HIGH"
+        },
+        {
+          assetTag: "PHONE-002",
+          category: "PHONE", 
+          priority: "HIGH"
+        },
+        {
+          assetTag: "TABLET-001",
+          category: "TABLET",
+          priority: "MEDIUM"
+        }
+      ];
     } else if (position?.toLowerCase().includes('manager')) {
-      return [...baseAssets, 'phone', 'tablet'];
+      return [
+        {
+          assetTag: "LAPTOP-003",
+          category: "LAPTOP",
+          priority: "HIGH"
+        },
+        {
+          assetTag: "PHONE-003",
+          category: "PHONE",
+          priority: "HIGH" 
+        }
+      ];
     }
     
-    return baseAssets;
+    // Default assets
+    return [
+      {
+        assetTag: "LAPTOP-001",
+        category: "LAPTOP",
+        priority: "HIGH"
+      }
+    ];
   }
 
   /**

@@ -11,10 +11,41 @@
 	<!-- Import Global Configuration -->
 	<import file="global.xml"/>
 
+	<!-- CORS Preflight Handler for OPTIONS requests -->
+	<flow name="cors-preflight-handler">
+		<http:listener config-ref="http-config" path="/*" allowedMethods="OPTIONS" doc:name="CORS Preflight Listener">
+			<http:response>
+				<http:headers><![CDATA[#[{
+					"Access-Control-Allow-Origin": attributes.headers.origin default "*",
+					"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+					"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+					"Access-Control-Max-Age": "3600"
+				}]]]></http:headers>
+			</http:response>
+		</http:listener>
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" />
+		<ee:transform doc:name="Set CORS Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[""]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" message="CORS preflight request handled for origin: #[vars.origin]" />
+	</flow>
+
 	<!-- Health Check Endpoint -->
 	<flow name="health-check">
 		<http:listener config-ref="http-config" path="/health" doc:name="Health Check Listener">
+			<http:response>
+				<http:headers><![CDATA[#[{
+					"Access-Control-Allow-Origin": attributes.headers.origin default "*",
+					"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+					"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+					"Access-Control-Max-Age": "3600"
+				}]]]></http:headers>
+			</http:response>
 		</http:listener>
+		<!-- CORS Headers for Browser Access -->
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" />
 		<set-payload
 			value="#[{'status': 'UP', 'service': 'Employee Onboarding Agent Broker', 'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}, 'orchestrationEnabled': '${agent.broker.orchestration.enabled}'}]"
 			mimeType="application/json" />
@@ -24,7 +55,17 @@
 	<!-- MCP Server Info Endpoint -->
 	<flow name="mcp-server-info">
 		<http:listener config-ref="http-config" path="/mcp/info" doc:name="MCP Info Listener">
+			<http:response>
+				<http:headers><![CDATA[#[{
+					"Access-Control-Allow-Origin": attributes.headers.origin default "*",
+					"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+					"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+					"Access-Control-Max-Age": "3600"
+				}]]]></http:headers>
+			</http:response>
 		</http:listener>
+		<!-- CORS Headers for Browser Access -->
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" />
 		<set-payload
 			value="#[{'name': 'Employee Onboarding Agent Broker', 'version': '1.0.0', 'description': 'Agent Broker MCP Server for Employee Onboarding Process Orchestration', 'tools': [{'name': 'orchestrate-employee-onboarding', 'description': 'Complete employee onboarding process orchestration', 'endpoint': '/mcp/tools/orchestrate-employee-onboarding'}, {'name': 'get-onboarding-status', 'description': 'Get employee onboarding process status', 'endpoint': '/mcp/tools/get-onboarding-status'}, {'name': 'retry-failed-step', 'description': 'Retry a failed onboarding step', 'endpoint': '/mcp/tools/retry-failed-step'}]}]"
 			mimeType="application/json" />
@@ -34,7 +75,18 @@
 	<!-- Main MCP Tool: Orchestrate Complete Employee Onboarding -->
 	<flow name="orchestrate-employee-onboarding">
 		<http:listener config-ref="http-config" path="/mcp/tools/orchestrate-employee-onboarding" doc:name="Orchestrate Employee Onboarding Listener">
+			<http:response>
+				<http:headers><![CDATA[#[{
+					"Access-Control-Allow-Origin": attributes.headers.origin default "*",
+					"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+					"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+					"Access-Control-Max-Age": "3600"
+				}]]]></http:headers>
+			</http:response>
 		</http:listener>
+
+		<!-- CORS Headers for Browser Access -->
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" />
 
 		<logger level="INFO" message="Starting complete employee onboarding orchestration for: #[payload.email]" />
 
@@ -266,6 +318,14 @@ output application/json
 	<!-- MCP Tool: Get Onboarding Status -->
 	<flow name="get-onboarding-status">
 		<http:listener config-ref="http-config" path="/mcp/tools/get-onboarding-status" doc:name="Get Onboarding Status Listener">
+			<http:response>
+				<http:headers><![CDATA[#[{
+					"Access-Control-Allow-Origin": attributes.headers.origin default "*",
+					"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+					"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+					"Access-Control-Max-Age": "3600"
+				}]]]></http:headers>
+			</http:response>
 		</http:listener>
 
 		<logger level="INFO" message="Getting onboarding status for employee: #[payload.employeeId]" />
@@ -295,6 +355,14 @@ output application/json
 	<!-- MCP Tool: Retry Failed Step -->
 	<flow name="retry-failed-step">
 		<http:listener config-ref="http-config" path="/mcp/tools/retry-failed-step" doc:name="Retry Failed Step Listener">
+			<http:response>
+				<http:headers><![CDATA[#[{
+					"Access-Control-Allow-Origin": attributes.headers.origin default "*",
+					"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+					"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+					"Access-Control-Max-Age": "3600"
+				}]]]></http:headers>
+			</http:response>
 		</http:listener>
 
 		<logger level="INFO" message="Retrying failed step: #[payload.step] for employee: #[payload.employeeId]" />
