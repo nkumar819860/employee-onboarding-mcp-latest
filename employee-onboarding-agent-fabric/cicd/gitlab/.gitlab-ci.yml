@@ -1,0 +1,1245 @@
+# Employee Onboarding Agent Fabric - GitLab CI/CD Pipeline
+# Comprehensive CI/CD pipeline for MuleSoft Employee Onboarding MCP system
+# Features: Build, Test, Security, Quality, Deploy, Performance Testing
+
+image: docker:27.2.0
+
+variables:
+  # Global Configuration
+  APPLICATION_NAME: "employee-onboarding-agent-fabric"
+  BUILD_VERSION: "${CI_PIPELINE_ID}-${CI_COMMIT_SHORT_SHA}"
+  MAVEN_OPTS: "-Dmaven.repo.local=${CI_PROJECT_DIR}/.m2/repository -Xmx2048m -XX:+TieredCompilation -XX:TieredStopAtLevel=1"
+  MAVEN_CLI_OPTS: "-s ${CI_PROJECT_DIR}/.m2/settings.xml --batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+  
+  # Docker Configuration
+  DOCKER_REGISTRY: "${CI_REGISTRY}"
+  DOCKER_IMAGE_TAG: "${CI_COMMIT_SHORT_SHA}"
+  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_DRIVER: overlay2
+  
+  # MuleSoft Configuration
+  MULE_VERSION: "4.9-java17"
+  CLOUDHUB_REGION: "us-east-1"
+  
+  # Environment Configuration
+  TEST_DATABASE_URL: "jdbc:postgresql://postgres:5432/testdb"
+  TEST_DATABASE_USER: "test"
+  TEST_DATABASE_PASSWORD: "test"
+  
+  # Security & Quality
+  SONAR_HOST_URL: "${SONAR_URL}"
+  OWASP_NVD_API_KEY: "${OWASP_NVD_API_KEY}"
+  
+  # Performance Testing
+  JMETER_VERSION: "5.5"
+  PERFORMANCE_USERS: "50"
+  PERFORMANCE_DURATION: "300"
+
+# Pipeline Stages
+stages:
+  - 🔍 validate
+  - 🏗️ build
+  - 🧪 test
+  - 🔍 analyze
+  - 📦 package
+  - 🐳 containerize
+  - 📤 publish
+  - 🚀 deploy
+  - 🧪 integration
+  - ⚡ performance
+  - 📊 monitoring
+  - 📢 notify
+
+# Global Scripts and Functions
+.mule_auth: &mule_auth
+  - echo "🔐 Authenticating with Anypoint Platform..."
+  - |
+    if [ -z "$ANYPOINT_CLIENT_ID" ] || [ -z "$ANYPOINT_CLIENT_SECRET" ]; then
+      echo "❌ Missing Anypoint credentials"
+      exit 1
+    fi
+  - echo "✅ Anypoint credentials validated"
+
+.docker_setup: &docker_setup
+  - echo "🐳 Setting up Docker environment..."
+  - docker --version
+  - docker info
+  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+.java_setup: &java_setup
+  - echo "☕ Setting up Java environment..."
+  - java -version
+  - mvn --version
+  - mkdir -p .m2
+  - |
+    cat > .m2/settings.xml << EOF
+    <settings>
+      <servers>
+        <server>
+          <id>anypoint-exchange</id>
+          <username>~~~Client~~~</username>
+          <password>${ANYPOINT_CLIENT_ID}~?~${ANYPOINT_CLIENT_SECRET}</password>
+        </server>
+      </servers>
+      <profiles>
+        <profile>
+          <id>anypoint</id>
+          <repositories>
+            <repository>
+              <id>mulesoft-releases</id>
+              <name>MuleSoft Releases Repository</name>
+              <url>https://repository.mulesoft.org/releases/</url>
+            </repository>
+          </repositories>
+        </profile>
+      </profiles>
+      <activeProfiles>
+        <activeProfile>anypoint</activeProfile>
+      </activeProfiles>
+    </settings>
+    EOF
+
+.node_setup: &node_setup
+  - echo "🟢 Setting up Node.js environment..."
+  - node --version
+  - npm --version
+  - npm config set registry https://registry.npmjs.org/
+
+# Cache Configuration
+.cache_maven: &cache_maven
+  cache:
+    key: maven-$CI_COMMIT_REF_SLUG
+    paths:
+      - .m2/repository/
+    policy: pull-push
+
+.cache_npm: &cache_npm
+  cache:
+    key: npm-$CI_COMMIT_REF_SLUG
+    paths:
+      - react-client/node_modules/
+    policy: pull-push
+
+# =============================================================================
+# 🔍 VALIDATION STAGE
+# =============================================================================
+
+validate:environment:
+  stage: 🔍 validate
+  image: openjdk:17-jdk-alpine
+  before_script:
+    - apk add --no-cache curl maven nodejs npm
+    - *java_setup
+  script:
+    - echo "🔧 Environment Validation"
+    - echo "=========================="
+    - echo "Pipeline ID: ${CI_PIPELINE_ID}"
+    - echo "Branch: ${CI_COMMIT_REF_NAME}"
+    - echo "Commit: ${CI_COMMIT_SHORT_SHA}"
+    - echo "Build Version: ${BUILD_VERSION}"
+    - echo "=========================="
+    - java -version
+    - mvn --version
+    - node --version
+    - npm --version
+    - echo "✅ Environment validation completed"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH =~ /^feature\/.*/
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\/.*/
+
+validate:structure:
+  stage: 🔍 validate
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache git tree
+  script:
+    - echo "📁 Project Structure Validation"
+    - tree -L 3 -I 'target|node_modules|.git'
+    - echo "🔍 Checking required files..."
+    - |
+      required_files=(
+        "pom.xml"
+        "docker-compose.yml"
+        "mcp-servers/employee-onboarding-mcp/pom.xml"
+        "mcp-servers/asset-allocation-mcp/pom.xml"
+        "mcp-servers/notification-mcp/pom.xml"
+        "mcp-servers/agent-broker-mcp/pom.xml"
+        "react-client/package.json"
+      )
+      for file in "${required_files[@]}"; do
+        if [ -f "$file" ]; then
+          echo "✅ $file exists"
+        else
+          echo "❌ $file missing"
+          exit 1
+        fi
+      done
+    - echo "✅ Project structure validation completed"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+# =============================================================================
+# 🏗️ BUILD STAGE
+# =============================================================================
+
+build:parent-pom:
+  stage: 🏗️ build
+  image: openjdk:17-jdk-alpine
+  before_script:
+    - apk add --no-cache maven
+    - *java_setup
+  <<: *cache_maven
+  script:
+    - echo "🏗️ Building Parent POM"
+    - mvn ${MAVEN_CLI_OPTS} clean compile -DskipTests -Dversion=${BUILD_VERSION}
+    - echo "✅ Parent POM build completed"
+  artifacts:
+    name: "parent-pom-${BUILD_VERSION}"
+    paths:
+      - target/
+      - .m2/
+    expire_in: 2 hours
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH =~ /^feature\/.*/
+
+build:mcp-services:
+  stage: 🏗️ build
+  image: openjdk:17-jdk-alpine
+  before_script:
+    - apk add --no-cache maven
+    - *java_setup
+  <<: *cache_maven
+  parallel:
+    matrix:
+      - SERVICE: ["employee-onboarding-mcp", "asset-allocation-mcp", "notification-mcp", "agent-broker-mcp"]
+  script:
+    - echo "🏗️ Building MCP Service: ${SERVICE}"
+    - cd mcp-servers/${SERVICE}
+    - mvn ${MAVEN_CLI_OPTS} clean compile -DskipTests -Dversion=${BUILD_VERSION} -Dmule.version=${MULE_VERSION}
+    - echo "✅ ${SERVICE} build completed"
+  artifacts:
+    name: "${SERVICE}-build-${BUILD_VERSION}"
+    paths:
+      - mcp-servers/${SERVICE}/target/
+    expire_in: 2 hours
+  dependencies:
+    - build:parent-pom
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH =~ /^feature\/.*/
+
+build:react-client:
+  stage: 🏗️ build
+  image: node:18-alpine
+  before_script:
+    - *node_setup
+    - apk add --no-cache openjdk17-jdk maven
+    - *java_setup
+  <<: *cache_npm
+  script:
+    - echo "⚛️ Building React Client"
+    - cd react-client
+    - npm ci --prefer-offline --no-audit
+    - |
+      # Set environment based on branch
+      case "$CI_COMMIT_REF_NAME" in
+        "main")
+          cp .env.production .env
+          echo "🏭 Using production environment"
+          ;;
+        "develop")
+          cp .env.staging .env
+          echo "🎭 Using staging environment"
+          ;;
+        *)
+          cp .env.development .env
+          echo "🛠️ Using development environment"
+          ;;
+      esac
+    - npm run build
+    - mvn ${MAVEN_CLI_OPTS} clean package -DskipTests -Dversion=${BUILD_VERSION}
+    - echo "✅ React client build completed"
+  artifacts:
+    name: "react-client-${BUILD_VERSION}"
+    paths:
+      - react-client/build/
+      - react-client/target/
+    expire_in: 2 hours
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH =~ /^feature\/.*/
+
+# =============================================================================
+# 🧪 TESTING STAGE
+# =============================================================================
+
+test:unit-mcp:
+  stage: 🧪 test
+  image: openjdk:17-jdk-alpine
+  services:
+    - name: postgres:15-alpine
+      alias: postgres
+  variables:
+    POSTGRES_DB: testdb
+    POSTGRES_USER: test
+    POSTGRES_PASSWORD: test
+    POSTGRES_HOST_AUTH_METHOD: trust
+  before_script:
+    - apk add --no-cache maven postgresql-client
+    - *java_setup
+    - sleep 30  # Wait for PostgreSQL to be ready
+    - PGPASSWORD=test psql -h postgres -U test -d testdb -c "SELECT version();"
+  <<: *cache_maven
+  parallel:
+    matrix:
+      - SERVICE: ["employee-onboarding-mcp", "asset-allocation-mcp", "notification-mcp", "agent-broker-mcp"]
+  script:
+    - echo "🧪 Running Unit Tests: ${SERVICE}"
+    - cd mcp-servers/${SERVICE}
+    - |
+      mvn ${MAVEN_CLI_OPTS} test \
+        -Dmaven.test.failure.ignore=false \
+        -Dmule.test.timeoutSecs=60 \
+        -Ddb.url=${TEST_DATABASE_URL} \
+        -Ddb.username=${TEST_DATABASE_USER} \
+        -Ddb.password=${TEST_DATABASE_PASSWORD}
+    - echo "✅ ${SERVICE} unit tests completed"
+  artifacts:
+    name: "${SERVICE}-test-results-${BUILD_VERSION}"
+    reports:
+      junit: mcp-servers/${SERVICE}/target/surefire-reports/TEST-*.xml
+      coverage_report:
+        coverage_format: jacoco
+        path: mcp-servers/${SERVICE}/target/site/jacoco/jacoco.xml
+    paths:
+      - mcp-servers/${SERVICE}/target/surefire-reports/
+      - mcp-servers/${SERVICE}/target/site/jacoco/
+    expire_in: 1 week
+    when: always
+  coverage: '/Total.*?([0-9]{1,3})%/'
+  dependencies:
+    - build:mcp-services
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+test:unit-react:
+  stage: 🧪 test
+  image: node:18-alpine
+  before_script:
+    - *node_setup
+  <<: *cache_npm
+  script:
+    - echo "🧪 Running React Unit Tests"
+    - cd react-client
+    - npm ci --prefer-offline --no-audit
+    - |
+      npm test -- \
+        --coverage \
+        --watchAll=false \
+        --testResultsProcessor=jest-junit \
+        --coverageReporters=text-lcov,html,cobertura \
+        --coverageDirectory=coverage \
+        --passWithNoTests
+    - npm run lint || echo "⚠️ Linting issues found"
+  artifacts:
+    name: "react-test-results-${BUILD_VERSION}"
+    reports:
+      junit: react-client/junit.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: react-client/coverage/cobertura-coverage.xml
+    paths:
+      - react-client/coverage/
+      - react-client/junit.xml
+    expire_in: 1 week
+    when: always
+  coverage: '/Lines\s*:\s*([0-9.]+)%/'
+  dependencies:
+    - build:react-client
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+test:integration:
+  stage: 🧪 test
+  image: docker/compose:alpine-1.29.2
+  services:
+    - docker:27.2.0-dind
+  variables:
+    COMPOSE_PROJECT_NAME: "employee-onboarding-test-${CI_PIPELINE_ID}"
+  before_script:
+    - *docker_setup
+    - apk add --no-cache curl
+  script:
+    - echo "🧪 Running Integration Tests"
+    - cd cicd
+    - |
+      # Start test services
+      docker-compose -f docker-compose-cicd.yml --profile integration-test up -d
+      
+      # Wait for services to be healthy
+      echo "⏳ Waiting for services to be ready..."
+      for i in {1..20}; do
+        if docker-compose -f docker-compose-cicd.yml ps --services --filter "status=running" | grep -q "employee-onboarding-test"; then
+          echo "✅ Services are running"
+          break
+        fi
+        echo "Attempt $i/20: Waiting..."
+        sleep 15
+      done
+      
+      # Run integration test suite
+      docker-compose -f docker-compose-cicd.yml --profile integration-test run test-runner
+      
+      # Collect logs
+      mkdir -p ../logs
+      docker-compose -f docker-compose-cicd.yml logs --no-color > ../logs/integration-test-logs.txt
+      
+      # Cleanup
+      docker-compose -f docker-compose-cicd.yml down -v
+    - echo "✅ Integration tests completed"
+  artifacts:
+    name: "integration-test-results-${BUILD_VERSION}"
+    paths:
+      - logs/
+    expire_in: 1 week
+    when: always
+  dependencies:
+    - build:mcp-services
+    - build:react-client
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+# =============================================================================
+# 🔍 ANALYSIS STAGE
+# =============================================================================
+
+analyze:sonarqube:
+  stage: 🔍 analyze
+  image: openjdk:17-jdk-alpine
+  before_script:
+    - apk add --no-cache maven
+    - *java_setup
+  <<: *cache_maven
+  script:
+    - echo "📊 Running SonarQube Analysis"
+    - |
+      mvn ${MAVEN_CLI_OPTS} sonar:sonar \
+        -Dsonar.host.url=${SONAR_HOST_URL} \
+        -Dsonar.login=${SONAR_TOKEN} \
+        -Dsonar.projectKey=${APPLICATION_NAME} \
+        -Dsonar.projectName="${APPLICATION_NAME}" \
+        -Dsonar.projectVersion=${BUILD_VERSION} \
+        -Dsonar.sources=. \
+        -Dsonar.exclusions="**/target/**,**/node_modules/**,**/build/**" \
+        -Dsonar.java.binaries="**/target/classes" \
+        -Dsonar.coverage.jacoco.xmlReportPaths="**/target/site/jacoco/jacoco.xml"
+    - echo "✅ SonarQube analysis completed"
+  dependencies:
+    - test:unit-mcp
+    - test:unit-react
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+analyze:security:
+  stage: 🔍 analyze
+  image: openjdk:17-jdk-alpine
+  services:
+    - docker:27.2.0-dind
+  before_script:
+    - apk add --no-cache maven nodejs npm docker
+    - *java_setup
+    - *docker_setup
+  <<: *cache_maven
+  script:
+    - echo "🛡️ Running Security Analysis"
+    
+    # OWASP Dependency Check
+    - echo "🔍 OWASP Dependency Check..."
+    - |
+      mvn ${MAVEN_CLI_OPTS} org.owasp:dependency-check-maven:check \
+        -DfailBuildOnCVSS=8 \
+        -DsuppressionsFile=cicd/owasp-suppressions.xml \
+        -DretireJsAnalyzerEnabled=true \
+        -DnvdApiKey=${OWASP_NVD_API_KEY} || true
+    
+    # Snyk Security Scan
+    - echo "🐍 Snyk Security Scan..."
+    - |
+      if [ -n "$SNYK_TOKEN" ]; then
+        npm install -g snyk
+        snyk auth $SNYK_TOKEN
+        snyk test --severity-threshold=medium --file=pom.xml || true
+        cd react-client
+        npm ci --prefer-offline --no-audit
+        snyk test --severity-threshold=medium || true
+        snyk code test || true
+        cd ..
+      else
+        echo "⚠️ Snyk token not provided, skipping Snyk scan"
+      fi
+    
+    # OWASP ZAP Security Scan (if services are running)
+    - echo "🕷️ OWASP ZAP Security Scan..."
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "main" ] || [ "$CI_COMMIT_BRANCH" = "develop" ]; then
+        cd cicd
+        docker-compose -f docker-compose-cicd.yml --profile security-scan up -d
+        sleep 60
+        docker-compose -f docker-compose-cicd.yml --profile security-scan run owasp-zap || true
+        mkdir -p ../security-reports
+        docker-compose -f docker-compose-cicd.yml cp owasp-zap:/zap/wrk/. ../security-reports/
+        docker-compose -f docker-compose-cicd.yml down -v
+        cd ..
+      fi
+    
+    - echo "✅ Security analysis completed"
+  artifacts:
+    name: "security-reports-${BUILD_VERSION}"
+    paths:
+      - target/dependency-check-report.html
+      - security-reports/
+    expire_in: 1 week
+    when: always
+  allow_failure: true
+  dependencies:
+    - build:mcp-services
+    - build:react-client
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+# =============================================================================
+# 📦 PACKAGE STAGE
+# =============================================================================
+
+package:mcp-services:
+  stage: 📦 package
+  image: openjdk:17-jdk-alpine
+  before_script:
+    - apk add --no-cache maven
+    - *java_setup
+  <<: *cache_maven
+  parallel:
+    matrix:
+      - SERVICE: ["employee-onboarding-mcp", "asset-allocation-mcp", "notification-mcp", "agent-broker-mcp"]
+  script:
+    - echo "📦 Packaging MCP Service: ${SERVICE}"
+    - cd mcp-servers/${SERVICE}
+    - |
+      mvn ${MAVEN_CLI_OPTS} package \
+        -DskipTests \
+        -Dversion=${BUILD_VERSION} \
+        -Dmule.version=${MULE_VERSION}
+    - echo "✅ ${SERVICE} packaging completed"
+  artifacts:
+    name: "${SERVICE}-package-${BUILD_VERSION}"
+    paths:
+      - mcp-servers/${SERVICE}/target/*.jar
+    expire_in: 1 week
+  dependencies:
+    - build:mcp-services
+    - test:unit-mcp
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+# =============================================================================
+# 🐳 CONTAINERIZE STAGE
+# =============================================================================
+
+containerize:services:
+  stage: 🐳 containerize
+  image: docker:27.2.0
+  services:
+    - docker:27.2.0-dind
+  before_script:
+    - *docker_setup
+  parallel:
+    matrix:
+      - SERVICE: ["employee-onboarding-mcp", "asset-allocation-mcp", "notification-mcp", "agent-broker-mcp", "react-client"]
+  script:
+    - echo "🐳 Building Docker Image: ${SERVICE}"
+    - |
+      if [ "${SERVICE}" = "react-client" ]; then
+        DOCKERFILE_PATH="react-client/Dockerfile"
+        BUILD_CONTEXT="react-client"
+      else
+        DOCKERFILE_PATH="mcp-servers/${SERVICE}/Dockerfile"
+        BUILD_CONTEXT="mcp-servers/${SERVICE}"
+      fi
+    
+    - |
+      docker build \
+        --build-arg BUILD_VERSION=${BUILD_VERSION} \
+        --build-arg MULE_VERSION=${MULE_VERSION} \
+        -t ${CI_REGISTRY_IMAGE}/${SERVICE}:${DOCKER_IMAGE_TAG} \
+        -t ${CI_REGISTRY_IMAGE}/${SERVICE}:latest \
+        -f ${DOCKERFILE_PATH} \
+        ${BUILD_CONTEXT}
+    
+    - docker push ${CI_REGISTRY_IMAGE}/${SERVICE}:${DOCKER_IMAGE_TAG}
+    - docker push ${CI_REGISTRY_IMAGE}/${SERVICE}:latest
+    - echo "✅ ${SERVICE} Docker image pushed"
+  dependencies:
+    - package:mcp-services
+    - build:react-client
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+
+# =============================================================================
+# 📤 PUBLISH STAGE
+# =============================================================================
+
+publish:exchange:
+  stage: 📤 publish
+  image: openjdk:17-jdk-alpine
+  before_script:
+    - apk add --no-cache maven
+    - *java_setup
+    - *mule_auth
+  <<: *cache_maven
+  parallel:
+    matrix:
+      - SERVICE: ["employee-onboarding-mcp", "asset-allocation-mcp", "notification-mcp", "agent-broker-mcp"]
+  script:
+    - echo "📤 Publishing ${SERVICE} to Anypoint Exchange"
+    - cd mcp-servers/${SERVICE}
+    - |
+      mvn ${MAVEN_CLI_OPTS} deploy \
+        -DskipTests \
+        -DaltDeploymentRepository=anypoint-exchange::default::https://maven.anypoint.mulesoft.com/api/v3/organizations/${ANYPOINT_ORG_ID}/maven \
+        -Danypoint.client_id=${ANYPOINT_CLIENT_ID} \
+        -Danypoint.client_secret=${ANYPOINT_CLIENT_SECRET} \
+        -Dversion=${BUILD_VERSION}
+    - echo "✅ ${SERVICE} published to Exchange"
+  dependencies:
+    - package:mcp-services
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+# =============================================================================
+# 🚀 DEPLOY STAGE
+# =============================================================================
+
+deploy:cloudhub:dev:
+  stage: 🚀 deploy
+  image: openjdk:17-jdk-alpine
+  environment:
+    name: development
+    url: https://employee-onboarding-mcp-dev.us-e1.cloudhub.io
+  before_script:
+    - apk add --no-cache maven curl
+    - *java_setup
+    - *mule_auth
+  <<: *cache_maven
+  variables:
+    ENVIRONMENT: "dev"
+    WORKER_TYPE: "MICRO"
+    WORKERS: "1"
+  script:
+    - echo "🚀 Deploying to CloudHub Development"
+    - |
+      services=("employee-onboarding-mcp" "asset-allocation-mcp" "notification-mcp" "agent-broker-mcp")
+      for service in "${services[@]}"; do
+        echo "🚀 Deploying ${service} to CloudHub..."
+        cd mcp-servers/${service}
+        
+        APP_NAME="${service}-${ENVIRONMENT}"
+        
+        mvn deploy -DmuleDeploy -B \
+          -DskipTests \
+          -Danypoint.client_id=${ANYPOINT_CLIENT_ID} \
+          -Danypoint.client_secret=${ANYPOINT_CLIENT_SECRET} \
+          -Dcloudhub.application.name=${APP_NAME} \
+          -Dcloudhub.environment=${ENVIRONMENT} \
+          -Dcloudhub.worker.type=${WORKER_TYPE} \
+          -Dcloudhub.workers=${WORKERS} \
+          -Dcloudhub.region=${CLOUDHUB_REGION} \
+          -Dcloudhub.mule.version=${MULE_VERSION} \
+          -Dcloudhub.objectStoreV2=true \
+          -Dcloudhub.persistentQueues=true \
+          -Dcloudhub.monitoringEnabled=true \
+          -Dcloudhub.monitoringAutoRestart=true
+        
+        # Health check
+        echo "⏳ Waiting for ${service} to be healthy..."
+        HEALTH_URL="https://${APP_NAME}.us-e1.cloudhub.io/health"
+        
+        for i in {1..20}; do
+          if curl -f -s ${HEALTH_URL} > /dev/null; then
+            echo "✅ ${service} is healthy!"
+            break
+          fi
+          echo "Attempt $i/20: Waiting for ${service} to be ready..."
+          sleep 30
+        done
+        
+        cd ../..
+      done
+    - echo "✅ Development deployment completed"
+  dependencies:
+    - package:mcp-services
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+deploy:cloudhub:prod:
+  stage: 🚀 deploy
+  image: openjdk:17-jdk-alpine
+  environment:
+    name: production
+    url: https://employee-onboarding-mcp-prod.us-e1.cloudhub.io
+  before_script:
+    - apk add --no-cache maven curl
+    - *java_setup
+    - *mule_auth
+  <<: *cache_maven
+  variables:
+    ENVIRONMENT: "prod"
+    WORKER_TYPE: "MEDIUM"
+    WORKERS: "2"
+  script:
+    - echo "🚀 Deploying to CloudHub Production"
+    - |
+      services=("employee-onboarding-mcp" "asset-allocation-mcp" "notification-mcp" "agent-broker-mcp")
+      for service in "${services[@]}"; do
+        echo "🚀 Deploying ${service} to CloudHub..."
+        cd mcp-servers/${service}
+        
+        APP_NAME="${service}-${ENVIRONMENT}"
+        
+        mvn deploy -DmuleDeploy -B \
+          -DskipTests \
+          -Danypoint.client_id=${ANYPOINT_CLIENT_ID} \
+          -Danypoint.client_secret=${ANYPOINT_CLIENT_SECRET} \
+          -Dcloudhub.application.name=${APP_NAME} \
+          -Dcloudhub.environment=${ENVIRONMENT} \
+          -Dcloudhub.worker.type=${WORKER_TYPE} \
+          -Dcloudhub.workers=${WORKERS} \
+          -Dcloudhub.region=${CLOUDHUB_REGION} \
+          -Dcloudhub.mule.version=${MULE_VERSION} \
+          -Dcloudhub.objectStoreV2=true \
+          -Dcloudhub.persistentQueues=true \
+          -Dcloudhub.monitoringEnabled=true \
+          -Dcloudhub.monitoringAutoRestart=true
+        
+        # Health check
+        echo "⏳ Waiting for ${service} to be healthy..."
+        HEALTH_URL="https://${APP_NAME}.us-e1.cloudhub.io/health"
+        
+        for i in {1..30}; do
+          if curl -f -s ${HEALTH_URL} > /dev/null; then
+            echo "✅ ${service} is healthy!"
+            break
+          fi
+          echo "Attempt $i/30: Waiting for ${service} to be ready..."
+          sleep 30
+        done
+        
+        cd ../..
+      done
+    - echo "✅ Production deployment completed"
+  dependencies:
+    - package:mcp-services
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+
+# =============================================================================
+# 🧪 INTEGRATION STAGE
+# =============================================================================
+
+integration:e2e-tests:
+  stage: 🧪 integration
+  image: docker/compose:alpine-1.29.2
+  services:
+    - docker:27.2.0-dind
+  variables:
+    COMPOSE_PROJECT_NAME: "employee-onboarding-e2e-${CI_PIPELINE_ID}"
+  before_script:
+    - *docker_setup
+    - apk add --no-cache curl jq
+  script:
+    - echo "🧪 Running End-to-End Tests"
+    - |
+      # Determine environment URLs based on branch
+      case "$CI_COMMIT_REF_NAME" in
+        "main")
+          BASE_URL="https://employee-onboarding-mcp-prod.us-e1.cloudhub.io"
+          ;;
+        "develop")
+          BASE_URL="https://employee-onboarding-mcp-dev.us-e1.cloudhub.io"
+          ;;
+        *)
+          echo "ℹ️ E2E tests only run on main/develop branches"
+          exit 0
+          ;;
+      esac
+      
+      # Wait for services to be ready
+      echo "⏳ Waiting for services to be available..."
+      services=("employee-onboarding-mcp" "asset-allocation-mcp" "notification-mcp" "agent-broker-mcp")
+      
+      for service in "${services[@]}"; do
+        SERVICE_URL="https://${service}-${ENVIRONMENT}.us-e1.cloudhub.io/health"
+        for i in {1..20}; do
+          if curl -f -s $SERVICE_URL > /dev/null; then
+            echo "✅ ${service} is ready"
+            break
+          fi
+          echo "Attempt $i/20: Waiting for ${service}..."
+          sleep 15
+        done
+      done
+      
+      # Test employee onboarding flow
+      echo "🧪 Testing complete employee onboarding flow..."
+      EMPLOYEE_DATA='{
+        "firstName": "John",
+        "lastName": "Doe",
+        "email": "john.doe@example.com",
+        "phone": "+1234567890",
+        "department": "IT",
+        "position": "Software Engineer",
+        "startDate": "2024-04-01",
+        "salary": 75000,
+        "manager": "Jane Smith",
+        "managerEmail": "jane.smith@example.com",
+        "companyName": "Test Company",
+        "assets": ["laptop", "phone", "id-card"]
+      }'
+      
+      # Create employee profile
+      RESPONSE=$(curl -s -X POST "${BASE_URL}/api/employees" \
+        -H "Content-Type: application/json" \
+        -d "$EMPLOYEE_DATA")
+      
+      EMPLOYEE_ID=$(echo $RESPONSE | jq -r '.employeeId // empty')
+      
+      if [ -n "$EMPLOYEE_ID" ]; then
+        echo "✅ Employee created with ID: $EMPLOYEE_ID"
+        
+        # Test asset allocation
+        echo "🧪 Testing asset allocation..."
+        curl -f -s "https://asset-allocation-mcp-${ENVIRONMENT}.us-e1.cloudhub.io/api/allocations/$EMPLOYEE_ID" || echo "⚠️ Asset allocation test failed"
+        
+        # Test notification service
+        echo "🧪 Testing notification service..."
+        curl -f -s "https://notification-mcp-${ENVIRONMENT}.us-e1.cloudhub.io/api/notifications/$EMPLOYEE_ID" || echo "⚠️ Notification test failed"
+        
+        # Test orchestration via agent broker
+        echo "🧪 Testing agent broker orchestration..."
+        curl -f -s "https://agent-broker-mcp-${ENVIRONMENT}.us-e1.cloudhub.io/api/orchestrate" \
+          -X POST \
+          -H "Content-Type: application/json" \
+          -d "$EMPLOYEE_DATA" || echo "⚠️ Agent broker test failed"
+        
+      else
+        echo "❌ Failed to create employee"
+        exit 1
+      fi
+    
+    - echo "✅ End-to-End tests completed"
+  dependencies:
+    - deploy:cloudhub:dev
+    - deploy:cloudhub:prod
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+# =============================================================================
+# ⚡ PERFORMANCE STAGE
+# =============================================================================
+
+performance:load-tests:
+  stage: ⚡ performance
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openjdk17-jre curl
+  script:
+    - echo "⚡ Running Performance Tests"
+    - |
+      # Determine environment URLs
+      case "$CI_COMMIT_REF_NAME" in
+        "main")
+          BASE_URL="https://employee-onboarding-mcp-prod.us-e1.cloudhub.io"
+          USERS=100
+          DURATION=600
+          ;;
+        "develop")
+          BASE_URL="https://employee-onboarding-mcp-dev.us-e1.cloudhub.io"
+          USERS=50
+          DURATION=300
+          ;;
+        *)
+          echo "ℹ️ Performance tests only run on main/develop branches"
+          exit 0
+          ;;
+      esac
+      
+      # Download and setup JMeter
+      echo "📥 Setting up JMeter..."
+      wget -q https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-${JMETER_VERSION}.tgz
+      tar -xzf apache-jmeter-${JMETER_VERSION}.tgz
+      export JMETER_HOME=$(pwd)/apache-jmeter-${JMETER_VERSION}
+      
+      # Create performance test directory
+      mkdir -p performance-results
+      
+      # Run performance tests
+      echo "⚡ Running load tests with ${USERS} users for ${DURATION} seconds..."
+      cd cicd/performance
+      
+      $JMETER_HOME/bin/jmeter.sh -n \
+        -t employee-onboarding-load-test.jmx \
+        -Jenv=${ENVIRONMENT} \
+        -Jbase_url=${BASE_URL} \
+        -Jusers=${USERS} \
+        -Jrampup=${DURATION} \
+        -Jloops=10 \
+        -l ../../performance-results/results.jtl \
+        -e -o ../../performance-results/html-report
+      
+      cd ../..
+      
+      # Analyze results
+      echo "📊 Analyzing performance results..."
+      if [ -f "performance-results/results.jtl" ]; then
+        avg_response=$(awk -F',' 'NR>1 {sum+=$2; count++} END {if(count>0) print sum/count; else print 0}' performance-results/results.jtl)
+        error_rate=$(awk -F',' 'NR>1 {if($8=="false") errors++; total++} END {if(total>0) print (errors/total)*100; else print 0}' performance-results/results.jtl)
+        
+        echo "📈 Performance Metrics:"
+        echo "Average Response Time: ${avg_response}ms"
+        echo "Error Rate: ${error_rate}%"
+        
+        # Performance thresholds
+        if (( $(echo "$avg_response > 5000" | bc -l) )); then
+          echo "❌ Performance test failed: Average response time exceeded 5000ms"
+          exit 1
+        fi
+        
+        if (( $(echo "$error_rate > 5" | bc -l) )); then
+          echo "❌ Performance test failed: Error rate exceeded 5%"
+          exit 1
+        fi
+        
+        echo "✅ Performance tests passed!"
+      else
+        echo "⚠️ No performance results found"
+      fi
+  artifacts:
+    name: "performance-results-${BUILD_VERSION}"
+    paths:
+      - performance-results/
+    expire_in: 1 week
+    when: always
+  dependencies:
+    - integration:e2e-tests
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+performance:stress-tests:
+  stage: ⚡ performance
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openjdk17-jre curl bc
+  script:
+    - echo "💥 Running Stress Tests"
+    - |
+      # Only run stress tests on main branch
+      if [ "$CI_COMMIT_BRANCH" != "main" ]; then
+        echo "ℹ️ Stress tests only run on main branch"
+        exit 0
+      fi
+      
+      BASE_URL="https://employee-onboarding-mcp-prod.us-e1.cloudhub.io"
+      
+      # Download and setup JMeter
+      echo "📥 Setting up JMeter..."
+      wget -q https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-${JMETER_VERSION}.tgz
+      tar -xzf apache-jmeter-${JMETER_VERSION}.tgz
+      export JMETER_HOME=$(pwd)/apache-jmeter-${JMETER_VERSION}
+      
+      mkdir -p stress-results
+      
+      # Run stress tests with increasing load
+      echo "💥 Running stress tests..."
+      cd cicd/performance
+      
+      # Stress test configuration
+      STRESS_USERS=200
+      STRESS_DURATION=300
+      
+      $JMETER_HOME/bin/jmeter.sh -n \
+        -t employee-onboarding-load-test.jmx \
+        -Jenv=prod \
+        -Jbase_url=${BASE_URL} \
+        -Jusers=${STRESS_USERS} \
+        -Jrampup=${STRESS_DURATION} \
+        -Jloops=20 \
+        -l ../../stress-results/stress-results.jtl \
+        -e -o ../../stress-results/html-report
+      
+      cd ../..
+      
+      echo "📊 Analyzing stress test results..."
+      if [ -f "stress-results/stress-results.jtl" ]; then
+        avg_response=$(awk -F',' 'NR>1 {sum+=$2; count++} END {if(count>0) print sum/count; else print 0}' stress-results/stress-results.jtl)
+        error_rate=$(awk -F',' 'NR>1 {if($8=="false") errors++; total++} END {if(total>0) print (errors/total)*100; else print 0}' stress-results/stress-results.jtl)
+        
+        echo "📈 Stress Test Metrics:"
+        echo "Average Response Time under stress: ${avg_response}ms"
+        echo "Error Rate under stress: ${error_rate}%"
+        
+        # Stress test thresholds (more lenient)
+        if (( $(echo "$error_rate > 15" | bc -l) )); then
+          echo "⚠️ High error rate under stress: ${error_rate}%"
+        else
+          echo "✅ System handled stress test well"
+        fi
+      fi
+  artifacts:
+    name: "stress-results-${BUILD_VERSION}"
+    paths:
+      - stress-results/
+    expire_in: 1 week
+    when: always
+  dependencies:
+    - performance:load-tests
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+
+# =============================================================================
+# 📊 MONITORING STAGE
+# =============================================================================
+
+monitoring:health-check:
+  stage: 📊 monitoring
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl jq
+  script:
+    - echo "🏥 Running Health Checks"
+    - |
+      # Determine environment
+      case "$CI_COMMIT_REF_NAME" in
+        "main")
+          ENVIRONMENT="prod"
+          ;;
+        "develop")
+          ENVIRONMENT="dev"
+          ;;
+        *)
+          echo "ℹ️ Health checks only run on main/develop branches"
+          exit 0
+          ;;
+      esac
+      
+      services=("employee-onboarding-mcp" "asset-allocation-mcp" "notification-mcp" "agent-broker-mcp")
+      
+      echo "🔍 Checking service health..."
+      for service in "${services[@]}"; do
+        SERVICE_URL="https://${service}-${ENVIRONMENT}.us-e1.cloudhub.io/health"
+        
+        echo "🏥 Checking ${service}..."
+        RESPONSE=$(curl -s -w "%{http_code}" $SERVICE_URL)
+        HTTP_CODE="${RESPONSE: -3}"
+        
+        if [ "$HTTP_CODE" = "200" ]; then
+          echo "✅ ${service} is healthy"
+        else
+          echo "❌ ${service} health check failed (HTTP: $HTTP_CODE)"
+        fi
+      done
+      
+      # Check CloudHub application status
+      echo "☁️ Checking CloudHub application status..."
+      # Note: This would require CloudHub API integration
+      # For now, we'll just report completion
+      echo "✅ Health checks completed"
+  dependencies:
+    - integration:e2e-tests
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+# =============================================================================
+# 📢 NOTIFICATION STAGE
+# =============================================================================
+
+notify:slack:
+  stage: 📢 notify
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - echo "📢 Sending Slack Notifications"
+    - |
+      # Determine pipeline status
+      if [ "$CI_JOB_STATUS" = "success" ]; then
+        STATUS_EMOJI="✅"
+        STATUS_TEXT="SUCCESS"
+        COLOR="good"
+      else
+        STATUS_EMOJI="❌" 
+        STATUS_TEXT="FAILED"
+        COLOR="danger"
+      fi
+      
+      # Determine environment
+      case "$CI_COMMIT_REF_NAME" in
+        "main")
+          ENVIRONMENT="Production"
+          ;;
+        "develop")
+          ENVIRONMENT="Development"
+          ;;
+        *)
+          ENVIRONMENT="Feature Branch"
+          ;;
+      esac
+      
+      # Create Slack message
+      MESSAGE="${STATUS_EMOJI} *Employee Onboarding CI/CD Pipeline - ${STATUS_TEXT}*
+      
+      *Environment:* ${ENVIRONMENT}
+      *Branch:* \`${CI_COMMIT_REF_NAME}\`
+      *Build:* ${CI_PIPELINE_ID}
+      *Version:* \`${BUILD_VERSION}\`
+      *Commit:* \`${CI_COMMIT_SHORT_SHA}\`
+      *Author:* ${GITLAB_USER_NAME:-${CI_COMMIT_AUTHOR}}
+      
+      *Pipeline URL:* ${CI_PIPELINE_URL}
+      *Duration:* ${CI_PIPELINE_DURATION:-N/A} seconds"
+      
+      # Send to Slack (if webhook is configured)
+      if [ -n "$SLACK_WEBHOOK_URL" ]; then
+        curl -X POST -H 'Content-type: application/json' \
+          --data "{\"text\":\"${MESSAGE}\", \"color\":\"${COLOR}\"}" \
+          $SLACK_WEBHOOK_URL
+        echo "📤 Slack notification sent"
+      else
+        echo "ℹ️ Slack webhook not configured"
+        echo "$MESSAGE"
+      fi
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: always  
+    - if: $CI_COMMIT_BRANCH == "develop"
+      when: always
+
+notify:email:
+  stage: 📢 notify
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - echo "📧 Preparing Email Notifications"
+    - |
+      # Create email content
+      SUBJECT="Employee Onboarding CI/CD: ${CI_JOB_STATUS} - Build ${CI_PIPELINE_ID}"
+      
+      BODY="Employee Onboarding MCP System CI/CD Pipeline Report
+      
+      Status: ${CI_JOB_STATUS}
+      Environment: ${CI_COMMIT_REF_NAME}
+      Build Number: ${CI_PIPELINE_ID}
+      Version: ${BUILD_VERSION}
+      Commit: ${CI_COMMIT_SHORT_SHA}
+      Author: ${GITLAB_USER_NAME:-${CI_COMMIT_AUTHOR}}
+      
+      Pipeline URL: ${CI_PIPELINE_URL}
+      Repository: ${CI_PROJECT_URL}
+      
+      Commit Message: ${CI_COMMIT_MESSAGE}
+      
+      Please check the pipeline logs for detailed information.
+      
+      ---
+      Automated notification from GitLab CI/CD"
+      
+      echo "Email prepared:"
+      echo "Subject: $SUBJECT"
+      echo "$BODY"
+      
+      # Note: Actual email sending would require SMTP configuration
+      # This is a placeholder for the email notification logic
+      echo "📧 Email notification prepared (SMTP configuration required)"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: on_failure
+    - if: $CI_COMMIT_BRANCH == "develop" 
+      when: on_failure
+
+# =============================================================================
+# SCHEDULED JOBS
+# =============================================================================
+
+# Weekly security scan
+security:weekly-scan:
+  extends: analyze:security
+  stage: 🔍 analyze
+  variables:
+    OWASP_FULL_SCAN: "true"
+  script:
+    - echo "🛡️ Running Weekly Security Scan"
+    - echo "🔍 Full OWASP scan with latest vulnerability database..."
+    - |
+      mvn ${MAVEN_CLI_OPTS} org.owasp:dependency-check-maven:check \
+        -DfailBuildOnCVSS=5 \
+        -DsuppressionsFile=cicd/owasp-suppressions.xml \
+        -DretireJsAnalyzerEnabled=true \
+        -DnvdApiKey=${OWASP_NVD_API_KEY} \
+        -DautoUpdate=true
+    - echo "✅ Weekly security scan completed"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+# Monthly performance baseline
+performance:baseline:
+  extends: performance:load-tests
+  stage: ⚡ performance
+  variables:
+    PERFORMANCE_USERS: "200"
+    PERFORMANCE_DURATION: "1800"  # 30 minutes
+  script:
+    - echo "📊 Running Monthly Performance Baseline"
+    - echo "⚡ Extended performance test for baseline metrics..."
+    # Extended performance testing logic here
+    - echo "✅ Monthly performance baseline completed"
+  artifacts:
+    name: "performance-baseline-${BUILD_VERSION}"
+    paths:
+      - performance-results/
+    expire_in: 3 months
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"

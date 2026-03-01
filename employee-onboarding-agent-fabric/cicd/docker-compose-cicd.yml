@@ -1,0 +1,294 @@
+# Docker Compose for CI/CD Testing Environment
+# This composition provides isolated testing environment for CI/CD pipelines
+version: '3.8'
+
+services:
+  # Test Database
+  test-postgres:
+    image: postgres:15-alpine
+    container_name: cicd-test-postgres
+    environment:
+      POSTGRES_DB: testdb
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+    ports:
+      - "5433:5432"
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
+      - ../database/init-databases.sql:/docker-entrypoint-initdb.d/00-init-databases.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - cicd-test-network
+
+  # SonarQube for Code Quality
+  sonarqube:
+    image: sonarqube:9.9-community
+    container_name: cicd-sonarqube
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonar-postgres:5432/sonardb
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+    ports:
+      - "9000:9000"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    depends_on:
+      - sonar-postgres
+    networks:
+      - cicd-test-network
+
+  # SonarQube Database
+  sonar-postgres:
+    image: postgres:15-alpine
+    container_name: cicd-sonar-postgres
+    environment:
+      POSTGRES_DB: sonardb
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+    volumes:
+      - sonar_postgres_data:/var/lib/postgresql/data
+    networks:
+      - cicd-test-network
+
+  # Redis for Caching Tests
+  redis:
+    image: redis:7-alpine
+    container_name: cicd-test-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - cicd-test-network
+
+  # OWASP ZAP for Security Testing
+  owasp-zap:
+    image: owasp/zap2docker-stable
+    container_name: cicd-owasp-zap
+    command: zap-baseline.py -t http://employee-onboarding-test:8081 -J zap-report.json
+    volumes:
+      - zap_reports:/zap/wrk
+    networks:
+      - cicd-test-network
+    profiles:
+      - security-scan
+
+  # Test Services (Lightweight versions for CI/CD)
+  employee-onboarding-test:
+    build:
+      context: ../mcp-servers/employee-onboarding-mcp
+      dockerfile: Dockerfile
+      args:
+        - MULE_ENV=test
+        - BUILD_VERSION=${BUILD_VERSION:-latest}
+    container_name: employee-onboarding-test
+    ports:
+      - "8081:8081"
+    environment:
+      - http.host=0.0.0.0
+      - http.port=8081
+      - db.url=jdbc:postgresql://test-postgres:5432/testdb
+      - db.username=test
+      - db.password=test
+      - mule.env=test
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - cicd-test-network
+    profiles:
+      - integration-test
+
+  asset-allocation-test:
+    build:
+      context: ../mcp-servers/asset-allocation-mcp
+      dockerfile: Dockerfile
+      args:
+        - MULE_ENV=test
+        - BUILD_VERSION=${BUILD_VERSION:-latest}
+    container_name: asset-allocation-test
+    ports:
+      - "8082:8082"
+    environment:
+      - http.host=0.0.0.0
+      - http.port=8082
+      - db.url=jdbc:postgresql://test-postgres:5432/testdb
+      - db.username=test
+      - db.password=test
+      - mule.env=test
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - cicd-test-network
+    profiles:
+      - integration-test
+
+  notification-test:
+    build:
+      context: ../mcp-servers/notification-mcp
+      dockerfile: Dockerfile
+      args:
+        - MULE_ENV=test
+        - BUILD_VERSION=${BUILD_VERSION:-latest}
+    container_name: notification-test
+    ports:
+      - "8083:8083"
+    environment:
+      - http.host=0.0.0.0
+      - http.port=8083
+      - db.url=jdbc:postgresql://test-postgres:5432/testdb
+      - db.username=test
+      - db.password=test
+      - mule.env=test
+      - gmail.smtp.host=smtp.gmail.com
+      - gmail.smtp.port=587
+      - gmail.username=test@gmail.com
+      - gmail.password=testpassword
+    depends_on:
+      test-postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - cicd-test-network
+    profiles:
+      - integration-test
+
+  # Test Runner Service
+  test-runner:
+    image: node:18-alpine
+    container_name: cicd-test-runner
+    working_dir: /app
+    volumes:
+      - ..:/app
+    command: >
+      sh -c "
+        echo 'Installing test dependencies...' &&
+        cd cicd/tests/integration &&
+        npm install &&
+        echo 'Running integration tests...' &&
+        npm run test:integration
+      "
+    depends_on:
+      - employee-onboarding-test
+      - asset-allocation-test
+      - notification-test
+    networks:
+      - cicd-test-network
+    profiles:
+      - integration-test
+
+  # Performance Test Runner
+  performance-test:
+    image: justb4/jmeter:5.5
+    container_name: cicd-performance-test
+    volumes:
+      - ../performance:/tests
+      - jmeter_results:/results
+    command: >
+      sh -c "
+        echo 'Running JMeter performance tests...' &&
+        jmeter -n -t /tests/employee-onboarding-load-test.jmx 
+        -Jenv=test 
+        -Jusers=10 
+        -Jrampup=60 
+        -Jloops=5 
+        -l /results/performance-results.jtl 
+        -e -o /results/html-report
+      "
+    depends_on:
+      - employee-onboarding-test
+      - asset-allocation-test
+      - notification-test
+    networks:
+      - cicd-test-network
+    profiles:
+      - performance-test
+
+  # Monitoring Stack for CI/CD
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: cicd-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - cicd-test-network
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: cicd-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - cicd-test-network
+    profiles:
+      - monitoring
+
+networks:
+  cicd-test-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.26.0.0/16
+
+volumes:
+  test_postgres_data:
+    driver: local
+  sonar_postgres_data:
+    driver: local
+  sonarqube_data:
+    driver: local
+  sonarqube_logs:
+    driver: local
+  sonarqube_extensions:
+    driver: local
+  redis_data:
+    driver: local
+  zap_reports:
+    driver: local
+  jmeter_results:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

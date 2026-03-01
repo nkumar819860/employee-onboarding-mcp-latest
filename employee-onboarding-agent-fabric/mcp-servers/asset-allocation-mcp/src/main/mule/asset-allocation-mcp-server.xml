@@ -266,21 +266,21 @@ output application/json
 	<!-- Allocate Assets with Fallback Strategy -->
 	<flow name="allocate-assets-with-fallback" doc:name="Allocate Assets with Smart Fallback">
 		<try doc:name="Database Operation with Fallback">
-			<ee:transform doc:name="Validate and Transform Input">
-				<ee:message>
-					<ee:set-payload><![CDATA[%dw 2.0
+		<ee:transform doc:name="Validate and Transform Input">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
 output application/java
 ---
 {
-	employeeId: payload.employeeId,
+	employeeId: payload.employeeId default "UNKNOWN",
 	firstName: payload.firstName default "",
 	lastName: payload.lastName default "",
 	department: payload.department default "IT",
 	position: payload.position default "Employee",
-	assets: payload.assets default ["laptop", "id-card"]
+	assets: if (payload.assets != null and payload.assets is Array) payload.assets else ["laptop", "id-card"]
 }]]></ee:set-payload>
-				</ee:message>
-			</ee:transform>
+			</ee:message>
+		</ee:transform>
 			
 			<!-- Try Primary Database First -->
 			<try doc:name="Primary Database Operation">
@@ -361,7 +361,9 @@ output application/java
 		</choice>
 		
 		<!-- Allocate each requested asset -->
-		<foreach collection="#[payload.assets]">
+		<choice doc:name="Check if assets exist">
+			<when expression="#[payload.assets != null and sizeOf(payload.assets) > 0]">
+				<foreach collection="#[payload.assets]">
 			<set-variable variableName="currentAssetType" value="#[payload]" />
 			
 			<!-- Find available asset -->
@@ -421,7 +423,12 @@ output application/java
 					<logger level="WARN" message="⚠️ No available asset of type: #[vars.currentAssetType]" />
 				</otherwise>
 			</choice>
-		</foreach>
+				</foreach>
+			</when>
+			<otherwise>
+				<logger level="WARN" message="No assets to allocate for employee: #[payload.employeeId]" />
+			</otherwise>
+		</choice>
 		
 		<!-- Return success response -->
 		<ee:transform doc:name="PostgreSQL Success Response">

@@ -1,0 +1,1101 @@
+# Employee Onboarding Agent Fabric - Azure DevOps Pipeline
+# This pipeline handles build, test, security scanning, and deployment for the Employee Onboarding MCP system
+
+name: Employee-Onboarding-CI-CD-$(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+    - main
+    - develop
+    - feature/*
+    - release/*
+    - hotfix/*
+  paths:
+    include:
+    - mcp-servers/**
+    - react-client/**
+    - cicd/**
+    - pom.xml
+    - docker-compose.yml
+    exclude:
+    - README.md
+    - docs/**
+    - '*.md'
+
+pr:
+  branches:
+    include:
+    - main
+    - develop
+  paths:
+    include:
+    - mcp-servers/**
+    - react-client/**
+    - cicd/**
+    - pom.xml
+    - docker-compose.yml
+
+schedules:
+- cron: "0 2 * * 0"
+  displayName: Weekly full security scan
+  branches:
+    include:
+    - main
+  always: true
+
+variables:
+  # Build Configuration
+  applicationName: 'employee-onboarding-agent-fabric'
+  buildVersion: '$(Build.BuildNumber)-$(Build.SourceVersion)'
+  buildConfiguration: 'Release'
+  
+  # Maven Configuration
+  mavenOptions: '-Xmx3072m -XX:MaxPermSize=1024m -Djava.awt.headless=true'
+  mavenGoals: 'clean compile test package'
+  
+  # Docker Configuration
+  dockerRegistryServiceConnection: 'docker-registry-connection'
+  dockerRepository: '$(applicationName)'
+  dockerfilePath: '**/Dockerfile'
+  
+  # CloudHub Configuration
+  cloudhubRegion: 'us-east-1'
+  muleVersion: '4.9-java17'
+  
+  # Quality & Security
+  sonarCloudServiceConnection: 'SonarCloud'
+  sonarCloudProjectKey: '$(applicationName)'
+  
+  # Environment Configuration
+  ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+    environment: 'prod'
+    deployToCloudHub: true
+    runPerformanceTests: true
+  ${{ elseif eq(variables['Build.SourceBranch'], 'refs/heads/develop') }}:
+    environment: 'staging'
+    deployToCloudHub: true
+    runPerformanceTests: false
+  ${{ else }}:
+    environment: 'dev'
+    deployToCloudHub: false
+    runPerformanceTests: false
+
+parameters:
+- name: serviceSelection
+  displayName: 'Service to Build/Deploy'
+  type: string
+  default: 'all'
+  values:
+  - all
+  - employee-onboarding-mcp
+  - asset-allocation-mcp
+  - notification-mcp
+  - agent-broker-mcp
+  - react-client
+
+- name: skipTests
+  displayName: 'Skip Tests'
+  type: boolean
+  default: false
+
+- name: skipSecurityScan
+  displayName: 'Skip Security Scanning'
+  type: boolean
+  default: false
+
+- name: deployToDocker
+  displayName: 'Build and Push Docker Images'
+  type: boolean
+  default: false
+
+- name: publishToExchange
+  displayName: 'Publish to Anypoint Exchange'
+  type: boolean
+  default: true
+
+- name: runE2ETests
+  displayName: 'Run End-to-End Tests'
+  type: boolean
+  default: true
+
+stages:
+- stage: Initialize
+  displayName: '🚀 Initialize & Validate'
+  jobs:
+  - job: Validate
+    displayName: 'Environment & Prerequisites Validation'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - checkout: self
+      fetchDepth: 1
+      displayName: 'Checkout source code'
+    
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java 17'
+      inputs:
+        versionSpec: '17'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+    
+    - task: NodeTool@0
+      displayName: 'Install Node.js 18'
+      inputs:
+        versionSpec: '18.x'
+    
+    - task: Maven@3
+      displayName: 'Validate Maven Setup'
+      inputs:
+        mavenPomFile: 'pom.xml'
+        goals: 'validate'
+        options: '-B -q'
+        javaHomeOption: 'JDKVersion'
+        jdkVersionOption: '1.17'
+        mavenVersionOption: 'Default'
+        mavenAuthenticateFeed: false
+        effectivePomSkip: false
+        sonarQubeRunAnalysis: false
+    
+    - script: |
+        echo "🔧 BUILD CONFIGURATION"
+        echo "========================"
+        echo "Application: $(applicationName)"
+        echo "Version: $(buildVersion)"
+        echo "Environment: $(environment)"
+        echo "Service: ${{ parameters.serviceSelection }}"
+        echo "Branch: $(Build.SourceBranch)"
+        echo "Commit: $(Build.SourceVersion)"
+        echo "Skip Tests: ${{ parameters.skipTests }}"
+        echo "Deploy to CloudHub: $(deployToCloudHub)"
+        echo "========================"
+        
+        echo "🔍 Validating Prerequisites..."
+        java -version
+        mvn --version
+        node --version
+        npm --version
+        docker --version
+        echo "✅ All prerequisites validated"
+      displayName: 'Display Build Configuration'
+
+- stage: Analysis
+  displayName: '🔍 Pre-Build Analysis'
+  dependsOn: Initialize
+  jobs:
+  - job: CodeMetrics
+    displayName: '📊 Code Metrics & Analysis'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - checkout: self
+      fetchDepth: 0
+      displayName: 'Checkout with full history'
+    
+    - script: |
+        echo "📊 Gathering code metrics..."
+        
+        # Line count analysis
+        find . -name "*.java" -o -name "*.xml" -o -name "*.js" -o -name "*.jsx" | xargs wc -l > $(Agent.TempDirectory)/code-metrics.txt
+        
+        # Dependency analysis
+        mvn dependency:analyze > $(Agent.TempDirectory)/dependency-analysis.txt || true
+        
+        # Find potential issues
+        echo "🔍 Scanning for potential issues..."
+        find . -name "*.java" -exec grep -l "System.out.println\|printStackTrace" {} \; | tee $(Agent.TempDirectory)/debug-statements.txt || true
+        find . -name "*.properties" -exec grep -l "password\|secret\|key" {} \; | tee $(Agent.TempDirectory)/sensitive-files.txt || true
+        
+        # Changed files analysis
+        if [ "$(Build.Reason)" = "PullRequest" ]; then
+          git diff --name-only HEAD~1 HEAD | tee $(Agent.TempDirectory)/changed-files.txt
+        else
+          echo "Direct branch build - analyzing all files" | tee $(Agent.TempDirectory)/changed-files.txt
+        fi
+      displayName: 'Code Metrics Collection'
+    
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Analysis Reports'
+      inputs:
+        pathToPublish: '$(Agent.TempDirectory)'
+        artifactName: 'analysis-reports'
+        publishLocation: 'Container'
+
+  - job: SecurityPreScan
+    displayName: '🔐 Security Pre-Scan'
+    condition: and(succeeded(), eq('${{ parameters.skipSecurityScan }}', false))
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - checkout: self
+      fetchDepth: 50
+      displayName: 'Checkout recent history'
+    
+    - script: |
+        echo "🔐 Running security pre-scan..."
+        
+        # Check for hardcoded secrets in recent commits
+        echo "Scanning for hardcoded secrets..."
+        git log --oneline -10 | grep -i -E "password|secret|key|token" || true
+        
+        # Check file permissions
+        find . -type f -perm /o+w | tee $(Agent.TempDirectory)/world-writable-files.txt || true
+        
+        # Scan for TODO/FIXME comments
+        find . -name "*.java" -o -name "*.js" -o -name "*.jsx" | xargs grep -n -i "TODO\|FIXME\|HACK" | tee $(Agent.TempDirectory)/todo-fixme.txt || true
+        
+        # Check for common security anti-patterns
+        grep -r "password.*=" --include="*.properties" --include="*.yml" --include="*.yaml" . || true
+      displayName: 'Security Pre-Scan'
+    
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Security Pre-Scan Results'
+      inputs:
+        pathToPublish: '$(Agent.TempDirectory)'
+        artifactName: 'security-prescan-reports'
+        publishLocation: 'Container'
+
+- stage: Build
+  displayName: '🏗️ Build & Compile'
+  dependsOn: Analysis
+  jobs:
+  - job: BuildServices
+    displayName: 'Build MCP Services & React Client'
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      matrix:
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'employee-onboarding-mcp')) }}:
+          employee-onboarding-mcp:
+            serviceName: 'employee-onboarding-mcp'
+            serviceType: 'mcp'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'asset-allocation-mcp')) }}:
+          asset-allocation-mcp:
+            serviceName: 'asset-allocation-mcp'
+            serviceType: 'mcp'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'notification-mcp')) }}:
+          notification-mcp:
+            serviceName: 'notification-mcp'
+            serviceType: 'mcp'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'agent-broker-mcp')) }}:
+          agent-broker-mcp:
+            serviceName: 'agent-broker-mcp'
+            serviceType: 'mcp'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'react-client')) }}:
+          react-client:
+            serviceName: 'react-client'
+            serviceType: 'react'
+    steps:
+    - checkout: self
+      fetchDepth: 1
+      displayName: 'Checkout source'
+    
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java 17'
+      condition: eq(variables['serviceType'], 'mcp')
+      inputs:
+        versionSpec: '17'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+    
+    - task: NodeTool@0
+      displayName: 'Install Node.js 18'
+      condition: eq(variables['serviceType'], 'react')
+      inputs:
+        versionSpec: '18.x'
+    
+    # Build MCP Services
+    - task: Maven@3
+      displayName: 'Build Parent POM'
+      condition: and(eq(variables['serviceType'], 'mcp'), eq(variables['serviceName'], 'employee-onboarding-mcp'))
+      inputs:
+        mavenPomFile: 'pom.xml'
+        goals: 'clean compile'
+        options: '-B -U -DskipTests -Dmaven.javadoc.skip=true -Dversion=$(buildVersion) -T 1C'
+        javaHomeOption: 'JDKVersion'
+        jdkVersionOption: '1.17'
+        mavenVersionOption: 'Default'
+        mavenAuthenticateFeed: false
+        effectivePomSkip: false
+        sonarQubeRunAnalysis: false
+    
+    - task: Maven@3
+      displayName: 'Build $(serviceName)'
+      condition: eq(variables['serviceType'], 'mcp')
+      inputs:
+        mavenPomFile: 'mcp-servers/$(serviceName)/pom.xml'
+        goals: 'clean compile'
+        options: '-B -U -DskipTests -Dmaven.javadoc.skip=true -Dversion=$(buildVersion) -Dmule.version=$(muleVersion)'
+        javaHomeOption: 'JDKVersion'
+        jdkVersionOption: '1.17'
+        mavenVersionOption: 'Default'
+        mavenAuthenticateFeed: false
+        effectivePomSkip: false
+        sonarQubeRunAnalysis: false
+    
+    # Build React Client
+    - script: |
+        cd react-client
+        echo "⚛️ Building React client..."
+        
+        # Install dependencies with npm ci for reproducible builds
+        npm ci --prefer-offline --no-audit
+        
+        # Build for the target environment
+        case "$(environment)" in
+          "dev")
+            cp .env.development .env
+            ;;
+          "staging")
+            cp .env.staging .env
+            ;;
+          "prod")
+            cp .env.production .env
+            ;;
+        esac
+        
+        # Build React application
+        npm run build
+        
+        # Create Maven package
+        mvn clean package -B -U -DskipTests -Dversion=$(buildVersion)
+      displayName: 'Build React Client'
+      condition: eq(variables['serviceType'], 'react')
+    
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish $(serviceName) Build Artifacts'
+      inputs:
+        pathToPublish: '$(System.DefaultWorkingDirectory)'
+        artifactName: '$(serviceName)-build'
+        publishLocation: 'Container'
+
+- stage: Test
+  displayName: '🧪 Testing Suite'
+  dependsOn: Build
+  condition: and(succeeded(), eq('${{ parameters.skipTests }}', false))
+  jobs:
+  - job: UnitTests
+    displayName: 'Unit Tests'
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      matrix:
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'employee-onboarding-mcp')) }}:
+          employee-onboarding-mcp:
+            serviceName: 'employee-onboarding-mcp'
+            serviceType: 'mcp'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'asset-allocation-mcp')) }}:
+          asset-allocation-mcp:
+            serviceName: 'asset-allocation-mcp'
+            serviceType: 'mcp'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'notification-mcp')) }}:
+          notification-mcp:
+            serviceName: 'notification-mcp'
+            serviceType: 'mcp'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'agent-broker-mcp')) }}:
+          agent-broker-mcp:
+            serviceName: 'agent-broker-mcp'
+            serviceType: 'mcp'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'react-client')) }}:
+          react-client:
+            serviceName: 'react-client'
+            serviceType: 'react'
+    steps:
+    - checkout: self
+      fetchDepth: 1
+      displayName: 'Checkout source'
+    
+    - task: DownloadBuildArtifacts@0
+      displayName: 'Download Build Artifacts'
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: '$(serviceName)-build'
+        downloadPath: '$(System.ArtifactsDirectory)'
+    
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java 17'
+      condition: eq(variables['serviceType'], 'mcp')
+      inputs:
+        versionSpec: '17'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+    
+    - task: NodeTool@0
+      displayName: 'Install Node.js 18'
+      condition: eq(variables['serviceType'], 'react')
+      inputs:
+        versionSpec: '18.x'
+    
+    # Backend Unit Tests
+    - task: Maven@3
+      displayName: 'Run Unit Tests - $(serviceName)'
+      condition: eq(variables['serviceType'], 'mcp')
+      inputs:
+        mavenPomFile: 'mcp-servers/$(serviceName)/pom.xml'
+        goals: 'test'
+        options: '-B -Dmaven.test.failure.ignore=false -Dmule.test.timeoutSecs=60 -Ddb.url=jdbc:h2:mem:testdb'
+        javaHomeOption: 'JDKVersion'
+        jdkVersionOption: '1.17'
+        testResultsFiles: '**/surefire-reports/TEST-*.xml'
+        codeCoverageToolOption: 'JaCoCo'
+        codeCoverageFailIfEmpty: false
+        mavenAuthenticateFeed: false
+        effectivePomSkip: false
+        sonarQubeRunAnalysis: false
+    
+    # Frontend Unit Tests
+    - script: |
+        cd react-client
+        echo "🔬 Running React unit tests..."
+        
+        # Install dependencies
+        npm ci --prefer-offline --no-audit
+        
+        # Run tests with coverage
+        npm test -- \
+          --coverage \
+          --watchAll=false \
+          --testResultsProcessor=jest-junit \
+          --coverageReporters=text-lcov,html,cobertura \
+          --passWithNoTests
+        
+        # Lint check
+        npm run lint || echo "⚠️ Linting issues found"
+      displayName: 'Run Unit Tests - React Client'
+      condition: eq(variables['serviceType'], 'react')
+    
+    - task: PublishTestResults@2
+      displayName: 'Publish Test Results - $(serviceName)'
+      condition: eq(variables['serviceType'], 'react')
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/junit.xml'
+        failTaskOnFailedTests: true
+        testRunTitle: '$(serviceName) Unit Tests'
+    
+    - task: PublishCodeCoverageResults@1
+      displayName: 'Publish Code Coverage - $(serviceName)'
+      condition: eq(variables['serviceType'], 'react')
+      inputs:
+        codeCoverageTool: 'Cobertura'
+        summaryFileLocation: '**/coverage/cobertura-coverage.xml'
+        reportDirectory: '**/coverage'
+        failIfCoverageEmpty: false
+
+  - job: IntegrationTests
+    displayName: 'Integration Tests'
+    dependsOn: UnitTests
+    pool:
+      vmImage: 'ubuntu-latest'
+    services:
+      postgres: postgres:15-alpine
+    variables:
+      POSTGRES_DB: testdb
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+    steps:
+    - checkout: self
+      fetchDepth: 1
+      displayName: 'Checkout source'
+    
+    - script: |
+        echo "🧪 Setting up integration test environment..."
+        
+        # Wait for PostgreSQL to be ready
+        sleep 30
+        
+        # Test database connection
+        PGPASSWORD=test psql -h localhost -U test -d testdb -c "SELECT version();"
+        
+        echo "🧪 Running integration tests..."
+        # Add integration test execution here
+        # This would typically involve:
+        # 1. Starting the applications
+        # 2. Running API tests
+        # 3. Testing inter-service communication
+        
+        echo "✅ Integration tests placeholder completed"
+      displayName: 'Run Integration Tests'
+
+- stage: Quality
+  displayName: '🔍 Code Quality & Security'
+  dependsOn: Test
+  condition: succeeded()
+  jobs:
+  - job: SonarCloudAnalysis
+    displayName: '📊 SonarCloud Analysis'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - checkout: self
+      fetchDepth: 0
+      displayName: 'Checkout with full history'
+    
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java 17'
+      inputs:
+        versionSpec: '17'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+    
+    - task: SonarCloudPrepare@1
+      displayName: 'Prepare SonarCloud Analysis'
+      inputs:
+        SonarCloud: '$(sonarCloudServiceConnection)'
+        organization: 'your-org'
+        scannerMode: 'Other'
+        extraProperties: |
+          sonar.projectKey=$(sonarCloudProjectKey)
+          sonar.projectName=$(applicationName)
+          sonar.projectVersion=$(buildVersion)
+          sonar.sources=.
+          sonar.exclusions=**/target/**,**/node_modules/**,**/build/**
+          sonar.java.binaries=**/target/classes
+          sonar.coverage.jacoco.xmlReportPaths=**/target/site/jacoco/jacoco.xml
+    
+    - task: Maven@3
+      displayName: 'Run SonarCloud Analysis'
+      inputs:
+        mavenPomFile: 'pom.xml'
+        goals: 'sonar:sonar'
+        options: '-B'
+        javaHomeOption: 'JDKVersion'
+        jdkVersionOption: '1.17'
+        sonarQubeRunAnalysis: true
+        sqMavenPluginVersionChoice: 'latest'
+    
+    - task: SonarCloudPublish@1
+      displayName: 'Publish SonarCloud Results'
+      inputs:
+        pollingTimeoutSec: '300'
+
+  - job: SecurityScanning
+    displayName: '🛡️ Security Scanning'
+    condition: eq('${{ parameters.skipSecurityScan }}', false)
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - checkout: self
+      fetchDepth: 1
+      displayName: 'Checkout source'
+    
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java 17'
+      inputs:
+        versionSpec: '17'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+    
+    - task: NodeTool@0
+      displayName: 'Install Node.js 18'
+      inputs:
+        versionSpec: '18.x'
+    
+    # OWASP Dependency Check
+    - task: Maven@3
+      displayName: 'OWASP Dependency Check'
+      inputs:
+        mavenPomFile: 'pom.xml'
+        goals: 'org.owasp:dependency-check-maven:check'
+        options: '-B -DfailBuildOnCVSS=8 -DsuppressionsFile=cicd/owasp-suppressions.xml -DretireJsAnalyzerEnabled=true'
+        javaHomeOption: 'JDKVersion'
+        jdkVersionOption: '1.17'
+        mavenAuthenticateFeed: false
+        effectivePomSkip: false
+        sonarQubeRunAnalysis: false
+      continueOnError: true
+    
+    # Snyk Security Scan
+    - script: |
+        echo "🐍 Running Snyk security scan..."
+        
+        # Install Snyk
+        npm install -g snyk
+        
+        # Authenticate with Snyk (requires SNYK_TOKEN environment variable)
+        snyk auth $(SNYK_TOKEN)
+        
+        # Scan Maven dependencies
+        snyk test --severity-threshold=medium --file=pom.xml || true
+        
+        # Scan Node.js dependencies
+        cd react-client
+        npm ci --prefer-offline --no-audit
+        snyk test --severity-threshold=medium || true
+        
+        # Code analysis
+        snyk code test || true
+      displayName: 'Snyk Security Scan'
+      env:
+        SNYK_TOKEN: $(snykToken)
+      continueOnError: true
+    
+    - task: PublishHtmlReport@1
+      displayName: 'Publish Security Reports'
+      inputs:
+        reportDir: '$(System.DefaultWorkingDirectory)/target'
+        tabName: 'Security Reports'
+      continueOnError: true
+
+- stage: Package
+  displayName: '📦 Package & Containerize'
+  dependsOn: Quality
+  jobs:
+  - job: MavenPackaging
+    displayName: 'Maven Packaging'
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      matrix:
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'employee-onboarding-mcp')) }}:
+          employee-onboarding-mcp:
+            serviceName: 'employee-onboarding-mcp'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'asset-allocation-mcp')) }}:
+          asset-allocation-mcp:
+            serviceName: 'asset-allocation-mcp'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'notification-mcp')) }}:
+          notification-mcp:
+            serviceName: 'notification-mcp'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'agent-broker-mcp')) }}:
+          agent-broker-mcp:
+            serviceName: 'agent-broker-mcp'
+    steps:
+    - checkout: self
+      fetchDepth: 1
+      displayName: 'Checkout source'
+    
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java 17'
+      inputs:
+        versionSpec: '17'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+    
+    - task: Maven@3
+      displayName: 'Package $(serviceName)'
+      inputs:
+        mavenPomFile: 'mcp-servers/$(serviceName)/pom.xml'
+        goals: 'package'
+        options: '-B -U -DskipTests -Dversion=$(buildVersion) -Dmule.version=$(muleVersion)'
+        javaHomeOption: 'JDKVersion'
+        jdkVersionOption: '1.17'
+        mavenAuthenticateFeed: false
+        effectivePomSkip: false
+        sonarQubeRunAnalysis: false
+    
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish $(serviceName) Packages'
+      inputs:
+        pathToPublish: 'mcp-servers/$(serviceName)/target'
+        artifactName: '$(serviceName)-package'
+        publishLocation: 'Container'
+
+  - job: DockerBuild
+    displayName: 'Docker Build & Push'
+    condition: eq('${{ parameters.deployToDocker }}', true)
+    dependsOn: MavenPackaging
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      matrix:
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'employee-onboarding-mcp')) }}:
+          employee-onboarding-mcp:
+            serviceName: 'employee-onboarding-mcp'
+            dockerfilePath: 'mcp-servers/employee-onboarding-mcp/Dockerfile'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'asset-allocation-mcp')) }}:
+          asset-allocation-mcp:
+            serviceName: 'asset-allocation-mcp'
+            dockerfilePath: 'mcp-servers/asset-allocation-mcp/Dockerfile'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'notification-mcp')) }}:
+          notification-mcp:
+            serviceName: 'notification-mcp'
+            dockerfilePath: 'mcp-servers/notification-mcp/Dockerfile'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'agent-broker-mcp')) }}:
+          agent-broker-mcp:
+            serviceName: 'agent-broker-mcp'
+            dockerfilePath: 'mcp-servers/agent-broker-mcp/Dockerfile'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'react-client')) }}:
+          react-client:
+            serviceName: 'react-client'
+            dockerfilePath: 'react-client/Dockerfile'
+    steps:
+    - checkout: self
+      fetchDepth: 1
+      displayName: 'Checkout source'
+    
+    - task: DownloadBuildArtifacts@0
+      displayName: 'Download Packages'
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: '$(serviceName)-package'
+        downloadPath: '$(System.ArtifactsDirectory)'
+      condition: ne(variables['serviceName'], 'react-client')
+    
+    - task: Docker@2
+      displayName: 'Build Docker Image - $(serviceName)'
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: '$(dockerRepository)-$(serviceName)'
+        command: 'build'
+        Dockerfile: '$(dockerfilePath)'
+        tags: |
+          $(buildVersion)
+          latest
+        arguments: '--build-arg BUILD_VERSION=$(buildVersion)'
+    
+    - task: Docker@2
+      displayName: 'Push Docker Image - $(serviceName)'
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: '$(dockerRepository)-$(serviceName)'
+        command: 'push'
+        tags: |
+          $(buildVersion)
+          latest
+
+- stage: PublishExchange
+  displayName: '📤 Publish to Exchange'
+  dependsOn: Package
+  condition: and(succeeded(), eq('${{ parameters.publishToExchange }}', true), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.SourceBranch'], 'refs/heads/develop')))
+  jobs:
+  - job: ExchangePublication
+    displayName: 'Anypoint Exchange Publication'
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      matrix:
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'employee-onboarding-mcp')) }}:
+          employee-onboarding-mcp:
+            serviceName: 'employee-onboarding-mcp'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'asset-allocation-mcp')) }}:
+          asset-allocation-mcp:
+            serviceName: 'asset-allocation-mcp'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'notification-mcp')) }}:
+          notification-mcp:
+            serviceName: 'notification-mcp'
+        ${{ if or(eq(parameters.serviceSelection, 'all'), eq(parameters.serviceSelection, 'agent-broker-mcp')) }}:
+          agent-broker-mcp:
+            serviceName: 'agent-broker-mcp'
+    steps:
+    - checkout: self
+      fetchDepth: 1
+      displayName: 'Checkout source'
+    
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java 17'
+      inputs:
+        versionSpec: '17'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+    
+    - task: Maven@3
+      displayName: 'Publish $(serviceName) to Exchange'
+      inputs:
+        mavenPomFile: 'mcp-servers/$(serviceName)/pom.xml'
+        goals: 'deploy'
+        options: '-B -DskipTests -DaltDeploymentRepository=anypoint-exchange::default::https://maven.anypoint.mulesoft.com/api/v3/organizations/$(anypointOrganizationId)/maven -Danypoint.client_id=$(anypointClientId) -Danypoint.client_secret=$(anypointClientSecret) -Dversion=$(buildVersion)'
+        javaHomeOption: 'JDKVersion'
+        jdkVersionOption: '1.17'
+        mavenAuthenticateFeed: false
+        effectivePomSkip: false
+        sonarQubeRunAnalysis: false
+
+- stage: Deploy
+  displayName: '🚀 Deploy to CloudHub'
+  dependsOn: 
+  - Package
+  - PublishExchange
+  condition: and(succeeded(), eq(variables['deployToCloudHub'], true))
+  jobs:
+  - deployment: CloudHubDeployment
+    displayName: 'CloudHub Deployment'
+    pool:
+      vmImage: 'ubuntu-latest'
+    environment: $(environment)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+            fetchDepth: 1
+            displayName: 'Checkout source'
+          
+          - task: JavaToolInstaller@0
+            displayName: 'Install Java 17'
+            inputs:
+              versionSpec: '17'
+              jdkArchitectureOption: 'x64'
+              jdkSourceOption: 'PreInstalled'
+          
+          - script: |
+              echo "🚀 Deploying services to CloudHub $(environment)..."
+              
+              # Environment configuration
+              case "$(environment)" in
+                "dev")
+                  WORKER_TYPE="MICRO"
+                  WORKERS="1"
+                  ;;
+                "staging")
+                  WORKER_TYPE="SMALL" 
+                  WORKERS="1"
+                  ;;
+                "prod")
+                  WORKER_TYPE="MEDIUM"
+                  WORKERS="2"
+                  ;;
+              esac
+              
+              # Deploy each service
+              for service in employee-onboarding-mcp asset-allocation-mcp notification-mcp agent-broker-mcp; do
+                if [[ "${{ parameters.serviceSelection }}" == "all" || "${{ parameters.serviceSelection }}" == "$service" ]]; then
+                  echo "🚀 Deploying $service to CloudHub..."
+                  cd mcp-servers/$service
+                  
+                  APP_NAME="$service-$(environment)"
+                  
+                  mvn deploy -DmuleDeploy -B \
+                    -DskipTests \
+                    -Danypoint.client_id=$(anypointClientId) \
+                    -Danypoint.client_secret=$(anypointClientSecret) \
+                    -Dcloudhub.application.name=$APP_NAME \
+                    -Dcloudhub.environment=$(environment) \
+                    -Dcloudhub.worker.type=$WORKER_TYPE \
+                    -Dcloudhub.workers=$WORKERS \
+                    -Dcloudhub.region=$(cloudhubRegion) \
+                    -Dcloudhub.mule.version=$(muleVersion) \
+                    -Dcloudhub.objectStoreV2=true \
+                    -Dcloudhub.persistentQueues=true \
+                    -Dcloudhub.monitoringEnabled=true \
+                    -Dcloudhub.monitoringAutoRestart=true
+                  
+                  # Health check
+                  echo "⏳ Waiting for $service to be healthy..."
+                  HEALTH_URL="https://$APP_NAME.us-e1.cloudhub.io/health"
+                  
+                  for i in {1..20}; do
+                    if curl -f -s $HEALTH_URL > /dev/null; then
+                      echo "✅ $service is healthy!"
+                      break
+                    fi
+                    echo "Attempt $i/20: Waiting for $service to be ready..."
+                    sleep 30
+                  done
+                  
+                  cd ../..
+                fi
+              done
+            displayName: 'Deploy to CloudHub'
+            env:
+              anypointClientId: $(anypointClientId)
+              anypointClientSecret: $(anypointClientSecret)
+
+- stage: EndToEndTest
+  displayName: '🧪 End-to-End Testing'
+  dependsOn: Deploy
+  condition: and(succeeded(), eq('${{ parameters.runE2ETests }}', true))
+  jobs:
+  - job: E2ETests
+    displayName: 'End-to-End Tests'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - checkout: self
+      fetchDepth: 1
+      displayName: 'Checkout source'
+    
+    - script: |
+        echo "🧪 Running end-to-end tests..."
+        
+        # Wait for all services to be ready
+        sleep 60
+        
+        echo "🧪 Testing employee onboarding flow..."
+        curl -X POST "https://employee-onboarding-mcp-$(environment).us-e1.cloudhub.io/api/employees" \
+          -H "Content-Type: application/json" \
+          -d '{"firstName":"Test","lastName":"Employee","email":"test@example.com","department":"IT","position":"Developer"}' \
+          --fail --silent --show-error
+        
+        echo "🧪 Testing asset allocation..."
+        curl -X GET "https://asset-allocation-mcp-$(environment).us-e1.cloudhub.io/api/assets" \
+          --fail --silent --show-error
+        
+        echo "🧪 Testing notifications..."
+        curl -X GET "https://notification-mcp-$(environment).us-e1.cloudhub.io/health" \
+          --fail --silent --show-error
+        
+        echo "🧪 Testing agent broker orchestration..."
+        curl -X GET "https://agent-broker-mcp-$(environment).us-e1.cloudhub.io/health" \
+          --fail --silent --show-error
+        
+        echo "✅ All E2E tests passed!"
+      displayName: 'Execute E2E Test Suite'
+
+- stage: PerformanceTest
+  displayName: '⚡ Performance Testing'
+  dependsOn: EndToEndTest
+  condition: and(succeeded(), eq(variables['runPerformanceTests'], true))
+  jobs:
+  - job: LoadTests
+    displayName: 'Load & Performance Tests'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - checkout: self
+      fetchDepth: 1
+      displayName: 'Checkout source'
+    
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java 17'
+      inputs:
+        versionSpec: '17'
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+    
+    - script: |
+        echo "⚡ Setting up JMeter..."
+        wget -q https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.5.tgz
+        tar -xzf apache-jmeter-5.5.tgz
+        export JMETER_HOME=$(pwd)/apache-jmeter-5.5
+        
+        echo "⚡ Running performance tests..."
+        cd cicd/performance
+        mkdir -p results
+        
+        # Run JMeter performance tests
+        $JMETER_HOME/bin/jmeter.sh -n \
+          -t employee-onboarding-load-test.jmx \
+          -Jenv=$(environment) \
+          -Jusers=50 \
+          -Jrampup=300 \
+          -Jloops=10 \
+          -l results/performance-results.jtl \
+          -e -o results/html-report
+        
+        echo "📊 Validating performance metrics..."
+        
+        # Extract and validate metrics
+        avg_response_time=$(awk -F',' 'NR>1 {sum+=$2; count++} END {print sum/count}' results/performance-results.jtl)
+        error_rate=$(awk -F',' 'NR>1 {if($8=="false") errors++; total++} END {print (errors/total)*100}' results/performance-results.jtl)
+        
+        echo "Average Response Time: ${avg_response_time}ms"
+        echo "Error Rate: ${error_rate}%"
+        
+        # Performance thresholds
+        if (( $(echo "$avg_response_time > 5000" | bc -l) )); then
+          echo "❌ Performance test failed: Average response time exceeded 5000ms"
+          exit 1
+        fi
+        
+        if (( $(echo "$error_rate > 5" | bc -l) )); then
+          echo "❌ Performance test failed: Error rate exceeded 5%"
+          exit 1
+        fi
+        
+        echo "✅ Performance tests passed!"
+      displayName: 'Execute Performance Tests'
+    
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Performance Results'
+      inputs:
+        pathToPublish: 'cicd/performance/results'
+        artifactName: 'performance-results'
+        publishLocation: 'Container'
+
+- stage: Notify
+  displayName: '📢 Notifications'
+  dependsOn:
+  - Deploy
+  - EndToEndTest
+  - PerformanceTest
+  condition: always()
+  jobs:
+  - job: SendNotifications
+    displayName: 'Send Build Notifications'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: |
+        echo "📢 Preparing build notifications..."
+        
+        # Determine build status
+        if [ "$(Agent.JobStatus)" = "Succeeded" ]; then
+          STATUS="✅ SUCCESS"
+          COLOR="good"
+          EMOJI="🎉"
+        elif [ "$(Agent.JobStatus)" = "Failed" ]; then
+          STATUS="❌ FAILED"
+          COLOR="danger" 
+          EMOJI="💥"
+        else
+          STATUS="⚠️ PARTIAL"
+          COLOR="warning"
+          EMOJI="⚠️"
+        fi
+        
+        # Create notification message
+        MESSAGE="$EMOJI **Employee Onboarding CI/CD Pipeline - $STATUS**
+        
+        **Environment:** $(environment)
+        **Service:** ${{ parameters.serviceSelection }}
+        **Branch:** $(Build.SourceBranch)
+        **Build:** $(Build.BuildNumber)
+        **Version:** $(buildVersion)
+        **Commit:** $(Build.SourceVersion)
+        
+        **Actions Completed:**
+        $(if [ '$(deployToCloudHub)' = 'true' ]; then echo '✅ Deployed to CloudHub'; else echo '⏭️ Skipped CloudHub deployment'; fi)
+        $(if [ '${{ parameters.deployToDocker }}' = 'true' ]; then echo '✅ Built and pushed Docker images'; else echo '⏭️ Skipped Docker build'; fi)
+        $(if [ '${{ parameters.publishToExchange }}' = 'true' ]; then echo '✅ Published to Exchange'; else echo '⏭️ Skipped Exchange publication'; fi)
+        $(if [ '$(runPerformanceTests)' = 'true' ]; then echo '✅ Performance tests executed'; else echo '⏭️ Skipped performance tests'; fi)
+        $(if [ '${{ parameters.runE2ETests }}' = 'true' ]; then echo '✅ E2E tests executed'; else echo '⏭️ Skipped E2E tests'; fi)
+        
+        **Build URL:** $(System.TeamFoundationCollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)"
+        
+        echo "Notification message prepared"
+        echo "$MESSAGE"
+      displayName: 'Prepare Notifications'
+    
+    # Slack notification (requires Slack extension)
+    - task: SlackNotification@1
+      displayName: 'Send Slack Notification'
+      inputs:
+        SlackApiToken: $(slackApiToken)
+        Channel: '#mulesoft-deployments'
+        Message: |
+          🎯 **Employee Onboarding CI/CD Pipeline**
+          
+          **Status:** $(Agent.JobStatus)
+          **Environment:** $(environment)
+          **Service:** ${{ parameters.serviceSelection }}
+          **Build:** $(Build.BuildNumber)
+          **Version:** $(buildVersion)
+          
+          [View Build Results]($(System.TeamFoundationCollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId))
+      continueOnError: true
+    
+    # Email notification
+    - task: SendEmail@1
+      displayName: 'Send Email Notification'
+      inputs:
+        To: 'devops@company.com,team-lead@company.com'
+        Subject: '$(Agent.JobStatus): Employee Onboarding CI/CD - Build $(Build.BuildNumber)'
+        Body: |
+          Employee Onboarding CI/CD Pipeline Status: $(Agent.JobStatus)
+          
+          Environment: $(environment)
+          Service: ${{ parameters.serviceSelection }}
+          Branch: $(Build.SourceBranch)
+          Build: $(Build.BuildNumber)
+          Version: $(buildVersion)
+          Commit: $(Build.SourceVersion)
+          
+          Build URL: $(System.TeamFoundationCollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)
+          
+          Please check the build logs for detailed information.
+        SmtpServer: $(smtpServer)
+        SmtpUsername: $(smtpUsername)
+        SmtpPassword: $(smtpPassword)
+      continueOnError: true

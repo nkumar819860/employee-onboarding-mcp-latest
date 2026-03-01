@@ -1,0 +1,61 @@
+# Production Environment Configuration
+# GitLab Environment Variables for Employee Onboarding Agent Fabric
+
+variables:
+  # Environment Specific
+  ENVIRONMENT_NAME: "production"
+  CLOUDHUB_ENVIRONMENT: "prod"
+  
+  # CloudHub Configuration
+  CLOUDHUB_WORKER_TYPE: "MEDIUM"
+  CLOUDHUB_WORKERS: "2"
+  CLOUDHUB_REGION: "us-east-1"
+  CLOUDHUB_MONITORING: "true"
+  CLOUDHUB_PERSISTENT_QUEUES: "true"
+  CLOUDHUB_OBJECT_STORE_V2: "true"
+  CLOUDHUB_AUTO_RESTART: "true"
+  
+  # Performance Test Configuration
+  PERFORMANCE_USERS: "100"
+  PERFORMANCE_DURATION: "600"
+  PERFORMANCE_THRESHOLD_AVG_RESPONSE: "2000"
+  PERFORMANCE_THRESHOLD_ERROR_RATE: "5"
+  
+  # Database Configuration
+  DB_MAX_CONNECTIONS: "50"
+  DB_CONNECTION_TIMEOUT: "10000"
+  
+  # Logging Level
+  LOG_LEVEL: "WARN"
+  
+  # Feature Flags
+  ENABLE_DEBUG_ENDPOINTS: "false"
+  ENABLE_METRICS_COLLECTION: "true"
+  ENABLE_HEALTH_CHECKS: "true"
+  
+  # Notification Settings
+  EMAIL_NOTIFICATIONS: "true"
+  SLACK_NOTIFICATIONS: "true"
+  
+  # Security Settings
+  SECURITY_SCAN_THRESHOLD: "5"
+  OWASP_FAIL_BUILD: "true"
+  
+  # Application URLs (will be set after deployment)
+  EMPLOYEE_ONBOARDING_URL: "https://employee-onboarding-mcp-prod.us-e1.cloudhub.io"
+  ASSET_ALLOCATION_URL: "https://asset-allocation-mcp-prod.us-e1.cloudhub.io"
+  NOTIFICATION_URL: "https://notification-mcp-prod.us-e1.cloudhub.io"
+  AGENT_BROKER_URL: "https://agent-broker-mcp-prod.us-e1.cloudhub.io"
+  REACT_CLIENT_URL: "https://react-client-prod.us-e1.cloudhub.io"
+  
+  # Caching Configuration
+  CACHE_TTL: "3600"
+  CACHE_MAX_SIZE: "10000"
+  
+  # Rate Limiting
+  RATE_LIMIT_REQUESTS_PER_MINUTE: "1000"
+  RATE_LIMIT_BURST: "100"
+  
+  # Backup and Recovery
+  BACKUP_ENABLED: "true"
+  BACKUP_RETENTION_DAYS: "30"

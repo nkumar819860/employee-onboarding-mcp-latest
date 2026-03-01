@@ -1,0 +1,1278 @@
+{
+	"info": {
+		"_postman_id": "employee-onboarding-mcp-system-complete",
+		"name": "Employee Onboarding MCP Services - COMPLETE Collection",
+		"description": "COMPREHENSIVE Postman collection with ALL endpoints, tests, and validations for the Employee Onboarding MCP System. Includes health checks, orchestration, employee management, asset allocation, notifications, and comprehensive test scenarios.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "employee-onboarding-mcp-complete"
+	},
+	"item": [
+		{
+			"name": "🏥 Health Checks - All Services",
+			"item": [
+				{
+					"name": "Agent Broker Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Service is UP\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.status).to.eql(\"UP\");",
+									"});",
+									"",
+									"pm.test(\"Service name is correct\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.service).to.eql(\"Employee Onboarding Agent Broker\");",
+									"});",
+									"",
+									"pm.test(\"Orchestration is enabled\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.orchestrationEnabled).to.not.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{AGENT_BROKER_URL}}/health",
+							"host": [
+								"{{AGENT_BROKER_URL}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Employee Onboarding Service Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Service is UP\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.status).to.eql(\"UP\") || pm.expect(responseJson.status).to.eql(\"HEALTHY\");",
+									"});",
+									"",
+									"pm.test(\"Response contains service info\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.service).to.not.be.undefined;",
+									"    pm.expect(responseJson.timestamp).to.not.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{EMPLOYEE_SERVICE_URL}}/health",
+							"host": [
+								"{{EMPLOYEE_SERVICE_URL}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Asset Allocation Service Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Service is UP\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.status).to.eql(\"UP\") || pm.expect(responseJson.status).to.eql(\"HEALTHY\");",
+									"});",
+									"",
+									"pm.test(\"Response contains service info\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.service).to.not.be.undefined;",
+									"    pm.expect(responseJson.timestamp).to.not.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{ASSET_SERVICE_URL}}/health",
+							"host": [
+								"{{ASSET_SERVICE_URL}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Notification Service Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Service is UP\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.status).to.eql(\"UP\");",
+									"});",
+									"",
+									"pm.test(\"Email configuration check\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.emailEnabled).to.not.be.undefined;",
+									"    console.log(\"Email notifications enabled: \" + responseJson.emailEnabled);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{NOTIFICATION_SERVICE_URL}}/health",
+							"host": [
+								"{{NOTIFICATION_SERVICE_URL}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Comprehensive health check endpoints for all MCP services"
+		},
+		{
+			"name": "📋 MCP Server Information",
+			"item": [
+				{
+					"name": "Agent Broker MCP Info",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Server info contains name and tools\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.name).to.eql(\"Employee Onboarding Agent Broker\");",
+									"    pm.expect(responseJson.tools).to.be.an('array');",
+									"    pm.expect(responseJson.tools.length).to.be.greaterThan(0);",
+									"});",
+									"",
+									"pm.test(\"Contains orchestration tool\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    const orchestrationTool = responseJson.tools.find(tool => tool.name === 'orchestrate-employee-onboarding');",
+									"    pm.expect(orchestrationTool).to.not.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{AGENT_BROKER_URL}}/mcp/info",
+							"host": [
+								"{{AGENT_BROKER_URL}}"
+							],
+							"path": [
+								"mcp",
+								"info"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Employee Service MCP Info",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Server info contains employee tools\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.name).to.contain(\"Employee\");",
+									"    pm.expect(responseJson.capabilities).to.not.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{EMPLOYEE_SERVICE_URL}}/mcp/info",
+							"host": [
+								"{{EMPLOYEE_SERVICE_URL}}"
+							],
+							"path": [
+								"mcp",
+								"info"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Asset Service MCP Info",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Server info contains asset tools\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.name).to.contain(\"Asset\");",
+									"    pm.expect(responseJson.tools).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{ASSET_SERVICE_URL}}/mcp/info",
+							"host": [
+								"{{ASSET_SERVICE_URL}}"
+							],
+							"path": [
+								"mcp",
+								"info"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Notification Service MCP Info",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Server info contains notification tools\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.name).to.contain(\"Notification\");",
+									"    pm.expect(responseJson.tools).to.be.an('array');",
+									"    pm.expect(responseJson.tools.length).to.be.greaterThan(2);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{NOTIFICATION_SERVICE_URL}}/mcp/info",
+							"host": [
+								"{{NOTIFICATION_SERVICE_URL}}"
+							],
+							"path": [
+								"mcp",
+								"info"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "MCP server information endpoints to understand capabilities and available tools"
+		},
+		{
+			"name": "🚀 Agent Broker - Orchestration",
+			"item": [
+				{
+					"name": "Complete Employee Onboarding Orchestration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Orchestration successful\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.status).to.eql(\"success\");",
+									"});",
+									"",
+									"pm.test(\"Employee ID generated\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.employeeId).to.not.be.undefined;",
+									"    pm.environment.set(\"GENERATED_EMPLOYEE_ID\", responseJson.employeeId);",
+									"    console.log(\"Generated Employee ID: \" + responseJson.employeeId);",
+									"});",
+									"",
+									"pm.test(\"All onboarding steps completed\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.onboardingSteps).to.not.be.undefined;",
+									"    pm.expect(responseJson.onboardingSteps.profileCreation.status).to.eql(\"completed\");",
+									"    pm.expect(responseJson.onboardingSteps.assetAllocation.status).to.eql(\"completed\");",
+									"    pm.expect(responseJson.onboardingSteps.welcomeEmail.status).to.eql(\"completed\");",
+									"    pm.expect(responseJson.onboardingSteps.assetNotification.status).to.eql(\"completed\");",
+									"    pm.expect(responseJson.onboardingSteps.onboardingComplete.status).to.eql(\"completed\");",
+									"});",
+									"",
+									"pm.test(\"Processing time recorded\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.startTime).to.not.be.undefined;",
+									"    pm.expect(responseJson.completionTime).to.not.be.undefined;",
+									"    pm.expect(responseJson.totalDuration).to.not.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-MCP-Client",
+								"value": "Postman-Testing-Complete"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"{{$randomFirstName}}\",\n  \"lastName\": \"{{$randomLastName}}\",\n  \"email\": \"{{$randomEmail}}\",\n  \"phone\": \"+1-555-{{$randomInt}}\",\n  \"department\": \"Engineering\",\n  \"position\": \"Senior Software Developer\",\n  \"startDate\": \"2024-03-15\",\n  \"salary\": 95000,\n  \"manager\": \"Sarah Johnson\",\n  \"managerEmail\": \"sarah.johnson@company.com\",\n  \"companyName\": \"Tech Innovations Inc\",\n  \"assets\": [\"laptop\", \"phone\", \"id-card\", \"monitor\", \"keyboard-mouse\"]\n}"
+						},
+						"url": {
+							"raw": "{{AGENT_BROKER_URL}}/mcp/tools/orchestrate-employee-onboarding",
+							"host": [
+								"{{AGENT_BROKER_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"orchestrate-employee-onboarding"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Onboarding Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Status retrieved successfully\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.status).to.eql(\"success\");",
+									"});",
+									"",
+									"pm.test(\"Employee data present\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.employeeData).to.not.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"employeeId\": \"{{GENERATED_EMPLOYEE_ID}}\"\n}"
+						},
+						"url": {
+							"raw": "{{AGENT_BROKER_URL}}/mcp/tools/get-onboarding-status",
+							"host": [
+								"{{AGENT_BROKER_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"get-onboarding-status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Retry Failed Step",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Retry response received\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.status).to.eql(\"success\");",
+									"    pm.expect(responseJson.step).to.not.be.undefined;",
+									"    pm.expect(responseJson.employeeId).to.not.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"employeeId\": \"{{GENERATED_EMPLOYEE_ID}}\",\n  \"step\": \"welcome-email\"\n}"
+						},
+						"url": {
+							"raw": "{{AGENT_BROKER_URL}}/mcp/tools/retry-failed-step",
+							"host": [
+								"{{AGENT_BROKER_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"retry-failed-step"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Agent Broker orchestration endpoints for complete employee onboarding workflow"
+		},
+		{
+			"name": "👥 Employee Management Service",
+			"item": [
+				{
+					"name": "Create Employee",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Employee created successfully\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.success).to.be.true;",
+									"    pm.expect(responseJson.employeeId).to.not.be.undefined;",
+									"    pm.environment.set(\"TEST_EMPLOYEE_ID\", responseJson.employeeId);",
+									"});",
+									"",
+									"pm.test(\"Database mode validation\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.database).to.not.be.undefined;",
+									"    pm.expect(responseJson.mockMode).to.not.be.undefined;",
+									"    console.log(\"Database: \" + responseJson.database + \", Mock Mode: \" + responseJson.mockMode);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"employeeId\": \"EMP-{{$randomInt}}\",\n  \"firstName\": \"{{$randomFirstName}}\",\n  \"lastName\": \"{{$randomLastName}}\",\n  \"email\": \"{{$randomEmail}}\",\n  \"phone\": \"+1-555-{{$randomInt}}\",\n  \"position\": \"Software Engineer\",\n  \"salary\": 75000.00\n}"
+						},
+						"url": {
+							"raw": "{{EMPLOYEE_SERVICE_URL}}/mcp/tools/create-employee",
+							"host": [
+								"{{EMPLOYEE_SERVICE_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"create-employee"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Employee by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Employee data retrieved\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.employee_id).to.not.be.undefined;",
+									"    pm.expect(responseJson.email).to.not.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{EMPLOYEE_SERVICE_URL}}/mcp/tools/get-employee/{{TEST_EMPLOYEE_ID}}",
+							"host": [
+								"{{EMPLOYEE_SERVICE_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"get-employee",
+								"{{TEST_EMPLOYEE_ID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Employees",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Employee list retrieved\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.success).to.be.true;",
+									"    pm.expect(responseJson.data).to.be.an('array');",
+									"    pm.expect(responseJson.pagination).to.not.be.undefined;",
+									"});",
+									"",
+									"pm.test(\"Pagination information present\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.pagination.page).to.not.be.undefined;",
+									"    pm.expect(responseJson.pagination.size).to.not.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{EMPLOYEE_SERVICE_URL}}/mcp/tools/list-employees?page=1&size=10",
+							"host": [
+								"{{EMPLOYEE_SERVICE_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"list-employees"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Employee Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Employee status updated\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.success).to.be.true;",
+									"    pm.expect(responseJson.status).to.eql(\"ACTIVE\");",
+									"    pm.expect(responseJson.affectedRows).to.be.greaterThan(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{EMPLOYEE_SERVICE_URL}}/mcp/tools/update-employee-status/{{TEST_EMPLOYEE_ID}}/ACTIVE",
+							"host": [
+								"{{EMPLOYEE_SERVICE_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"update-employee-status",
+								"{{TEST_EMPLOYEE_ID}}",
+								"ACTIVE"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Comprehensive employee management operations including CRUD operations and status management"
+		},
+		{
+			"name": "💼 Asset Allocation Service",
+			"item": [
+				{
+					"name": "Allocate Assets to Employee",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Asset allocation successful\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.success).to.be.true;",
+									"    pm.expect(responseJson.allocatedAssets).to.be.an('array');",
+									"    pm.expect(responseJson.allocationCount).to.be.greaterThan(0);",
+									"});",
+									"",
+									"pm.test(\"Database mode validation\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.database).to.not.be.undefined;",
+									"    pm.expect(responseJson.mockMode).to.not.be.undefined;",
+									"    console.log(\"Asset DB: \" + responseJson.database + \", Mock: \" + responseJson.mockMode);",
+									"});",
+									"",
+									"pm.test(\"Asset allocation timestamp\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.timestamp).to.not.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"employeeId\": \"{{TEST_EMPLOYEE_ID}}\",\n  \"firstName\": \"{{$randomFirstName}}\",\n  \"lastName\": \"{{$randomLastName}}\",\n  \"department\": \"Engineering\",\n  \"position\": \"Software Developer\",\n  \"assets\": [\"laptop\", \"id-card\", \"phone\", \"monitor\"]\n}"
+						},
+						"url": {
+							"raw": "{{ASSET_SERVICE_URL}}/mcp/tools/allocate-assets",
+							"host": [
+								"{{ASSET_SERVICE_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"allocate-assets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List All Assets",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Asset list retrieved\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.success).to.be.true;",
+									"    pm.expect(responseJson.assets).to.be.an('array');",
+									"    pm.expect(responseJson.assetCount).to.not.be.undefined;",
+									"});",
+									"",
+									"pm.test(\"Asset statistics present\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.statistics).to.not.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{ASSET_SERVICE_URL}}/mcp/tools/list-assets",
+							"host": [
+								"{{ASSET_SERVICE_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"list-assets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Available Assets",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Available assets retrieved\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.success).to.be.true;",
+									"    pm.expect(responseJson.assets).to.be.an('array');",
+									"    pm.expect(responseJson.categories).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Asset count present\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.assetCount).to.not.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{ASSET_SERVICE_URL}}/mcp/tools/get-available-assets",
+							"host": [
+								"{{ASSET_SERVICE_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"get-available-assets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Employee Assets",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Employee assets retrieved\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.success).to.be.true;",
+									"    pm.expect(responseJson.employeeId).to.not.be.undefined;",
+									"    pm.expect(responseJson.assets).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"employeeId\": \"{{TEST_EMPLOYEE_ID}}\"\n}"
+						},
+						"url": {
+							"raw": "{{ASSET_SERVICE_URL}}/mcp/tools/get-employee-assets",
+							"host": [
+								"{{ASSET_SERVICE_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"get-employee-assets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Return Asset",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Asset returned successfully\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.success).to.be.true;",
+									"    pm.expect(responseJson.assetTag).to.not.be.undefined;",
+									"    pm.expect(responseJson.returnDate).to.not.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"assetTag\": \"LAP-001\",\n  \"condition\": \"GOOD\",\n  \"notes\": \"Asset returned in excellent condition\"\n}"
+						},
+						"url": {
+							"raw": "{{ASSET_SERVICE_URL}}/mcp/tools/return-asset",
+							"host": [
+								"{{ASSET_SERVICE_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"return-asset"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Comprehensive asset allocation and management operations"
+		},
+		{
+			"name": "📧 Notification Service - All Email Types",
+			"item": [
+				{
+					"name": "Send Welcome Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Welcome email sent successfully\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.status).to.eql(\"success\");",
+									"    pm.expect(responseJson.emailType).to.eql(\"welcome\");",
+									"});",
+									"",
+									"pm.test(\"Mock content validation\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.mockContent).to.not.be.undefined;",
+									"    pm.expect(responseJson.mockContent.subject).to.contain(\"Welcome\");",
+									"    pm.expect(responseJson.deliveryStatus).to.eql(\"DELIVERED_MOCK\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"{{$randomFirstName}}\",\n  \"lastName\": \"{{$randomLastName}}\",\n  \"employeeId\": \"{{TEST_EMPLOYEE_ID}}\",\n  \"email\": \"{{$randomEmail}}\",\n  \"department\": \"Engineering\",\n  \"position\": \"Software Developer\",\n  \"startDate\": \"2024-03-20\",\n  \"manager\": \"Sarah Johnson\",\n  \"companyName\": \"Tech Innovations Inc\"\n}"
+						},
+						"url": {
+							"raw": "{{NOTIFICATION_SERVICE_URL}}/mcp/tools/send-welcome-email",
+							"host": [
+								"{{NOTIFICATION_SERVICE_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"send-welcome-email"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Asset Allocation Notification",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Asset notification sent successfully\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.status).to.eql(\"success\");",
+									"    pm.expect(responseJson.emailType).to.eql(\"asset-notification\");",
+									"});",
+									"",
+									"pm.test(\"Asset details included\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.assetCount).to.be.greaterThan(0);",
+									"    pm.expect(responseJson.mockContent.assetDetails).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"{{$randomFirstName}}\",\n  \"lastName\": \"{{$randomLastName}}\",\n  \"employeeId\": \"{{TEST_EMPLOYEE_ID}}\",\n  \"email\": \"{{$randomEmail}}\",\n  \"assets\": [\"laptop\", \"id-card\", \"monitor\"],\n  \"allocationDate\": \"2024-03-20\",\n  \"approvedBy\": \"IT Manager\",\n  \"allocationStatus\": \"ALLOCATED\"\n}"
+						},
+						"url": {
+							"raw": "{{NOTIFICATION_SERVICE_URL}}/mcp/tools/send-asset-notification",
+							"host": [
+								"{{NOTIFICATION_SERVICE_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"send-asset-notification"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Onboarding Complete Notification",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Onboarding complete notification sent\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.status).to.eql(\"success\");",
+									"    pm.expect(responseJson.emailType).to.eql(\"onboarding-complete\");",
+									"});",
+									"",
+									"pm.test(\"Completion summary included\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.mockContent.completionSummary).to.not.be.undefined;",
+									"    pm.expect(responseJson.mockContent.completionSummary.milestones).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"{{$randomFirstName}}\",\n  \"lastName\": \"{{$randomLastName}}\",\n  \"employeeId\": \"{{TEST_EMPLOYEE_ID}}\",\n  \"email\": \"{{$randomEmail}}\",\n  \"department\": \"Engineering\",\n  \"position\": \"Software Developer\",\n  \"startDate\": \"2024-03-20\",\n  \"assets\": [\"laptop\", \"id-card\", \"monitor\"],\n  \"managerName\": \"Sarah Johnson\",\n  \"managerEmail\": \"sarah.johnson@company.com\",\n  \"companyName\": \"Tech Innovations Inc\"\n}"
+						},
+						"url": {
+							"raw": "{{NOTIFICATION_SERVICE_URL}}/mcp/tools/send-onboarding-complete",
+							"host": [
+								"{{NOTIFICATION_SERVICE_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"send-onboarding-complete"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Test Email Configuration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Email test response received\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.status).to.not.be.undefined;",
+									"    pm.expect(responseJson.message).to.not.be.undefined;",
+									"});",
+									"",
+									"pm.test(\"Test recipient included\", function () {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.recipient).to.not.be.undefined;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"testEmail\": \"test@company.com\"\n}"
+						},
+						"url": {
+							"raw": "{{NOTIFICATION_SERVICE_URL}}/mcp/tools/test-email-config",
+							"host": [
+								"{{NOTIFICATION_SERVICE_URL}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"test-email-config"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "All notification service endpoints including welcome emails, asset notifications, onboarding completion, and email testing"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Set comprehensive environment variables for all MCP services",
+					"if (!pm.environment.get('AGENT_BROKER_URL')) {",
+					"    pm.environment.set('AGENT_BROKER_URL', 'http://agent-broker-mcp-server.us-e1.cloudhub.io');",
+					"}",
+					"if (!pm.environment.get('EMPLOYEE_SERVICE_URL')) {",
+					"    pm.environment.set('EMPLOYEE_SERVICE_URL', 'http://employee-onboarding-mcp-server.us-e1.cloudhub.io');",
+					"}",
+					"if (!pm.environment.get('ASSET_SERVICE_URL')) {",
+					"    pm.environment.set('ASSET_SERVICE_URL', 'http://asset-allocation-mcp-server.us-e1.cloudhub.io');",
+					"}",
+					"if (!pm.environment.get('NOTIFICATION_SERVICE_URL')) {",
+					"    pm.environment.set('NOTIFICATION_SERVICE_URL', 'http://notification-mcp-server.us-e1.cloudhub.io');",
+					"}",
+					"",
+					"// Set database preference to H2 by default",
+					"pm.environment.set('DATABASE_PREFERENCE', 'h2');",
+					"pm.environment.set('TEST_RUN_TIMESTAMP', new Date().toISOString());",
+					"",
+					"console.log('=== COMPREHENSIVE MCP TESTING SETUP ===');",
+					"console.log('Agent Broker: ' + pm.environment.get('AGENT_BROKER_URL'));",
+					"console.log('Employee Service: ' + pm.environment.get('EMPLOYEE_SERVICE_URL')); ",
+					"console.log('Asset Service: ' + pm.environment.get('ASSET_SERVICE_URL'));",
+					"console.log('Notification Service: ' + pm.environment.get('NOTIFICATION_SERVICE_URL'));",
+					"console.log('Database Preference: ' + pm.environment.get('DATABASE_PREFERENCE'));",
+					"console.log('Test Run: ' + pm.environment.get('TEST_RUN_TIMESTAMP'));"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "AGENT_BROKER_URL",
+			"value": "http://agent-broker-mcp-server.us-e1.cloudhub.io",
+			"type": "string",
+			"description": "Agent Broker MCP Server URL - Handles orchestration of complete employee onboarding process"
+		},
+		{
+			"key": "EMPLOYEE_SERVICE_URL",
+			"value": "http://employee-onboarding-mcp-server.us-e1.cloudhub.io",
+			"type": "string",
+			"description": "Employee Onboarding MCP Server URL - Manages employee profiles and lifecycle"
+		},
+		{
+			"key": "ASSET_SERVICE_URL",
+			"value": "http://asset-allocation-mcp-server.us-e1.cloudhub.io",
+			"type": "string",
+			"description": "Asset Allocation MCP Server URL - Manages IT assets and allocations"
+		},
+		{
+			"key": "NOTIFICATION_SERVICE_URL",
+			"value": "http://notification-mcp-server.us-e1.cloudhub.io",
+			"type": "string",
+			"description": "Notification MCP Server URL - Handles email notifications throughout onboarding process"
+		},
+		{
+			"key": "TEST_EMPLOYEE_ID",
+			"value": "EMP-TEST-001",
+			"type": "string",
+			"description": "Test Employee ID for individual service testing"
+		},
+		{
+			"key": "GENERATED_EMPLOYEE_ID",
+			"value": "",
+			"type": "string",
+			"description": "Employee ID generated during orchestration testing"
+		}
+	]
+}

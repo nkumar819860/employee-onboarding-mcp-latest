@@ -1,0 +1,48 @@
+# Development Environment Configuration
+# GitLab Environment Variables for Employee Onboarding Agent Fabric
+
+variables:
+  # Environment Specific
+  ENVIRONMENT_NAME: "development"
+  CLOUDHUB_ENVIRONMENT: "dev"
+  
+  # CloudHub Configuration
+  CLOUDHUB_WORKER_TYPE: "MICRO"
+  CLOUDHUB_WORKERS: "1"
+  CLOUDHUB_REGION: "us-east-1"
+  CLOUDHUB_MONITORING: "true"
+  CLOUDHUB_PERSISTENT_QUEUES: "false"
+  CLOUDHUB_OBJECT_STORE_V2: "true"
+  
+  # Performance Test Configuration
+  PERFORMANCE_USERS: "25"
+  PERFORMANCE_DURATION: "180"
+  PERFORMANCE_THRESHOLD_AVG_RESPONSE: "3000"
+  PERFORMANCE_THRESHOLD_ERROR_RATE: "10"
+  
+  # Database Configuration
+  DB_MAX_CONNECTIONS: "10"
+  DB_CONNECTION_TIMEOUT: "30000"
+  
+  # Logging Level
+  LOG_LEVEL: "DEBUG"
+  
+  # Feature Flags
+  ENABLE_DEBUG_ENDPOINTS: "true"
+  ENABLE_METRICS_COLLECTION: "true"
+  ENABLE_HEALTH_CHECKS: "true"
+  
+  # Notification Settings
+  EMAIL_NOTIFICATIONS: "false"
+  SLACK_NOTIFICATIONS: "true"
+  
+  # Security Settings
+  SECURITY_SCAN_THRESHOLD: "8"
+  OWASP_FAIL_BUILD: "false"
+  
+  # Application URLs (will be set after deployment)
+  EMPLOYEE_ONBOARDING_URL: "https://employee-onboarding-mcp-dev.us-e1.cloudhub.io"
+  ASSET_ALLOCATION_URL: "https://asset-allocation-mcp-dev.us-e1.cloudhub.io"
+  NOTIFICATION_URL: "https://notification-mcp-dev.us-e1.cloudhub.io"
+  AGENT_BROKER_URL: "https://agent-broker-mcp-dev.us-e1.cloudhub.io"
+  REACT_CLIENT_URL: "https://react-client-dev.us-e1.cloudhub.io"

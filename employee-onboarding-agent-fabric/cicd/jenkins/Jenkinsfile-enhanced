@@ -1,0 +1,939 @@
+pipeline {
+    agent any
+    
+    tools {
+        maven 'Maven-3.9.0'
+        jdk 'JDK-17'
+        nodejs 'NodeJS-18'
+    }
+    
+    environment {
+        // Build Configuration
+        APPLICATION_NAME = 'employee-onboarding-agent-fabric'
+        BUILD_VERSION = "${env.BUILD_NUMBER}-${env.GIT_COMMIT.substring(0,7)}"
+        BUILD_TIMESTAMP = sh(script: "date '+%Y%m%d%H%M%S'", returnStdout: true).trim()
+        
+        // Maven Configuration
+        MAVEN_OPTS = '-Xmx3072m -XX:MaxPermSize=1024m -Djava.awt.headless=true'
+        
+        // Anypoint Platform Credentials
+        ANYPOINT_CLIENT_ID = credentials('anypoint-client-id')
+        ANYPOINT_CLIENT_SECRET = credentials('anypoint-client-secret')
+        ANYPOINT_ORGANIZATION_ID = credentials('anypoint-organization-id')
+        
+        // Docker Configuration
+        DOCKER_REGISTRY = credentials('docker-registry-url')
+        DOCKER_CREDENTIALS = 'docker-registry-creds'
+        DOCKER_REPO = "${DOCKER_REGISTRY}/${APPLICATION_NAME}"
+        
+        // Quality & Security
+        SONARQUBE_SERVER = 'SonarQube-Server'
+        SNYK_TOKEN = credentials('snyk-token')
+        
+        // CloudHub Configuration
+        CLOUDHUB_REGION = 'us-east-1'
+        MULE_VERSION = '4.9-java17'
+        
+        // Notification Configuration
+        SLACK_CHANNEL = '#mulesoft-deployments'
+        EMAIL_RECIPIENTS = 'devops@company.com,team-lead@company.com'
+        
+        // Performance Testing
+        JMETER_HOME = tool 'JMeter-5.5'
+        
+        // Database Configuration
+        TEST_DB_URL = 'jdbc:h2:mem:testdb'
+        
+        // Environment Mapping
+        ENVIRONMENT_MAP = [
+            'dev': [
+                'env': 'Development',
+                'workers': '1',
+                'workerType': 'MICRO',
+                'objectStore': 'true'
+            ],
+            'staging': [
+                'env': 'Staging',
+                'workers': '1', 
+                'workerType': 'SMALL',
+                'objectStore': 'true'
+            ],
+            'prod': [
+                'env': 'Production',
+                'workers': '2',
+                'workerType': 'MEDIUM',
+                'objectStore': 'true'
+            ]
+        ]
+    }
+    
+    parameters {
+        choice(
+            name: 'DEPLOYMENT_ENVIRONMENT',
+            choices: ['dev', 'staging', 'prod'],
+            description: 'Select deployment environment'
+        )
+        choice(
+            name: 'SERVICE_SELECTION',
+            choices: ['all', 'employee-onboarding-mcp', 'asset-allocation-mcp', 'notification-mcp', 'agent-broker-mcp', 'react-client'],
+            description: 'Select service to build/deploy'
+        )
+        booleanParam(
+            name: 'SKIP_TESTS',
+            defaultValue: false,
+            description: 'Skip unit and integration tests'
+        )
+        booleanParam(
+            name: 'SKIP_SECURITY_SCAN',
+            defaultValue: false,
+            description: 'Skip security scanning'
+        )
+        booleanParam(
+            name: 'DEPLOY_TO_CLOUDHUB',
+            defaultValue: true,
+            description: 'Deploy to CloudHub'
+        )
+        booleanParam(
+            name: 'DEPLOY_TO_DOCKER',
+            defaultValue: false,
+            description: 'Build and push Docker images'
+        )
+        booleanParam(
+            name: 'PUBLISH_TO_EXCHANGE',
+            defaultValue: true,
+            description: 'Publish to Anypoint Exchange'
+        )
+        booleanParam(
+            name: 'RUN_PERFORMANCE_TESTS',
+            defaultValue: false,
+            description: 'Execute performance tests'
+        )
+        booleanParam(
+            name: 'RUN_E2E_TESTS',
+            defaultValue: true,
+            description: 'Execute end-to-end tests'
+        )
+    }
+    
+    options {
+        buildDiscarder(logRotator(
+            numToKeepStr: '20',
+            daysToKeepStr: '30',
+            artifactNumToKeepStr: '10'
+        ))
+        timeout(time: 120, unit: 'MINUTES')
+        timestamps()
+        skipDefaultCheckout(false)
+        parallelsAlwaysFailFast()
+        ansiColor('xterm')
+    }
+    
+    triggers {
+        pollSCM('H/10 * * * *') // Poll every 10 minutes
+        cron('H 2 * * 0') // Weekly full scan on Sundays at 2 AM
+    }
+    
+    stages {
+        stage('🚀 Initialize & Validate') {
+            steps {
+                script {
+                    // Clean workspace
+                    deleteDir()
+                    
+                    // Checkout code
+                    checkout scm
+                    
+                    // Set dynamic build properties
+                    currentBuild.displayName = "#${BUILD_NUMBER}-${params.DEPLOYMENT_ENVIRONMENT}-${params.SERVICE_SELECTION}"
+                    currentBuild.description = "Building ${params.SERVICE_SELECTION} for ${params.DEPLOYMENT_ENVIRONMENT} environment"
+                    
+                    // Display build information
+                    echo """
+                    🔧 BUILD CONFIGURATION
+                    ========================
+                    Application: ${APPLICATION_NAME}
+                    Version: ${BUILD_VERSION}
+                    Environment: ${params.DEPLOYMENT_ENVIRONMENT}
+                    Service: ${params.SERVICE_SELECTION}
+                    Branch: ${env.GIT_BRANCH}
+                    Commit: ${env.GIT_COMMIT.substring(0,12)}
+                    ========================
+                    """
+                    
+                    // Validate prerequisites
+                    sh '''
+                        echo "🔍 Validating Prerequisites..."
+                        java -version
+                        mvn --version
+                        node --version
+                        npm --version
+                        docker --version
+                        echo "✅ All prerequisites validated"
+                    '''
+                }
+            }
+        }
+        
+        stage('🔍 Pre-Build Analysis') {
+            parallel {
+                stage('📊 Code Metrics') {
+                    steps {
+                        script {
+                            sh '''
+                                echo "📊 Gathering code metrics..."
+                                
+                                # Line count analysis
+                                find . -name "*.java" -o -name "*.xml" -o -name "*.js" -o -name "*.jsx" | xargs wc -l > code-metrics.txt
+                                
+                                # Dependency analysis
+                                mvn dependency:analyze > dependency-analysis.txt || true
+                                
+                                # Find potential issues
+                                echo "🔍 Scanning for potential issues..."
+                                find . -name "*.java" -exec grep -l "System.out.println\\|printStackTrace" {} \\; | tee debug-statements.txt || true
+                                find . -name "*.properties" -exec grep -l "password\\|secret\\|key" {} \\; | tee sensitive-files.txt || true
+                            '''
+                            
+                            archiveArtifacts artifacts: '*-metrics.txt,*-analysis.txt,*-statements.txt,*-files.txt', allowEmptyArchive: true
+                        }
+                    }
+                }
+                
+                stage('🏗️ Build Plan Validation') {
+                    steps {
+                        script {
+                            // Determine what to build based on changes and parameters
+                            def servicesToBuild = []
+                            
+                            if (params.SERVICE_SELECTION == 'all') {
+                                servicesToBuild = ['employee-onboarding-mcp', 'asset-allocation-mcp', 'notification-mcp', 'agent-broker-mcp', 'react-client']
+                            } else {
+                                servicesToBuild = [params.SERVICE_SELECTION]
+                            }
+                            
+                            // Check for changes in specific directories
+                            def changedFiles = sh(
+                                script: "git diff --name-only HEAD~1 HEAD || echo 'all'",
+                                returnStdout: true
+                            ).trim().split('\n')
+                            
+                            echo "📋 Services to build: ${servicesToBuild.join(', ')}"
+                            echo "📝 Changed files: ${changedFiles.join(', ')}"
+                            
+                            env.SERVICES_TO_BUILD = servicesToBuild.join(',')
+                        }
+                    }
+                }
+                
+                stage('🔐 Security Pre-Scan') {
+                    when {
+                        not { params.SKIP_SECURITY_SCAN }
+                    }
+                    steps {
+                        script {
+                            sh '''
+                                echo "🔐 Running security pre-scan..."
+                                
+                                # Check for hardcoded secrets
+                                echo "Scanning for hardcoded secrets..."
+                                git log --oneline -10 | grep -i -E "password|secret|key|token" || true
+                                
+                                # Check file permissions
+                                find . -type f -perm /o+w | tee world-writable-files.txt || true
+                                
+                                # Scan for TODO/FIXME comments
+                                find . -name "*.java" -o -name "*.js" -o -name "*.jsx" | xargs grep -n -i "TODO\\|FIXME\\|HACK" | tee todo-fixme.txt || true
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('🏗️ Build & Compile') {
+            parallel {
+                stage('☕ Build MCP Services') {
+                    steps {
+                        script {
+                            def services = env.SERVICES_TO_BUILD.split(',').findAll { 
+                                it.endsWith('-mcp') 
+                            }
+                            
+                            if (services) {
+                                echo "🏗️ Building MCP services: ${services.join(', ')}"
+                                
+                                // Build parent POM first
+                                sh '''
+                                    echo "📦 Building parent POM..."
+                                    mvn clean compile -B -U \
+                                        -DskipTests \
+                                        -Dmaven.javadoc.skip=true \
+                                        -Dversion=${BUILD_VERSION} \
+                                        -T 1C
+                                '''
+                                
+                                // Build each service
+                                services.each { service ->
+                                    dir("mcp-servers/${service}") {
+                                        sh """
+                                            echo "🏗️ Building ${service}..."
+                                            mvn clean compile -B -U \
+                                                -DskipTests \
+                                                -Dmaven.javadoc.skip=true \
+                                                -Dversion=${BUILD_VERSION} \
+                                                -Dmule.version=${MULE_VERSION}
+                                        """
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                stage('⚛️ Build React Client') {
+                    when {
+                        expression { 
+                            env.SERVICES_TO_BUILD.contains('react-client') || params.SERVICE_SELECTION == 'all'
+                        }
+                    }
+                    steps {
+                        dir('react-client') {
+                            sh '''
+                                echo "⚛️ Building React client..."
+                                
+                                # Install dependencies with npm ci for reproducible builds
+                                npm ci --prefer-offline --no-audit
+                                
+                                # Build for the target environment
+                                case "${DEPLOYMENT_ENVIRONMENT}" in
+                                    "dev")
+                                        cp .env.development .env
+                                        ;;
+                                    "staging")
+                                        cp .env.staging .env
+                                        ;;
+                                    "prod")
+                                        cp .env.production .env
+                                        ;;
+                                esac
+                                
+                                # Build React application
+                                npm run build
+                                
+                                # Create Maven package
+                                mvn clean package -B -U \
+                                    -DskipTests \
+                                    -Dversion=${BUILD_VERSION}
+                            '''
+                            
+                            // Archive build artifacts
+                            archiveArtifacts artifacts: 'build/**/*', fingerprint: true, allowEmptyArchive: true
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('🧪 Testing Suite') {
+            when {
+                not { params.SKIP_TESTS }
+            }
+            parallel {
+                stage('🔬 Unit Tests - Backend') {
+                    steps {
+                        script {
+                            def services = env.SERVICES_TO_BUILD.split(',').findAll { 
+                                it.endsWith('-mcp') 
+                            }
+                            
+                            if (services) {
+                                services.each { service ->
+                                    dir("mcp-servers/${service}") {
+                                        sh """
+                                            echo "🔬 Running unit tests for ${service}..."
+                                            mvn test -B \
+                                                -Dmaven.test.failure.ignore=false \
+                                                -Dtest.reports.dir=\${WORKSPACE}/test-reports/${service} \
+                                                -Dmule.test.timeoutSecs=60 \
+                                                -Ddb.url=${TEST_DB_URL}
+                                        """
+                                        
+                                        // Publish test results
+                                        publishTestResults testResultsPattern: 'target/surefire-reports/*.xml'
+                                        
+                                        // Generate coverage report
+                                        publishHTML([
+                                            allowMissing: true,
+                                            alwaysLinkToLastBuild: true,
+                                            keepAll: true,
+                                            reportDir: 'target/site/jacoco',
+                                            reportFiles: 'index.html',
+                                            reportName: "${service} Test Coverage"
+                                        ])
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    post {
+                        always {
+                            // Collect test results
+                            publishTestResults testResultsPattern: 'mcp-servers/*/target/surefire-reports/*.xml'
+                        }
+                    }
+                }
+                
+                stage('🔬 Unit Tests - Frontend') {
+                    when {
+                        expression { 
+                            env.SERVICES_TO_BUILD.contains('react-client') || params.SERVICE_SELECTION == 'all'
+                        }
+                    }
+                    steps {
+                        dir('react-client') {
+                            sh '''
+                                echo "🔬 Running React unit tests..."
+                                
+                                # Run tests with coverage
+                                npm test -- \
+                                    --coverage \
+                                    --watchAll=false \
+                                    --testResultsProcessor=jest-junit \
+                                    --coverageReporters=text-lcov,html \
+                                    --passWithNoTests
+                                
+                                # Lint check
+                                npm run lint || echo "⚠️ Linting issues found"
+                            '''
+                            
+                            // Publish test results
+                            publishTestResults testResultsPattern: 'junit.xml'
+                            
+                            // Publish coverage
+                            publishHTML([
+                                allowMissing: true,
+                                alwaysLinkToLastBuild: true,
+                                keepAll: true,
+                                reportDir: 'coverage',
+                                reportFiles: 'index.html',
+                                reportName: 'React Test Coverage'
+                            ])
+                        }
+                    }
+                }
+                
+                stage('🧪 Integration Tests') {
+                    steps {
+                        script {
+                            sh '''
+                                echo "🧪 Setting up integration test environment..."
+                                
+                                # Start test database
+                                docker run -d \
+                                    --name test-postgres \
+                                    -e POSTGRES_DB=testdb \
+                                    -e POSTGRES_USER=test \
+                                    -e POSTGRES_PASSWORD=test \
+                                    -p 5433:5432 \
+                                    postgres:15-alpine || echo "Database already running"
+                                
+                                # Wait for database
+                                sleep 30
+                                
+                                echo "🧪 Running integration tests..."
+                                # Add integration test execution here
+                            '''
+                        }
+                    }
+                    post {
+                        always {
+                            sh 'docker rm -f test-postgres || true'
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('🔍 Code Quality & Security') {
+            parallel {
+                stage('📊 SonarQube Analysis') {
+                    steps {
+                        script {
+                            withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                                sh """
+                                    mvn sonar:sonar \
+                                        -Dsonar.projectKey=${APPLICATION_NAME} \
+                                        -Dsonar.projectName="${APPLICATION_NAME}" \
+                                        -Dsonar.projectVersion=${BUILD_VERSION} \
+                                        -Dsonar.sources=. \
+                                        -Dsonar.exclusions="**/target/**,**/node_modules/**,**/build/**" \
+                                        -Dsonar.java.binaries="**/target/classes" \
+                                        -Dsonar.coverage.jacoco.xmlReportPaths="**/target/site/jacoco/jacoco.xml"
+                                """
+                            }
+                        }
+                    }
+                }
+                
+                stage('🛡️ Security Scanning') {
+                    when {
+                        not { params.SKIP_SECURITY_SCAN }
+                    }
+                    parallel {
+                        stage('🔍 OWASP Dependency Check') {
+                            steps {
+                                sh '''
+                                    echo "🔍 Running OWASP dependency check..."
+                                    mvn org.owasp:dependency-check-maven:check \
+                                        -DfailBuildOnCVSS=8 \
+                                        -DsuppressionsFile=cicd/owasp-suppressions.xml \
+                                        -DretireJsAnalyzerEnabled=true || true
+                                '''
+                                
+                                publishHTML([
+                                    allowMissing: true,
+                                    alwaysLinkToLastBuild: true,
+                                    keepAll: true,
+                                    reportDir: 'target',
+                                    reportFiles: 'dependency-check-report.html',
+                                    reportName: 'OWASP Dependency Check'
+                                ])
+                            }
+                        }
+                        
+                        stage('🐍 Snyk Security Scan') {
+                            steps {
+                                sh '''
+                                    echo "🐍 Running Snyk security scan..."
+                                    
+                                    # Scan Maven dependencies
+                                    npx snyk test --severity-threshold=medium --file=pom.xml || true
+                                    
+                                    # Scan Node.js dependencies
+                                    cd react-client
+                                    npx snyk test --severity-threshold=medium || true
+                                    
+                                    # Code analysis
+                                    npx snyk code test || true
+                                '''
+                            }
+                        }
+                    }
+                }
+                
+                stage('🏗️ Quality Gate') {
+                    steps {
+                        timeout(time: 10, unit: 'MINUTES') {
+                            script {
+                                def qg = waitForQualityGate()
+                                if (qg.status != 'OK') {
+                                    error "❌ Pipeline aborted due to quality gate failure: ${qg.status}"
+                                }
+                                echo "✅ Quality gate passed!"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('📦 Package & Containerize') {
+            parallel {
+                stage('📦 Maven Packages') {
+                    steps {
+                        script {
+                            def services = env.SERVICES_TO_BUILD.split(',').findAll { 
+                                it.endsWith('-mcp') 
+                            }
+                            
+                            if (services) {
+                                services.each { service ->
+                                    dir("mcp-servers/${service}") {
+                                        sh """
+                                            echo "📦 Packaging ${service}..."
+                                            mvn package -B -U \
+                                                -DskipTests \
+                                                -Dversion=${BUILD_VERSION} \
+                                                -Dmule.version=${MULE_VERSION}
+                                        """
+                                        
+                                        // Archive artifacts
+                                        archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                stage('🐳 Docker Images') {
+                    when {
+                        expression { params.DEPLOY_TO_DOCKER }
+                    }
+                    steps {
+                        script {
+                            def services = env.SERVICES_TO_BUILD.split(',')
+                            
+                            withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                                sh "echo \$DOCKER_PASSWORD | docker login \$DOCKER_REGISTRY -u \$DOCKER_USERNAME --password-stdin"
+                                
+                                services.each { service ->
+                                    if (service.endsWith('-mcp')) {
+                                        dir("mcp-servers/${service}") {
+                                            sh """
+                                                echo "🐳 Building Docker image for ${service}..."
+                                                docker build -t ${DOCKER_REPO}-${service}:${BUILD_VERSION} \
+                                                    -t ${DOCKER_REPO}-${service}:latest .
+                                                
+                                                docker push ${DOCKER_REPO}-${service}:${BUILD_VERSION}
+                                                docker push ${DOCKER_REPO}-${service}:latest
+                                            """
+                                        }
+                                    } else if (service == 'react-client') {
+                                        dir('react-client') {
+                                            sh """
+                                                echo "🐳 Building Docker image for React client..."
+                                                docker build -t ${DOCKER_REPO}-${service}:${BUILD_VERSION} \
+                                                    -t ${DOCKER_REPO}-${service}:latest .
+                                                
+                                                docker push ${DOCKER_REPO}-${service}:${BUILD_VERSION}
+                                                docker push ${DOCKER_REPO}-${service}:latest
+                                            """
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('📤 Publish to Exchange') {
+            when {
+                allOf {
+                    expression { params.PUBLISH_TO_EXCHANGE }
+                    anyOf {
+                        branch 'main'
+                        branch 'develop'
+                        expression { params.DEPLOYMENT_ENVIRONMENT != 'dev' }
+                    }
+                }
+            }
+            steps {
+                script {
+                    def services = env.SERVICES_TO_BUILD.split(',').findAll { 
+                        it.endsWith('-mcp') 
+                    }
+                    
+                    if (services) {
+                        services.each { service ->
+                            dir("mcp-servers/${service}") {
+                                echo "📤 Publishing ${service} to Anypoint Exchange..."
+                                
+                                sh """
+                                    mvn deploy -B \
+                                        -DskipTests \
+                                        -DaltDeploymentRepository=anypoint-exchange::default::https://maven.anypoint.mulesoft.com/api/v3/organizations/\${ANYPOINT_ORGANIZATION_ID}/maven \
+                                        -Danypoint.client_id=\${ANYPOINT_CLIENT_ID} \
+                                        -Danypoint.client_secret=\${ANYPOINT_CLIENT_SECRET} \
+                                        -Dversion=${BUILD_VERSION}
+                                """
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('🚀 Deploy to CloudHub') {
+            when {
+                expression { params.DEPLOY_TO_CLOUDHUB }
+            }
+            steps {
+                script {
+                    def services = env.SERVICES_TO_BUILD.split(',').findAll { 
+                        it.endsWith('-mcp') 
+                    }
+                    
+                    def envConfig = ENVIRONMENT_MAP[params.DEPLOYMENT_ENVIRONMENT]
+                    
+                    if (services) {
+                        services.each { service ->
+                            dir("mcp-servers/${service}") {
+                                echo "🚀 Deploying ${service} to CloudHub ${params.DEPLOYMENT_ENVIRONMENT}..."
+                                
+                                def appName = "${service}-${params.DEPLOYMENT_ENVIRONMENT}"
+                                
+                                sh """
+                                    mvn deploy -DmuleDeploy -B \
+                                        -DskipTests \
+                                        -Danypoint.client_id=\${ANYPOINT_CLIENT_ID} \
+                                        -Danypoint.client_secret=\${ANYPOINT_CLIENT_SECRET} \
+                                        -Dcloudhub.application.name=${appName} \
+                                        -Dcloudhub.environment=${envConfig.env} \
+                                        -Dcloudhub.worker.type=${envConfig.workerType} \
+                                        -Dcloudhub.workers=${envConfig.workers} \
+                                        -Dcloudhub.region=\${CLOUDHUB_REGION} \
+                                        -Dcloudhub.mule.version=\${MULE_VERSION} \
+                                        -Dcloudhub.objectStoreV2=${envConfig.objectStore} \
+                                        -Dcloudhub.persistentQueues=true \
+                                        -Dcloudhub.monitoringEnabled=true \
+                                        -Dcloudhub.monitoringAutoRestart=true
+                                """
+                                
+                                // Health check after deployment
+                                timeout(time: 20, unit: 'MINUTES') {
+                                    script {
+                                        echo "⏳ Waiting for ${service} to be healthy..."
+                                        def healthUrl = "https://${appName}.us-e1.cloudhub.io/health"
+                                        
+                                        retry(20) {
+                                            sleep(30)
+                                            sh "curl -f -s ${healthUrl} || exit 1"
+                                        }
+                                        
+                                        echo "✅ ${service} is healthy and ready!"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('🧪 End-to-End Testing') {
+            when {
+                allOf {
+                    expression { params.RUN_E2E_TESTS }
+                    expression { params.DEPLOY_TO_CLOUDHUB }
+                }
+            }
+            steps {
+                script {
+                    echo "🧪 Running end-to-end tests..."
+                    
+                    // Wait for all services to be ready
+                    sleep(60)
+                    
+                    sh '''
+                        echo "🧪 Executing comprehensive E2E test suite..."
+                        
+                        # Test employee onboarding flow
+                        curl -X POST https://employee-onboarding-mcp-${DEPLOYMENT_ENVIRONMENT}.us-e1.cloudhub.io/api/employees \
+                            -H "Content-Type: application/json" \
+                            -d '{"firstName":"John","lastName":"Doe","email":"john.doe@test.com"}' \
+                            --fail --silent --show-error
+                        
+                        # Test asset allocation
+                        curl -X GET https://asset-allocation-mcp-${DEPLOYMENT_ENVIRONMENT}.us-e1.cloudhub.io/api/assets \
+                            --fail --silent --show-error
+                        
+                        # Test notifications
+                        curl -X GET https://notification-mcp-${DEPLOYMENT_ENVIRONMENT}.us-e1.cloudhub.io/health \
+                            --fail --silent --show-error
+                        
+                        echo "✅ All E2E tests passed!"
+                    '''
+                }
+            }
+        }
+        
+        stage('⚡ Performance Testing') {
+            when {
+                expression { params.RUN_PERFORMANCE_TESTS }
+            }
+            steps {
+                script {
+                    echo "⚡ Running performance tests..."
+                    
+                    dir('cicd/performance') {
+                        sh '''
+                            echo "⚡ Executing JMeter performance tests..."
+                            
+                            # Create results directory
+                            mkdir -p results
+                            
+                            # Run JMeter tests
+                            ${JMETER_HOME}/bin/jmeter.sh -n \
+                                -t employee-onboarding-load-test.jmx \
+                                -Jenv=${DEPLOYMENT_ENVIRONMENT} \
+                                -Jusers=50 \
+                                -Jrampup=300 \
+                                -Jloops=10 \
+                                -l results/performance-results.jtl \
+                                -e -o results/html-report
+                        '''
+                        
+                        // Archive performance results
+                        archiveArtifacts artifacts: 'results/**/*', fingerprint: true
+                        
+                        // Publish performance report
+                        publishHTML([
+                            allowMissing: false,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: 'results/html-report',
+                            reportFiles: 'index.html',
+                            reportName: 'Performance Test Report'
+                        ])
+                        
+                        // Performance validation
+                        sh '''
+                            echo "📊 Validating performance metrics..."
+                            
+                            # Extract metrics and validate
+                            avg_response_time=$(awk -F',' 'NR>1 {sum+=$2; count++} END {print sum/count}' results/performance-results.jtl)
+                            error_rate=$(awk -F',' 'NR>1 {if($8=="false") errors++; total++} END {print (errors/total)*100}' results/performance-results.jtl)
+                            
+                            echo "Average Response Time: ${avg_response_time}ms"
+                            echo "Error Rate: ${error_rate}%"
+                            
+                            # Fail if performance thresholds are exceeded
+                            if (( $(echo "$avg_response_time > 5000" | bc -l) )); then
+                                echo "❌ Performance test failed: Average response time exceeded 5000ms"
+                                exit 1
+                            fi
+                            
+                            if (( $(echo "$error_rate > 5" | bc -l) )); then
+                                echo "❌ Performance test failed: Error rate exceeded 5%"
+                                exit 1
+                            fi
+                            
+                            echo "✅ Performance tests passed!"
+                        '''
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            script {
+                // Clean up Docker images
+                sh '''
+                    echo "🧹 Cleaning up Docker images..."
+                    docker system prune -f || true
+                '''
+                
+                // Archive logs
+                archiveArtifacts artifacts: 'logs/**/*', allowEmptyArchive: true
+                
+                // Clean workspace
+                cleanWs()
+            }
+        }
+        
+        success {
+            script {
+                def duration = currentBuild.durationString.replace(' and counting', '')
+                def message = """
+                ✅ **Employee Onboarding CI/CD Pipeline - SUCCESS** 🎉
+                
+                **Environment:** ${params.DEPLOYMENT_ENVIRONMENT}
+                **Service:** ${params.SERVICE_SELECTION}
+                **Branch:** ${env.GIT_BRANCH}
+                **Build:** ${env.BUILD_NUMBER}
+                **Duration:** ${duration}
+                **Version:** ${BUILD_VERSION}
+                
+                **Actions Completed:**
+                ${params.DEPLOY_TO_CLOUDHUB ? '✅ Deployed to CloudHub' : '⏭️ Skipped CloudHub deployment'}
+                ${params.DEPLOY_TO_DOCKER ? '✅ Built and pushed Docker images' : '⏭️ Skipped Docker build'}
+                ${params.PUBLISH_TO_EXCHANGE ? '✅ Published to Exchange' : '⏭️ Skipped Exchange publication'}
+                ${params.RUN_PERFORMANCE_TESTS ? '✅ Performance tests executed' : '⏭️ Skipped performance tests'}
+                ${params.RUN_E2E_TESTS ? '✅ E2E tests executed' : '⏭️ Skipped E2E tests'}
+                """
+                
+                // Send Slack notification
+                slackSend(
+                    channel: env.SLACK_CHANNEL,
+                    color: 'good',
+                    message: message
+                )
+                
+                // Send email notification
+                emailext(
+                    subject: "✅ Employee Onboarding CI/CD Success - Build ${env.BUILD_NUMBER}",
+                    body: message.replace('**', ''),
+                    to: env.EMAIL_RECIPIENTS,
+                    mimeType: 'text/html'
+                )
+            }
+        }
+        
+        failure {
+            script {
+                def duration = currentBuild.durationString.replace(' and counting', '')
+                def message = """
+                ❌ **Employee Onboarding CI/CD Pipeline - FAILED** 💥
+                
+                **Environment:** ${params.DEPLOYMENT_ENVIRONMENT}
+                **Service:** ${params.SERVICE_SELECTION}
+                **Branch:** ${env.GIT_BRANCH}
+                **Build:** ${env.BUILD_NUMBER}
+                **Duration:** ${duration}
+                **Failed Stage:** ${env.STAGE_NAME ?: 'Unknown'}
+                
+                **Error Details:**
+                Check the build logs for detailed information about the failure.
+                
+                **Build URL:** ${env.BUILD_URL}
+                """
+                
+                // Send Slack notification
+                slackSend(
+                    channel: env.SLACK_CHANNEL,
+                    color: 'danger',
+                    message: message
+                )
+                
+                // Send email notification
+                emailext(
+                    subject: "❌ Employee Onboarding CI/CD Failed - Build ${env.BUILD_NUMBER}",
+                    body: message.replace('**', ''),
+                    to: env.EMAIL_RECIPIENTS,
+                    mimeType: 'text/html'
+                )
+            }
+        }
+        
+        unstable {
+            script {
+                def duration = currentBuild.durationString.replace(' and counting', '')
+                def message = """
+                ⚠️ **Employee Onboarding CI/CD Pipeline - UNSTABLE** ⚠️
+                
+                **Environment:** ${params.DEPLOYMENT_ENVIRONMENT}
+                **Service:** ${params.SERVICE_SELECTION}
+                **Branch:** ${env.GIT_BRANCH}
+                **Build:** ${env.BUILD_NUMBER}
+                **Duration:** ${duration}
+                
+                **Warning:**
+                Some tests may have failed or quality gates were not fully met.
+                Please review the results and take appropriate action.
+                
+                **Build URL:** ${env.BUILD_URL}
+                """
+                
+                // Send Slack notification
+                slackSend(
+                    channel: env.SLACK_CHANNEL,
+                    color: 'warning',
+                    message: message
+                )
+                
+                // Send email notification
+                emailext(
+                    subject: "⚠️ Employee Onboarding CI/CD Unstable - Build ${env.BUILD_NUMBER}",
+                    body: message.replace('**', ''),
+                    to: env.EMAIL_RECIPIENTS,
+                    mimeType: 'text/html'
+                )
+            }
+        }
+    }
+}

@@ -1,0 +1,506 @@
+pipeline {
+    agent any
+    
+    tools {
+        maven 'Maven-3.9.0'
+        jdk 'JDK-17'
+    }
+    
+    environment {
+        // Anypoint Platform Credentials
+        ANYPOINT_CLIENT_ID = credentials('anypoint-client-id')
+        ANYPOINT_CLIENT_SECRET = credentials('anypoint-client-secret')
+        ANYPOINT_ORGANIZATION_ID = credentials('anypoint-organization-id')
+        
+        // Environment Configuration
+        DEV_ENVIRONMENT = 'Development'
+        STAGING_ENVIRONMENT = 'Staging' 
+        PROD_ENVIRONMENT = 'Production'
+        
+        // CloudHub Configuration
+        CLOUDHUB_REGION = 'us-east-1'
+        MULE_VERSION = '4.6.0'
+        
+        // Maven Settings
+        MAVEN_OPTS = '-Xmx2048m -XX:MaxPermSize=512m'
+        
+        // Build Configuration
+        BUILD_TIMESTAMP = sh(script: "date '+%Y%m%d%H%M%S'", returnStdout: true).trim()
+        
+        // SonarQube Configuration
+        SONAR_HOST_URL = credentials('sonar-host-url')
+        SONAR_AUTH_TOKEN = credentials('sonar-auth-token')
+        
+        // Notification Configuration
+        SLACK_CHANNEL = '#mulesoft-deployments'
+        EMAIL_RECIPIENTS = 'devops@company.com'
+    }
+    
+    parameters {
+        choice(
+            name: 'DEPLOYMENT_ENVIRONMENT',
+            choices: ['dev', 'staging', 'prod'],
+            description: 'Select deployment environment'
+        )
+        choice(
+            name: 'MCP_SERVICE',
+            choices: ['all', 'employee-onboarding-mcp', 'asset-allocation-mcp', 'notification-mcp', 'agent-broker-mcp'],
+            description: 'Select MCP service to deploy'
+        )
+        booleanParam(
+            name: 'SKIP_TESTS',
+            defaultValue: false,
+            description: 'Skip unit tests execution'
+        )
+        booleanParam(
+            name: 'DEPLOY_TO_CLOUDHUB',
+            defaultValue: true,
+            description: 'Deploy to CloudHub'
+        )
+        booleanParam(
+            name: 'PUBLISH_TO_EXCHANGE',
+            defaultValue: true,
+            description: 'Publish to Anypoint Exchange'
+        )
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    echo "Starting CI/CD Pipeline for Employee Onboarding MCP Services"
+                    echo "Branch: ${env.BRANCH_NAME}"
+                    echo "Build Number: ${env.BUILD_NUMBER}"
+                    echo "Environment: ${params.DEPLOYMENT_ENVIRONMENT}"
+                    echo "Service: ${params.MCP_SERVICE}"
+                }
+                
+                checkout scm
+                
+                // Load environment-specific properties
+                script {
+                    def envPropsFile = "cicd/jenkins/environments/${params.DEPLOYMENT_ENVIRONMENT}.properties"
+                    if (fileExists(envPropsFile)) {
+                        def props = readProperties file: envPropsFile
+                        props.each { key, value ->
+                            env."${key}" = value
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Environment Setup') {
+            steps {
+                script {
+                    // Set environment-specific variables
+                    switch(params.DEPLOYMENT_ENVIRONMENT) {
+                        case 'dev':
+                            env.MULE_ENV = 'dev'
+                            env.WORKER_TYPE = 'MICRO'
+                            env.WORKERS = '1'
+                            break
+                        case 'staging':
+                            env.MULE_ENV = 'staging'
+                            env.WORKER_TYPE = 'SMALL'
+                            env.WORKERS = '1'
+                            break
+                        case 'prod':
+                            env.MULE_ENV = 'prod'
+                            env.WORKER_TYPE = 'MEDIUM'
+                            env.WORKERS = '2'
+                            break
+                    }
+                }
+                
+                sh '''
+                    echo "=== Environment Configuration ==="
+                    echo "Mule Environment: ${MULE_ENV}"
+                    echo "Worker Type: ${WORKER_TYPE}"
+                    echo "Number of Workers: ${WORKERS}"
+                    echo "Maven Version: $(mvn --version)"
+                    echo "Java Version: $(java -version)"
+                '''
+            }
+        }
+        
+        stage('Build & Test') {
+            parallel {
+                stage('Build MCP Services') {
+                    steps {
+                        script {
+                            def services = []
+                            if (params.MCP_SERVICE == 'all') {
+                                services = ['employee-onboarding-mcp', 'asset-allocation-mcp', 'notification-mcp', 'agent-broker-mcp']
+                            } else {
+                                services = [params.MCP_SERVICE]
+                            }
+                            
+                            services.each { service ->
+                                dir("mcp-servers/${service}") {
+                                    echo "Building ${service}..."
+                                    
+                                    // Clean and compile
+                                    sh "mvn clean compile -DskipTests -q"
+                                    
+                                    // Run tests if not skipped
+                                    if (!params.SKIP_TESTS) {
+                                        sh "mvn test -Dtest.environment=${env.MULE_ENV}"
+                                    }
+                                    
+                                    // Package application
+                                    sh "mvn package -DskipTests -Dversion.suffix=.${BUILD_TIMESTAMP}"
+                                    
+                                    // Archive artifacts
+                                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                stage('Build React Client') {
+                    when {
+                        anyOf {
+                            changeset "react-client/**"
+                            params.MCP_SERVICE == 'all'
+                        }
+                    }
+                    steps {
+                        dir('react-client') {
+                            sh '''
+                                echo "Building React Client..."
+                                npm ci
+                                npm run build
+                                npm run test -- --coverage --watchAll=false
+                            '''
+                            
+                            // Archive build artifacts
+                            archiveArtifacts artifacts: 'build/**', fingerprint: true
+                            
+                            // Publish test results
+                            publishHTML([
+                                allowMissing: false,
+                                alwaysLinkToLastBuild: true,
+                                keepAll: true,
+                                reportDir: 'coverage/lcov-report',
+                                reportFiles: 'index.html',
+                                reportName: 'React Test Coverage Report'
+                            ])
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Code Quality Analysis') {
+            parallel {
+                stage('SonarQube Analysis') {
+                    steps {
+                        script {
+                            def services = params.MCP_SERVICE == 'all' ? 
+                                ['employee-onboarding-mcp', 'asset-allocation-mcp', 'notification-mcp', 'agent-broker-mcp'] : 
+                                [params.MCP_SERVICE]
+                            
+                            services.each { service ->
+                                dir("mcp-servers/${service}") {
+                                    withSonarQubeEnv('SonarQube') {
+                                        sh """
+                                            mvn sonar:sonar \
+                                                -Dsonar.projectKey=${service} \
+                                                -Dsonar.projectName="${service}" \
+                                                -Dsonar.projectVersion=${BUILD_NUMBER} \
+                                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                                                -Dsonar.login=${SONAR_AUTH_TOKEN}
+                                        """
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                stage('Security Scan') {
+                    steps {
+                        script {
+                            def services = params.MCP_SERVICE == 'all' ? 
+                                ['employee-onboarding-mcp', 'asset-allocation-mcp', 'notification-mcp', 'agent-broker-mcp'] : 
+                                [params.MCP_SERVICE]
+                            
+                            services.each { service ->
+                                dir("mcp-servers/${service}") {
+                                    // OWASP Dependency Check
+                                    sh "mvn org.owasp:dependency-check-maven:check"
+                                    
+                                    // Archive security reports
+                                    archiveArtifacts artifacts: 'target/dependency-check-report.html', allowEmptyArchive: true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+        
+        stage('Publish to Exchange') {
+            when {
+                allOf {
+                    expression { params.PUBLISH_TO_EXCHANGE }
+                    anyOf {
+                        branch 'main'
+                        branch 'develop'
+                        expression { params.DEPLOYMENT_ENVIRONMENT != 'dev' }
+                    }
+                }
+            }
+            steps {
+                script {
+                    def services = params.MCP_SERVICE == 'all' ? 
+                        ['employee-onboarding-mcp', 'asset-allocation-mcp', 'notification-mcp', 'agent-broker-mcp'] : 
+                        [params.MCP_SERVICE]
+                    
+                    services.each { service ->
+                        dir("mcp-servers/${service}") {
+                            echo "Publishing ${service} to Anypoint Exchange..."
+                            
+                            sh """
+                                mvn deploy \
+                                    -DskipTests \
+                                    -DaltDeploymentRepository=anypoint-exchange::default::https://maven.anypoint.mulesoft.com/api/v1/organizations/${ANYPOINT_ORGANIZATION_ID}/maven \
+                                    -Danypoint.client_id=${ANYPOINT_CLIENT_ID} \
+                                    -Danypoint.client_secret=${ANYPOINT_CLIENT_SECRET}
+                            """
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy to CloudHub') {
+            when {
+                expression { params.DEPLOY_TO_CLOUDHUB }
+            }
+            steps {
+                script {
+                    def services = params.MCP_SERVICE == 'all' ? 
+                        ['employee-onboarding-mcp', 'asset-allocation-mcp', 'notification-mcp', 'agent-broker-mcp'] : 
+                        [params.MCP_SERVICE]
+                    
+                    services.each { service ->
+                        dir("mcp-servers/${service}") {
+                            echo "Deploying ${service} to CloudHub ${params.DEPLOYMENT_ENVIRONMENT}..."
+                            
+                            def appName = "${service}-${env.MULE_ENV}"
+                            
+                            sh """
+                                mvn deploy -DmuleDeploy \
+                                    -DskipTests \
+                                    -Danypoint.client_id=${ANYPOINT_CLIENT_ID} \
+                                    -Danypoint.client_secret=${ANYPOINT_CLIENT_SECRET} \
+                                    -Dcloudhub.application.name=${appName} \
+                                    -Dcloudhub.environment=${env.MULE_ENV} \
+                                    -Dcloudhub.worker.type=${env.WORKER_TYPE} \
+                                    -Dcloudhub.workers=${env.WORKERS} \
+                                    -Dcloudhub.region=${CLOUDHUB_REGION} \
+                                    -Dcloudhub.mule.version=${MULE_VERSION} \
+                                    -Dcloudhub.objectStoreV2=true \
+                                    -Dcloudhub.persistentQueues=true
+                            """
+                            
+                            // Wait for deployment to complete
+                            timeout(time: 15, unit: 'MINUTES') {
+                                script {
+                                    def deploymentStatus = 'DEPLOYING'
+                                    while (deploymentStatus != 'STARTED') {
+                                        sleep(30)
+                                        deploymentStatus = sh(
+                                            script: "curl -s -H 'Authorization: Bearer \$(curl -s -X POST https://anypoint.mulesoft.com/accounts/login -d \"username=${ANYPOINT_CLIENT_ID}&password=${ANYPOINT_CLIENT_SECRET}\" | jq -r .access_token)' https://anypoint.mulesoft.com/cloudhub/api/v2/applications/${appName} | jq -r .status",
+                                            returnStdout: true
+                                        ).trim()
+                                        echo "Deployment status: ${deploymentStatus}"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Integration Tests') {
+            when {
+                expression { params.DEPLOY_TO_CLOUDHUB }
+            }
+            steps {
+                script {
+                    echo "Running integration tests..."
+                    
+                    // Wait for applications to be fully available
+                    sleep(60)
+                    
+                    // Run health checks
+                    def services = params.MCP_SERVICE == 'all' ? 
+                        ['employee-onboarding-mcp', 'asset-allocation-mcp', 'notification-mcp', 'agent-broker-mcp'] : 
+                        [params.MCP_SERVICE]
+                    
+                    services.each { service ->
+                        def appName = "${service}-${env.MULE_ENV}"
+                        def healthUrl = "https://${appName}.us-e1.cloudhub.io/health"
+                        
+                        sh """
+                            echo "Testing ${service} health endpoint..."
+                            curl -f -s -o /dev/null -w "%{http_code}" ${healthUrl} | grep -q "200" || exit 1
+                        """
+                    }
+                    
+                    // Run end-to-end tests
+                    dir('tests/integration') {
+                        sh '''
+                            npm ci
+                            npm run test:integration -- --env=${MULE_ENV}
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Performance Tests') {
+            when {
+                anyOf {
+                    branch 'main'
+                    expression { params.DEPLOYMENT_ENVIRONMENT == 'staging' }
+                }
+            }
+            steps {
+                script {
+                    echo "Running performance tests..."
+                    
+                    dir('tests/performance') {
+                        sh '''
+                            # Run JMeter performance tests
+                            jmeter -n -t employee-onboarding-load-test.jmx \
+                                -Jenv=${MULE_ENV} \
+                                -l results/performance-results.jtl \
+                                -e -o results/html-report
+                        '''
+                        
+                        // Archive performance results
+                        archiveArtifacts artifacts: 'results/**', fingerprint: true
+                        
+                        // Publish performance report
+                        publishHTML([
+                            allowMissing: false,
+                            alwaysLinkToLastBuild: true,
+                            keepAll: true,
+                            reportDir: 'results/html-report',
+                            reportFiles: 'index.html',
+                            reportName: 'Performance Test Report'
+                        ])
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            // Clean workspace
+            cleanWs()
+            
+            // Archive logs
+            archiveArtifacts artifacts: 'logs/**', allowEmptyArchive: true
+        }
+        
+        success {
+            script {
+                def message = """
+                ✅ **Employee Onboarding MCP Pipeline - SUCCESS**
+                
+                **Environment:** ${params.DEPLOYMENT_ENVIRONMENT}
+                **Service:** ${params.MCP_SERVICE}
+                **Branch:** ${env.BRANCH_NAME}
+                **Build:** ${env.BUILD_NUMBER}
+                **Duration:** ${currentBuild.durationString}
+                
+                **Actions Completed:**
+                ${params.DEPLOY_TO_CLOUDHUB ? '✅ Deployed to CloudHub' : '⏭️ Skipped CloudHub deployment'}
+                ${params.PUBLISH_TO_EXCHANGE ? '✅ Published to Exchange' : '⏭️ Skipped Exchange publication'}
+                """
+                
+                // Send Slack notification
+                slackSend(
+                    channel: env.SLACK_CHANNEL,
+                    color: 'good',
+                    message: message
+                )
+                
+                // Send email notification
+                emailext(
+                    subject: "✅ Employee Onboarding MCP Pipeline Success - Build ${env.BUILD_NUMBER}",
+                    body: message,
+                    to: env.EMAIL_RECIPIENTS
+                )
+            }
+        }
+        
+        failure {
+            script {
+                def message = """
+                ❌ **Employee Onboarding MCP Pipeline - FAILED**
+                
+                **Environment:** ${params.DEPLOYMENT_ENVIRONMENT}
+                **Service:** ${params.MCP_SERVICE}
+                **Branch:** ${env.BRANCH_NAME}
+                **Build:** ${env.BUILD_NUMBER}
+                **Failed Stage:** ${env.STAGE_NAME}
+                
+                Please check the build logs for details.
+                """
+                
+                // Send Slack notification
+                slackSend(
+                    channel: env.SLACK_CHANNEL,
+                    color: 'danger',
+                    message: message
+                )
+                
+                // Send email notification
+                emailext(
+                    subject: "❌ Employee Onboarding MCP Pipeline Failed - Build ${env.BUILD_NUMBER}",
+                    body: message,
+                    to: env.EMAIL_RECIPIENTS
+                )
+            }
+        }
+        
+        unstable {
+            script {
+                def message = """
+                ⚠️ **Employee Onboarding MCP Pipeline - UNSTABLE**
+                
+                **Environment:** ${params.DEPLOYMENT_ENVIRONMENT}
+                **Service:** ${params.MCP_SERVICE}
+                **Branch:** ${env.BRANCH_NAME}
+                **Build:** ${env.BUILD_NUMBER}
+                
+                Some tests may have failed. Please review the results.
+                """
+                
+                // Send Slack notification
+                slackSend(
+                    channel: env.SLACK_CHANNEL,
+                    color: 'warning',
+                    message: message
+                )
+            }
+        }
+    }
+}

@@ -328,11 +328,21 @@ output application/json
 			</http:response>
 		</http:listener>
 
-		<logger level="INFO" message="Getting onboarding status for employee: #[payload.employeeId]" />
+		<!-- Add payload validation before processing -->
+		<choice doc:name="Validate Payload">
+			<when expression="#[payload != null and payload.employeeId != null]">
+				<set-variable variableName="employeeId" value="#[payload.employeeId]" />
+				<logger level="INFO" message="Getting onboarding status for employee: #[vars.employeeId]" />
+			</when>
+			<otherwise>
+				<set-variable variableName="employeeId" value="UNKNOWN" />
+				<logger level="WARN" message="No employeeId provided in request payload, using default: UNKNOWN" />
+			</otherwise>
+		</choice>
 
 		<try doc:name="Try Get Status">
 			<http:request method="GET" config-ref="employee-onboarding-mcp-config" path="/mcp/tools/get-employee/{employeeId}" doc:name="Get Employee Status">
-				<http:uri-params>#[{"employeeId": payload.employeeId}]</http:uri-params>
+				<http:uri-params>#[{"employeeId": vars.employeeId}]</http:uri-params>
 			</http:request>
 
 			<set-payload

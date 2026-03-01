@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: mcp-postgres
+    environment:
+      POSTGRES_DB: employee_onboarding
+      POSTGRES_USER: mcp_user
+      POSTGRES_PASSWORD: mcp_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./employee-onboarding-agent-fabric/database/init-databases.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mcp_user -d employee_onboarding"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # H2 Database (for testing)
+  h2:
+    image: oscarfonts/h2:latest
+    container_name: mcp-h2
+    ports:
+      - "8082:8082"  # Web console
+      - "9092:9092"  # TCP server
+    environment:
+      H2_OPTIONS: -web -webAllowOthers -tcp -tcpAllowOthers -baseDir /opt/h2-data
+    volumes:
+      - h2_data:/opt/h2-data
+    networks:
+      - mcp-network
+    restart: unless-stopped
+
+  # pgAdmin (PostgreSQL Web Interface)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: mcp-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@mcp.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8083:80"
+    depends_on:
+      - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - mcp-network
+    restart: unless-stopped
+
+  # Redis (for caching - optional)
+  redis:
+    image: redis:7-alpine
+    container_name: mcp-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mcp-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+volumes:
+  postgres_data:
+    driver: local
+  h2_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  mcp-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
