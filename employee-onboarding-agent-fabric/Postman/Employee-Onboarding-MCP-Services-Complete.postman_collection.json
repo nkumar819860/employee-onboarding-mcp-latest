@@ -1,0 +1,749 @@
+{
+	"info": {
+		"_postman_id": "employee-onboarding-mcp-complete",
+		"name": "Employee Onboarding MCP Services - Complete Collection",
+		"description": "Comprehensive Postman collection for all Employee Onboarding MCP Services including Agent Broker, Employee Onboarding, Asset Allocation, and Notification services.\n\n## Services Included:\n\n### 1. Agent Broker MCP (Port 8084)\n- **Purpose**: Central orchestrator for complete employee onboarding workflow\n- **Endpoints**: Orchestration, status tracking, retry operations\n- **Key Features**: Multi-service integration, error handling, status tracking\n\n### 2. Employee Onboarding MCP (Port 8081)\n- **Purpose**: Employee lifecycle management and HR processes\n- **Endpoints**: Employee CRUD operations, status management, listing\n- **Key Features**: Multi-database support, pagination, status tracking\n\n### 3. Asset Allocation MCP (Port 8083)\n- **Purpose**: IT asset management and allocation\n- **Endpoints**: Asset allocation, return, listing, availability checking\n- **Key Features**: Intelligent asset allocation, real-time tracking, condition management\n\n### 4. Notification MCP (Port 8082)\n- **Purpose**: Email notification services for onboarding process\n- **Endpoints**: Welcome emails, asset notifications, completion messages\n- **Key Features**: Gmail SMTP integration, HTML templates, configuration testing\n\n## Environment Variables:\nSet the following variables for different environments:\n- `agent_broker_url`: Agent Broker MCP base URL (default: http://localhost:8084)\n- `employee_onboarding_url`: Employee Onboarding MCP base URL (default: http://localhost:8081/api)\n- `asset_allocation_url`: Asset Allocation MCP base URL (default: http://localhost:8083/api)\n- `notification_url`: Notification MCP base URL (default: http://localhost:8082)\n\n## Usage Instructions:\n1. Configure environment variables for your deployment\n2. Start with health checks to verify all services are running\n3. Use the Agent Broker for complete onboarding orchestration\n4. Use individual service endpoints for specific operations\n\nCreated: 2024-01-15\nVersion: 1.0.0",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Agent Broker MCP (Port 8084)",
+			"description": "Central orchestrator for employee onboarding process coordination",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{agent_broker_url}}/health",
+							"host": [
+								"{{agent_broker_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Returns the current health status of the agent broker and orchestration capabilities"
+					},
+					"response": []
+				},
+				{
+					"name": "Get MCP Server Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{agent_broker_url}}/mcp/info",
+							"host": [
+								"{{agent_broker_url}}"
+							],
+							"path": [
+								"mcp",
+								"info"
+							]
+						},
+						"description": "Returns comprehensive information about the agent broker MCP server capabilities and integrated services"
+					},
+					"response": []
+				},
+				{
+					"name": "Orchestrate Employee Onboarding",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"email\": \"john.smith@company.com\",\n    \"department\": \"Engineering\",\n    \"position\": \"Senior Software Engineer\",\n    \"startDate\": \"2024-01-15\",\n    \"manager\": \"Sarah Johnson\",\n    \"managerName\": \"Sarah Johnson\",\n    \"managerEmail\": \"sarah.johnson@company.com\",\n    \"orientationDate\": \"2024-01-16\",\n    \"companyName\": \"TechCorp Inc\",\n    \"assets\": [\n        {\n            \"category\": \"LAPTOP\",\n            \"priority\": \"HIGH\"\n        },\n        {\n            \"category\": \"ID_CARD\",\n            \"priority\": \"HIGH\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{agent_broker_url}}/mcp/tools/orchestrate-employee-onboarding",
+							"host": [
+								"{{agent_broker_url}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"orchestrate-employee-onboarding"
+							]
+						},
+						"description": "Executes the complete employee onboarding workflow including profile creation, asset allocation, and notifications"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Onboarding Status",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"employeeId\": \"EMP001\"\n}"
+						},
+						"url": {
+							"raw": "{{agent_broker_url}}/mcp/tools/get-onboarding-status",
+							"host": [
+								"{{agent_broker_url}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"get-onboarding-status"
+							]
+						},
+						"description": "Retrieves the current status of an employee's onboarding process"
+					},
+					"response": []
+				},
+				{
+					"name": "Retry Failed Step",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"employeeId\": \"EMP001\",\n    \"step\": \"assetAllocation\",\n    \"retryReason\": \"Network connectivity restored\",\n    \"maxRetries\": 3\n}"
+						},
+						"url": {
+							"raw": "{{agent_broker_url}}/mcp/tools/retry-failed-step",
+							"host": [
+								"{{agent_broker_url}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"retry-failed-step"
+							]
+						},
+						"description": "Provides retry functionality for failed onboarding steps"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. Employee Onboarding MCP (Port 8081)",
+			"description": "Employee lifecycle management and HR processes",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{employee_onboarding_url}}/health",
+							"host": [
+								"{{employee_onboarding_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Returns the current health status of the Employee Onboarding MCP Server"
+					},
+					"response": []
+				},
+				{
+					"name": "Get MCP Server Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{employee_onboarding_url}}/mcp/info",
+							"host": [
+								"{{employee_onboarding_url}}"
+							],
+							"path": [
+								"mcp",
+								"info"
+							]
+						},
+						"description": "Returns detailed information about the MCP server capabilities and available tools"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Employee",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"employeeId\": \"EMP001\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@company.com\",\n    \"phone\": \"+1-555-0101\",\n    \"position\": \"Software Engineer\",\n    \"departmentId\": 2,\n    \"hireDate\": \"2024-01-15\",\n    \"salary\": 75000.00,\n    \"address\": \"123 Main St, City, State 12345\"\n}"
+						},
+						"url": {
+							"raw": "{{employee_onboarding_url}}/mcp/tools/create-employee",
+							"host": [
+								"{{employee_onboarding_url}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"create-employee"
+							]
+						},
+						"description": "Creates a new employee record with the provided information"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Employee",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{employee_onboarding_url}}/mcp/tools/get-employee/EMP001",
+							"host": [
+								"{{employee_onboarding_url}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"get-employee",
+								"EMP001"
+							]
+						},
+						"description": "Retrieves complete employee information including personal details, employment information, and current status"
+					},
+					"response": []
+				},
+				{
+					"name": "List Employees",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{employee_onboarding_url}}/mcp/tools/list-employees?page=1&size=10&status=ACTIVE",
+							"host": [
+								"{{employee_onboarding_url}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"list-employees"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "status",
+									"value": "ACTIVE"
+								}
+							]
+						},
+						"description": "Returns a paginated list of employees with support for status and department filtering"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Employee Status",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{employee_onboarding_url}}/mcp/tools/update-employee-status/EMP001/ACTIVE",
+							"host": [
+								"{{employee_onboarding_url}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"update-employee-status",
+								"EMP001",
+								"ACTIVE"
+							]
+						},
+						"description": "Updates employee status with validation and records status change timestamp"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Asset Allocation MCP (Port 8083)",
+			"description": "IT asset management and allocation services",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{asset_allocation_url}}/health",
+							"host": [
+								"{{asset_allocation_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Returns the current health status of the Asset Allocation MCP Server"
+					},
+					"response": []
+				},
+				{
+					"name": "Get MCP Server Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{asset_allocation_url}}/mcp/info",
+							"host": [
+								"{{asset_allocation_url}}"
+							],
+							"path": [
+								"mcp",
+								"info"
+							]
+						},
+						"description": "Returns detailed information about the Asset Allocation MCP server capabilities"
+					},
+					"response": []
+				},
+				{
+					"name": "Allocate Assets",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"employeeId\": \"EMP001\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"department\": \"Engineering\",\n    \"position\": \"Software Developer\",\n    \"assets\": [\"laptop\", \"id-card\", \"phone\"]\n}"
+						},
+						"url": {
+							"raw": "{{asset_allocation_url}}/mcp/tools/allocate-assets",
+							"host": [
+								"{{asset_allocation_url}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"allocate-assets"
+							]
+						},
+						"description": "Allocates available assets to the specified employee"
+					},
+					"response": []
+				},
+				{
+					"name": "Return Asset",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"assetTag\": \"LAP-001\",\n    \"condition\": \"GOOD\",\n    \"notes\": \"Asset returned in good condition\"\n}"
+						},
+						"url": {
+							"raw": "{{asset_allocation_url}}/mcp/tools/return-asset",
+							"host": [
+								"{{asset_allocation_url}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"return-asset"
+							]
+						},
+						"description": "Returns a previously allocated asset to available status"
+					},
+					"response": []
+				},
+				{
+					"name": "List Assets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{asset_allocation_url}}/mcp/tools/list-assets?status=AVAILABLE&category=LAPTOP",
+							"host": [
+								"{{asset_allocation_url}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"list-assets"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "AVAILABLE"
+								},
+								{
+									"key": "category",
+									"value": "LAPTOP"
+								}
+							]
+						},
+						"description": "Returns a list of assets with optional status and category filters"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Available Assets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{asset_allocation_url}}/mcp/tools/get-available-assets",
+							"host": [
+								"{{asset_allocation_url}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"get-available-assets"
+							]
+						},
+						"description": "Returns only assets with 'AVAILABLE' status, ready for allocation"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Employee Assets",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"employeeId\": \"EMP001\"\n}"
+						},
+						"url": {
+							"raw": "{{asset_allocation_url}}/mcp/tools/get-employee-assets",
+							"host": [
+								"{{asset_allocation_url}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"get-employee-assets"
+							]
+						},
+						"description": "Returns all currently allocated assets for the specified employee"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "4. Notification MCP (Port 8082)",
+			"description": "Email notification services for onboarding process",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{notification_url}}/health",
+							"host": [
+								"{{notification_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Returns the current health status of the notification service"
+					},
+					"response": []
+				},
+				{
+					"name": "Get MCP Server Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{notification_url}}/mcp/info",
+							"host": [
+								"{{notification_url}}"
+							],
+							"path": [
+								"mcp",
+								"info"
+							]
+						},
+						"description": "Returns comprehensive information about the notification MCP server capabilities"
+					},
+					"response": []
+				},
+				{
+					"name": "Send Welcome Email",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"email\": \"john.smith@company.com\",\n    \"employeeId\": \"EMP001\",\n    \"department\": \"Engineering\",\n    \"position\": \"Senior Software Engineer\",\n    \"startDate\": \"2024-01-15\",\n    \"manager\": \"Sarah Johnson\",\n    \"orientationDate\": \"2024-01-16\",\n    \"companyName\": \"TechCorp Inc\"\n}"
+						},
+						"url": {
+							"raw": "{{notification_url}}/mcp/tools/send-welcome-email",
+							"host": [
+								"{{notification_url}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"send-welcome-email"
+							]
+						},
+						"description": "Sends a professional welcome email to new employees with personalized content"
+					},
+					"response": []
+				},
+				{
+					"name": "Send Asset Notification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"email\": \"john.smith@company.com\",\n    \"employeeId\": \"EMP001\",\n    \"allocationDate\": \"2024-01-15\",\n    \"approvedBy\": \"IT Manager\",\n    \"allocationStatus\": \"ALLOCATED\",\n    \"companyName\": \"TechCorp Inc\",\n    \"assets\": [\n        {\n            \"assetName\": \"MacBook Pro 16\\\"\",\n            \"assetTag\": \"LAPTOP-001\",\n            \"category\": \"LAPTOP\",\n            \"brand\": \"Apple\",\n            \"model\": \"MacBook Pro 16\\\" M2\",\n            \"serialNumber\": \"ABC123456789\",\n            \"condition\": \"NEW\",\n            \"specifications\": \"16GB RAM, 512GB SSD, M2 Chip\",\n            \"location\": \"IT Storage Room\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{notification_url}}/mcp/tools/send-asset-notification",
+							"host": [
+								"{{notification_url}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"send-asset-notification"
+							]
+						},
+						"description": "Sends asset allocation confirmation email with detailed equipment information"
+					},
+					"response": []
+				},
+				{
+					"name": "Send Onboarding Complete",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"email\": \"john.smith@company.com\",\n    \"employeeId\": \"EMP001\",\n    \"department\": \"Engineering\",\n    \"position\": \"Senior Software Engineer\",\n    \"startDate\": \"2024-01-15\",\n    \"managerName\": \"Sarah Johnson\",\n    \"managerEmail\": \"sarah.johnson@company.com\",\n    \"companyName\": \"TechCorp Inc\",\n    \"assets\": [\n        {\n            \"assetName\": \"MacBook Pro 16\\\"\",\n            \"assetTag\": \"LAPTOP-001\",\n            \"category\": \"LAPTOP\",\n            \"brand\": \"Apple\",\n            \"model\": \"MacBook Pro 16\\\" M2\",\n            \"serialNumber\": \"ABC123456789\",\n            \"condition\": \"NEW\",\n            \"specifications\": \"16GB RAM, 512GB SSD, M2 Chip\",\n            \"location\": \"IT Storage Room\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{notification_url}}/mcp/tools/send-onboarding-complete",
+							"host": [
+								"{{notification_url}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"send-onboarding-complete"
+							]
+						},
+						"description": "Sends comprehensive onboarding completion email including complete employee profile summary and asset allocation"
+					},
+					"response": []
+				},
+				{
+					"name": "Test Email Configuration",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"testEmail\": \"test@company.com\"\n}"
+						},
+						"url": {
+							"raw": "{{notification_url}}/mcp/tools/test-email-config",
+							"host": [
+								"{{notification_url}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"test-email-config"
+							]
+						},
+						"description": "Tests the Gmail SMTP configuration by sending a test email"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "5. End-to-End Workflow Examples",
+			"description": "Complete workflow examples demonstrating integration between all services",
+			"item": [
+				{
+					"name": "Complete Onboarding Workflow",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Wilson\",\n    \"email\": \"jane.wilson@company.com\",\n    \"department\": \"Marketing\",\n    \"position\": \"Marketing Manager\",\n    \"startDate\": \"2024-01-20\",\n    \"manager\": \"Mike Davis\",\n    \"managerName\": \"Mike Davis\",\n    \"managerEmail\": \"mike.davis@company.com\",\n    \"orientationDate\": \"2024-01-21\",\n    \"companyName\": \"TechCorp Inc\",\n    \"assets\": [\n        {\n            \"category\": \"LAPTOP\",\n            \"priority\": \"HIGH\"\n        },\n        {\n            \"category\": \"ID_CARD\",\n            \"priority\": \"HIGH\"\n        },\n        {\n            \"category\": \"MOBILE_PHONE\",\n            \"priority\": \"MEDIUM\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{agent_broker_url}}/mcp/tools/orchestrate-employee-onboarding",
+							"host": [
+								"{{agent_broker_url}}"
+							],
+							"path": [
+								"mcp",
+								"tools",
+								"orchestrate-employee-onboarding"
+							]
+						},
+						"description": "Complete end-to-end employee onboarding workflow demonstrating integration between all MCP services"
+					},
+					"response": []
+				},
+				{
+					"name": "Health Check All Services",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{agent_broker_url}}/health",
+							"host": [
+								"{{agent_broker_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Example health check - run this for each service to verify all are running"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Set default environment variables if not already set",
+					"if (!pm.environment.get('agent_broker_url')) {",
+					"    pm.environment.set('agent_broker_url', 'http://localhost:8084');",
+					"}",
+					"if (!pm.environment.get('employee_onboarding_url')) {",
+					"    pm.environment.set('employee_onboarding_url', 'http://localhost:8081/api');",
+					"}",
+					"if (!pm.environment.get('asset_allocation_url')) {",
+					"    pm.environment.set('asset_allocation_url', 'http://localhost:8083/api');",
+					"}",
+					"if (!pm.environment.get('notification_url')) {",
+					"    pm.environment.set('notification_url', 'http://localhost:8082');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global test script for all requests",
+					"pm.test('Response time is less than 5000ms', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+					"});",
+					"",
+					"pm.test('Response has valid JSON structure', function () {",
+					"    pm.response.to.have.jsonBody();",
+					"});",
+					"",
+					"// Log response for debugging",
+					"console.log('Response Status:', pm.response.status);",
+					"console.log('Response Time:', pm.response.responseTime + 'ms');",
+					"if (pm.response.json()) {",
+					"    console.log('Response Body:', JSON.stringify(pm.response.json(), null, 2));",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "agent_broker_url",
+			"value": "http://localhost:8084",
+			"description": "Agent Broker MCP base URL"
+		},
+		{
+			"key": "employee_onboarding_url",
+			"value": "http://localhost:8081/api",
+			"description": "Employee Onboarding MCP base URL"
+		},
+		{
+			"key": "asset_allocation_url",
+			"value": "http://localhost:8083/api",
+			"description": "Asset Allocation MCP base URL"
+		},
+		{
+			"key": "notification_url",
+			"value": "http://localhost:8082",
+			"description": "Notification MCP base URL"
+		}
+	]
+}
