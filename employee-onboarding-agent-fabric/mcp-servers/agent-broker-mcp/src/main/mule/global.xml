@@ -11,7 +11,7 @@
 
 	<!-- HTTP Listener Configuration -->
 	<http:listener-config name="http-config" doc:name="HTTP Listener config">
-		<http:listener-connection host="${https.host}" port="${http.port}"/>
+		<http:listener-connection host="${http.host}" port="${http.port}"/>
 	</http:listener-config>
 
 	<!-- HTTP Request Configurations for CloudHub MCP Servers -->

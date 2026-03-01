@@ -138,9 +138,7 @@ output application/json
 	<http:listener-config name="HTTP_Listener_config" doc:name="Production HTTP Config">
 		<http:listener-connection 
 			host="${http.host}" 
-			port="${http.port}"
-			protocol="HTTP"
-			usePersistentConnections="true"/>
+			port="${http.port}"/>
 	</http:listener-config>
 
 	<!-- ================================================================== -->
