@@ -2,19 +2,31 @@
 <mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
 	xmlns:db="http://www.mulesoft.org/schema/mule/db"
 	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
 	xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns:sockets="http://www.mulesoft.org/schema/mule/sockets"
 	xsi:schemaLocation="
         http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd
         http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
         http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
         http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
         http://www.mulesoft.org/schema/mule/sockets http://www.mulesoft.org/schema/mule/sockets/current/mule-sockets.xsd">
 
 	<!-- Load Properties Configuration -->
-	<configuration-properties file="config.properties" />
+	<configuration-properties file="config.properties" doc:name="Configuration properties"/>
+	
+	<!-- ================================================================== -->
+	<!-- APIKIT ROUTER CONFIGURATION - CONTRACT-FIRST API DEVELOPMENT -->
+	<!-- ================================================================== -->
+	
+	<apikit:config name="employee-onboarding-mcp-api-config" 
+		api="api/employee-onboarding-mcp-api.yaml" 
+		outboundHeadersMapName="outboundHeaders" 
+		httpStatusVarName="httpStatus" 
+		doc:name="APIKit Router Configuration"/>
 	
 	<!-- Global Error Handler for Production Reliability -->
 	<error-handler name="Global_Error_Handler" doc:name="Global Production Error Handler">
@@ -119,8 +131,6 @@ output application/json
 		</db:generic-connection>
 	</db:config>
 
-	<!-- Database configuration logic moved to flows for proper execution context -->
-
 	<!-- ================================================================== -->
 	<!-- HTTP LISTENER CONFIGURATION WITH PRODUCTION SETTINGS -->
 	<!-- ================================================================== -->
@@ -215,6 +225,7 @@ output application/json
 		<logger level="INFO" message="Environment: ${env} | Database Strategy: ${db.strategy}"/>
 		<logger level="INFO" message="Features - Mock: ${mcp.features.mock.enabled} | Audit: ${mcp.features.audit.enabled}"/>
 		<logger level="INFO" message="Server URL: ${mcp.server.baseUrl}"/>
+		<logger level="INFO" message="APIKit Router enabled for contract-first API development"/>
 		
 		<!-- Initialize monitoring metrics if enabled -->
 		<choice doc:name="Initialize Monitoring">

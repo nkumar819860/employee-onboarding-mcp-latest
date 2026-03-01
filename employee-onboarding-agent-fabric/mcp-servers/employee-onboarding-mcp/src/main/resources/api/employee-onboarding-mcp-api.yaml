@@ -1,426 +1,563 @@
-#%RAML 1.0
-title: Employee Onboarding MCP Server API
-version: v1.0.1
-baseUri: https://employee-onboarding-mcp.cloudhub.io/api
-description: |
-  The Employee Onboarding MCP (Model Context Protocol) Server provides comprehensive employee lifecycle management capabilities for HR and onboarding processes. This API enables automated employee record creation, status tracking, and onboarding workflow management.
+openapi: 3.0.3
+info:
+  title: Employee Onboarding MCP Server API
+  version: 1.0.1
+  description: |
+    The Employee Onboarding MCP (Model Context Protocol) Server provides comprehensive employee lifecycle management capabilities for HR and onboarding processes. This API enables automated employee record creation, status tracking, and onboarding workflow management.
 
-  Key Features:
-  - Complete employee lifecycle management
-  - Automated onboarding workflow orchestration
-  - Multi-database support with intelligent fallback
-  - Real-time employee status tracking
-  - Paginated employee listings with filtering
-  - Comprehensive health monitoring and reporting
-  - RESTful API design with JSON responses
+    Key Features:
+    - Complete employee lifecycle management
+    - Automated onboarding workflow orchestration
+    - Multi-database support with intelligent fallback
+    - Real-time employee status tracking
+    - Paginated employee listings with filtering
+    - Comprehensive health monitoring and reporting
+    - RESTful API design with JSON responses
+  contact:
+    name: Employee Onboarding MCP Support
+    email: support@company.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 
-mediaType: application/json
+servers:
+  - url: https://employee-onboarding-mcp.cloudhub.io/api
+    description: Production server
+  - url: http://localhost:8081/api
+    description: Development server
 
-documentation:
-  - title: Getting Started
-    content: |
-      ## Authentication
-      This API uses standard authentication mechanisms depending on deployment environment.
-      
-      ## Base URL
-      - Development: http://localhost:8081
-      - Production: https://employee-onboarding-mcp.cloudhub.io
-      
-      ## Rate Limiting  
-      Standard rate limiting applies: 1000 requests per hour per client.
+components:
+  schemas:
+    Employee:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Internal database ID
+        employee_id:
+          type: string
+          description: Unique employee identifier
+        first_name:
+          type: string
+          description: Employee first name
+        last_name:
+          type: string
+          description: Employee last name
+        email:
+          type: string
+          format: email
+          description: Employee email address
+        phone:
+          type: string
+          description: Employee phone number
+        department_id:
+          type: integer
+          description: Department ID
+        position:
+          type: string
+          description: Job position/title
+        hire_date:
+          type: string
+          format: date
+          description: Hire date
+        status:
+          type: string
+          enum: [PENDING, ACTIVE, INACTIVE, TERMINATED]
+          description: Employee status
+        salary:
+          type: number
+          format: float
+          description: Annual salary
+        address:
+          type: string
+          description: Employee address
+        emergency_contact_name:
+          type: string
+          description: Emergency contact name
+        emergency_contact_phone:
+          type: string
+          description: Emergency contact phone
+        created_at:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Record last update timestamp
+      example:
+        employee_id: "EMP001"
+        first_name: "John"
+        last_name: "Doe"
+        email: "john.doe@company.com"
+        phone: "+1-555-0101"
+        department_id: 2
+        position: "Software Engineer"
+        hire_date: "2024-01-15"
+        status: "ACTIVE"
+        salary: 75000.00
+        address: "123 Main St, City, State 12345"
 
-types:
-  Employee:
-    type: object
-    properties:
-      id?: integer
-      employee_id: string
-      first_name: string
-      last_name: string
-      email: string
-      phone?: string
-      department_id?: integer
-      position?: string
-      hire_date?: date
-      status?: string
-      salary?: number
-      address?: string
-      emergency_contact_name?: string
-      emergency_contact_phone?: string
-      created_at?: datetime
-      updated_at?: datetime
-    example:
-      employee_id: "EMP001"
-      first_name: "John"
-      last_name: "Doe"
-      email: "john.doe@company.com"
-      phone: "+1-555-0101"
-      department_id: 2
-      position: "Software Engineer"
-      hire_date: "2024-01-15"
-      status: "ACTIVE"
-      salary: 75000.00
-      address: "123 Main St, City, State 12345"
+    CreateEmployeeRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+      properties:
+        employeeId:
+          type: string
+          description: Optional employee ID (auto-generated if not provided)
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Employee first name
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Employee last name
+        email:
+          type: string
+          format: email
+          description: Employee email address
+        phone:
+          type: string
+          description: Employee phone number
+        departmentId:
+          type: integer
+          description: Department ID
+        position:
+          type: string
+          description: Job position/title
+        hireDate:
+          type: string
+          format: date
+          description: Hire date
+        salary:
+          type: number
+          format: float
+          description: Annual salary
+        address:
+          type: string
+          description: Employee address
+      example:
+        employeeId: "EMP001"
+        firstName: "John"
+        lastName: "Doe"
+        email: "john.doe@company.com"
+        phone: "+1-555-0101"
+        position: "Software Engineer"
+        salary: 75000.00
 
-  CreateEmployeeRequest:
-    type: object
-    properties:
-      employeeId?: string
-      firstName: string
-      lastName: string
-      email: string
-      phone?: string
-      departmentId?: integer
-      position?: string
-      hireDate?: date
-      salary?: number
-      address?: string
-    example:
-      employeeId: "EMP001"
-      firstName: "John"
-      lastName: "Doe"
-      email: "john.doe@company.com"
-      phone: "+1-555-0101"
-      position: "Software Engineer"
-      salary: 75000.00
-
-  CreateEmployeeResponse:
-    type: object
-    properties:
-      success: boolean
-      message: string
-      employeeId: string
-      environment: string
-      database: string
-      timestamp: datetime
-      mockMode: boolean
-    example:
-      success: true
-      message: "Employee created successfully"
-      employeeId: "EMP001"
-      environment: "development"
-      database: "h2"
-      timestamp: "2024-01-15T10:30:00Z"
-      mockMode: false
-
-  EmployeeListResponse:
-    type: object
-    properties:
-      success: boolean
-      data: Employee[]
-      pagination: object
-      filters: object
-      environment: string
-      database: string
-      timestamp: datetime
-      mockMode: boolean
-    example:
-      success: true
-      data:
-        - employee_id: "EMP001"
-          first_name: "John"
-          last_name: "Doe"
-          email: "john.doe@company.com"
-          status: "ACTIVE"
-      pagination:
-        page: 1
-        size: 10
-        totalResults: 50
-        hasMore: true
-      database: "h2"
-      mockMode: false
-
-  StatusUpdateResponse:
-    type: object
-    properties:
-      success: boolean
-      message: string
-      employeeId: string
-      status: string
-      affectedRows: integer
-      database: string
-      timestamp: datetime
-      mockMode: boolean
-    example:
-      success: true
-      message: "Employee status updated successfully"
-      employeeId: "EMP001"
-      status: "ACTIVE"
-      affectedRows: 1
-      database: "h2"
-      timestamp: "2024-01-15T10:30:00Z"
-      mockMode: false
-
-  HealthStatus:
-    type: object
-    properties:
-      status: string
-      service: string
-      version: string
-      timestamp: datetime
-      environment: string
-      checks: object[]
-      uptime: number
-      features: object
-    example:
-      status: "HEALTHY"
-      service: "Employee Onboarding MCP Server"
-      version: "1.0.1"
-      timestamp: "2024-01-15T10:30:00Z"
-      environment: "development"
-      uptime: 3600
-      features:
+    CreateEmployeeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Operation success status
+        message:
+          type: string
+          description: Response message
+        employeeId:
+          type: string
+          description: Created employee ID
+        environment:
+          type: string
+          description: Environment name
+        database:
+          type: string
+          description: Database used
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+        mockMode:
+          type: boolean
+          description: Whether mock mode was used
+      example:
+        success: true
+        message: "Employee created successfully"
+        employeeId: "EMP001"
+        environment: "development"
+        database: "h2"
+        timestamp: "2024-01-15T10:30:00Z"
         mockMode: false
-        databaseRequired: true
-        auditEnabled: true
 
-/health:
-  displayName: Health Check
-  description: Returns the current health status of the Employee Onboarding MCP Server
-  get:
-    description: Get comprehensive health status including database connectivity, application state, and configuration details
-    responses:
-      200:
-        description: Service is healthy
-        body:
-          type: HealthStatus
-      503:
-        description: Service is degraded or unhealthy
-        body:
+    EmployeeListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Employee'
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+        filters:
           type: object
-          properties:
-            status: string
-            message: string
-          example:
-            status: "DEGRADED"
-            message: "Database connection failed"
+        environment:
+          type: string
+        database:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        mockMode:
+          type: boolean
+      example:
+        success: true
+        data:
+          - employee_id: "EMP001"
+            first_name: "John"
+            last_name: "Doe"
+            email: "john.doe@company.com"
+            status: "ACTIVE"
+        pagination:
+          page: 1
+          size: 10
+          totalResults: 50
+          hasMore: true
+        database: "h2"
+        mockMode: false
 
-/mcp:
-  /info:
-    displayName: MCP Server Information
-    description: Returns detailed information about the MCP server capabilities and available tools
-    get:
-      description: Get MCP server metadata, capabilities, and tool definitions
-      responses:
-        200:
-          description: MCP server information
-          body:
+    PaginationInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Current page number
+        size:
+          type: integer
+          description: Items per page
+        totalResults:
+          type: integer
+          description: Total number of results
+        hasMore:
+          type: boolean
+          description: Whether more pages are available
+
+    StatusUpdateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        employeeId:
+          type: string
+        status:
+          type: string
+        affectedRows:
+          type: integer
+        database:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        mockMode:
+          type: boolean
+      example:
+        success: true
+        message: "Employee status updated successfully"
+        employeeId: "EMP001"
+        status: "ACTIVE"
+        affectedRows: 1
+        database: "h2"
+        timestamp: "2024-01-15T10:30:00Z"
+        mockMode: false
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [HEALTHY, DEGRADED, DOWN]
+        service:
+          type: string
+        version:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        environment:
+          type: string
+        checks:
+          type: array
+          items:
             type: object
-            properties:
-              name: string
-              version: string
-              description: string
-              baseUrl: string
-              environment: string
-              capabilities: object
-              endpoints: object
-              tools: object[]
+        uptime:
+          type: number
+        features:
+          type: object
+      example:
+        status: "HEALTHY"
+        service: "Employee Onboarding MCP Server"
+        version: "1.0.1"
+        timestamp: "2024-01-15T10:30:00Z"
+        environment: "development"
+        uptime: 3600
+        features:
+          mockMode: false
+          databaseRequired: true
+          auditEnabled: true
 
-  /tools:
-    displayName: MCP Tools
-    description: Employee onboarding and management tools
-    
-    /create-employee:
-      displayName: Create Employee
-      description: Create a new employee record in the system
-      post:
-        description: |
-          Creates a new employee record with the provided information. The system will:
-          1. Generate a unique employee ID if not provided
-          2. Validate email uniqueness
-          3. Set default status to 'PENDING'
-          4. Create employee record in the database
-          5. Return employee creation confirmation
-        body:
-          type: CreateEmployeeRequest
-        responses:
-          200:
-            description: Employee created successfully
-            body:
-              type: CreateEmployeeResponse
-          400:
-            description: Invalid request parameters
-            body:
-              type: object
-              properties:
-                success: boolean
-                error: string
-                message: string
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+paths:
+  /health:
+    get:
+      summary: Health Check
+      description: Returns the current health status of the Employee Onboarding MCP Server
+      operationId: getHealthStatus
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+        '503':
+          description: Service is degraded or unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                status: "DEGRADED"
+                message: "Database connection failed"
+
+  /mcp/info:
+    get:
+      summary: MCP Server Information
+      description: Returns detailed information about the MCP server capabilities and available tools
+      operationId: getMcpServerInfo
+      responses:
+        '200':
+          description: MCP server information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  version:
+                    type: string
+                  description:
+                    type: string
+                  baseUrl:
+                    type: string
+                  environment:
+                    type: string
+                  capabilities:
+                    type: object
+                  endpoints:
+                    type: object
+                  tools:
+                    type: array
+                    items:
+                      type: object
+
+  /mcp/tools/create-employee:
+    post:
+      summary: Create Employee
+      description: |
+        Creates a new employee record with the provided information. The system will:
+        1. Generate a unique employee ID if not provided
+        2. Validate email uniqueness
+        3. Set default status to 'PENDING'
+        4. Create employee record in the database
+        5. Return employee creation confirmation
+      operationId: createEmployee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEmployeeRequest'
+      responses:
+        '200':
+          description: Employee created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateEmployeeResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
               example:
                 success: false
                 error: "VALIDATION_ERROR"
                 message: "Email address is required"
-          409:
-            description: Employee already exists
-            body:
-              type: object
-              properties:
-                success: boolean
-                error: string
-                message: string
-                existingEmployeeId: string
+        '409':
+          description: Employee already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-    /get-employee/{empId}:
-      displayName: Get Employee
-      description: Retrieve employee information by employee ID
-      uriParameters:
-        empId:
-          type: string
+  /mcp/tools/get-employee/{empId}:
+    get:
+      summary: Get Employee
+      description: |
+        Retrieves complete employee information including:
+        - Personal details
+        - Employment information
+        - Current status
+        - Department assignment
+        - Contact information
+      operationId: getEmployee
+      parameters:
+        - name: empId
+          in: path
+          required: true
           description: The unique employee identifier
+          schema:
+            type: string
           example: "EMP001"
-      get:
-        description: |
-          Retrieves complete employee information including:
-          - Personal details
-          - Employment information
-          - Current status
-          - Department assignment
-          - Contact information
-        responses:
-          200:
-            description: Employee found and retrieved successfully
-            body:
-              type: Employee
-          404:
-            description: Employee not found
-            body:
-              type: object
-              properties:
-                success: boolean
-                error: string
-                message: string
-                employeeId: string
+      responses:
+        '200':
+          description: Employee found and retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+        '404':
+          description: Employee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
               example:
                 success: false
                 error: "EMPLOYEE_NOT_FOUND"
                 message: "Employee not found: EMP001"
                 employeeId: "EMP001"
 
-    /list-employees:
-      displayName: List Employees
-      description: Retrieve a paginated list of employees with optional filtering
-      get:
-        description: |
-          Returns a paginated list of employees with support for:
-          - Status filtering (PENDING, ACTIVE, INACTIVE, TERMINATED)
-          - Department filtering
-          - Pagination controls
-          - Sorting by hire date
-        queryParameters:
-          page?:
+  /mcp/tools/list-employees:
+    get:
+      summary: List Employees
+      description: |
+        Returns a paginated list of employees with support for:
+        - Status filtering (PENDING, ACTIVE, INACTIVE, TERMINATED)
+        - Department filtering
+        - Pagination controls
+        - Sorting by hire date
+      operationId: listEmployees
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
             type: integer
             minimum: 1
             default: 1
-            description: Page number for pagination
-          size?:
+        - name: size
+          in: query
+          description: Number of employees per page
+          schema:
             type: integer
             minimum: 1
             maximum: 100
             default: 10
-            description: Number of employees per page
-          status?:
+        - name: status
+          in: query
+          description: Filter employees by status
+          schema:
             type: string
             enum: [PENDING, ACTIVE, INACTIVE, TERMINATED]
-            description: Filter employees by status
-          department?:
+        - name: department
+          in: query
+          description: Filter employees by department name
+          schema:
             type: string
-            description: Filter employees by department name
-        responses:
-          200:
-            description: Employees retrieved successfully
-            body:
-              type: EmployeeListResponse
-          400:
-            description: Invalid query parameters
-            body:
-              type: object
-              properties:
-                success: boolean
-                error: string
-                message: string
+      responses:
+        '200':
+          description: Employees retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeListResponse'
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-    /update-employee-status/{empId}/{status}:
-      displayName: Update Employee Status
-      description: Update the onboarding/employment status of an employee
-      uriParameters:
-        empId:
-          type: string
+  /mcp/tools/update-employee-status/{empId}/{status}:
+    put:
+      summary: Update Employee Status
+      description: |
+        Updates employee status with validation:
+        1. Validates employee exists
+        2. Validates status is allowed value
+        3. Updates employee record
+        4. Records status change timestamp
+        5. Returns update confirmation
+      operationId: updateEmployeeStatus
+      parameters:
+        - name: empId
+          in: path
+          required: true
           description: The unique employee identifier
+          schema:
+            type: string
           example: "EMP001"
-        status:
-          type: string
-          enum: [PENDING, ACTIVE, INACTIVE, TERMINATED]
+        - name: status
+          in: path
+          required: true
           description: New status for the employee
+          schema:
+            type: string
+            enum: [PENDING, ACTIVE, INACTIVE, TERMINATED]
           example: "ACTIVE"
-      put:
-        description: |
-          Updates employee status with validation:
-          1. Validates employee exists
-          2. Validates status is allowed value
-          3. Updates employee record
-          4. Records status change timestamp
-          5. Returns update confirmation
-        responses:
-          200:
-            description: Employee status updated successfully
-            body:
-              type: StatusUpdateResponse
-          400:
-            description: Invalid status or parameters
-            body:
-              type: object
-              properties:
-                success: boolean
-                error: string
-                message: string
-                provided: string
+      responses:
+        '200':
+          description: Employee status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusUpdateResponse'
+        '400':
+          description: Invalid status or parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
               example:
                 success: false
                 error: "INVALID_STATUS"
                 message: "Status must be one of: PENDING, ACTIVE, INACTIVE, TERMINATED"
                 provided: "INVALID_STATUS"
-          404:
-            description: Employee not found
-            body:
-              type: object
-              properties:
-                success: boolean
-                error: string
-                message: string
-                employeeId: string
-
-traits:
-  paginated:
-    queryParameters:
-      page?:
-        type: integer
-        minimum: 1
-        default: 1
-        description: Page number
-      size?:
-        type: integer
-        minimum: 1
-        maximum: 100
-        default: 10
-        description: Items per page
-
-  errorResponses:
-    responses:
-      400:
-        description: Bad Request
-        body:
-          type: object
-          properties:
-            success: boolean
-            error: string
-            message: string
-      500:
-        description: Internal Server Error
-        body:
-          type: object
-          properties:
-            success: boolean
-            error: string
-            message: string
-            database: string
-            timestamp: datetime
+        '404':
+          description: Employee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

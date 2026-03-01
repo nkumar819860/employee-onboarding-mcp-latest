@@ -188,6 +188,14 @@
 			<artifactId>mule-secure-configuration-property-module</artifactId>
 			<classifier>mule-plugin</classifier>
 		</dependency>
+
+		<!-- APIKit Router -->
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-apikit-module</artifactId>
+			<version>1.11.0</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
 	</dependencies>
 
 </project>

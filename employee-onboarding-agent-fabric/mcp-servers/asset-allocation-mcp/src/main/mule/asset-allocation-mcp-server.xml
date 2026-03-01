@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+<mule xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
 	xmlns:http="http://www.mulesoft.org/schema/mule/http"
@@ -8,7 +9,163 @@
 	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
       http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
       http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+      http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+      http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd">
+
+	<!-- ========================================================================================= -->
+	<!-- APIKIT ROUTER - MODERN API GATEWAY WITH AUTOMATIC ROUTING -->
+	<!-- ========================================================================================= -->
+
+	<flow name="asset-allocation-mcp-api-main" doc:name="APIKit Main Router">
+		<http:listener config-ref="HTTP_Listener_config" path="/api/*" doc:name="API Listener">
+			<http:response statusCode="#[vars.httpStatus default 200]">
+				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+			</http:response>
+			<http:error-response statusCode="#[vars.httpStatus default 500]">
+				<http:body><![CDATA[#[payload]]]></http:body>
+				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+			</http:error-response>
+		</http:listener>
+		<apikit:router config-ref="asset-allocation-mcp-api-config" doc:name="APIKit Router"/>
+		<error-handler>
+			<on-error-propagate type="APIKIT:BAD_REQUEST">
+				<ee:transform doc:name="Transform Message">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">400</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:NOT_FOUND">
+				<ee:transform doc:name="Transform Message">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">404</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+				<ee:transform doc:name="Transform Message">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">405</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+				<ee:transform doc:name="Transform Message">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">406</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+				<ee:transform doc:name="Transform Message">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">415</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+				<ee:transform doc:name="Transform Message">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">501</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+
+	<!-- APIKit Console Flow -->
+	<flow name="asset-allocation-mcp-api-console" doc:name="APIKit Console">
+		<http:listener config-ref="HTTP_Listener_config" path="/console/*" doc:name="Console Listener">
+			<http:response statusCode="200"/>
+			<http:error-response statusCode="500">
+				<http:body><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<apikit:console config-ref="asset-allocation-mcp-api-config" doc:name="APIKit Console"/>
+	</flow>
+
+	<!-- ========================================================================================= -->
+	<!-- APIKIT FLOW IMPLEMENTATIONS - AUTOMATIC ROUTING TO BUSINESS LOGIC -->
+	<!-- ========================================================================================= -->
+
+	<!-- Health Check Flow -->
+	<flow name="get:\health:asset-allocation-mcp-api-config" doc:name="Health Check Implementation">
+		<flow-ref name="health-check-implementation" doc:name="Health Check Logic"/>
+	</flow>
+
+	<!-- MCP Server Info Flow -->
+	<flow name="get:\mcp\info:asset-allocation-mcp-api-config" doc:name="MCP Server Info Implementation">
+		<flow-ref name="mcp-server-info-implementation" doc:name="Server Info Logic"/>
+	</flow>
+
+	<!-- Asset Allocation Tool Flow -->
+	<flow name="post:\mcp\tools\allocate-assets:application\json:asset-allocation-mcp-api-config" doc:name="Allocate Assets Implementation">
+		<logger level="INFO" message="APIKit: Allocate assets - Request: #[payload]" doc:name="Log Request"/>
+		<flow-ref name="allocate-assets-with-fallback" doc:name="Allocate Assets Logic"/>
+	</flow>
+
+	<!-- Return Asset Tool Flow -->
+	<flow name="post:\mcp\tools\return-asset:application\json:asset-allocation-mcp-api-config" doc:name="Return Asset Implementation">
+		<logger level="INFO" message="APIKit: Return asset - Request: #[payload]" doc:name="Log Request"/>
+		<flow-ref name="return-asset-with-fallback" doc:name="Return Asset Logic"/>
+	</flow>
+
+	<!-- List Assets Tool Flow -->
+	<flow name="get:\mcp\tools\list-assets:asset-allocation-mcp-api-config" doc:name="List Assets Implementation">
+		<set-variable variableName="statusFilter" value="#[attributes.queryParams.status default '']" doc:name="Set Status Filter"/>
+		<set-variable variableName="categoryFilter" value="#[attributes.queryParams.category default '']" doc:name="Set Category Filter"/>
+		<logger level="INFO" message="APIKit: List assets - Status: #[vars.statusFilter], Category: #[vars.categoryFilter]" doc:name="Log Request"/>
+		<flow-ref name="list-assets-with-fallback" doc:name="List Assets Logic"/>
+	</flow>
+
+	<!-- Get Available Assets Tool Flow -->
+	<flow name="get:\mcp\tools\get-available-assets:asset-allocation-mcp-api-config" doc:name="Get Available Assets Implementation">
+		<logger level="INFO" message="APIKit: Get available assets" doc:name="Log Request"/>
+		<flow-ref name="get-available-assets-with-fallback" doc:name="Get Available Assets Logic"/>
+	</flow>
+
+	<!-- Get Employee Assets Tool Flow -->
+	<flow name="post:\mcp\tools\get-employee-assets:application\json:asset-allocation-mcp-api-config" doc:name="Get Employee Assets Implementation">
+		<set-variable variableName="employeeId" value="#[payload.employeeId]" doc:name="Set Employee ID"/>
+		<logger level="INFO" message="APIKit: Get employee assets - ID: #[vars.employeeId]" doc:name="Log Request"/>
+		<flow-ref name="get-employee-assets-with-fallback" doc:name="Get Employee Assets Logic"/>
+	</flow>
 
 	<!-- ========================================================================================= -->
 	<!-- DATABASE INITIALIZATION & HEALTH MANAGEMENT - PRODUCTION READY -->
@@ -82,12 +239,11 @@
 	</flow>
 
 	<!-- ========================================================================================= -->
-	<!-- PRODUCTION-GRADE HEALTH CHECK WITH COMPREHENSIVE STATUS -->
+	<!-- BUSINESS LOGIC IMPLEMENTATIONS - UPDATED FOR APIKIT -->
 	<!-- ========================================================================================= -->
 
-	<flow name="health-check" doc:name="Production Health Check">
-		<http:listener path="/health" config-ref="HTTP_Listener_config" doc:name="Health Endpoint"/>
-		
+	<!-- Health Check Implementation -->
+	<flow name="health-check-implementation" doc:name="Production Health Check">
 		<parallel-foreach doc:name="Parallel Health Checks">
 			<ee:transform doc:name="Health Check Tasks">
 				<ee:message>
@@ -136,13 +292,8 @@ output application/json
 		<logger level="INFO" message="Health check completed - Status: #[payload.status]"/>
 	</flow>
 
-	<!-- ========================================================================================= -->
-	<!-- MCP SERVER METADATA & DISCOVERY -->
-	<!-- ========================================================================================= -->
-
-	<flow name="mcp-server-info" doc:name="MCP Server Discovery">
-		<http:listener path="/mcp/info" config-ref="HTTP_Listener_config"/>
-		
+	<!-- MCP Server Info Implementation -->
+	<flow name="mcp-server-info-implementation" doc:name="MCP Server Discovery">
 		<ee:transform doc:name="Server Metadata Response">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
@@ -162,15 +313,16 @@ output application/json
 		cache: "${cache.enabled}"
 	},
 	endpoints: {
-		health: "/health",
-		info: "/mcp/info",
-		tools: "/mcp/tools"
+		health: "/api/health",
+		info: "/api/mcp/info",
+		tools: "/api/mcp/tools",
+		console: "/console"
 	},
 	tools: [
 		{
 			name: "allocate-assets",
 			description: "Allocate assets to employees",
-			endpoint: "/mcp/tools/allocate-assets",
+			endpoint: "/api/mcp/tools/allocate-assets",
 			method: "POST",
 			inputSchema: {
 				employeeId: "string",
@@ -184,7 +336,7 @@ output application/json
 		{
 			name: "return-asset",
 			description: "Return allocated assets",
-			endpoint: "/mcp/tools/return-asset",
+			endpoint: "/api/mcp/tools/return-asset",
 			method: "POST",
 			inputSchema: {
 				assetTag: "string",
@@ -195,20 +347,20 @@ output application/json
 		{
 			name: "list-assets",
 			description: "List all assets with status",
-			endpoint: "/mcp/tools/list-assets",
+			endpoint: "/api/mcp/tools/list-assets",
 			method: "GET",
 			parameters: ["status?", "category?"]
 		},
 		{
 			name: "get-available-assets",
 			description: "Get available assets for allocation",
-			endpoint: "/mcp/tools/get-available-assets",
+			endpoint: "/api/mcp/tools/get-available-assets",
 			method: "GET"
 		},
 		{
 			name: "get-employee-assets",
 			description: "Get assets allocated to specific employee",
-			endpoint: "/mcp/tools/get-employee-assets",
+			endpoint: "/api/mcp/tools/get-employee-assets",
 			method: "POST",
 			inputSchema: {
 				employeeId: "string"
@@ -220,43 +372,6 @@ output application/json
 		</ee:transform>
 		
 		<logger level="INFO" message="MCP server info requested - responding with metadata"/>
-	</flow>
-
-	<!-- ========================================================================================= -->
-	<!-- MCP TOOLS - PRODUCTION IMPLEMENTATIONS WITH INTELLIGENT FALLBACK -->
-	<!-- ========================================================================================= -->
-
-	<flow name="mcp-allocate-assets-tool" doc:name="Allocate Assets Tool">
-		<http:listener path="/mcp/tools/allocate-assets" config-ref="HTTP_Listener_config"/>
-		<logger level="INFO" message="MCP Tool: Allocate assets - Request: #[payload]"/>
-		<flow-ref name="allocate-assets-with-fallback"/>
-	</flow>
-
-	<flow name="mcp-return-asset-tool" doc:name="Return Asset Tool">
-		<http:listener path="/mcp/tools/return-asset" config-ref="HTTP_Listener_config"/>
-		<logger level="INFO" message="MCP Tool: Return asset - Request: #[payload]"/>
-		<flow-ref name="return-asset-with-fallback"/>
-	</flow>
-
-	<flow name="mcp-list-assets-tool" doc:name="List Assets Tool">
-		<http:listener path="/mcp/tools/list-assets" config-ref="HTTP_Listener_config"/>
-		<set-variable variableName="statusFilter" value="#[attributes.queryParams.status default '']"/>
-		<set-variable variableName="categoryFilter" value="#[attributes.queryParams.category default '']"/>
-		<logger level="INFO" message="MCP Tool: List assets - Status: #[vars.statusFilter], Category: #[vars.categoryFilter]"/>
-		<flow-ref name="list-assets-with-fallback"/>
-	</flow>
-
-	<flow name="mcp-get-available-assets-tool" doc:name="Get Available Assets Tool">
-		<http:listener path="/mcp/tools/get-available-assets" config-ref="HTTP_Listener_config"/>
-		<logger level="INFO" message="MCP Tool: Get available assets"/>
-		<flow-ref name="get-available-assets-with-fallback"/>
-	</flow>
-
-	<flow name="mcp-get-employee-assets-tool" doc:name="Get Employee Assets Tool">
-		<http:listener path="/mcp/tools/get-employee-assets" config-ref="HTTP_Listener_config"/>
-		<set-variable variableName="employeeId" value="#[payload.employeeId]"/>
-		<logger level="INFO" message="MCP Tool: Get employee assets - ID: #[vars.employeeId]"/>
-		<flow-ref name="get-employee-assets-with-fallback"/>
 	</flow>
 
 	<!-- ========================================================================================= -->
@@ -737,57 +852,6 @@ output application/json
 		</try>
 	</flow>
 
-	<!-- List Assets Fallback Database Flow -->
-	<flow name="list-assets-fallback-database" doc:name="List Assets Fallback Database">
-		<try doc:name="Try Fallback Database">
-			<choice doc:name="Try Fallback Database">
-				<when expression='#[vars.databaseUsed != "h2"]'>
-					<db:select config-ref="H2_Database_Config">
-						<db:sql><![CDATA[
-							SELECT a.*, ac.category_name
-							FROM assets a 
-							JOIN asset_categories ac ON a.category_id = ac.id
-							WHERE (:statusFilter = '' OR a.status = :statusFilter)
-							AND (:categoryFilter = '' OR UPPER(ac.category_name) = UPPER(:categoryFilter))
-							ORDER BY ac.category_name, a.asset_name
-						]]></db:sql>
-						<db:input-parameters><![CDATA[#[{
-							statusFilter: vars.statusFilter,
-							categoryFilter: vars.categoryFilter
-						}]]]></db:input-parameters>
-					</db:select>
-					<set-variable variableName="databaseUsed" value="h2-fallback"/>
-				</when>
-				<otherwise>
-					<db:select config-ref="PostgreSQL_Database_Config">
-						<db:sql><![CDATA[
-							SELECT a.*, ac.category_name,
-							       CASE WHEN aa.allocation_status = 'ALLOCATED' THEN e.employee_id ELSE NULL END as allocated_to
-							FROM assets a 
-							JOIN asset_categories ac ON a.category_id = ac.id
-							LEFT JOIN asset_allocations aa ON a.id = aa.asset_id AND aa.allocation_status = 'ALLOCATED'
-							LEFT JOIN employees e ON aa.employee_id = e.id
-							WHERE (:statusFilter = '' OR a.status = :statusFilter)
-							AND (:categoryFilter = '' OR UPPER(ac.category_name) = UPPER(:categoryFilter))
-							ORDER BY ac.category_name, a.asset_name
-						]]></db:sql>
-						<db:input-parameters><![CDATA[#[{
-							statusFilter: vars.statusFilter,
-							categoryFilter: vars.categoryFilter
-						}]]]></db:input-parameters>
-					</db:select>
-					<set-variable variableName="databaseUsed" value="postgresql-fallback"/>
-				</otherwise>
-			</choice>
-			<error-handler>
-				<on-error-continue type="ANY">
-					<flow-ref name="list-assets-mock-response"/>
-					<set-variable variableName="databaseUsed" value="mock"/>
-				</on-error-continue>
-			</error-handler>
-		</try>
-	</flow>
-
 	<!-- Get Available Assets with Fallback Strategy -->
 	<flow name="get-available-assets-with-fallback" doc:name="Get Available Assets with Smart Fallback">
 		<try doc:name="Database Query with Fallback">
@@ -849,44 +913,6 @@ output application/json
 			<error-handler>
 				<on-error-continue type="ANY">
 					<flow-ref name="get-available-assets-mock-response"/>
-				</on-error-continue>
-			</error-handler>
-		</try>
-	</flow>
-
-	<!-- Get Available Assets Fallback Database Flow -->
-	<flow name="get-available-assets-fallback-database" doc:name="Get Available Assets Fallback Database">
-		<try doc:name="Try Fallback Database">
-			<choice doc:name="Try Fallback Database">
-				<when expression='#[vars.databaseUsed != "h2"]'>
-					<db:select config-ref="H2_Database_Config">
-						<db:sql><![CDATA[
-							SELECT a.*, ac.category_name
-							FROM assets a 
-							JOIN asset_categories ac ON a.category_id = ac.id 
-							WHERE a.status = 'AVAILABLE'
-							ORDER BY ac.category_name, a.asset_name
-						]]></db:sql>
-					</db:select>
-					<set-variable variableName="databaseUsed" value="h2-fallback"/>
-				</when>
-				<otherwise>
-					<db:select config-ref="PostgreSQL_Database_Config">
-						<db:sql><![CDATA[
-							SELECT a.*, ac.category_name
-							FROM assets a 
-							JOIN asset_categories ac ON a.category_id = ac.id 
-							WHERE a.status = 'AVAILABLE'
-							ORDER BY ac.category_name, a.asset_name
-						]]></db:sql>
-					</db:select>
-					<set-variable variableName="databaseUsed" value="postgresql-fallback"/>
-				</otherwise>
-			</choice>
-			<error-handler>
-				<on-error-continue type="ANY">
-					<flow-ref name="get-available-assets-mock-response"/>
-					<set-variable variableName="databaseUsed" value="mock"/>
 				</on-error-continue>
 			</error-handler>
 		</try>
@@ -967,54 +993,8 @@ output application/json
 		</try>
 	</flow>
 
-	<!-- Get Employee Assets Fallback Database Flow -->
-	<flow name="get-employee-assets-fallback-database" doc:name="Get Employee Assets Fallback Database">
-		<try doc:name="Try Fallback Database">
-			<choice doc:name="Try Fallback Database">
-				<when expression='#[vars.databaseUsed != "h2"]'>
-					<db:select config-ref="H2_Database_Config">
-						<db:sql><![CDATA[
-							SELECT a.*, ac.category_name, aa.allocated_date, aa.allocation_status
-							FROM asset_allocations aa
-							JOIN assets a ON aa.asset_id = a.id
-							JOIN asset_categories ac ON a.category_id = ac.id
-							JOIN employees e ON aa.employee_id = e.id
-							WHERE e.employee_id = :employeeId 
-							AND aa.allocation_status = 'ALLOCATED'
-							ORDER BY aa.allocated_date DESC
-						]]></db:sql>
-						<db:input-parameters><![CDATA[#[{'employeeId': vars.employeeId}]]]></db:input-parameters>
-					</db:select>
-					<set-variable variableName="databaseUsed" value="h2-fallback"/>
-				</when>
-				<otherwise>
-					<db:select config-ref="PostgreSQL_Database_Config">
-						<db:sql><![CDATA[
-							SELECT a.*, ac.category_name, aa.allocated_date, aa.allocation_status, aa.notes
-							FROM asset_allocations aa
-							JOIN assets a ON aa.asset_id = a.id
-							JOIN asset_categories ac ON a.category_id = ac.id
-							JOIN employees e ON aa.employee_id = e.id
-							WHERE e.employee_id = :employeeId 
-							AND aa.allocation_status = 'ALLOCATED'
-							ORDER BY aa.allocated_date DESC
-						]]></db:sql>
-						<db:input-parameters><![CDATA[#[{'employeeId': vars.employeeId}]]]></db:input-parameters>
-					</db:select>
-					<set-variable variableName="databaseUsed" value="postgresql-fallback"/>
-				</otherwise>
-			</choice>
-			<error-handler>
-				<on-error-continue type="ANY">
-					<flow-ref name="get-employee-assets-mock-response"/>
-					<set-variable variableName="databaseUsed" value="mock"/>
-				</on-error-continue>
-			</error-handler>
-		</try>
-	</flow>
-
 	<!-- ========================================================================================= -->
-	<!-- DATABASE SETUP FLOWS -->
+	<!-- DATABASE SETUP AND HELPER FLOWS -->
 	<!-- ========================================================================================= -->
 
 	<!-- PostgreSQL Database Setup -->
@@ -1178,6 +1158,142 @@ output application/java
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+	</flow>
+
+	<!-- ========================================================================================= -->
+	<!-- FALLBACK DATABASE FLOWS -->
+	<!-- ========================================================================================= -->
+
+	<flow name="list-assets-fallback-database" doc:name="List Assets Fallback Database">
+		<try doc:name="Try Fallback Database">
+			<choice doc:name="Try Fallback Database">
+				<when expression='#[vars.databaseUsed != "h2"]'>
+					<db:select config-ref="H2_Database_Config">
+						<db:sql><![CDATA[
+							SELECT a.*, ac.category_name
+							FROM assets a 
+							JOIN asset_categories ac ON a.category_id = ac.id
+							WHERE (:statusFilter = '' OR a.status = :statusFilter)
+							AND (:categoryFilter = '' OR UPPER(ac.category_name) = UPPER(:categoryFilter))
+							ORDER BY ac.category_name, a.asset_name
+						]]></db:sql>
+						<db:input-parameters><![CDATA[#[{
+							statusFilter: vars.statusFilter,
+							categoryFilter: vars.categoryFilter
+						}]]]></db:input-parameters>
+					</db:select>
+					<set-variable variableName="databaseUsed" value="h2-fallback"/>
+				</when>
+				<otherwise>
+					<db:select config-ref="PostgreSQL_Database_Config">
+						<db:sql><![CDATA[
+							SELECT a.*, ac.category_name,
+							       CASE WHEN aa.allocation_status = 'ALLOCATED' THEN e.employee_id ELSE NULL END as allocated_to
+							FROM assets a 
+							JOIN asset_categories ac ON a.category_id = ac.id
+							LEFT JOIN asset_allocations aa ON a.id = aa.asset_id AND aa.allocation_status = 'ALLOCATED'
+							LEFT JOIN employees e ON aa.employee_id = e.id
+							WHERE (:statusFilter = '' OR a.status = :statusFilter)
+							AND (:categoryFilter = '' OR UPPER(ac.category_name) = UPPER(:categoryFilter))
+							ORDER BY ac.category_name, a.asset_name
+						]]></db:sql>
+						<db:input-parameters><![CDATA[#[{
+							statusFilter: vars.statusFilter,
+							categoryFilter: vars.categoryFilter
+						}]]]></db:input-parameters>
+					</db:select>
+					<set-variable variableName="databaseUsed" value="postgresql-fallback"/>
+				</otherwise>
+			</choice>
+			<error-handler>
+				<on-error-continue type="ANY">
+					<flow-ref name="list-assets-mock-response"/>
+					<set-variable variableName="databaseUsed" value="mock"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<flow name="get-available-assets-fallback-database" doc:name="Get Available Assets Fallback Database">
+		<try doc:name="Try Fallback Database">
+			<choice doc:name="Try Fallback Database">
+				<when expression='#[vars.databaseUsed != "h2"]'>
+					<db:select config-ref="H2_Database_Config">
+						<db:sql><![CDATA[
+							SELECT a.*, ac.category_name
+							FROM assets a 
+							JOIN asset_categories ac ON a.category_id = ac.id 
+							WHERE a.status = 'AVAILABLE'
+							ORDER BY ac.category_name, a.asset_name
+						]]></db:sql>
+					</db:select>
+					<set-variable variableName="databaseUsed" value="h2-fallback"/>
+				</when>
+				<otherwise>
+					<db:select config-ref="PostgreSQL_Database_Config">
+						<db:sql><![CDATA[
+							SELECT a.*, ac.category_name
+							FROM assets a 
+							JOIN asset_categories ac ON a.category_id = ac.id 
+							WHERE a.status = 'AVAILABLE'
+							ORDER BY ac.category_name, a.asset_name
+						]]></db:sql>
+					</db:select>
+					<set-variable variableName="databaseUsed" value="postgresql-fallback"/>
+				</otherwise>
+			</choice>
+			<error-handler>
+				<on-error-continue type="ANY">
+					<flow-ref name="get-available-assets-mock-response"/>
+					<set-variable variableName="databaseUsed" value="mock"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+
+	<flow name="get-employee-assets-fallback-database" doc:name="Get Employee Assets Fallback Database">
+		<try doc:name="Try Fallback Database">
+			<choice doc:name="Try Fallback Database">
+				<when expression='#[vars.databaseUsed != "h2"]'>
+					<db:select config-ref="H2_Database_Config">
+						<db:sql><![CDATA[
+							SELECT a.*, ac.category_name, aa.allocated_date, aa.allocation_status
+							FROM asset_allocations aa
+							JOIN assets a ON aa.asset_id = a.id
+							JOIN asset_categories ac ON a.category_id = ac.id
+							JOIN employees e ON aa.employee_id = e.id
+							WHERE e.employee_id = :employeeId 
+							AND aa.allocation_status = 'ALLOCATED'
+							ORDER BY aa.allocated_date DESC
+						]]></db:sql>
+						<db:input-parameters><![CDATA[#[{'employeeId': vars.employeeId}]]]></db:input-parameters>
+					</db:select>
+					<set-variable variableName="databaseUsed" value="h2-fallback"/>
+				</when>
+				<otherwise>
+					<db:select config-ref="PostgreSQL_Database_Config">
+						<db:sql><![CDATA[
+							SELECT a.*, ac.category_name, aa.allocated_date, aa.allocation_status, aa.notes
+							FROM asset_allocations aa
+							JOIN assets a ON aa.asset_id = a.id
+							JOIN asset_categories ac ON a.category_id = ac.id
+							JOIN employees e ON aa.employee_id = e.id
+							WHERE e.employee_id = :employeeId 
+							AND aa.allocation_status = 'ALLOCATED'
+							ORDER BY aa.allocated_date DESC
+						]]></db:sql>
+						<db:input-parameters><![CDATA[#[{'employeeId': vars.employeeId}]]]></db:input-parameters>
+					</db:select>
+					<set-variable variableName="databaseUsed" value="postgresql-fallback"/>
+				</otherwise>
+			</choice>
+			<error-handler>
+				<on-error-continue type="ANY">
+					<flow-ref name="get-employee-assets-mock-response"/>
+					<set-variable variableName="databaseUsed" value="mock"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
 	</flow>
 
 	<!-- ========================================================================================= -->

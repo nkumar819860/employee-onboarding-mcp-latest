@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry kind="con" path="MULE_LIB/org.mule.modules/mule-apikit-module/1.11.0"/>
 	<classpathentry kind="con" path="MULE_LIB/org.mule.connectors/mule-http-connector/1.9.0"/>
 	<classpathentry kind="con" path="MULE_LIB/com.mulesoft.modules/mule-secure-configuration-property-module/1.2.7"/>
 	<classpathentry kind="con" path="MULE_LIB/org.mule.connectors/mule-db-connector/1.14.17"/>

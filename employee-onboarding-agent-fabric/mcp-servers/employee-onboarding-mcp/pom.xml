@@ -56,6 +56,14 @@
 	</properties>
 
 	<dependencies>
+		<!-- APIKit Router for Contract-First API Development -->
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-apikit-module</artifactId>
+			<version>1.11.1</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+
 		<!-- HTTP Connector -->
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
@@ -67,6 +75,14 @@
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-db-connector</artifactId>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+
+		<!-- Sockets Connector -->
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-sockets-connector</artifactId>
+			<version>1.2.7</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 

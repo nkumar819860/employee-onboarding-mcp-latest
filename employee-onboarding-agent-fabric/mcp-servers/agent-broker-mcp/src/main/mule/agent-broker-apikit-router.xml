@@ -1,0 +1,585 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd 
+	http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+	http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+	http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd">
+
+	<!-- Import Global Configuration -->
+	<import file="global.xml"/>
+
+	<!-- APIKit Router Configuration -->
+	<apikit:config name="agent-broker-config" api="api/agent-broker-mcp-api.yaml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+
+	<!-- Main APIKit Router Flow -->
+	<flow name="agent-broker-main">
+		<http:listener config-ref="http-config" path="/api/*" doc:name="HTTP Listener">
+			<http:response statusCode="#[vars.httpStatus default 200]">
+				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+			</http:response>
+			<http:error-response statusCode="#[vars.httpStatus default 500]">
+				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+			</http:error-response>
+		</http:listener>
+		<apikit:router config-ref="agent-broker-config" doc:name="APIKit Router" />
+		<error-handler>
+			<on-error-propagate type="APIKIT:BAD_REQUEST">
+				<ee:transform doc:name="Transform Message">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">400</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:NOT_FOUND">
+				<ee:transform doc:name="Transform Message">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">404</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+				<ee:transform doc:name="Transform Message">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">405</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+				<ee:transform doc:name="Transform Message">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">406</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+				<ee:transform doc:name="Transform Message">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">415</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+				<ee:transform doc:name="Transform Message">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">501</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+
+	<!-- Console Flow for API Documentation -->
+	<flow name="agent-broker-console">
+		<http:listener config-ref="http-config" path="/console/*" doc:name="HTTP Listener" />
+		<apikit:console config-ref="agent-broker-config" doc:name="APIkit Console" />
+		<error-handler>
+			<on-error-propagate type="APIKIT:NOT_FOUND">
+				<ee:transform doc:name="Transform Message">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="httpStatus">404</ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+
+	<!-- Implementation Flows Generated from OpenAPI Specification -->
+
+	<!-- GET /health -->
+	<flow name="get:\health:agent-broker-config">
+		<logger level="INFO" message="Health check requested for Agent Broker" doc:name="Logger" />
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
+		<ee:transform doc:name="Health Check Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "UP",
+	service: "Employee Onboarding Agent Broker",
+	timestamp: now() as String {format: "yyyy-MM-dd HH:mm:ss"},
+	orchestrationEnabled: "${agent.broker.orchestration.enabled}"
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<!-- GET /mcp/info -->
+	<flow name="get:\mcp\info:agent-broker-config">
+		<logger level="INFO" message="Agent Broker MCP Server info requested" doc:name="Logger" />
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
+		<ee:transform doc:name="MCP Info Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	name: "Employee Onboarding Agent Broker",
+	version: "1.0.0",
+	description: "Agent Broker MCP Server for Employee Onboarding Process Orchestration",
+	tools: [
+		{
+			name: "orchestrate-employee-onboarding",
+			description: "Complete employee onboarding process orchestration",
+			endpoint: "/api/mcp/tools/orchestrate-employee-onboarding"
+		},
+		{
+			name: "get-onboarding-status",
+			description: "Get employee onboarding process status",
+			endpoint: "/api/mcp/tools/get-onboarding-status"
+		},
+		{
+			name: "retry-failed-step",
+			description: "Retry a failed onboarding step",
+			endpoint: "/api/mcp/tools/retry-failed-step"
+		}
+	]
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<!-- POST /mcp/tools/orchestrate-employee-onboarding -->
+	<flow name="post:\mcp\tools\orchestrate-employee-onboarding:application\json:agent-broker-config">
+		<logger level="INFO" message="Starting complete employee onboarding orchestration for: #[payload.email]" doc:name="Logger" />
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
+		<set-variable variableName="onboardingStartTime" value="#[now()]" doc:name="Set Start Time" />
+		<set-variable variableName="employeeData" value="#[payload]" doc:name="Store Employee Data" />
+		<set-variable variableName="orchestrationResults" value="#[{}]" doc:name="Initialize Results" />
+
+		<try doc:name="Try Complete Onboarding Orchestration">
+			<!-- Step 1: Create Employee Profile -->
+			<logger level="INFO" message="Step 1: Creating employee profile for #[vars.employeeData.email]" doc:name="Logger" />
+			<http:request method="POST" config-ref="employee-onboarding-mcp-config" path="/mcp/tools/create-employee" doc:name="Create Employee Profile">
+				<http:body>#[vars.employeeData]</http:body>
+				<http:headers>#[{"Content-Type": "application/json"}]</http:headers>
+			</http:request>
+			
+			<set-variable variableName="employeeCreationResult" value="#[payload]" doc:name="Store Employee Creation Result" />
+			<logger level="INFO" message="Employee profile created successfully: #[vars.employeeCreationResult.employeeId]" doc:name="Logger" />
+
+			<!-- Step 2: Allocate Assets -->
+			<logger level="INFO" message="Step 2: Allocating assets for employee #[vars.employeeCreationResult.employeeId]" doc:name="Logger" />
+			<ee:transform doc:name="Prepare Asset Allocation Request">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	employeeId: vars.employeeCreationResult.employeeId,
+	firstName: vars.employeeData.firstName,
+	lastName: vars.employeeData.lastName,
+	email: vars.employeeData.email,
+	department: vars.employeeData.department,
+	position: vars.employeeData.position,
+	startDate: vars.employeeData.startDate,
+	assets: vars.employeeData.assets default []
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+
+			<http:request method="POST" config-ref="asset-allocation-mcp-config" path="/mcp/tools/allocate-assets" doc:name="Allocate Assets">
+				<http:body>#[payload]</http:body>
+				<http:headers>#[{"Content-Type": "application/json"}]</http:headers>
+			</http:request>
+			
+			<set-variable variableName="assetAllocationResult" value="#[payload]" doc:name="Store Asset Allocation Result" />
+			<logger level="INFO" message="Assets allocated successfully: #[sizeOf(vars.assetAllocationResult.allocatedAssets default [])] assets allocated" doc:name="Logger" />
+
+			<!-- Step 3: Send Welcome Email -->
+			<logger level="INFO" message="Step 3: Sending welcome email to #[vars.employeeData.email]" doc:name="Logger" />
+			<ee:transform doc:name="Prepare Welcome Email Request">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	firstName: vars.employeeData.firstName,
+	lastName: vars.employeeData.lastName,
+	employeeId: vars.employeeCreationResult.employeeId,
+	email: vars.employeeData.email,
+	department: vars.employeeData.department,
+	position: vars.employeeData.position,
+	startDate: vars.employeeData.startDate,
+	manager: vars.employeeData.manager,
+	orientationDate: vars.employeeData.orientationDate,
+	companyName: vars.employeeData.companyName default "Our Company"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+
+			<http:request method="POST" config-ref="notification-mcp-config" path="/mcp/tools/send-welcome-email" doc:name="Send Welcome Email">
+				<http:body>#[payload]</http:body>
+				<http:headers>#[{"Content-Type": "application/json"}]</http:headers>
+			</http:request>
+			
+			<set-variable variableName="welcomeEmailResult" value="#[payload]" doc:name="Store Welcome Email Result" />
+			<logger level="INFO" message="Welcome email sent successfully" doc:name="Logger" />
+
+			<!-- Step 4: Send Asset Allocation Notification -->
+			<logger level="INFO" message="Step 4: Sending asset allocation notification" doc:name="Logger" />
+			<ee:transform doc:name="Prepare Asset Notification Request">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	firstName: vars.employeeData.firstName,
+	lastName: vars.employeeData.lastName,
+	employeeId: vars.employeeCreationResult.employeeId,
+	email: vars.employeeData.email,
+	assets: vars.assetAllocationResult.allocatedAssets default [],
+	allocationDate: now() as String {format: 'yyyy-MM-dd'},
+	approvedBy: "Agent Broker System",
+	allocationStatus: "ALLOCATED",
+	companyName: vars.employeeData.companyName default "Our Company"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+
+			<http:request method="POST" config-ref="notification-mcp-config" path="/mcp/tools/send-asset-notification" doc:name="Send Asset Notification">
+				<http:body>#[payload]</http:body>
+				<http:headers>#[{"Content-Type": "application/json"}]</http:headers>
+			</http:request>
+			
+			<set-variable variableName="assetNotificationResult" value="#[payload]" doc:name="Store Asset Notification Result" />
+			<logger level="INFO" message="Asset allocation notification sent successfully" doc:name="Logger" />
+
+			<!-- Step 5: Send Onboarding Complete Notification -->
+			<logger level="INFO" message="Step 5: Sending onboarding complete notification" doc:name="Logger" />
+			<ee:transform doc:name="Prepare Onboarding Complete Request">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	firstName: vars.employeeData.firstName,
+	lastName: vars.employeeData.lastName,
+	employeeId: vars.employeeCreationResult.employeeId,
+	email: vars.employeeData.email,
+	department: vars.employeeData.department,
+	position: vars.employeeData.position,
+	startDate: vars.employeeData.startDate,
+	assets: vars.assetAllocationResult.allocatedAssets default [],
+	managerName: vars.employeeData.managerName,
+	managerEmail: vars.employeeData.managerEmail,
+	companyName: vars.employeeData.companyName default "Our Company"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+
+			<http:request method="POST" config-ref="notification-mcp-config" path="/mcp/tools/send-onboarding-complete" doc:name="Send Onboarding Complete">
+				<http:body>#[payload]</http:body>
+				<http:headers>#[{"Content-Type": "application/json"}]</http:headers>
+			</http:request>
+			
+			<set-variable variableName="onboardingCompleteResult" value="#[payload]" doc:name="Store Onboarding Complete Result" />
+			<logger level="INFO" message="Onboarding complete notification sent successfully" doc:name="Logger" />
+
+			<!-- Final Success Response -->
+			<ee:transform doc:name="Prepare Success Response">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "success",
+	message: "Employee onboarding orchestration completed successfully",
+	employeeId: vars.employeeCreationResult.employeeId,
+	employeeName: vars.employeeData.firstName ++ " " ++ vars.employeeData.lastName,
+	email: vars.employeeData.email,
+	onboardingSteps: {
+		profileCreation: {
+			status: "completed",
+			result: vars.employeeCreationResult
+		},
+		assetAllocation: {
+			status: "completed",
+			assetsAllocated: sizeOf(vars.assetAllocationResult.allocatedAssets default []),
+			result: vars.assetAllocationResult
+		},
+		welcomeEmail: {
+			status: "completed",
+			result: vars.welcomeEmailResult
+		},
+		assetNotification: {
+			status: "completed",
+			result: vars.assetNotificationResult
+		},
+		onboardingComplete: {
+			status: "completed",
+			result: vars.onboardingCompleteResult
+		}
+	},
+	startTime: vars.onboardingStartTime as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	completionTime: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	totalDuration: (now() - vars.onboardingStartTime) as String,
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+
+			<logger level="INFO" message="Employee onboarding orchestration completed successfully for: #[vars.employeeData.email]" doc:name="Logger" />
+
+			<error-handler>
+				<on-error-propagate type="HTTP:*">
+					<ee:transform doc:name="Prepare Error Response">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "error",
+	message: "Employee onboarding orchestration failed",
+	error: error.description,
+	employeeEmail: vars.employeeData.email,
+	failedAt: "HTTP Request to MCP Server",
+	startTime: vars.onboardingStartTime as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	errorTime: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+}]]></ee:set-payload>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="httpStatus">500</ee:set-variable>
+							<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					<logger level="ERROR" message="Onboarding orchestration failed: #[error.description]" doc:name="Logger" />
+				</on-error-propagate>
+				<on-error-propagate type="ANY">
+					<ee:transform doc:name="Prepare Generic Error Response">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "error",
+	message: "Unexpected error during employee onboarding orchestration",
+	error: error.description,
+	employeeEmail: vars.employeeData.email default "unknown",
+	startTime: vars.onboardingStartTime as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	errorTime: now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+}]]></ee:set-payload>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="httpStatus">500</ee:set-variable>
+							<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					<logger level="ERROR" message="Unexpected onboarding orchestration error: #[error.description]" doc:name="Logger" />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- POST /mcp/tools/get-onboarding-status -->
+	<flow name="post:\mcp\tools\get-onboarding-status:application\json:agent-broker-config">
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
+		
+		<!-- Add payload validation before processing -->
+		<choice doc:name="Validate Payload">
+			<when expression="#[payload != null and payload.employeeId != null]">
+				<set-variable variableName="employeeId" value="#[payload.employeeId]" doc:name="Set Employee ID" />
+				<logger level="INFO" message="Getting onboarding status for employee: #[vars.employeeId]" doc:name="Logger" />
+			</when>
+			<otherwise>
+				<set-variable variableName="employeeId" value="UNKNOWN" doc:name="Set Default Employee ID" />
+				<logger level="WARN" message="No employeeId provided in request payload, using default: UNKNOWN" doc:name="Logger" />
+			</otherwise>
+		</choice>
+
+		<try doc:name="Try Get Status">
+			<http:request method="GET" config-ref="employee-onboarding-mcp-config" path="/mcp/tools/get-employee/{employeeId}" doc:name="Get Employee Status">
+				<http:uri-params>#[{"employeeId": vars.employeeId}]</http:uri-params>
+			</http:request>
+
+			<ee:transform doc:name="Transform Response">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "success",
+	message: "Employee status retrieved",
+	employeeData: payload,
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<logger level="INFO" message="Employee status retrieved successfully" doc:name="Logger" />
+
+			<error-handler>
+				<on-error-propagate type="ANY">
+					<ee:transform doc:name="Transform Error Response">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "error",
+	message: "Failed to get employee status",
+	error: error.description,
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+}]]></ee:set-payload>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="httpStatus">500</ee:set-variable>
+							<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					<logger level="ERROR" message="Failed to get employee status: #[error.description]" doc:name="Logger" />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</flow>
+
+	<!-- POST /mcp/tools/retry-failed-step -->
+	<flow name="post:\mcp\tools\retry-failed-step:application\json:agent-broker-config">
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
+		<logger level="INFO" message="Retrying failed step: #[payload.step] for employee: #[payload.employeeId]" doc:name="Logger" />
+
+		<ee:transform doc:name="Transform Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "success",
+	message: "Retry functionality is under development",
+	step: payload.step,
+	employeeId: payload.employeeId,
+	timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" message="Retry step response sent (feature under development)" doc:name="Logger" />
+	</flow>
+
+</mule>
