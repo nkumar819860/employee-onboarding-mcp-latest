@@ -138,6 +138,9 @@
 						<properties>
 							<env>${anypoint.platform.env}</env>
 							<http.port>8081</http.port>
+							<https.port>8082</https.port>
+							<mule.env>cloudhub</mule.env>
+							<secure.key>mule</secure.key>
 						</properties>
 					</cloudHubDeployment>
 				</configuration>
@@ -179,4 +182,12 @@
 			<url>https://maven.anypoint.mulesoft.com/api/v1/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
 		</repository>
 	</distributionManagement>
+	<repositories>
+		<repository>
+			<id>anypoint-exchange-v3</id>
+			<name>Anypoint Exchange V3</name>
+			<url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+			<layout>default</layout>
+		</repository>
+	</repositories>
 </project>

@@ -4,7 +4,6 @@
 	<classpathentry kind="con" path="MULE_LIB/org.mule.connectors/mule-http-connector/1.9.0"/>
 	<classpathentry kind="con" path="MULE_LIB/com.mulesoft.modules/mule-secure-configuration-property-module/1.2.7"/>
 	<classpathentry kind="con" path="MULE_LIB/org.mule.connectors/mule-db-connector/1.14.17"/>
-	<classpathentry kind="con" path="MULE_LIB/com.mulesoft.modules/mule-secure-configuration-property-module/1.2.6"/>
 	<classpathentry kind="con" path="org.mule.tooling.MULE_PROJECT_LIB"/>
 	<classpathentry kind="con" path="MULE_LIB/org.mule.connectors/mule-email-connector/1.7.4"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>

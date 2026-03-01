@@ -91,10 +91,13 @@
 						<workers>${cloudhub.workers}</workers>
 						<workerType>${cloudhub.worker.type}</workerType>
 						<objectStoreV2>true</objectStoreV2>
-						<!-- ✅ Properties OK -->
+						<!-- ✅ FIXED: CloudHub HTTPS Configuration -->
 						<properties>
 							<env>${anypoint.platform.env}</env>
 							<http.port>8081</http.port>
+							<https.port>8082</https.port>
+							<mule.env>cloudhub</mule.env>
+							<secure.key>mule</secure.key>
 						</properties>
 					</cloudHubDeployment>
 				</configuration>

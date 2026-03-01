@@ -18,7 +18,7 @@
 
     <!-- HTTP Listener Configuration -->
     <http:listener-config doc:name="HTTP Config" name="HTTP_Listener_config">
-        <http:listener-connection host="${http.host}" port="${http.port}"/>
+        <http:listener-connection host="${http.host}" port="${https.port}"/>
     </http:listener-config>
 
     <!-- H2 Database Configuration (Primary for CloudHub) -->
