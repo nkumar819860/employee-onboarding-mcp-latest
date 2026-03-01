@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
@@ -14,7 +12,7 @@
 
 	<groupId>980c5346-1838-46a0-a1d9-42a6f8bf34a5</groupId>
 	<artifactId>employee-onboarding-mcp</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.2</version>
 	<packaging>mule-application</packaging>
 
 	<name>Employee Onboarding MCP Server</name>
@@ -28,9 +26,10 @@
 		<!-- ✅ Exchange Metadata -->
 		<exchange.skip>false</exchange.skip>
 		<exchange.publish>true</exchange.publish>
+		<exchange.classifier>mcp</exchange.classifier>
 		<tags>employee-onboarding,mcp-server,database-operations,profile-management,multi-database</tags>
-		<categories>Integration,Database,Human Resources,Agent Network</categories>
-		<fields>["mcp","employee","onboarding","database","postgresql","h2","fallback","agent-fabric","profile-management","mulesoft"]</fields>
+		<categories>[]</categories>
+		<fields>[]</fields>
 		<mule.version>4.9.14</mule.version>
 		<mule.runtime.version>4.9-java17</mule.runtime.version>
 		<java.version>17</java.version>
@@ -109,7 +108,6 @@
 				<version>${mule.maven.plugin.version}</version>
 				<extensions>true</extensions>
 				<configuration>
-					<classifier>mcp</classifier>
 					<!-- ✅ Shared Libraries -->
 					<sharedLibraries>
 						<sharedLibrary>
@@ -145,19 +143,12 @@
 				</configuration>
 			</plugin>
 
-			<!-- ✅ Exchange Maven Plugin (Publications) -->
+			<!-- ✅ ADD THIS PLUGIN after mule-maven-plugin -->
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>exchange-mule-maven-plugin</artifactId>
 				<version>0.0.21</version>
 				<executions>
-					<execution>
-						<id>validate</id>
-						<phase>validate</phase>
-						<goals>
-							<goal>exchange-pre-deploy</goal>
-						</goals>
-					</execution>
 					<execution>
 						<id>deploy</id>
 						<phase>deploy</phase>
@@ -165,16 +156,18 @@
 							<goal>exchange-deploy</goal>
 						</goals>
 						<configuration>
-							<skip>${exchange.skip}</skip>
-							<authenticationMethod>connected-app</authenticationMethod>
+							<!-- ✅ Uses YOUR Connected App -->
 							<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
 							<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
 							<connectedAppGrantType>client_credentials</connectedAppGrantType>
+							<!-- ✅ Uses YOUR exchange.classifier -->
+							<classifier>${exchange.classifier}</classifier>
 							<businessGroupId>${anypoint.business.group}</businessGroupId>
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
+
 		</plugins>
 	</build>
 

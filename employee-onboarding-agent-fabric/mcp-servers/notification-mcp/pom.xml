@@ -48,6 +48,7 @@
 		<!-- ✅ Exchange Metadata -->
 		<exchange.skip>false</exchange.skip>
 		<exchange.publish>true</exchange.publish>
+		<exchange.classifier>mcp</exchange.classifier>
 		<tags>notification,mcp-server,email-notifications,employee-communications,messaging</tags>
 		<categories>Integration,Communication,Human Resources,Agent Network</categories>
 		<fields>["mcp","notification","email","messaging","employee","communications","onboarding","agent-fabric","mulesoft"]</fields>
@@ -62,7 +63,6 @@
 				<extensions>true</extensions>
 
 				<configuration>
-					<classifier>mcp</classifier>
 					<!-- ✅ Shared libraries - CORRECTLY inside configuration -->
 					<sharedLibraries>
 						<sharedLibrary>
@@ -104,19 +104,12 @@
 				</configuration>
 			</plugin>
 
-			<!-- ✅ Exchange Maven Plugin (Publications) -->
+			<!-- ✅ ADD THIS PLUGIN after mule-maven-plugin -->
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>exchange-mule-maven-plugin</artifactId>
 				<version>0.0.21</version>
 				<executions>
-					<execution>
-						<id>validate</id>
-						<phase>validate</phase>
-						<goals>
-							<goal>exchange-pre-deploy</goal>
-						</goals>
-					</execution>
 					<execution>
 						<id>deploy</id>
 						<phase>deploy</phase>
@@ -124,11 +117,12 @@
 							<goal>exchange-deploy</goal>
 						</goals>
 						<configuration>
-							<skip>${exchange.skip}</skip>
-							<authenticationMethod>connected-app</authenticationMethod>
+							<!-- ✅ Uses YOUR Connected App -->
 							<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
 							<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
 							<connectedAppGrantType>client_credentials</connectedAppGrantType>
+							<!-- ✅ Uses YOUR exchange.classifier -->
+							<classifier>${exchange.classifier}</classifier>
 							<businessGroupId>${anypoint.business.group}</businessGroupId>
 						</configuration>
 					</execution>

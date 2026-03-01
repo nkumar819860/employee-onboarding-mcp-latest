@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
 	<artifactId>agent-broker-mcp</artifactId>
-	<version>1.0.12</version>
+	<version>1.0.16</version>
 	<packaging>mule-application</packaging>
 
 	<name>Agent Broker MCP Server</name>
@@ -40,6 +40,7 @@
 		<!-- ✅ Exchange Metadata -->
 		<exchange.skip>false</exchange.skip>
 		<exchange.publish>true</exchange.publish>
+		<exchange.classifier>agent</exchange.classifier>
 		<tags>agent-broker,mcp-server,orchestration,employee-onboarding,workflow-management</tags>
 		<categories>[]</categories>
 		<fields>[]</fields>
@@ -119,7 +120,6 @@
 				<extensions>true</extensions>
 
 				<configuration>
-				 <classifier>agent</classifier>
 					<!-- Shared libraries -->
 					<sharedLibraries>
 						<sharedLibrary>
@@ -152,29 +152,21 @@
 						<!-- ✅ Properties OK -->
 						<properties>
 							<env>${anypoint.platform.env}</env>
-							<http.port>8081</http.port>
 							<anypoint.platform.visualizer>true</anypoint.platform.visualizer>
 							<anypoint.platform.visualizer.displayName>Agent Broker MCP Server</anypoint.platform.visualizer.displayName>
-							<anypoint.platform.visualizer.layer>Process</anypoint.platform.visualizer.layer>
+							<anypoint.platform.visualizer.layer>Agent</anypoint.platform.visualizer.layer>
 						</properties>
 					</cloudHubDeployment>
 				</configuration>
 
 			</plugin>
 
-			<!-- ✅ Exchange Maven Plugin (Publications) -->
+			<!-- ✅ ADD THIS PLUGIN after mule-maven-plugin -->
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>exchange-mule-maven-plugin</artifactId>
 				<version>0.0.21</version>
 				<executions>
-					<execution>
-						<id>validate</id>
-						<phase>validate</phase>
-						<goals>
-							<goal>exchange-pre-deploy</goal>
-						</goals>
-					</execution>
 					<execution>
 						<id>deploy</id>
 						<phase>deploy</phase>
@@ -182,16 +174,18 @@
 							<goal>exchange-deploy</goal>
 						</goals>
 						<configuration>
-							<skip>${exchange.skip}</skip>
-							<authenticationMethod>connected-app</authenticationMethod>
+							<!-- ✅ Uses YOUR Connected App -->
 							<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
 							<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
 							<connectedAppGrantType>client_credentials</connectedAppGrantType>
+							<!-- ✅ Uses YOUR exchange.classifier -->
+							<classifier>${exchange.classifier}</classifier>
 							<businessGroupId>${anypoint.business.group}</businessGroupId>
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
+
 		</plugins>
 	</build>
 
