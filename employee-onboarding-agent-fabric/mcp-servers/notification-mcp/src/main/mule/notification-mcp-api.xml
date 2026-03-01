@@ -20,12 +20,12 @@
 
 	<!-- Main APIKit Router Flow -->
 	<flow name="notification-main">
-		<http:listener config-ref="http-config" path="/api/*" doc:name="HTTP Listener">
+		<http:listener config-ref="HTTP_Listener_config" path="/api/*" doc:name="HTTP Listener">
 			<http:response statusCode="#[vars.httpStatus default 200]">
-				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+				<http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
 			</http:response>
 			<http:error-response statusCode="#[vars.httpStatus default 500]">
-				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
+				<http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
 			</http:error-response>
 		</http:listener>
 		<apikit:router config-ref="notification-config" doc:name="APIKit Router" />
@@ -113,7 +113,7 @@ output application/json
 
 	<!-- Console Flow for API Documentation -->
 	<flow name="notification-console">
-		<http:listener config-ref="http-config" path="/console/*" doc:name="HTTP Listener" />
+		<http:listener config-ref="HTTP_Listener_config" path="/console/*" doc:name="HTTP Listener" />
 		<apikit:console config-ref="notification-config" doc:name="APIkit Console" />
 		<error-handler>
 			<on-error-propagate type="APIKIT:NOT_FOUND">

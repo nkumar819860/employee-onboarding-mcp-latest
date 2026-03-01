@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
@@ -8,6 +9,7 @@
 	xmlns:http="http://www.mulesoft.org/schema/mule/http"
 	xmlns:sockets="http://www.mulesoft.org/schema/mule/sockets"
 	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd 
         http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
         http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd
         http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
@@ -135,10 +137,15 @@ output application/json
 	<!-- HTTP LISTENER CONFIGURATION WITH PRODUCTION SETTINGS -->
 	<!-- ================================================================== -->
 
-	<http:listener-config name="HTTP_Listener_config" doc:name="Production HTTP Config">
-		<http:listener-connection 
-			host="${http.host}" 
-			port="${https.port}"/>
+	<http:listener-config name="HTTP_Listener_config"
+		doc:name="HTTP Listener config">
+		<http:listener-connection host="0.0.0.0"
+			port="${https.port}" protocol="HTTPS">
+			<tls:context name="tls-context">
+				<tls:key-store type="jks" path="server.jks"
+					keyPassword="MULEPASS" password="MULEPASS" alias="mule-server" />
+			</tls:context>
+		</http:listener-connection>
 	</http:listener-config>
 
 	<!-- ================================================================== -->
