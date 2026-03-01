@@ -30,8 +30,7 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 		name="employee-onboarding-mcp-config"
 		doc:name="Employee Onboarding MCP Config" basePath="/api">
 		<http:request-connection protocol="HTTPS"
-			host="employee-onboarding-mcp-server.us-e1.cloudhub.io" port="443"
-			>
+			host="employee-onboarding-mcp-server.us-e1.cloudhub.io" port="443">
 		</http:request-connection>
 	</http:request-config>
 
@@ -40,8 +39,7 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 		name="asset-allocation-mcp-config"
 		doc:name="Asset Allocation MCP Config" basePath="/api">
 		<http:request-connection protocol="HTTPS"
-			host="asset-allocation-mcp-server.us-e1.cloudhub.io" port="443"
-			>
+			host="asset-allocation-mcp-server.us-e1.cloudhub.io" port="443">
 		</http:request-connection>
 	</http:request-config>
 
@@ -49,8 +47,7 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 	<http:request-config name="notification-mcp-config"
 		doc:name="Notification MCP Config" basePath="/api">
 		<http:request-connection protocol="HTTPS"
-			host="notification-mcp-server.us-e1.cloudhub.io" port="443"
-			basePath="/api">
+			host="notification-mcp-server.us-e1.cloudhub.io" port="443">
 		</http:request-connection>
 	</http:request-config>
 
