@@ -19,7 +19,7 @@
     }
   },
   "configs": [
-    "notification-mcp-server.xml",
+    "notification-mcp-api.xml",
     "global.xml"
   ]
 }

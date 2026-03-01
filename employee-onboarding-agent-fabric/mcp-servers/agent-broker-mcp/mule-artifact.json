@@ -1,5 +1,5 @@
 {
-  "name": "employee-onboarding-agent-broker",
+  "name": "agent-broker-mcp-server",
   "minMuleVersion": "4.4.0",
   "javaSpecificationVersions": [
     "17"
@@ -16,7 +16,7 @@
     "attributes": {}
   },
   "configs": [
-    "employee-onboarding-agent-broker.xml",
+    "agent-broker-mcp-api.xml",
     "global.xml"
   ]
 }

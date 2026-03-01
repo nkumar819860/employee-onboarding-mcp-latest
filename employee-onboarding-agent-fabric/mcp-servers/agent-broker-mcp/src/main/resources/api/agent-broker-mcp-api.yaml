@@ -45,9 +45,9 @@ info:
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: http://localhost:8084
+  - url: http://localhost:8084/api
     description: Local development server
-  - url: https://agent-broker-mcp.cloudhub.io
+  - url: https://agent-broker-mcp-server.us-e1.cloudhub.io/api
     description: Production CloudHub server
 
 tags:
