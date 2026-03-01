@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "employee-onboarding-mcp-complete",
 		"name": "Employee Onboarding MCP Services - Complete Collection",
-		"description": "Comprehensive Postman collection for all Employee Onboarding MCP Services including Agent Broker, Employee Onboarding, Asset Allocation, and Notification services.\n\n## Services Included:\n\n### 1. Agent Broker MCP (Port 8084)\n- **Purpose**: Central orchestrator for complete employee onboarding workflow\n- **Endpoints**: Orchestration, status tracking, retry operations\n- **Key Features**: Multi-service integration, error handling, status tracking\n\n### 2. Employee Onboarding MCP (Port 8081)\n- **Purpose**: Employee lifecycle management and HR processes\n- **Endpoints**: Employee CRUD operations, status management, listing\n- **Key Features**: Multi-database support, pagination, status tracking\n\n### 3. Asset Allocation MCP (Port 8083)\n- **Purpose**: IT asset management and allocation\n- **Endpoints**: Asset allocation, return, listing, availability checking\n- **Key Features**: Intelligent asset allocation, real-time tracking, condition management\n\n### 4. Notification MCP (Port 8082)\n- **Purpose**: Email notification services for onboarding process\n- **Endpoints**: Welcome emails, asset notifications, completion messages\n- **Key Features**: Gmail SMTP integration, HTML templates, configuration testing\n\n## Environment Variables:\nSet the following variables for different environments:\n- `agent_broker_url`: Agent Broker MCP base URL (default: http://localhost:8084)\n- `employee_onboarding_url`: Employee Onboarding MCP base URL (default: http://localhost:8081/api)\n- `asset_allocation_url`: Asset Allocation MCP base URL (default: http://localhost:8083/api)\n- `notification_url`: Notification MCP base URL (default: http://localhost:8082)\n\n## Usage Instructions:\n1. Configure environment variables for your deployment\n2. Start with health checks to verify all services are running\n3. Use the Agent Broker for complete onboarding orchestration\n4. Use individual service endpoints for specific operations\n\nCreated: 2024-01-15\nVersion: 1.0.0",
+		"description": "Comprehensive Postman collection for all Employee Onboarding MCP Services including Agent Broker, Employee Onboarding, Asset Allocation, and Notification services.\n\n## Services Included:\n\n### 1. Agent Broker MCP (Port 8084)\n- **Purpose**: Central orchestrator for complete employee onboarding workflow\n- **Endpoints**: Orchestration, status tracking, retry operations\n- **Key Features**: Multi-service integration, error handling, status tracking\n\n### 2. Employee Onboarding MCP (Port 8081)\n- **Purpose**: Employee lifecycle management and HR processes\n- **Endpoints**: Employee CRUD operations, status management, listing\n- **Key Features**: Multi-database support, pagination, status tracking\n\n### 3. Asset Allocation MCP (Port 8083)\n- **Purpose**: IT asset management and allocation\n- **Endpoints**: Asset allocation, return, listing, availability checking\n- **Key Features**: Intelligent asset allocation, real-time tracking, condition management\n\n### 4. Notification MCP (Port 8082)\n- **Purpose**: Email notification services for onboarding process\n- **Endpoints**: Welcome emails, asset notifications, completion messages\n- **Key Features**: Gmail SMTP integration, HTML templates, configuration testing\n\n## Environment Variables:\nSet the following variables for different environments:\n- `agent_broker_url`: Agent Broker MCP base URL (default: https://localhost:8084)\n- `employee_onboarding_url`: Employee Onboarding MCP base URL (default: https://localhost:8081/api)\n- `asset_allocation_url`: Asset Allocation MCP base URL (default: https://localhost:8083/api)\n- `notification_url`: Notification MCP base URL (default: https://localhost:8082)\n\n## Usage Instructions:\n1. Configure environment variables for your deployment\n2. Start with health checks to verify all services are running\n3. Use the Agent Broker for complete onboarding orchestration\n4. Use individual service endpoints for specific operations\n\nCreated: 2024-01-15\nVersion: 1.0.0",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -686,16 +686,16 @@
 				"exec": [
 					"// Set default environment variables if not already set",
 					"if (!pm.environment.get('agent_broker_url')) {",
-					"    pm.environment.set('agent_broker_url', 'http://localhost:8084');",
+					"    pm.environment.set('agent_broker_url', 'https://localhost:8084');",
 					"}",
 					"if (!pm.environment.get('employee_onboarding_url')) {",
-					"    pm.environment.set('employee_onboarding_url', 'http://localhost:8081/api');",
+					"    pm.environment.set('employee_onboarding_url', 'https://localhost:8081/api');",
 					"}",
 					"if (!pm.environment.get('asset_allocation_url')) {",
-					"    pm.environment.set('asset_allocation_url', 'http://localhost:8083/api');",
+					"    pm.environment.set('asset_allocation_url', 'https://localhost:8083/api');",
 					"}",
 					"if (!pm.environment.get('notification_url')) {",
-					"    pm.environment.set('notification_url', 'http://localhost:8082');",
+					"    pm.environment.set('notification_url', 'https://localhost:8082');",
 					"}"
 				]
 			}
@@ -727,22 +727,22 @@
 	"variable": [
 		{
 			"key": "agent_broker_url",
-			"value": "http://localhost:8084",
+			"value": "https://localhost:8084",
 			"description": "Agent Broker MCP base URL"
 		},
 		{
 			"key": "employee_onboarding_url",
-			"value": "http://localhost:8081/api",
+			"value": "https://localhost:8081/api",
 			"description": "Employee Onboarding MCP base URL"
 		},
 		{
 			"key": "asset_allocation_url",
-			"value": "http://localhost:8083/api",
+			"value": "https://localhost:8083/api",
 			"description": "Asset Allocation MCP base URL"
 		},
 		{
 			"key": "notification_url",
-			"value": "http://localhost:8082",
+			"value": "https://localhost:8082",
 			"description": "Notification MCP base URL"
 		}
 	]

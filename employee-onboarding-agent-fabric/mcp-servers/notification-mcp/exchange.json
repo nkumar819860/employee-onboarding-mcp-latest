@@ -5,7 +5,7 @@
     "main": "notification-mcp-server.xml",
     "groupId": "47562e5d-bf49-440a-a0f5-a9cea0a89aa9",
     "assetId": "notification-mcp",
-    "classifier": "mule-application",
+    "classifier": "mcp",
     "keywords": [
         "mcp",
         "notification",
