@@ -62,6 +62,7 @@
 				<extensions>true</extensions>
 
 				<configuration>
+					<classifier>mcp</classifier>
 					<!-- ✅ Shared libraries - CORRECTLY inside configuration -->
 					<sharedLibraries>
 						<sharedLibrary>

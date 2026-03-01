@@ -5,7 +5,7 @@
     "main": "employee-onboarding-agent-broker.xml",
     "groupId": "47562e5d-bf49-440a-a0f5-a9cea0a89aa9",
     "assetId": "agent-broker-mcp",
-    "classifier": "template",
+    "classifier": "agent",
     "keywords": [
         "mcp",
         "agent-broker",

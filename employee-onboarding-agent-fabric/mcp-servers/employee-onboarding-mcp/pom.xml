@@ -109,6 +109,7 @@
 				<version>${mule.maven.plugin.version}</version>
 				<extensions>true</extensions>
 				<configuration>
+					<classifier>mcp</classifier>
 					<!-- ✅ Shared Libraries -->
 					<sharedLibraries>
 						<sharedLibrary>

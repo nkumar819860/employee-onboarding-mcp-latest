@@ -6,6 +6,7 @@
     "groupId": "47562e5d-bf49-440a-a0f5-a9cea0a89aa9",
     "assetId": "notification-mcp",
     "classifier": "mcp",
+    "minMuleVersion": "4.4.0",
     "keywords": [
         "mcp",
         "notification",
@@ -24,11 +25,6 @@
         "type": "git",
         "url": "https://github.com/mulesoft/notification-mcp.git"
     },
-    "bugs": {
-        "url": "https://github.com/mulesoft/notification-mcp/issues"
-    },
-    "contactName": "MCP Development Team",
-    "contactEmail": "mcp-dev@company.com",
     "tags": [
         "Email Notifications",
         "MCP Server",
@@ -40,8 +36,7 @@
         "Integration",
         "Communication",
         "Human Resources",
-        "Notification Systems",
-        "Agent Network"
+        "Notification Systems"
     ],
     "dependencies": [
         {
@@ -53,126 +48,67 @@
             "groupId": "org.mule.connectors",
             "artifactId": "mule-email-connector",
             "version": "1.8.0"
-        },
-        {
-            "groupId": "org.mule.modules",
-            "artifactId": "mule-scripting-module",
-            "version": "2.0.4"
         }
     ],
-    "properties": {
-        "apiVersion": "v1",
-        "secure": "true",
-        "monitoring": "advanced",
-        "emailProvider": "Gmail SMTP",
-        "templateEngine": "velocity",
-        "multiRecipient": "true"
-    },
-    "documentation": {
-        "summary": "Comprehensive email notification system for employee onboarding and asset allocation processes using Gmail SMTP integration with professional HTML templates.",
-        "description": "This MCP server provides automated email notification capabilities for HR and IT processes with enterprise-grade features:\n\n## Key Features\n\n### Professional Email Templates\n- **Employee Welcome Emails**: Branded onboarding emails with company information and next steps\n- **Asset Allocation Notifications**: Detailed equipment assignment confirmations with asset details\n- **Onboarding Complete Messages**: Comprehensive completion notifications with asset summaries\n- **Responsive Design**: Mobile-friendly HTML email templates with consistent branding\n- **Dynamic Content**: Template variables for personalized messaging\n\n### Gmail SMTP Integration\n- **Secure SMTP Configuration**: Enterprise-grade Gmail SMTP integration with TLS encryption\n- **App Password Support**: Enhanced security using Gmail app passwords instead of account passwords\n- **Authentication Methods**: OAuth 2.0 and app password authentication support\n- **Delivery Tracking**: Email delivery status monitoring and error handling\n- **Rate Limiting**: Intelligent rate limiting to comply with Gmail sending limits\n\n### Template Engine\n- **Velocity Templates**: Apache Velocity template engine for dynamic content generation\n- **Variable Substitution**: Support for complex data structures and conditional logic\n- **Template Inheritance**: Base templates with customizable sections\n- **Localization Support**: Multi-language template support with resource bundles\n- **Template Validation**: Pre-send template validation and error checking\n\n## API Endpoints\n\n### Core Notification Operations\n- `/mcp/tools/send-welcome-email` - Send employee welcome notification with onboarding information\n- `/mcp/tools/send-asset-notification` - Send asset allocation confirmation with device details\n- `/mcp/tools/send-onboarding-complete` - Send completion notification with process summary\n- `/mcp/tools/send-bulk-notification` - Send bulk notifications to multiple recipients\n\n### Configuration and Testing\n- `/mcp/tools/test-email-config` - Test Gmail SMTP configuration and connectivity\n- `/mcp/tools/validate-template` - Validate email template syntax and variables\n- `/mcp/tools/preview-email` - Generate email preview without sending\n- `/mcp/tools/get-delivery-status` - Check email delivery status and metrics\n\n### Template Management\n- `/mcp/tools/list-templates` - List available email templates\n- `/mcp/tools/get-template` - Retrieve specific template content\n- `/mcp/tools/update-template` - Update template content (admin only)\n\n## Email Templates\n\n### Welcome Email Template\n```html\n<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Welcome to ${companyName}</title>\n</head>\n<body>\n    <div style=\"max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;\">\n        <h1>Welcome ${firstName}!</h1>\n        <p>We're excited to have you join our ${department} team as a ${position}.</p>\n        <p>Your start date is ${startDate}. Your manager ${manager} will contact you shortly.</p>\n    </div>\n</body>\n</html>\n```\n\n### Asset Allocation Template\n```html\n<h2>Asset Allocation Confirmation</h2>\n<p>Dear ${firstName},</p>\n<p>The following assets have been allocated to you:</p>\n<ul>\n#foreach($asset in $assets)\n    <li>${asset.category}: ${asset.brand} ${asset.model} (Tag: ${asset.assetTag})</li>\n#end\n</ul>\n<p>Please take care of these assets and report any issues immediately.</p>\n```\n\n## Configuration\n\n### Gmail SMTP Configuration\n```properties\n# Gmail SMTP Settings\ngmail.smtp.host=smtp.gmail.com\ngmail.smtp.port=587\ngmail.smtp.auth=true\ngmail.smtp.starttls.enable=true\ngmail.username=${GMAIL_USERNAME}\ngmail.password=${secure::GMAIL_APP_PASSWORD}\n\n# Email Defaults\nemail.from.name=${COMPANY_NAME} HR Team\nemail.from.address=${GMAIL_USERNAME}\nemail.reply.to=${HR_EMAIL}\n```\n\n### Template Configuration\n```properties\n# Template Engine Settings\ntemplate.engine=velocity\ntemplate.encoding=UTF-8\ntemplate.cache.enabled=true\ntemplate.validation.enabled=true\n\n# Template Locations\ntemplate.welcome=templates/employee-welcome.html\ntemplate.asset=templates/asset-allocation.html\ntemplate.complete=templates/onboarding-complete.html\n```\n\n### Notification Recipients\n```properties\n# Default Recipients\nnotification.cc.hr=${HR_EMAIL}\nnotification.cc.it=${IT_EMAIL}\nnotification.cc.manager=${MANAGER_EMAIL}\n\n# Notification Rules\nnotification.welcome.cc=hr\nnotification.asset.cc=hr,it\nnotification.complete.cc=hr,manager\n```\n\n## Security Features\n\n### Credential Management\n- **Secure Properties**: Gmail credentials stored using MuleSoft secure property placeholder\n- **Environment Variables**: Support for environment-based configuration\n- **Credential Rotation**: Easy credential rotation without application restart\n- **Access Control**: Role-based access to sensitive configuration\n\n### Email Security\n- **TLS Encryption**: All SMTP communications encrypted using TLS 1.2+\n- **Authentication**: Multiple authentication methods (OAuth 2.0, App Passwords)\n- **Input Validation**: Comprehensive email address and content validation\n- **Sanitization**: HTML content sanitization to prevent injection attacks\n\n### Privacy and Compliance\n- **GDPR Compliance**: Support for data privacy regulations\n- **Audit Logging**: Complete audit trail of all email notifications\n- **Data Retention**: Configurable email log retention policies\n- **Opt-out Support**: Unsubscribe and preference management\n\n## Monitoring and Observability\n\n### Performance Metrics\n- **Email Delivery Rates**: Track successful vs. failed deliveries\n- **Response Times**: Monitor SMTP response times and throughput\n- **Template Rendering**: Performance metrics for template processing\n- **Error Rates**: Comprehensive error tracking and categorization\n\n### Health Checks\n- **SMTP Connectivity**: Continuous monitoring of Gmail SMTP connection\n- **Template Validation**: Regular validation of email templates\n- **Credential Health**: Monitoring of authentication status\n- **Queue Status**: Email queue depth and processing status\n\n### Alerting\n- **Delivery Failures**: Immediate alerts for email delivery failures\n- **Authentication Issues**: Alerts for Gmail authentication problems\n- **Rate Limiting**: Notifications when approaching Gmail sending limits\n- **Template Errors**: Alerts for template rendering failures\n\n## Integration Capabilities\n\n### MCP Protocol Support\n- **Full MCP Compliance**: Complete Model Context Protocol implementation\n- **Agent Fabric Integration**: Seamless coordination with other MCP servers\n- **Event-Driven Architecture**: Real-time notification triggering\n- **Orchestration Support**: Integration with workflow orchestrators\n\n### External System Integration\n- **HR Information Systems**: Employee data synchronization for personalization\n- **Asset Management Systems**: Asset details integration for notifications\n- **Identity Providers**: Single sign-on integration for template management\n- **CRM Systems**: Contact management and preference synchronization\n- **Monitoring Systems**: Integration with enterprise monitoring platforms\n\n## Template Variables\n\n### Employee Variables\n- `${firstName}`, `${lastName}` - Employee name components\n- `${email}` - Employee email address\n- `${employeeId}` - Unique employee identifier\n- `${department}` - Department assignment\n- `${position}` - Job title/position\n- `${startDate}` - Employment start date\n- `${manager}` - Manager name and contact information\n\n### Asset Variables\n- `${assets}` - Collection of allocated assets\n- `${asset.category}` - Asset type (laptop, phone, etc.)\n- `${asset.brand}` - Asset manufacturer\n- `${asset.model}` - Asset model name\n- `${asset.assetTag}` - Unique asset identifier\n- `${asset.specifications}` - Technical specifications\n\n### Company Variables\n- `${companyName}` - Organization name\n- `${companyAddress}` - Company address\n- `${hrEmail}` - HR contact email\n- `${itEmail}` - IT support email\n- `${companyLogo}` - Logo URL for branding\n\n## Business Rules\n\n### Email Routing Rules\n- **Welcome Emails**: Sent to employee with CC to HR and manager\n- **Asset Notifications**: Sent to employee with CC to HR and IT\n- **Completion Emails**: Sent to employee, manager, HR, and IT\n- **Error Notifications**: Sent to system administrators\n\n### Delivery Policies\n- **Retry Logic**: Exponential backoff for failed deliveries\n- **Rate Limiting**: Respect Gmail API quotas and limits\n- **Priority Queuing**: High-priority notifications processed first\n- **Duplicate Prevention**: Prevent duplicate notifications\n\n## Integration Patterns\n\nDesigned to integrate with:\n- Employee onboarding and offboarding systems\n- HR information systems (HRIS)\n- IT asset management platforms\n- Customer relationship management (CRM) systems\n- Enterprise service management tools\n- Business process automation platforms\n- Identity and access management systems"
-    },
-    "apiSpecification": {
-        "type": "OpenAPI",
-        "version": "3.0.3",
-        "location": "api/notification-mcp-api.yaml",
-        "description": "Complete OpenAPI specification with all endpoint definitions, email template schemas, delivery tracking, and comprehensive examples",
-        "main": "api/notification-mcp-api.yaml"
-    },
-    "readme": {
-        "location": "README.md",
-        "format": "markdown"
-    },
     "transport": {
         "kind": "mule-application",
         "path": "/mcp/tools"
     },
+    "apiSpecification": {
+        "type": "OpenAPI",
+        "location": "api/notification-mcp-api.yaml"
+    },
     "visualizer": {
         "primaryColor": "#FF6B6B",
-        "secondaryColor": "#4ECDC4", 
-        "backgroundColor": "#45B7D1",
-        "textColor": "#FFFFFF",
-        "borderColor": "#FFA07A",
-        "icon": "📧",
-        "category": "Communication",
-        "displayName": "Email Notifier",
-        "shortDescription": "Email notifications and template management",
-        "position": {
-            "x": 600,
-            "y": 100
+        "secondaryColor": "#4ECDC4",
+        "icon": "📧"
+    },
+    "mcp": {
+        "capabilities": {
+            "tools": true,
+            "resources": false,
+            "prompts": false,
+            "logging": true
         },
-        "connectionPorts": {
-            "input": [
-                {
-                    "name": "notification-requests",
-                    "type": "http",
-                    "position": "left",
-                    "color": "#FF6B6B"
-                },
-                {
-                    "name": "employee-events", 
-                    "type": "event",
-                    "position": "top",
-                    "color": "#4ECDC4"
-                },
-                {
-                    "name": "asset-events",
-                    "type": "event",
-                    "position": "left",
-                    "color": "#45B7D1"
+        "transport": {
+            "kind": "http",
+            "path": "/mcp/tools"
+        },
+        "tools": [
+            {
+                "name": "send-welcome-email",
+                "description": "Send employee welcome notification",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "employeeId": {"type": "string"},
+                        "firstName": {"type": "string"},
+                        "email": {"type": "string"}
+                    },
+                    "required": ["employeeId", "email"]
                 }
-            ],
-            "output": [
-                {
-                    "name": "email-delivery",
-                    "type": "smtp",
-                    "position": "right", 
-                    "color": "#FF6B6B"
-                },
-                {
-                    "name": "delivery-status",
-                    "type": "status",
-                    "position": "bottom",
-                    "color": "#FFA07A"
-                },
-                {
-                    "name": "notification-logs",
-                    "type": "log",
-                    "position": "right",
-                    "color": "#4ECDC4"
+            },
+            {
+                "name": "send-asset-notification",
+                "description": "Send asset allocation confirmation",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "employeeId": {"type": "string"},
+                        "assets": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "assetTag": {"type": "string"},
+                                    "category": {"type": "string"}
+                                }
+                            }
+                        }
+                    },
+                    "required": ["employeeId"]
                 }
-            ]
-        },
-        "metadata": {
-            "flowCount": 10,
-            "endpointCount": 7,
-            "emailTemplates": 3,
-            "supportedProviders": [
-                "GMAIL_SMTP"
-            ],
-            "supportedOperations": [
-                "SEND_WELCOME_EMAIL",
-                "SEND_ASSET_NOTIFICATION", 
-                "SEND_ONBOARDING_COMPLETE",
-                "SEND_BULK_NOTIFICATION",
-                "TEST_EMAIL_CONFIG",
-                "VALIDATE_TEMPLATE",
-                "PREVIEW_EMAIL"
-            ],
-            "templateEngine": "velocity"
-        },
-        "healthCheck": {
-            "endpoint": "/mcp/health",
-            "expectedStatus": 200,
-            "timeout": 5000
-        },
-        "documentation": {
-            "quickStart": "Send POST to /mcp/tools/send-welcome-email with employee details",
-            "commonUses": [
-                "Welcome email notifications for new employees",
-                "Asset allocation confirmation emails", 
-                "Onboarding completion notifications with summaries"
-            ]
-        }
+            }
+        ]
     }
 }

@@ -119,6 +119,7 @@
 				<extensions>true</extensions>
 
 				<configuration>
+				 <classifier>agent</classifier>
 					<!-- Shared libraries -->
 					<sharedLibraries>
 						<sharedLibrary>
