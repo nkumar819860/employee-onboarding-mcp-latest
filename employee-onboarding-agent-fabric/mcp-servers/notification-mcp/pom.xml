@@ -29,7 +29,7 @@
 		<!-- ✅ Exchange Metadata -->
 		<exchange.skip>false</exchange.skip>
 		<exchange.publish>true</exchange.publish>
-		<exchange.classifier>mcp</exchange.classifier>
+		<exchange.classifier>mule-application</exchange.classifier>
 		<exchange.assetId>notification-mcp-server</exchange.assetId>
 		<tags>Email Notifications,MCP Server,HR Automation,Gmail Integration,Template Engine</tags>
 		<categories>["Integration","Communication","Human Resources"]</categories>

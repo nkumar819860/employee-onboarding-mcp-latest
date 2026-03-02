@@ -3,7 +3,7 @@
     "description": "MCP Server for Email Notifications - Employee Onboarding & Asset Allocation confirmations using Gmail SMTP",
     "version": "2.0.0",
     "groupId": "47562e5d-bf49-440a-a0f5-a9cea0a89aa9",
-    "classifier": "mcp",
+    "classifier": "mule-application",
     "contactName": "MCP Development Team",
     "contactEmail": "mcp-dev@company.com",
     "tags": [
