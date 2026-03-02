@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
@@ -66,6 +68,7 @@
 			<url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
 			<layout>default</layout>
 		</repository>
+
 	</repositories>
 
 	<pluginRepositories>
@@ -116,7 +119,15 @@
 		</dependency>
 
 	</dependencies>
-
+	<!-- ✅ Exchange Repository -->
+	<!-- Distribution Management for Exchange -->
+	<distributionManagement>
+		<repository>
+			<id>anypoint-exchange-v3</id>
+			<name>Anypoint Exchange</name>
+			<url>https://maven.anypoint.mulesoft.com/api/v3/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
+		</repository>
+	</distributionManagement>
 	<build>
 		<plugins>
 			<plugin>
@@ -199,13 +210,6 @@
 		</plugins>
 	</build>
 
-	<!-- Distribution Management for Exchange -->
-	<distributionManagement>
-		<repository>
-			<id>anypoint-exchange</id>
-			<name>Anypoint Exchange</name>
-			<url>https://maven.anypoint.mulesoft.com/api/v1/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
-		</repository>
-	</distributionManagement>
+
 
 </project>
