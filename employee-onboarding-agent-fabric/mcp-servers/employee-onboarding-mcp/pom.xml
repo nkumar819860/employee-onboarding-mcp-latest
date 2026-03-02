@@ -32,7 +32,10 @@
 		<exchange.classifier>mule-application</exchange.classifier>
 		<exchange.assetId>employee-onboarding-mcp-server</exchange.assetId>
 		<tags>Employee Management,MCP Server,Database Operations,Profile Management,Multi-Database Support</tags>
-		<categories>Integration,Database,Human Resources</categories>
+		<categories>[
+		  {"key":"Integration","value":"Integration"},
+		  {"key":"Human Resources","value":"Human Resources"}
+		]</categories>
 		
 		<!-- ✅ CloudHub Properties -->
 		<mule.version>4.9.14</mule.version>
