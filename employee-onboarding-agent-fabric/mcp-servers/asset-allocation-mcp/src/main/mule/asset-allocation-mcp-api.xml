@@ -38,6 +38,15 @@ output application/json
 					</ee:message>
 					<ee:variables>
 						<ee:set-variable variableName="httpStatus">400</ee:set-variable>
+						<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": "*",
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
 					</ee:variables>
 				</ee:transform>
 			</on-error-propagate>
@@ -51,6 +60,15 @@ output application/json
 					</ee:message>
 					<ee:variables>
 						<ee:set-variable variableName="httpStatus">404</ee:set-variable>
+						<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": "*",
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
 					</ee:variables>
 				</ee:transform>
 			</on-error-propagate>
@@ -64,6 +82,15 @@ output application/json
 					</ee:message>
 					<ee:variables>
 						<ee:set-variable variableName="httpStatus">405</ee:set-variable>
+						<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": "*",
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
 					</ee:variables>
 				</ee:transform>
 			</on-error-propagate>
@@ -77,6 +104,15 @@ output application/json
 					</ee:message>
 					<ee:variables>
 						<ee:set-variable variableName="httpStatus">406</ee:set-variable>
+						<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": "*",
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
 					</ee:variables>
 				</ee:transform>
 			</on-error-propagate>
@@ -90,6 +126,15 @@ output application/json
 					</ee:message>
 					<ee:variables>
 						<ee:set-variable variableName="httpStatus">415</ee:set-variable>
+						<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": "*",
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
 					</ee:variables>
 				</ee:transform>
 			</on-error-propagate>
@@ -103,6 +148,15 @@ output application/json
 					</ee:message>
 					<ee:variables>
 						<ee:set-variable variableName="httpStatus">501</ee:set-variable>
+						<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": "*",
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
 					</ee:variables>
 				</ee:transform>
 			</on-error-propagate>
@@ -126,45 +180,284 @@ output application/json
 
 	<!-- Health Check Flow -->
 	<flow name="get:\health:asset-allocation-mcp-api-config" doc:name="Health Check Implementation">
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
 		<flow-ref name="health-check-implementation" doc:name="Health Check Logic"/>
+		<ee:transform doc:name="Add CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 	</flow>
 
 	<!-- MCP Server Info Flow -->
 	<flow name="get:\mcp\info:asset-allocation-mcp-api-config" doc:name="MCP Server Info Implementation">
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
 		<flow-ref name="mcp-server-info-implementation" doc:name="Server Info Logic"/>
+		<ee:transform doc:name="Add CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 	</flow>
 
 	<!-- Asset Allocation Tool Flow -->
 	<flow name="post:\mcp\tools\allocate-assets:application\json:asset-allocation-mcp-api-config" doc:name="Allocate Assets Implementation">
 		<logger level="INFO" message="APIKit: Allocate assets - Request: #[payload]" doc:name="Log Request"/>
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
 		<flow-ref name="allocate-assets-with-fallback" doc:name="Allocate Assets Logic"/>
+		<ee:transform doc:name="Add CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 	</flow>
 
 	<!-- Return Asset Tool Flow -->
 	<flow name="post:\mcp\tools\return-asset:application\json:asset-allocation-mcp-api-config" doc:name="Return Asset Implementation">
 		<logger level="INFO" message="APIKit: Return asset - Request: #[payload]" doc:name="Log Request"/>
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
 		<flow-ref name="return-asset-with-fallback" doc:name="Return Asset Logic"/>
+		<ee:transform doc:name="Add CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 	</flow>
 
 	<!-- List Assets Tool Flow -->
 	<flow name="get:\mcp\tools\list-assets:asset-allocation-mcp-api-config" doc:name="List Assets Implementation">
 		<set-variable variableName="statusFilter" value="#[attributes.queryParams.status default '']" doc:name="Set Status Filter"/>
 		<set-variable variableName="categoryFilter" value="#[attributes.queryParams.category default '']" doc:name="Set Category Filter"/>
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
 		<logger level="INFO" message="APIKit: List assets - Status: #[vars.statusFilter], Category: #[vars.categoryFilter]" doc:name="Log Request"/>
 		<flow-ref name="list-assets-with-fallback" doc:name="List Assets Logic"/>
+		<ee:transform doc:name="Add CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 	</flow>
 
 	<!-- Get Available Assets Tool Flow -->
 	<flow name="get:\mcp\tools\get-available-assets:asset-allocation-mcp-api-config" doc:name="Get Available Assets Implementation">
 		<logger level="INFO" message="APIKit: Get available assets" doc:name="Log Request"/>
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
 		<flow-ref name="get-available-assets-with-fallback" doc:name="Get Available Assets Logic"/>
+		<ee:transform doc:name="Add CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 	</flow>
 
 	<!-- Get Employee Assets Tool Flow -->
 	<flow name="post:\mcp\tools\get-employee-assets:application\json:asset-allocation-mcp-api-config" doc:name="Get Employee Assets Implementation">
 		<set-variable variableName="employeeId" value="#[payload.employeeId]" doc:name="Set Employee ID"/>
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
 		<logger level="INFO" message="APIKit: Get employee assets - ID: #[vars.employeeId]" doc:name="Log Request"/>
 		<flow-ref name="get-employee-assets-with-fallback" doc:name="Get Employee Assets Logic"/>
+		<ee:transform doc:name="Add CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<!-- OPTIONS Preflight Handlers for CORS -->
+	<flow name="options:\health:asset-allocation-mcp-api-config" doc:name="OPTIONS /health">
+		<ee:transform doc:name="CORS Preflight Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[""]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="httpStatus">200</ee:set-variable>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": attributes.headers.origin default "*",
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<flow name="options:\mcp\info:asset-allocation-mcp-api-config" doc:name="OPTIONS /mcp/info">
+		<ee:transform doc:name="CORS Preflight Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[""]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="httpStatus">200</ee:set-variable>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": attributes.headers.origin default "*",
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<flow name="options:\mcp\tools\allocate-assets:asset-allocation-mcp-api-config" doc:name="OPTIONS /mcp/tools/allocate-assets">
+		<ee:transform doc:name="CORS Preflight Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[""]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="httpStatus">200</ee:set-variable>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": attributes.headers.origin default "*",
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<flow name="options:\mcp\tools\return-asset:asset-allocation-mcp-api-config" doc:name="OPTIONS /mcp/tools/return-asset">
+		<ee:transform doc:name="CORS Preflight Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[""]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="httpStatus">200</ee:set-variable>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": attributes.headers.origin default "*",
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<flow name="options:\mcp\tools\list-assets:asset-allocation-mcp-api-config" doc:name="OPTIONS /mcp/tools/list-assets">
+		<ee:transform doc:name="CORS Preflight Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[""]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="httpStatus">200</ee:set-variable>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": attributes.headers.origin default "*",
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<flow name="options:\mcp\tools\get-available-assets:asset-allocation-mcp-api-config" doc:name="OPTIONS /mcp/tools/get-available-assets">
+		<ee:transform doc:name="CORS Preflight Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[""]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="httpStatus">200</ee:set-variable>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": attributes.headers.origin default "*",
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<flow name="options:\mcp\tools\get-employee-assets:asset-allocation-mcp-api-config" doc:name="OPTIONS /mcp/tools/get-employee-assets">
+		<ee:transform doc:name="CORS Preflight Response">
+			<ee:message>
+				<ee:set-payload><![CDATA[""]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="httpStatus">200</ee:set-variable>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": attributes.headers.origin default "*",
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 	</flow>
 
 	<!-- ========================================================================================= -->

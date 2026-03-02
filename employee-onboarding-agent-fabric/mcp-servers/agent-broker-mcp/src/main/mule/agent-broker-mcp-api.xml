@@ -582,4 +582,106 @@ output application/java
 		<logger level="INFO" message="Retry step response sent (feature under development)" doc:name="Logger" />
 	</flow>
 
+	<!-- OPTIONS CORS Handlers -->
+	
+	<!-- OPTIONS /health -->
+	<flow name="options:\health:agent-broker-config">
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
+		<logger level="INFO" message="CORS preflight request for /health" doc:name="Logger" />
+		<set-payload value="" mimeType="text/plain" doc:name="Empty Response Body" />
+		<ee:transform doc:name="CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<!-- OPTIONS /mcp/info -->
+	<flow name="options:\mcp\info:agent-broker-config">
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
+		<logger level="INFO" message="CORS preflight request for /mcp/info" doc:name="Logger" />
+		<set-payload value="" mimeType="text/plain" doc:name="Empty Response Body" />
+		<ee:transform doc:name="CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<!-- OPTIONS /mcp/tools/orchestrate-employee-onboarding -->
+	<flow name="options:\mcp\tools\orchestrate-employee-onboarding:agent-broker-config">
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
+		<logger level="INFO" message="CORS preflight request for /mcp/tools/orchestrate-employee-onboarding" doc:name="Logger" />
+		<set-payload value="" mimeType="text/plain" doc:name="Empty Response Body" />
+		<ee:transform doc:name="CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<!-- OPTIONS /mcp/tools/get-onboarding-status -->
+	<flow name="options:\mcp\tools\get-onboarding-status:agent-broker-config">
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
+		<logger level="INFO" message="CORS preflight request for /mcp/tools/get-onboarding-status" doc:name="Logger" />
+		<set-payload value="" mimeType="text/plain" doc:name="Empty Response Body" />
+		<ee:transform doc:name="CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<!-- OPTIONS /mcp/tools/retry-failed-step -->
+	<flow name="options:\mcp\tools\retry-failed-step:agent-broker-config">
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
+		<logger level="INFO" message="CORS preflight request for /mcp/tools/retry-failed-step" doc:name="Logger" />
+		<set-payload value="" mimeType="text/plain" doc:name="Empty Response Body" />
+		<ee:transform doc:name="CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
 </mule>

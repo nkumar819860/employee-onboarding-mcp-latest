@@ -93,26 +93,82 @@ output application/json
 	<!-- Health Check Implementation -->
 	<flow name="get:\health:employee-onboarding-mcp-api-config" doc:name="GET /health">
 		<logger level="INFO" message="APIKit: Health check requested"/>
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
 		<flow-ref name="health-check-implementation" doc:name="Health Check Logic"/>
+		<ee:transform doc:name="Add CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 	</flow>
 
 	<!-- MCP Server Info Implementation -->
 	<flow name="get:\mcp\info:employee-onboarding-mcp-api-config" doc:name="GET /mcp/info">
 		<logger level="INFO" message="APIKit: MCP server info requested"/>
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
 		<flow-ref name="mcp-server-info-implementation" doc:name="MCP Info Logic"/>
+		<ee:transform doc:name="Add CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 	</flow>
 
 	<!-- Create Employee Implementation -->
 	<flow name="post:\mcp\tools\create-employee:application\json:employee-onboarding-mcp-api-config" doc:name="POST /mcp/tools/create-employee">
 		<logger level="INFO" message="APIKit: Create employee - Request: #[payload]"/>
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
 		<flow-ref name="create-employee-with-fallback" doc:name="Create Employee Logic"/>
+		<ee:transform doc:name="Add CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 	</flow>
 
 	<!-- Get Employee Implementation -->
 	<flow name="get:\mcp\tools\get-employee\(empId):employee-onboarding-mcp-api-config" doc:name="GET /mcp/tools/get-employee/{empId}">
 		<set-variable variableName="empId" value="#[attributes.uriParams.empId]" doc:name="Set Employee ID"/>
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
 		<logger level="INFO" message="APIKit: Get employee - ID: #[vars.empId]"/>
 		<flow-ref name="get-employee-with-fallback" doc:name="Get Employee Logic"/>
+		<ee:transform doc:name="Add CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 	</flow>
 
 	<!-- List Employees Implementation -->
@@ -120,14 +176,29 @@ output application/json
 		<set-variable variableName="page" value="#[attributes.queryParams.page default 1]" doc:name="Set Page"/>
 		<set-variable variableName="size" value="#[attributes.queryParams.size default 10]" doc:name="Set Size"/>
 		<set-variable variableName="statusFilter" value="#[attributes.queryParams.status default '']" doc:name="Set Status Filter"/>
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
 		<logger level="INFO" message="APIKit: List employees - Page: #[vars.page], Size: #[vars.size]"/>
 		<flow-ref name="list-employees-with-fallback" doc:name="List Employees Logic"/>
+		<ee:transform doc:name="Add CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 	</flow>
 
 	<!-- Update Employee Status Implementation -->
 	<flow name="put:\mcp\tools\update-employee-status\(empId)\(status):employee-onboarding-mcp-api-config" doc:name="PUT /mcp/tools/update-employee-status/{empId}/{status}">
 		<set-variable variableName="empId" value="#[attributes.uriParams.empId]" doc:name="Set Employee ID"/>
 		<set-variable variableName="status" value="#[upper(attributes.uriParams.status)]" doc:name="Set Status"/>
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
 		
 		<!-- Validate Status -->
 		<choice doc:name="Validate Status">
@@ -149,9 +220,157 @@ output application/json
 	timestamp: now()
 }]]></ee:set-payload>
 					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+					</ee:variables>
 				</ee:transform>
 			</otherwise>
 		</choice>
+		<ee:transform doc:name="Add CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<!-- ========================================================================================= -->
+	<!-- OPTIONS CORS HANDLERS -->
+	<!-- ========================================================================================= -->
+
+	<!-- OPTIONS /health -->
+	<flow name="options:\health:employee-onboarding-mcp-api-config" doc:name="OPTIONS /health">
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
+		<logger level="INFO" message="CORS preflight request for /health" doc:name="Logger" />
+		<set-payload value="" mimeType="text/plain" doc:name="Empty Response Body" />
+		<ee:transform doc:name="CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<!-- OPTIONS /mcp/info -->
+	<flow name="options:\mcp\info:employee-onboarding-mcp-api-config" doc:name="OPTIONS /mcp/info">
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
+		<logger level="INFO" message="CORS preflight request for /mcp/info" doc:name="Logger" />
+		<set-payload value="" mimeType="text/plain" doc:name="Empty Response Body" />
+		<ee:transform doc:name="CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<!-- OPTIONS /mcp/tools/create-employee -->
+	<flow name="options:\mcp\tools\create-employee:employee-onboarding-mcp-api-config" doc:name="OPTIONS /mcp/tools/create-employee">
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
+		<logger level="INFO" message="CORS preflight request for /mcp/tools/create-employee" doc:name="Logger" />
+		<set-payload value="" mimeType="text/plain" doc:name="Empty Response Body" />
+		<ee:transform doc:name="CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<!-- OPTIONS /mcp/tools/get-employee/{empId} -->
+	<flow name="options:\mcp\tools\get-employee\(empId):employee-onboarding-mcp-api-config" doc:name="OPTIONS /mcp/tools/get-employee/{empId}">
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
+		<logger level="INFO" message="CORS preflight request for /mcp/tools/get-employee" doc:name="Logger" />
+		<set-payload value="" mimeType="text/plain" doc:name="Empty Response Body" />
+		<ee:transform doc:name="CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<!-- OPTIONS /mcp/tools/list-employees -->
+	<flow name="options:\mcp\tools\list-employees:employee-onboarding-mcp-api-config" doc:name="OPTIONS /mcp/tools/list-employees">
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
+		<logger level="INFO" message="CORS preflight request for /mcp/tools/list-employees" doc:name="Logger" />
+		<set-payload value="" mimeType="text/plain" doc:name="Empty Response Body" />
+		<ee:transform doc:name="CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+	</flow>
+
+	<!-- OPTIONS /mcp/tools/update-employee-status/{empId}/{status} -->
+	<flow name="options:\mcp\tools\update-employee-status\(empId)\(status):employee-onboarding-mcp-api-config" doc:name="OPTIONS /mcp/tools/update-employee-status">
+		<set-variable variableName="origin" value="#[attributes.headers.origin default '*']" doc:name="Set CORS Origin" />
+		<logger level="INFO" message="CORS preflight request for /mcp/tools/update-employee-status" doc:name="Logger" />
+		<set-payload value="" mimeType="text/plain" doc:name="Empty Response Body" />
+		<ee:transform doc:name="CORS Headers">
+			<ee:variables>
+				<ee:set-variable variableName="outboundHeaders"><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Access-Control-Allow-Origin": vars.origin,
+	"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	"Access-Control-Allow-Headers": "Content-Type, Authorization, X-MCP-Client",
+	"Access-Control-Max-Age": "3600"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 	</flow>
 
 	<!-- ========================================================================================= -->

@@ -360,15 +360,15 @@
     <div class="container">
         <div class="header">
             <h1>🚀 Comprehensive MCP Test Suite</h1>
-            <p>Employee Onboarding System - Complete API Testing Framework</p>
+            <p>Employee Onboarding System - Complete API Testing Framework (Updated v2.0.0)</p>
         </div>
 
         <div class="controls">
             <div class="environment-toggle">
                 <label>Environment:</label>
-                <span id="env-label">Local</span>
-                <div class="toggle" id="env-toggle" onclick="toggleEnvironment()"></div>
-                <span>CloudHub</span>
+                <button class="btn btn-success" id="env-button" onclick="toggleEnvironment()">
+                    <span id="env-label">CLOUDHUB</span>
+                </button>
             </div>
             
             <button class="btn btn-primary" onclick="runAllTests()">
@@ -394,21 +394,21 @@
                     <div class="icon status-idle">📊</div>
                     <div>Overview</div>
                 </div>
-                <div class="nav-item" data-server="employee-onboarding" onclick="showServer('employee-onboarding')">
-                    <div class="icon status-idle">👥</div>
-                    <div>Employee Onboarding</div>
-                </div>
                 <div class="nav-item" data-server="agent-broker" onclick="showServer('agent-broker')">
                     <div class="icon status-idle">🤖</div>
-                    <div>Agent Broker</div>
+                    <div>Agent Broker MCP</div>
+                </div>
+                <div class="nav-item" data-server="employee-onboarding" onclick="showServer('employee-onboarding')">
+                    <div class="icon status-idle">👥</div>
+                    <div>Employee Onboarding MCP</div>
                 </div>
                 <div class="nav-item" data-server="asset-allocation" onclick="showServer('asset-allocation')">
                     <div class="icon status-idle">💻</div>
-                    <div>Asset Allocation</div>
+                    <div>Asset Allocation MCP</div>
                 </div>
                 <div class="nav-item" data-server="notification" onclick="showServer('notification')">
                     <div class="icon status-idle">📧</div>
-                    <div>Notification</div>
+                    <div>Notification MCP</div>
                 </div>
             </div>
 
@@ -441,25 +441,42 @@
     <script>
         // Configuration
         const config = {
-            environment: 'local', // 'local' or 'cloudhub'
-            ports: {
-                'employee-onboarding': 8081,
-                'agent-broker': 8081,
-                'asset-allocation': 8081,
-                'notification': 8081
+            environment: 'cloudhub', // 'local' or 'cloudhub'
+            
+            // Local development configuration
+            local: {
+                baseUrl: 'http://localhost',
+                ports: {
+                    'agent-broker': 8082,
+                    'employee-onboarding': 8081,
+                    'asset-allocation': 8083,
+                    'notification': 8084
+                }
             },
-            cloudhubUrls: {
-                'employee-onboarding': 'http://employee-onboarding-mcp-server.us-e1.cloudhub.io',
-                'agent-broker': 'http://agent-broker-mcp-server.us-e1.cloudhub.io',
-                'asset-allocation': 'http://asset-allocation-mcp-server.us-e1.cloudhub.io',
-                'notification': 'http://employee-notification-service.us-e1.cloudhub.io'
+            
+            // CloudHub production URLs (Fixed - matching agent broker config.properties)
+            cloudhub: {
+                urls: {
+                    'agent-broker': 'https://agent-broker-mcp-server.us-e1.cloudhub.io',
+                    'employee-onboarding': 'https://employee-onboarding-mcp-server.us-e1.cloudhub.io',
+                    'asset-allocation': 'https://asset-allocation-mcp-server.us-e1.cloudhub.io',
+                    'notification': 'https://notification-mcp-server.us-e1.cloudhub.io'
+                }
             },
-            stagingUrls: {
-                'employee-onboarding': 'http://employee-onboarding-mcp-server-staging.us-e1.cloudhub.io',
-                'agent-broker': 'http://agent-broker-mcp-server-staging.us-e1.cloudhub.io',
-                'asset-allocation': 'http://asset-allocation-mcp-server-staging.us-e1.cloudhub.io',
-                'notification': 'http://employee-notification-service-staging.us-e1.cloudhub.io'
-            }
+            
+            // CloudHub staging URLs
+            staging: {
+                urls: {
+                    'agent-broker': 'https://agent-broker-mcp-server-staging.us-e1.cloudhub.io',
+                    'employee-onboarding': 'https://employee-onboarding-mcp-server-staging.us-e1.cloudhub.io',
+                    'asset-allocation': 'https://asset-allocation-mcp-server-staging.us-e1.cloudhub.io',
+                    'notification': 'https://employee-notification-service-staging.us-e1.cloudhub.io'
+                }
+            },
+            
+            // Default timeouts and retry settings
+            timeout: 10000,
+            retryAttempts: 3
         };
 
         // Test results storage
@@ -470,189 +487,199 @@
             pending: 0
         };
 
-        // MCP Server Definitions
+        // Updated MCP Server Definitions based on Postman collection
         const mcpServers = {
-            'employee-onboarding': {
-                name: 'Employee Onboarding MCP Server',
-                description: 'Manages employee profiles, onboarding processes, and lifecycle management',
-                port: 8081,
-                endpoints: [
-                    {
-                        name: 'Health Check',
-                        method: 'GET',
-                        path: '/health',
-                        description: 'Check server health status'
-                    },
-                    {
-                        name: 'Create Employee Profile',
-                        method: 'POST',
-                        path: '/api/employees',
-                        description: 'Create a new employee profile',
-                        payload: {
-                            firstName: 'John',
-                            lastName: 'Doe',
-                            email: 'john.doe@company.com',
-                            phone: '+1-555-0123',
-                            department: 'Engineering',
-                            position: 'Software Developer',
-                            startDate: '2024-03-01',
-                            salary: 75000,
-                            manager: 'Jane Smith',
-                            managerEmail: 'jane.smith@company.com',
-                            companyName: 'TechCorp Inc'
-                        }
-                    },
-                    {
-                        name: 'Get Employee Profile',
-                        method: 'GET',
-                        path: '/api/employees/{id}',
-                        description: 'Retrieve employee profile by ID',
-                        pathParams: { id: '1' }
-                    },
-                    {
-                        name: 'Update Employee Profile',
-                        method: 'PUT',
-                        path: '/api/employees/{id}',
-                        description: 'Update existing employee profile',
-                        pathParams: { id: '1' },
-                        payload: {
-                            department: 'Senior Engineering',
-                            position: 'Senior Software Developer',
-                            salary: 85000
-                        }
-                    },
-                    {
-                        name: 'List All Employees',
-                        method: 'GET',
-                        path: '/api/employees',
-                        description: 'Get all employee profiles'
-                    },
-                    {
-                        name: 'Get Employee Status',
-                        method: 'GET',
-                        path: '/api/employees/{id}/status',
-                        description: 'Get employee onboarding status',
-                        pathParams: { id: '1' }
-                    }
-                ]
-            },
             'agent-broker': {
-                name: 'Employee Onboarding Agent Broker',
-                description: 'Orchestrates the complete employee onboarding process across all MCP servers',
-                port: 8081,
+                name: 'Agent Broker MCP Server',
+                description: 'Central orchestrator for employee onboarding process coordination',
                 endpoints: [
                     {
                         name: 'Health Check',
                         method: 'GET',
-                        path: '/health',
-                        description: 'Check agent broker health status'
+                        path: '/api/health',
+                        description: 'Returns the current health status of the agent broker and orchestration capabilities'
                     },
                     {
-                        name: 'Orchestrate Complete Onboarding',
+                        name: 'Get MCP Server Info',
+                        method: 'GET',
+                        path: '/api/mcp/info',
+                        description: 'Returns comprehensive information about the agent broker MCP server capabilities and integrated services'
+                    },
+                    {
+                        name: 'Orchestrate Employee Onboarding',
                         method: 'POST',
-                        path: '/api/orchestrate-onboarding',
+                        path: '/api/mcp/tools/orchestrate-employee-onboarding',
                         description: 'Complete end-to-end employee onboarding orchestration',
                         payload: {
-                            firstName: 'Alice',
-                            lastName: 'Johnson',
-                            email: 'alice.johnson@company.com',
-                            phone: '+1-555-0456',
-                            department: 'Marketing',
-                            position: 'Marketing Manager',
-                            startDate: '2024-03-15',
-                            salary: 68000,
-                            manager: 'Bob Wilson',
-                            managerEmail: 'bob.wilson@company.com',
+                            firstName: 'John',
+                            lastName: 'Smith',
+                            email: 'john.smith@company.com',
+                            department: 'Engineering',
+                            position: 'Senior Software Engineer',
+                            startDate: '2024-01-15',
+                            manager: 'Sarah Johnson',
+                            managerName: 'Sarah Johnson',
+                            managerEmail: 'sarah.johnson@company.com',
+                            orientationDate: '2024-01-16',
                             companyName: 'TechCorp Inc',
-                            assets: ['laptop', 'phone', 'id-card']
+                            assets: [
+                                {
+                                    category: 'LAPTOP',
+                                    priority: 'HIGH'
+                                },
+                                {
+                                    category: 'ID_CARD',
+                                    priority: 'HIGH'
+                                }
+                            ]
                         }
                     },
                     {
                         name: 'Get Onboarding Status',
-                        method: 'GET',
-                        path: '/api/onboarding-status',
+                        method: 'POST',
+                        path: '/api/mcp/tools/get-onboarding-status',
                         description: 'Get comprehensive onboarding status',
-                        queryParams: { email: 'alice.johnson@company.com' }
+                        payload: {
+                            employeeId: 'EMP001'
+                        }
                     },
                     {
                         name: 'Retry Failed Step',
                         method: 'POST',
-                        path: '/api/retry-step',
+                        path: '/api/mcp/tools/retry-failed-step',
                         description: 'Retry a specific failed onboarding step',
                         payload: {
-                            employeeId: '1',
-                            step: 'asset-allocation'
+                            employeeId: 'EMP001',
+                            step: 'assetAllocation',
+                            retryReason: 'Network connectivity restored',
+                            maxRetries: 3
+                        }
+                    }
+                ]
+            },
+            'employee-onboarding': {
+                name: 'Employee Onboarding MCP Server',
+                description: 'Employee lifecycle management and HR processes',
+                endpoints: [
+                    {
+                        name: 'Health Check',
+                        method: 'GET',
+                        path: '/api/health',
+                        description: 'Check server health status'
+                    },
+                    {
+                        name: 'Get MCP Server Info',
+                        method: 'GET',
+                        path: '/api/mcp/info',
+                        description: 'Get MCP server information and capabilities'
+                    },
+                    {
+                        name: 'Create Employee',
+                        method: 'POST',
+                        path: '/api/mcp/tools/create-employee',
+                        description: 'Create a new employee profile',
+                        payload: {
+                            employeeId: 'EMP001',
+                            firstName: 'John',
+                            lastName: 'Doe',
+                            email: 'john.doe@company.com',
+                            phone: '+1-555-0101',
+                            position: 'Software Engineer',
+                            departmentId: 2,
+                            hireDate: '2024-01-15',
+                            salary: 75000.00,
+                            address: '123 Main St, City, State 12345'
                         }
                     },
                     {
-                        name: 'System Health Check',
+                        name: 'Get Employee',
                         method: 'GET',
-                        path: '/api/system-health',
-                        description: 'Check health of all connected MCP servers'
+                        path: '/api/mcp/tools/get-employee/EMP001',
+                        description: 'Retrieve employee profile by ID'
+                    },
+                    {
+                        name: 'List Employees',
+                        method: 'GET',
+                        path: '/api/mcp/tools/list-employees',
+                        description: 'Get all employee profiles with pagination',
+                        queryParams: { page: '1', size: '10', status: 'ACTIVE' }
+                    },
+                    {
+                        name: 'Update Employee Status',
+                        method: 'PUT',
+                        path: '/api/mcp/tools/update-employee-status/EMP001/ACTIVE',
+                        description: 'Update employee status'
                     }
                 ]
             },
             'asset-allocation': {
                 name: 'Asset Allocation MCP Server',
-                description: 'Manages IT asset allocation and tracking for employees',
-                port: 8081,
+                description: 'IT asset management and allocation system',
                 endpoints: [
                     {
                         name: 'Health Check',
                         method: 'GET',
-                        path: '/health',
+                        path: '/api/health',
                         description: 'Check asset allocation server health'
+                    },
+                    {
+                        name: 'Get MCP Server Info',
+                        method: 'GET',
+                        path: '/api/mcp/info',
+                        description: 'Get MCP server information and capabilities'
                     },
                     {
                         name: 'Allocate Assets',
                         method: 'POST',
-                        path: '/api/assets/allocate',
+                        path: '/api/mcp/tools/allocate-assets',
                         description: 'Allocate assets to an employee',
                         payload: {
-                            employeeId: '1',
-                            assets: ['laptop', 'phone', 'id-card'],
-                            employeeEmail: 'john.doe@company.com',
-                            employeeName: 'John Doe',
-                            department: 'Engineering'
+                            employeeId: 'EMP001',
+                            firstName: 'John',
+                            lastName: 'Doe',
+                            department: 'Engineering',
+                            position: 'Software Developer',
+                            assets: ['laptop', 'id-card', 'phone']
                         }
+                    },
+                    {
+                        name: 'Return Asset',
+                        method: 'POST',
+                        path: '/api/mcp/tools/return-asset',
+                        description: 'Return an asset',
+                        payload: {
+                            assetTag: 'LAP-001',
+                            condition: 'GOOD',
+                            notes: 'Asset returned in good condition'
+                        }
+                    },
+                    {
+                        name: 'List Assets',
+                        method: 'GET',
+                        path: '/api/mcp/tools/list-assets',
+                        description: 'List assets with filtering',
+                        queryParams: { status: 'AVAILABLE', category: 'LAPTOP' }
+                    },
+                    {
+                        name: 'Get Available Assets',
+                        method: 'GET',
+                        path: '/api/mcp/tools/get-available-assets',
+                        description: 'Get all available assets'
                     },
                     {
                         name: 'Get Employee Assets',
-                        method: 'GET',
-                        path: '/api/assets/employee/{id}',
-                        description: 'Get all assets allocated to an employee',
-                        pathParams: { id: '1' }
-                    },
-                    {
-                        name: 'List All Assets',
-                        method: 'GET',
-                        path: '/api/assets',
-                        description: 'Get all asset allocations'
-                    },
-                    {
-                        name: 'Update Asset Status',
-                        method: 'PUT',
-                        path: '/api/assets/{id}',
-                        description: 'Update asset allocation status',
-                        pathParams: { id: '1' },
+                        method: 'POST',
+                        path: '/api/mcp/tools/get-employee-assets',
+                        description: 'Get assets allocated to an employee',
                         payload: {
-                            status: 'delivered',
-                            notes: 'Asset delivered to employee workspace'
+                            employeeId: 'EMP001'
                         }
-                    },
-                    {
-                        name: 'Deallocate Assets',
-                        method: 'DELETE',
-                        path: '/api/assets/employee/{id}',
-                        description: 'Deallocate assets from employee',
-                        pathParams: { id: '1' }
                     }
                 ]
             },
             'notification': {
                 name: 'Notification MCP Server',
-                description: 'Handles email notifications for employee onboarding events',
-                port: 8081,
+                description: 'Email notification services for onboarding process',
                 endpoints: [
                     {
                         name: 'Health Check',
@@ -661,49 +688,97 @@
                         description: 'Check notification server health'
                     },
                     {
+                        name: 'Get MCP Server Info',
+                        method: 'GET',
+                        path: '/mcp/info',
+                        description: 'Get MCP server information and capabilities'
+                    },
+                    {
                         name: 'Send Welcome Email',
                         method: 'POST',
-                        path: '/api/notifications/welcome',
+                        path: '/mcp/tools/send-welcome-email',
                         description: 'Send welcome email to new employee',
                         payload: {
-                            employeeEmail: 'john.doe@company.com',
-                            employeeName: 'John Doe',
-                            startDate: '2024-03-01',
+                            firstName: 'John',
+                            lastName: 'Smith',
+                            email: 'john.smith@company.com',
+                            employeeId: 'EMP001',
                             department: 'Engineering',
-                            manager: 'Jane Smith',
+                            position: 'Senior Software Engineer',
+                            startDate: '2024-01-15',
+                            manager: 'Sarah Johnson',
+                            orientationDate: '2024-01-16',
                             companyName: 'TechCorp Inc'
                         }
                     },
                     {
                         name: 'Send Asset Notification',
                         method: 'POST',
-                        path: '/api/notifications/assets',
+                        path: '/mcp/tools/send-asset-notification',
                         description: 'Send asset allocation notification',
                         payload: {
-                            employeeEmail: 'john.doe@company.com',
-                            employeeName: 'John Doe',
-                            assets: ['laptop', 'phone', 'id-card'],
-                            department: 'Engineering'
+                            firstName: 'John',
+                            lastName: 'Smith',
+                            email: 'john.smith@company.com',
+                            employeeId: 'EMP001',
+                            allocationDate: '2024-01-15',
+                            approvedBy: 'IT Manager',
+                            allocationStatus: 'ALLOCATED',
+                            companyName: 'TechCorp Inc',
+                            assets: [
+                                {
+                                    assetName: 'MacBook Pro 16"',
+                                    assetTag: 'LAPTOP-001',
+                                    category: 'LAPTOP',
+                                    brand: 'Apple',
+                                    model: 'MacBook Pro 16" M2',
+                                    serialNumber: 'ABC123456789',
+                                    condition: 'NEW',
+                                    specifications: '16GB RAM, 512GB SSD, M2 Chip',
+                                    location: 'IT Storage Room'
+                                }
+                            ]
                         }
                     },
                     {
                         name: 'Send Onboarding Complete',
                         method: 'POST',
-                        path: '/api/notifications/complete',
+                        path: '/mcp/tools/send-onboarding-complete',
                         description: 'Send onboarding completion notification',
                         payload: {
-                            employeeEmail: 'john.doe@company.com',
-                            employeeName: 'John Doe',
-                            managerEmail: 'jane.smith@company.com',
-                            department: 'Engineering'
+                            firstName: 'John',
+                            lastName: 'Smith',
+                            email: 'john.smith@company.com',
+                            employeeId: 'EMP001',
+                            department: 'Engineering',
+                            position: 'Senior Software Engineer',
+                            startDate: '2024-01-15',
+                            managerName: 'Sarah Johnson',
+                            managerEmail: 'sarah.johnson@company.com',
+                            companyName: 'TechCorp Inc',
+                            assets: [
+                                {
+                                    assetName: 'MacBook Pro 16"',
+                                    assetTag: 'LAPTOP-001',
+                                    category: 'LAPTOP',
+                                    brand: 'Apple',
+                                    model: 'MacBook Pro 16" M2',
+                                    serialNumber: 'ABC123456789',
+                                    condition: 'NEW',
+                                    specifications: '16GB RAM, 512GB SSD, M2 Chip',
+                                    location: 'IT Storage Room'
+                                }
+                            ]
                         }
                     },
                     {
-                        name: 'Get Notification History',
-                        method: 'GET',
-                        path: '/api/notifications/history',
-                        description: 'Get notification history',
-                        queryParams: { email: 'john.doe@company.com' }
+                        name: 'Test Email Configuration',
+                        method: 'POST',
+                        path: '/mcp/tools/test-email-config',
+                        description: 'Test email configuration',
+                        payload: {
+                            testEmail: 'test@company.com'
+                        }
                     }
                 ]
             }
@@ -711,17 +786,36 @@
 
         // Utility Functions
         function getBaseUrl(serverName) {
-            if (config.environment === 'cloudhub') {
-                // CloudHub URLs don't include ports - they're handled by the platform
-                return config.cloudhubUrls[serverName];
-            } else {
-                // Local development uses localhost with specific ports
-                return `http://localhost:${config.ports[serverName]}`;
+            switch(config.environment) {
+                case 'cloudhub':
+                    return config.cloudhub.urls[serverName];
+                case 'staging':
+                    return config.staging.urls[serverName];
+                case 'local':
+                default:
+                    const port = config.local.ports[serverName];
+                    return `${config.local.baseUrl}:${port}`;
+            }
+        }
+        
+        function validateUrl(url) {
+            try {
+                new URL(url);
+                return true;
+            } catch (error) {
+                console.error(`Invalid URL: ${url}`, error);
+                return false;
             }
         }
 
         function buildUrl(serverName, endpoint) {
-            let url = getBaseUrl(serverName) + endpoint.path;
+            const baseUrl = getBaseUrl(serverName);
+            
+            if (!baseUrl) {
+                throw new Error(`No base URL configured for server: ${serverName}`);
+            }
+            
+            let url = baseUrl + endpoint.path;
             
             // Replace path parameters
             if (endpoint.pathParams) {
@@ -736,23 +830,43 @@
                 url += '?' + params.toString();
             }
             
+            // Validate the final URL
+            if (!validateUrl(url)) {
+                throw new Error(`Invalid URL constructed: ${url}`);
+            }
+            
             return url;
         }
 
         // Environment Toggle
         function toggleEnvironment() {
-            const toggle = document.getElementById('env-toggle');
+            const button = document.getElementById('env-button');
             const label = document.getElementById('env-label');
             
-            if (config.environment === 'local') {
-                config.environment = 'cloudhub';
-                toggle.classList.add('active');
-                label.textContent = 'CloudHub';
-            } else {
-                config.environment = 'local';
-                toggle.classList.remove('active');
-                label.textContent = 'Local';
+            // Cycle through environments: local -> cloudhub -> staging -> local
+            switch(config.environment) {
+                case 'local':
+                    config.environment = 'cloudhub';
+                    button.className = 'btn btn-success';
+                    label.textContent = 'CLOUDHUB';
+                    break;
+                case 'cloudhub':
+                    config.environment = 'staging';
+                    button.className = 'btn btn-warning';
+                    label.textContent = 'STAGING';
+                    break;
+                case 'staging':
+                default:
+                    config.environment = 'local';
+                    button.className = 'btn btn-primary';
+                    label.textContent = 'LOCAL';
+                    break;
             }
+            
+            console.log(`Environment switched to: ${config.environment}`);
+            
+            // Clear previous test results when switching environments
+            clearAllResults();
             
             // Refresh the current content to show updated URLs
             const activeNavItem = document.querySelector('.nav-item.active');
@@ -784,17 +898,38 @@
 
         function loadOverviewContent() {
             const content = document.getElementById('test-content');
+            const corsWarning = config.environment !== 'local' ? `
+                <div class="server-info" style="background: #f8d7da; border-left-color: #dc3545; color: #721c24;">
+                    <h3>🚫 CloudHub CORS Restriction Detected</h3>
+                    <p><strong>Browser Security Limitation:</strong> Web browsers block cross-origin requests to CloudHub URLs. This is normal browser security behavior.</p>
+                    
+                    <div style="background: #ffffff; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                        <h4 style="color: #28a745; margin-bottom: 10px;">✅ WORKING SOLUTIONS:</h4>
+                        <ol style="margin: 5px 0; padding-left: 20px; color: #212529;">
+                            <li><strong>Use Postman Collection</strong> - Import the updated Postman collection for full CloudHub testing</li>
+                            <li><strong>Use API Testing Tools</strong> - Insomnia, Thunder Client, or similar tools</li>
+                            <li><strong>Switch to LOCAL</strong> - If you have servers running locally</li>
+                        </ol>
+                    </div>
+                    
+                    <p><strong style="color: #dc3545;">CloudHub Environment Testing Disabled in Browser</strong></p>
+                    <p><em>The servers and APIs work perfectly - this is just a browser CORS restriction.</em></p>
+                </div>
+            ` : '';
+            
             content.innerHTML = `
                 <div class="server-info">
-                    <h2>🏗️ Employee Onboarding MCP System Overview</h2>
-                    <p>This comprehensive test suite covers all MCP (Model Context Protocol) servers in the Employee Onboarding System:</p>
+                    <h2>🏗️ Employee Onboarding MCP System Overview (Updated v2.0.0)</h2>
+                    <p>This comprehensive test suite covers all MCP (Model Context Protocol) servers in the Employee Onboarding System with updated API endpoints:</p>
                     <ul style="margin: 15px 0; padding-left: 20px;">
-                        <li><strong>Employee Onboarding MCP:</strong> Core employee profile management and onboarding workflows</li>
-                        <li><strong>Agent Broker MCP:</strong> Orchestration layer that coordinates all onboarding processes</li>
+                        <li><strong>Agent Broker MCP:</strong> Central orchestrator for complete employee onboarding workflow</li>
+                        <li><strong>Employee Onboarding MCP:</strong> Employee lifecycle management and HR processes</li>
                         <li><strong>Asset Allocation MCP:</strong> IT asset management and allocation system</li>
-                        <li><strong>Notification MCP:</strong> Email notification system for onboarding events</li>
+                        <li><strong>Notification MCP:</strong> Email notification services for onboarding process</li>
                     </ul>
                 </div>
+                
+                ${corsWarning}
 
                 <div class="workflow-section">
                     <h3>🔄 End-to-End Workflow Test</h3>
@@ -814,25 +949,25 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
                     <div class="endpoint-card">
                         <div class="endpoint-header">
-                            <h4>👥 Employee Onboarding MCP</h4>
-                            <span class="endpoint-method method-get">Ready</span>
+                            <h4>🤖 Agent Broker MCP</h4>
+                            <span class="endpoint-method method-post">Ready</span>
                         </div>
                         <div class="endpoint-body active">
-                            <p>Port: 8081</p>
-                            <p>Endpoints: 6</p>
-                            <p>Functions: Profile management, status tracking</p>
+                            <p>Endpoints: 5 (Updated)</p>
+                            <p>Functions: Orchestration, status tracking, retry operations</p>
+                            <p>Base URL: /api/mcp/tools/*</p>
                         </div>
                     </div>
 
                     <div class="endpoint-card">
                         <div class="endpoint-header">
-                            <h4>🤖 Agent Broker MCP</h4>
-                            <span class="endpoint-method method-post">Ready</span>
+                            <h4>👥 Employee Onboarding MCP</h4>
+                            <span class="endpoint-method method-get">Ready</span>
                         </div>
                         <div class="endpoint-body active">
-                            <p>Port: 8081</p>
-                            <p>Endpoints: 4</p>
-                            <p>Functions: Orchestration, system health</p>
+                            <p>Endpoints: 6 (Updated)</p>
+                            <p>Functions: Employee lifecycle management</p>
+                            <p>Base URL: /api/mcp/tools/*</p>
                         </div>
                     </div>
 
@@ -842,9 +977,9 @@
                             <span class="endpoint-method method-put">Ready</span>
                         </div>
                         <div class="endpoint-body active">
-                            <p>Port: 8081</p>
-                            <p>Endpoints: 6</p>
+                            <p>Endpoints: 7 (Updated)</p>
                             <p>Functions: Asset management, tracking</p>
+                            <p>Base URL: /api/mcp/tools/*</p>
                         </div>
                     </div>
 
@@ -854,9 +989,9 @@
                             <span class="endpoint-method method-delete">Ready</span>
                         </div>
                         <div class="endpoint-body active">
-                            <p>Port: 8081</p>
-                            <p>Endpoints: 5</p>
-                            <p>Functions: Email notifications, history</p>
+                            <p>Endpoints: 6 (Updated)</p>
+                            <p>Functions: Email notifications, testing</p>
+                            <p>Base URL: /mcp/tools/*</p>
                         </div>
                     </div>
                 </div>
@@ -868,9 +1003,15 @@
             const content = document.getElementById('test-content');
             
             // Build environment info based on current environment
-            const envInfo = config.environment === 'cloudhub' 
-                ? `<strong>Environment:</strong> ${config.environment} | <strong>Base URL:</strong> ${getBaseUrl(serverName)}`
-                : `<strong>Port:</strong> ${server.port} | <strong>Environment:</strong> ${config.environment} | <strong>Base URL:</strong> ${getBaseUrl(serverName)}`;
+            const baseUrl = getBaseUrl(serverName);
+            let envInfo;
+            
+            if (config.environment === 'local') {
+                const port = config.local.ports[serverName];
+                envInfo = `<strong>Environment:</strong> ${config.environment.toUpperCase()} | <strong>Port:</strong> ${port} | <strong>Base URL:</strong> ${baseUrl}`;
+            } else {
+                envInfo = `<strong>Environment:</strong> ${config.environment.toUpperCase()} | <strong>Base URL:</strong> ${baseUrl}`;
+            }
             
             let html = `
                 <div class="server-info">
@@ -895,7 +1036,7 @@
                         <div class="endpoint-body" id="${serverName}-${index}">
                             <div class="form-group">
                                 <label>URL:</label>
-                                <input type="text" class="form-control" value="${buildUrl(serverName, endpoint)}" readonly>
+                                <input type="text" class="form-control" id="${serverName}-${index}-url" value="${buildUrl(serverName, endpoint)}" readonly>
                             </div>
                             
                             ${endpoint.payload ? `
@@ -952,30 +1093,52 @@
             responseContent.textContent = 'Executing test...';
             
             // Update test counts
+            testResults.total++;
             testResults.pending++;
             updateTestSummary();
             updateNavStatus(serverName, 'pending');
             
             try {
                 const url = buildUrl(serverName, endpoint);
+                console.log(`Testing ${endpoint.method} ${url}`);
+                
                 const options = {
                     method: endpoint.method,
                     headers: {
                         'Content-Type': 'application/json',
-                    }
+                        'Accept': 'application/json'
+                    },
+                    timeout: config.timeout
                 };
                 
                 // Add payload for POST/PUT requests
                 if (endpoint.payload && (endpoint.method === 'POST' || endpoint.method === 'PUT')) {
                     const payloadElement = document.getElementById(`${testId}-payload`);
+                    let payloadData;
+                    
                     if (payloadElement) {
-                        options.body = payloadElement.value;
+                        try {
+                            payloadData = JSON.parse(payloadElement.value);
+                        } catch (parseError) {
+                            throw new Error(`Invalid JSON payload: ${parseError.message}`);
+                        }
                     } else {
-                        options.body = JSON.stringify(endpoint.payload);
+                        payloadData = endpoint.payload;
                     }
+                    
+                    options.body = JSON.stringify(payloadData);
+                    console.log(`Request payload:`, payloadData);
                 }
                 
+                // Create abort controller for timeout
+                const controller = new AbortController();
+                options.signal = controller.signal;
+                
+                const timeoutId = setTimeout(() => controller.abort(), config.timeout);
+                
                 const response = await fetch(url, options);
+                clearTimeout(timeoutId);
+                
                 const responseText = await response.text();
                 let responseData;
                 
@@ -987,11 +1150,16 @@
                 
                 // Display results
                 const result = {
+                    url: url,
+                    method: endpoint.method,
                     status: response.status,
                     statusText: response.statusText,
                     headers: Object.fromEntries(response.headers.entries()),
-                    data: responseData
+                    data: responseData,
+                    timestamp: new Date().toISOString()
                 };
+                
+                console.log(`Response:`, result);
                 
                 if (response.ok) {
                     responseArea.className = 'response-area success';
@@ -1006,8 +1174,57 @@
                 }
                 
             } catch (error) {
+                console.error(`Test failed for ${serverName}:`, error);
+                
                 responseArea.className = 'response-area error';
-                responseContent.textContent = `Error: ${error.message}\n\nThis might be due to:\n- Server not running\n- CORS issues\n- Network connectivity\n- Invalid endpoint URL`;
+                
+                let errorMessage = `Error: ${error.message}\n\n`;
+                
+                if (error.name === 'AbortError') {
+                    errorMessage += 'Request timed out.\n\n';
+                } else if (error.message.includes('CORS') || error.message.includes('cors')) {
+                    errorMessage += '🚫 CORS ERROR DETECTED 🚫\n';
+                    errorMessage += 'This is a browser security restriction when making cross-origin requests.\n\n';
+                    errorMessage += 'SOLUTIONS:\n';
+                    errorMessage += '✅ Use Postman, Insomnia, or similar API testing tools\n';
+                    errorMessage += '✅ Switch to LOCAL environment if servers are running locally\n';
+                    errorMessage += '✅ Deploy this HTML to the same domain as the APIs\n';
+                    errorMessage += '✅ Configure server CORS headers (if you control the server)\n\n';
+                } else if (error.message.includes('fetch') || error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMessage += '🌐 NETWORK/CORS ERROR 🌐\n';
+                    errorMessage += 'This is likely a CORS (Cross-Origin Resource Sharing) restriction.\n';
+                    errorMessage += 'Browsers block requests from web pages to different domains for security.\n\n';
+                    errorMessage += 'RECOMMENDED ACTIONS:\n';
+                    errorMessage += '🔧 Use Postman for CloudHub API testing (works perfectly)\n';
+                    errorMessage += '🔧 Switch to LOCAL environment for local server testing\n';
+                    errorMessage += '🔧 Check browser developer console for detailed CORS error\n\n';
+                } else {
+                    errorMessage += 'Possible causes:\n';
+                    errorMessage += `- Server not running (${config.environment} environment)\n`;
+                    errorMessage += '- Network connectivity problems\n';
+                    errorMessage += `- Invalid endpoint URL: ${getBaseUrl(serverName)}\n`;
+                    errorMessage += `- Timeout after ${config.timeout}ms\n`;
+                }
+                
+                if (config.environment !== 'local') {
+                    errorMessage += '\n💡 TIP: CloudHub APIs work perfectly in Postman but may have CORS restrictions in browsers.\n';
+                }
+                
+                if (config.environment === 'local') {
+                    errorMessage += `\nFor local testing, ensure server is running on port ${config.local.ports[serverName]}`;
+                }
+                
+                const errorResult = {
+                    error: error.message,
+                    errorType: error.name,
+                    url: getBaseUrl(serverName) + endpoint.path,
+                    environment: config.environment,
+                    isCorsLikely: error.message.includes('fetch') || error.message.includes('CORS') || error.message.includes('NetworkError'),
+                    recommendation: config.environment !== 'local' ? 'Use Postman for CloudHub testing' : 'Ensure local server is running',
+                    timestamp: new Date().toISOString()
+                };
+                
+                responseContent.textContent = errorMessage + '\n\nError Details:\n' + JSON.stringify(errorResult, null, 2);
                 testResults.failed++;
                 updateNavStatus(serverName, 'error');
             } finally {
@@ -1078,31 +1295,31 @@
             try {
                 // Step 1: Create Employee Profile
                 await updateWorkflowStep(1, 'in-progress');
-                const createResult = await executeWorkflowStep('employee-onboarding', 1);
+                const createResult = await executeWorkflowStep('employee-onboarding', 2);
                 results.push({ step: 'Create Employee', success: createResult.success, data: createResult.data });
                 await updateWorkflowStep(1, createResult.success ? 'success' : 'error');
                 
                 // Step 2: Allocate Assets
                 await updateWorkflowStep(2, 'in-progress');
-                const assetResult = await executeWorkflowStep('asset-allocation', 1);
+                const assetResult = await executeWorkflowStep('asset-allocation', 2);
                 results.push({ step: 'Allocate Assets', success: assetResult.success, data: assetResult.data });
                 await updateWorkflowStep(2, assetResult.success ? 'success' : 'error');
                 
                 // Step 3: Send Welcome Email
                 await updateWorkflowStep(3, 'in-progress');
-                const emailResult = await executeWorkflowStep('notification', 1);
+                const emailResult = await executeWorkflowStep('notification', 2);
                 results.push({ step: 'Send Welcome Email', success: emailResult.success, data: emailResult.data });
                 await updateWorkflowStep(3, emailResult.success ? 'success' : 'error');
                 
                 // Step 4: Orchestrate Complete Process
                 await updateWorkflowStep(4, 'in-progress');
-                const orchestrateResult = await executeWorkflowStep('agent-broker', 1);
+                const orchestrateResult = await executeWorkflowStep('agent-broker', 2);
                 results.push({ step: 'Orchestrate Process', success: orchestrateResult.success, data: orchestrateResult.data });
                 await updateWorkflowStep(4, orchestrateResult.success ? 'success' : 'error');
                 
                 // Step 5: Verify Results
                 await updateWorkflowStep(5, 'in-progress');
-                const verifyResult = await executeWorkflowStep('agent-broker', 2);
+                const verifyResult = await executeWorkflowStep('agent-broker', 3);
                 results.push({ step: 'Verify Results', success: verifyResult.success, data: verifyResult.data });
                 await updateWorkflowStep(5, verifyResult.success ? 'success' : 'error');
                 
@@ -1119,27 +1336,55 @@
                 const endpoint = mcpServers[serverName].endpoints[endpointIndex];
                 const url = buildUrl(serverName, endpoint);
                 
+                console.log(`Workflow step: ${endpoint.method} ${url}`);
+                
                 const options = {
                     method: endpoint.method,
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    timeout: config.timeout
                 };
                 
                 if (endpoint.payload && (endpoint.method === 'POST' || endpoint.method === 'PUT')) {
                     options.body = JSON.stringify(endpoint.payload);
+                    console.log(`Workflow payload:`, endpoint.payload);
                 }
                 
+                // Create abort controller for timeout
+                const controller = new AbortController();
+                options.signal = controller.signal;
+                
+                const timeoutId = setTimeout(() => controller.abort(), config.timeout);
+                
                 const response = await fetch(url, options);
-                const data = await response.text();
+                clearTimeout(timeoutId);
+                
+                const responseText = await response.text();
+                let responseData;
+                
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch {
+                    responseData = responseText;
+                }
                 
                 return {
                     success: response.ok,
-                    data: data,
-                    status: response.status
+                    data: responseData,
+                    status: response.status,
+                    url: url,
+                    timestamp: new Date().toISOString()
                 };
             } catch (error) {
+                console.error(`Workflow step failed:`, error);
+                
                 return {
                     success: false,
-                    error: error.message
+                    error: error.message,
+                    url: buildUrl(serverName, mcpServers[serverName].endpoints[endpointIndex]),
+                    timestamp: new Date().toISOString()
                 };
             }
         }

@@ -1,0 +1,602 @@
+{
+  "info": {
+    "_postman_id": "0805bc77-d484-4ad1-801f-49c4122ac566",
+    "name": "Employee Onboarding MCP Services - Complete Collection (Updated)",
+    "description": "UPDATED: Comprehensive Postman collection for all Employee Onboarding MCP Services with correct API endpoints based on actual Mule flow specifications.\n\n## Services Included:\n\n### 1. Agent Broker MCP\n- **Base URL**: https://agent-broker-mcp-server.us-e1.cloudhub.io/api\n- **Purpose**: Central orchestrator for complete employee onboarding workflow\n- **Endpoints**: /health, /mcp/info, orchestration, status tracking, retry operations\n\n### 2. Employee Onboarding MCP\n- **Base URL**: https://employee-onboarding-mcp-server.us-e1.cloudhub.io/api  \n- **Purpose**: Employee lifecycle management and HR processes\n- **Endpoints**: /health, /mcp/info, employee CRUD operations, status management\n\n### 3. Asset Allocation MCP\n- **Base URL**: https://asset-allocation-mcp-server.us-e1.cloudhub.io/api\n- **Purpose**: IT asset management and allocation\n- **Endpoints**: /health, /mcp/info, asset allocation, return, listing, availability\n\n### 4. Notification MCP\n- **Base URL**: https://notification-service-mcp.us-e1.cloudhub.io\n- **Purpose**: Email notification services for onboarding process\n- **Endpoints**: /health, /mcp/info, welcome emails, asset notifications\n\n## Environment Variables:\n- `agent_broker_url`: agent-broker-mcp-server.us-e1.cloudhub.io\n- `employee_onboarding_url`: employee-onboarding-mcp-server.us-e1.cloudhub.io  \n- `asset_allocation_url`: asset-allocation-mcp-server.us-e1.cloudhub.io\n- `notification_url`: notification-service-mcp.us-e1.cloudhub.io\n\nUpdated: 2024-03-02\nVersion: 2.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "46229874"
+  },
+  "item": [
+    {
+      "name": "1. Agent Broker MCP",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has JSON body\", function () {",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test(\"Health status is UP\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql(\"UP\");",
+                  "});",
+                  "",
+                  "pm.globals.set(\"healthStatus\", pm.response.text());"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{agent_broker_url}}/api/health",
+              "protocol": "https",
+              "host": ["{{agent_broker_url}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Returns the current health status of the agent broker and orchestration capabilities"
+          },
+          "response": []
+        },
+        {
+          "name": "Get MCP Server Info",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains server info\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('name');",
+                  "    pm.expect(jsonData).to.have.property('version');",
+                  "    pm.expect(jsonData).to.have.property('tools');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{agent_broker_url}}/api/mcp/info",
+              "protocol": "https",
+              "host": ["{{agent_broker_url}}"],
+              "path": ["api", "mcp", "info"]
+            },
+            "description": "Returns comprehensive information about the agent broker MCP server capabilities and integrated services"
+          },
+          "response": []
+        },
+        {
+          "name": "Orchestrate Employee Onboarding",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 500 (expected for orchestration)\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 500]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has JSON structure\", function () {",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Orchestration completed successfully\", function () {",
+                  "        pm.expect(jsonData.status).to.eql('success');",
+                  "        pm.expect(jsonData).to.have.property('employeeId');",
+                  "    });",
+                  "} else {",
+                  "    pm.test(\"Orchestration error details provided\", function () {",
+                  "        pm.expect(jsonData).to.have.property('error');",
+                  "        pm.expect(jsonData).to.have.property('message');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"email\": \"john.smith@company.com\",\n    \"department\": \"Engineering\",\n    \"position\": \"Senior Software Engineer\",\n    \"startDate\": \"2024-01-15\",\n    \"manager\": \"Sarah Johnson\",\n    \"managerName\": \"Sarah Johnson\",\n    \"managerEmail\": \"sarah.johnson@company.com\",\n    \"orientationDate\": \"2024-01-16\",\n    \"companyName\": \"TechCorp Inc\",\n    \"assets\": [\n        {\n            \"category\": \"LAPTOP\",\n            \"priority\": \"HIGH\"\n        },\n        {\n            \"category\": \"ID_CARD\",\n            \"priority\": \"HIGH\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "https://{{agent_broker_url}}/api/mcp/tools/orchestrate-employee-onboarding",
+              "protocol": "https",
+              "host": ["{{agent_broker_url}}"],
+              "path": ["api", "mcp", "tools", "orchestrate-employee-onboarding"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Onboarding Status",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"employeeId\": \"EMP001\"\n}"
+            },
+            "url": {
+              "raw": "https://{{agent_broker_url}}/api/mcp/tools/get-onboarding-status",
+              "protocol": "https",
+              "host": ["{{agent_broker_url}}"],
+              "path": ["api", "mcp", "tools", "get-onboarding-status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Retry Failed Step",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"employeeId\": \"EMP001\",\n    \"step\": \"assetAllocation\",\n    \"retryReason\": \"Network connectivity restored\",\n    \"maxRetries\": 3\n}"
+            },
+            "url": {
+              "raw": "https://{{agent_broker_url}}/api/mcp/tools/retry-failed-step",
+              "protocol": "https",
+              "host": ["{{agent_broker_url}}"],
+              "path": ["api", "mcp", "tools", "retry-failed-step"]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Central orchestrator for employee onboarding process coordination"
+    },
+    {
+      "name": "2. Employee Onboarding MCP",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{employee_onboarding_url}}/api/health",
+              "protocol": "https",
+              "host": ["{{employee_onboarding_url}}"],
+              "path": ["api", "health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get MCP Server Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{employee_onboarding_url}}/api/mcp/info",
+              "protocol": "https",
+              "host": ["{{employee_onboarding_url}}"],
+              "path": ["api", "mcp", "info"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"employeeId\": \"EMP001\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@company.com\",\n    \"phone\": \"+1-555-0101\",\n    \"position\": \"Software Engineer\",\n    \"departmentId\": 2,\n    \"hireDate\": \"2024-01-15\",\n    \"salary\": 75000.00,\n    \"address\": \"123 Main St, City, State 12345\"\n}"
+            },
+            "url": {
+              "raw": "https://{{employee_onboarding_url}}/api/mcp/tools/create-employee",
+              "protocol": "https",
+              "host": ["{{employee_onboarding_url}}"],
+              "path": ["api", "mcp", "tools", "create-employee"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Employee",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{employee_onboarding_url}}/api/mcp/tools/get-employee/EMP001",
+              "protocol": "https",
+              "host": ["{{employee_onboarding_url}}"],
+              "path": ["api", "mcp", "tools", "get-employee", "EMP001"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Employees",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{employee_onboarding_url}}/api/mcp/tools/list-employees?page=1&size=10&status=ACTIVE",
+              "protocol": "https",
+              "host": ["{{employee_onboarding_url}}"],
+              "path": ["api", "mcp", "tools", "list-employees"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "size", "value": "10"},
+                {"key": "status", "value": "ACTIVE"}
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Employee Status",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "https://{{employee_onboarding_url}}/api/mcp/tools/update-employee-status/EMP001/ACTIVE",
+              "protocol": "https",
+              "host": ["{{employee_onboarding_url}}"],
+              "path": ["api", "mcp", "tools", "update-employee-status", "EMP001", "ACTIVE"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Asset Allocation MCP",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{asset_allocation_url}}/api/health",
+              "protocol": "https",
+              "host": ["{{asset_allocation_url}}"],
+              "path": ["api", "health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get MCP Server Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{asset_allocation_url}}/api/mcp/info",
+              "protocol": "https",
+              "host": ["{{asset_allocation_url}}"],
+              "path": ["api", "mcp", "info"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Allocate Assets",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"employeeId\": \"EMP001\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"department\": \"Engineering\",\n    \"position\": \"Software Developer\",\n    \"assets\": [\"laptop\", \"id-card\", \"phone\"]\n}"
+            },
+            "url": {
+              "raw": "https://{{asset_allocation_url}}/api/mcp/tools/allocate-assets",
+              "protocol": "https",
+              "host": ["{{asset_allocation_url}}"],
+              "path": ["api", "mcp", "tools", "allocate-assets"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Return Asset",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"assetTag\": \"LAP-001\",\n    \"condition\": \"GOOD\",\n    \"notes\": \"Asset returned in good condition\"\n}"
+            },
+            "url": {
+              "raw": "https://{{asset_allocation_url}}/api/mcp/tools/return-asset",
+              "protocol": "https",
+              "host": ["{{asset_allocation_url}}"],
+              "path": ["api", "mcp", "tools", "return-asset"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Assets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{asset_allocation_url}}/api/mcp/tools/list-assets?status=AVAILABLE&category=LAPTOP",
+              "protocol": "https",
+              "host": ["{{asset_allocation_url}}"],
+              "path": ["api", "mcp", "tools", "list-assets"],
+              "query": [
+                {"key": "status", "value": "AVAILABLE"},
+                {"key": "category", "value": "LAPTOP"}
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Available Assets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{asset_allocation_url}}/api/mcp/tools/get-available-assets",
+              "protocol": "https",
+              "host": ["{{asset_allocation_url}}"],
+              "path": ["api", "mcp", "tools", "get-available-assets"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Employee Assets",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"employeeId\": \"EMP001\"\n}"
+            },
+            "url": {
+              "raw": "https://{{asset_allocation_url}}/api/mcp/tools/get-employee-assets",
+              "protocol": "https",
+              "host": ["{{asset_allocation_url}}"],
+              "path": ["api", "mcp", "tools", "get-employee-assets"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Notification MCP",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{notification_url}}/health",
+              "protocol": "https",
+              "host": ["{{notification_url}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get MCP Server Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{notification_url}}/mcp/info",
+              "protocol": "https",
+              "host": ["{{notification_url}}"],
+              "path": ["mcp", "info"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send Welcome Email",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"email\": \"john.smith@company.com\",\n    \"employeeId\": \"EMP001\",\n    \"department\": \"Engineering\",\n    \"position\": \"Senior Software Engineer\",\n    \"startDate\": \"2024-01-15\",\n    \"manager\": \"Sarah Johnson\",\n    \"orientationDate\": \"2024-01-16\",\n    \"companyName\": \"TechCorp Inc\"\n}"
+            },
+            "url": {
+              "raw": "https://{{notification_url}}/mcp/tools/send-welcome-email",
+              "protocol": "https",
+              "host": ["{{notification_url}}"],
+              "path": ["mcp", "tools", "send-welcome-email"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send Asset Notification",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"email\": \"john.smith@company.com\",\n    \"employeeId\": \"EMP001\",\n    \"allocationDate\": \"2024-01-15\",\n    \"approvedBy\": \"IT Manager\",\n    \"allocationStatus\": \"ALLOCATED\",\n    \"companyName\": \"TechCorp Inc\",\n    \"assets\": [\n        {\n            \"assetName\": \"MacBook Pro 16\\\"\",\n            \"assetTag\": \"LAPTOP-001\",\n            \"category\": \"LAPTOP\",\n            \"brand\": \"Apple\",\n            \"model\": \"MacBook Pro 16\\\" M2\",\n            \"serialNumber\": \"ABC123456789\",\n            \"condition\": \"NEW\",\n            \"specifications\": \"16GB RAM, 512GB SSD, M2 Chip\",\n            \"location\": \"IT Storage Room\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "https://{{notification_url}}/mcp/tools/send-asset-notification",
+              "protocol": "https",
+              "host": ["{{notification_url}}"],
+              "path": ["mcp", "tools", "send-asset-notification"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Send Onboarding Complete",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Smith\",\n    \"email\": \"john.smith@company.com\",\n    \"employeeId\": \"EMP001\",\n    \"department\": \"Engineering\",\n    \"position\": \"Senior Software Engineer\",\n    \"startDate\": \"2024-01-15\",\n    \"managerName\": \"Sarah Johnson\",\n    \"managerEmail\": \"sarah.johnson@company.com\",\n    \"companyName\": \"TechCorp Inc\",\n    \"assets\": [\n        {\n            \"assetName\": \"MacBook Pro 16\\\"\",\n            \"assetTag\": \"LAPTOP-001\",\n            \"category\": \"LAPTOP\",\n            \"brand\": \"Apple\",\n            \"model\": \"MacBook Pro 16\\\" M2\",\n            \"serialNumber\": \"ABC123456789\",\n            \"condition\": \"NEW\",\n            \"specifications\": \"16GB RAM, 512GB SSD, M2 Chip\",\n            \"location\": \"IT Storage Room\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "https://{{notification_url}}/mcp/tools/send-onboarding-complete",
+              "protocol": "https",
+              "host": ["{{notification_url}}"],
+              "path": ["mcp", "tools", "send-onboarding-complete"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Test Email Configuration",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"testEmail\": \"test@company.com\"\n}"
+            },
+            "url": {
+              "raw": "https://{{notification_url}}/mcp/tools/test-email-config",
+              "protocol": "https",
+              "host": ["{{notification_url}}"],
+              "path": ["mcp", "tools", "test-email-config"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. End-to-End Workflow Examples",
+      "item": [
+        {
+          "name": "Complete Onboarding Workflow",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Wilson\",\n    \"email\": \"jane.wilson@company.com\",\n    \"department\": \"Marketing\",\n    \"position\": \"Marketing Manager\",\n    \"startDate\": \"2024-01-20\",\n    \"manager\": \"Mike Davis\",\n    \"managerName\": \"Mike Davis\",\n    \"managerEmail\": \"mike.davis@company.com\",\n    \"orientationDate\": \"2024-01-21\",\n    \"companyName\": \"TechCorp Inc\",\n    \"assets\": [\n        {\n            \"category\": \"LAPTOP\",\n            \"priority\": \"HIGH\"\n        },\n        {\n            \"category\": \"ID_CARD\",\n            \"priority\": \"HIGH\"\n        },\n        {\n            \"category\": \"MOBILE_PHONE\",\n            \"priority\": \"MEDIUM\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "https://{{agent_broker_url}}/api/mcp/tools/orchestrate-employee-onboarding",
+              "protocol": "https",
+              "host": ["{{agent_broker_url}}"],
+              "path": ["api", "mcp", "tools", "orchestrate-employee-onboarding"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check All Services",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{agent_broker_url}}/api/health",
+              "protocol": "https",
+              "host": ["{{agent_broker_url}}"],
+              "path": ["api", "health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set service URLs using correct CloudHub domains",
+          "if (!pm.environment.get('agent_broker_url')) {",
+          "    pm.environment.set('agent_broker_url', 'agent-broker-mcp-server.us-e1.cloudhub.io');",
+          "}",
+          "if (!pm.environment.get('employee_onboarding_url')) {",
+          "    pm.environment.set('employee_onboarding_url', 'employee-onboarding-mcp-server.us-e1.cloudhub.io');",
+          "}",
+          "if (!pm.environment.get('asset_allocation_url')) {",
+          "    pm.environment.set('asset_allocation_url', 'asset-allocation-mcp-server.us-e1.cloudhub.io');",
+          "}",
+          "if (!pm.environment.get('notification_url')) {",
+          "    pm.environment.set('notification_url', 'notification-service-mcp.us-e1.cloudhub.io');",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script for all requests",
+          "pm.test('Response time is less than 10000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(10000);",
+          "});",
+          "",
+          "// Log response for debugging",
+          "console.log('Response Status:', pm.response.status);",
+          "console.log('Response Time:', pm.response.responseTime + 'ms');",
+          "if (pm.response.json && typeof pm.response.json === 'function') {",
+          "    try {",
+          "        console.log('Response Body:', JSON.stringify(pm.response.json(), null, 2));",
+          "    } catch (e) {",
+          "        console.log('Response Text:', pm.response.text());",
+          "    }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "agent_broker_url",
+      "value": "agent-broker-mcp-server.us-e1.cloudhub.io",
+      "description": "Agent Broker MCP base URL"
+    },
+    {
+      "key": "employee_onboarding_url",
+      "value": "employee-onboarding-mcp-server.us-e1.cloudhub.io",
+      "description": "Employee Onboarding MCP base URL"
+    },
+    {
+      "key": "asset_allocation_url",
+      "value": "asset-allocation-mcp-server.us-e1.cloudhub.io",
+      "description": "Asset Allocation MCP base URL"
+    },
+    {
+      "key": "notification_url",
+      "value": "notification-service-mcp.us-e1.cloudhub.io",
+      "description": "Notification MCP base URL"
+    }
+  ]
+}
