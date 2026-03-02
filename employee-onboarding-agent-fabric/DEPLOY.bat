@@ -203,15 +203,39 @@ echo.
 echo ✅ All MCP services compiled successfully
 echo.
 
-REM === STEP 6: PUBLISH TO EXCHANGE (OPTIONAL) ===
+REM === STEP 6: PUBLISH TO EXCHANGE (SMART SKIP) ===
 echo ==============================
 echo 📤 EXCHANGE PUBLICATION OPTIONS
 echo ==============================
-echo Do you want to publish assets to Anypoint Exchange?
-echo [Y] Yes - Publish to Exchange (requires proper Exchange permissions)
-echo [N] No  - Skip to CloudHub deployment
-echo.
-set /p PUBLISH_CHOICE=Enter your choice (Y/N): 
+
+REM Check if Exchange publishing was completed before
+set EXCHANGE_MARKER_FILE=".exchange-published"
+if exist %EXCHANGE_MARKER_FILE% (
+    echo ✅ Exchange publishing was completed successfully in a previous run
+    echo 📋 Found marker file: %EXCHANGE_MARKER_FILE%
+    echo.
+    echo [SMART SKIP] Do you want to publish to Exchange again?
+    echo [Y] Yes - Republish to Exchange (version changes, new assets)
+    echo [N] No  - Skip Exchange ^(recommended for code-only changes^)
+    echo [R] Reset - Delete marker file and ask again next time
+    echo.
+    set /p PUBLISH_CHOICE=Enter your choice (Y/N/R): 
+    
+    if /i "!PUBLISH_CHOICE!"=="R" (
+        del %EXCHANGE_MARKER_FILE% 2>nul
+        echo ✅ Exchange marker file deleted - will prompt again next time
+        echo [INFO] Exchange publication SKIPPED - Going directly to CloudHub deployment
+        goto :CLOUDHUB_DEPLOYMENT
+    )
+) else (
+    echo 📋 No previous Exchange publishing detected
+    echo Do you want to publish assets to Anypoint Exchange?
+    echo [Y] Yes - Publish to Exchange (requires proper Exchange permissions)
+    echo [N] No  - Skip to CloudHub deployment
+    echo.
+    set /p PUBLISH_CHOICE=Enter your choice (Y/N): 
+)
+
 if "%PUBLISH_CHOICE%"=="" set "PUBLISH_CHOICE=N"
 
 if /i "%PUBLISH_CHOICE%"=="Y" (
@@ -234,23 +258,8 @@ echo ✅ Using Connected App credentials from .env file
 echo   Client ID: %ANYPOINT_CLIENT_ID:~0,8%...
 echo   Organization: %ANYPOINT_ORG_ID:~0,8%...
 
-REM Parent POM publication
-if exist "exchange.json" (
-    echo 📦 Publishing parent POM...
-    call mvn deploy -DskipMuleApplicationDeployment -DskipTests -q ^
-        -Danypoint.client.id="%ANYPOINT_CLIENT_ID%" ^
-        -Danypoint.client.secret="%ANYPOINT_CLIENT_SECRET%" ^
-        -Danypoint.businessGroup.id="%ANYPOINT_ORG_ID%" ^
-        -Danypoint.platform.base.uri="https://anypoint.mulesoft.com" ^
-        -Danypoint.exchange.base.uri="https://anypoint.mulesoft.com/exchange"
-        
-    if !errorlevel! neq 0 (
-        echo ❌ Parent POM publishing failed
-        cd /d "%SCRIPT_DIR%"
-        pause
-        exit /b 1
-    )
-)
+REM Skip parent POM publication - only publish individual MCP applications
+echo 📋 Skipping parent POM publishing (not required for Exchange)
 
 REM Child modules
 for /l %%i in (1,1,%SERVER_COUNT%) do (
@@ -276,7 +285,13 @@ for /l %%i in (1,1,%SERVER_COUNT%) do (
     cd /d "%SCRIPT_DIR%"
 )
 
+REM Create marker file to indicate successful Exchange publishing
+cd /d "%SCRIPT_DIR%"
+echo Exchange publishing completed successfully on %DATE% at %TIME% > %EXCHANGE_MARKER_FILE%
 echo ✅ Exchange publishing completed using Connected App authentication
+echo 📁 Created marker file: %EXCHANGE_MARKER_FILE%
+echo 💡 Next time you run this script, Exchange publishing will be skipped automatically
+echo.
 goto :CLOUDHUB_DEPLOYMENT
 
 :CLOUDHUB_DEPLOYMENT
