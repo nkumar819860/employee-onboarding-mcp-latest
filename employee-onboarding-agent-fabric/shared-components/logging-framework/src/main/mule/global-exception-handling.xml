@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule.xsd">
+
+    <!-- Global Exception Handling Strategy -->
+    <error-handler name="globalExceptionHandler" global="true">
+        
+        <!-- HTTP Client Errors (4xx) -->
+        <on-error-propagate enableNotifications="true" logException="true" type="HTTP:CLIENT_ERROR">
+            <flow-ref name="logHttpClientError"/>
+            <set-variable value="CLIENT_ERROR" variableName="errorType"/>
+            <set-variable value="#[error.errorMessage.attributes.statusCode default 400]" variableName="statusCode"/>
+            <flow-ref name="buildErrorResponse"/>
+        </on-error-propagate>
+
+        <!-- HTTP Server Errors (5xx) -->
+        <on-error-propagate enableNotifications="true" logException="true" type="HTTP:SERVER_ERROR">
+            <flow-ref name="logHttpServerError"/>
+            <set-variable value="SERVER_ERROR" variableName="errorType"/>
+            <set-variable value="#[error.errorMessage.attributes.statusCode default 500]" variableName="statusCode"/>
+            <flow-ref name="buildErrorResponse"/>
+        </on-error-propagate>
+
+        <!-- Database Connection Errors -->
+        <on-error-propagate enableNotifications="true" logException="true" type="DB:CONNECTIVITY, DB:CONNECTION_ERROR">
+            <flow-ref name="logDatabaseError"/>
+            <set-variable value="DATABASE_ERROR" variableName="errorType"/>
+            <set-variable value="503" variableName="statusCode"/>
+            <flow-ref name="buildErrorResponse"/>
+        </on-error-propagate>
+
+        <!-- Validation Errors -->
+        <on-error-propagate enableNotifications="true" logException="true" type="VALIDATION:*">
+            <flow-ref name="logValidationError"/>
+            <set-variable value="VALIDATION_ERROR" variableName="errorType"/>
+            <set-variable value="400" variableName="statusCode"/>
+            <flow-ref name="buildErrorResponse"/>
+        </on-error-propagate>
+
+        <!-- Transformation Errors -->
+        <on-error-propagate enableNotifications="true" logException="true" type="MULE:TRANSFORMATION">
+            <flow-ref name="logTransformationError"/>
+            <set-variable value="TRANSFORMATION_ERROR" variableName="errorType"/>
+            <set-variable value="500" variableName="statusCode"/>
+            <flow-ref name="buildErrorResponse"/>
+        </on-error-propagate>
+
+        <!-- Security Errors -->
+        <on-error-propagate enableNotifications="true" logException="true" type="HTTP:UNAUTHORIZED, HTTP:FORBIDDEN">
+            <flow-ref name="logSecurityError"/>
+            <set-variable value="SECURITY_ERROR" variableName="errorType"/>
+            <set-variable value="#[error.errorMessage.attributes.statusCode default 401]" variableName="statusCode"/>
+            <flow-ref name="buildErrorResponse"/>
+        </on-error-propagate>
+
+        <!-- Timeout Errors -->
+        <on-error-propagate enableNotifications="true" logException="true" type="HTTP:TIMEOUT, MULE:TIMEOUT">
+            <flow-ref name="logTimeoutError"/>
+            <set-variable value="TIMEOUT_ERROR" variableName="errorType"/>
+            <set-variable value="408" variableName="statusCode"/>
+            <flow-ref name="buildErrorResponse"/>
+        </on-error-propagate>
+
+        <!-- Generic Application Errors -->
+        <on-error-propagate enableNotifications="true" logException="true" type="ANY">
+            <flow-ref name="logGenericError"/>
+            <set-variable value="INTERNAL_ERROR" variableName="errorType"/>
+            <set-variable value="500" variableName="statusCode"/>
+            <flow-ref name="buildErrorResponse"/>
+        </on-error-propagate>
+    </error-handler>
+
+    <!-- HTTP Client Error Logging Flow -->
+    <sub-flow name="logHttpClientError">
+        <logger level="WARN" 
+                doc:name="Log HTTP Client Error"
+                category="com.mulesoft.mcp.exception.HttpClientError"
+                message="HTTP Client Error occurred: Status Code: #[error.errorMessage.attributes.statusCode default 'Unknown'], Reason: #[error.errorMessage.attributes.reasonPhrase default 'Unknown'], URI: #[attributes.requestUri default 'Unknown'], Method: #[attributes.method default 'Unknown'], Correlation ID: #[correlationId]"/>
+        
+        <flow-ref name="logAuditEvent">
+            <flow-vars>
+                <flow-var name="auditAction" value="HTTP_CLIENT_ERROR"/>
+                <flow-var name="auditDetails" value="Status: #[error.errorMessage.attributes.statusCode], URI: #[attributes.requestUri], Method: #[attributes.method]"/>
+            </flow-vars>
+        </flow-ref>
+    </sub-flow>
+
+    <!-- HTTP Server Error Logging Flow -->
+    <sub-flow name="logHttpServerError">
+        <logger level="ERROR" 
+                doc:name="Log HTTP Server Error"
+                category="com.mulesoft.mcp.exception.HttpServerError"
+                message="HTTP Server Error occurred: Status Code: #[error.errorMessage.attributes.statusCode default 'Unknown'], Reason: #[error.errorMessage.attributes.reasonPhrase default 'Unknown'], URI: #[attributes.requestUri default 'Unknown'], Method: #[attributes.method default 'Unknown'], Correlation ID: #[correlationId], Error Details: #[error.detailedDescription]"/>
+        
+        <flow-ref name="logAuditEvent">
+            <flow-vars>
+                <flow-var name="auditAction" value="HTTP_SERVER_ERROR"/>
+                <flow-var name="auditDetails" value="Status: #[error.errorMessage.attributes.statusCode], URI: #[attributes.requestUri], Method: #[attributes.method]"/>
+            </flow-vars>
+        </flow-ref>
+    </sub-flow>
+
+    <!-- Database Error Logging Flow -->
+    <sub-flow name="logDatabaseError">
+        <logger level="ERROR" 
+                doc:name="Log Database Error"
+                category="com.mulesoft.mcp.exception.DatabaseError"
+                message="Database Error occurred: Type: #[error.errorType], Description: #[error.detailedDescription], Correlation ID: #[correlationId], SQL State: #[error.cause.sqlState default 'Unknown'], Error Code: #[error.cause.errorCode default 'Unknown']"/>
+        
+        <flow-ref name="logAuditEvent">
+            <flow-vars>
+                <flow-var name="auditAction" value="DATABASE_ERROR"/>
+                <flow-var name="auditDetails" value="Error Type: #[error.errorType], SQL State: #[error.cause.sqlState default 'Unknown']"/>
+            </flow-vars>
+        </flow-ref>
+    </sub-flow>
+
+    <!-- Validation Error Logging Flow -->
+    <sub-flow name="logValidationError">
+        <logger level="WARN" 
+                doc:name="Log Validation Error"
+                category="com.mulesoft.mcp.exception.ValidationError"
+                message="Validation Error occurred: Type: #[error.errorType], Description: #[error.detailedDescription], Correlation ID: #[correlationId], URI: #[attributes.requestUri default 'Unknown'], Method: #[attributes.method default 'Unknown']"/>
+        
+        <flow-ref name="logAuditEvent">
+            <flow-vars>
+                <flow-var name="auditAction" value="VALIDATION_ERROR"/>
+                <flow-var name="auditDetails" value="Error Type: #[error.errorType], URI: #[attributes.requestUri], Method: #[attributes.method]"/>
+            </flow-vars>
+        </flow-ref>
+    </sub-flow>
+
+    <!-- Transformation Error Logging Flow -->
+    <sub-flow name="logTransformationError">
+        <logger level="ERROR" 
+                doc:name="Log Transformation Error"
+                category="com.mulesoft.mcp.exception.TransformationError"
+                message="Transformation Error occurred: Type: #[error.errorType], Description: #[error.detailedDescription], Correlation ID: #[correlationId], Processor Path: #[error.failingComponent default 'Unknown']"/>
+        
+        <flow-ref name="logAuditEvent">
+            <flow-vars>
+                <flow-var name="auditAction" value="TRANSFORMATION_ERROR"/>
+                <flow-var name="auditDetails" value="Error Type: #[error.errorType], Processor: #[error.failingComponent]"/>
+            </flow-vars>
+        </flow-ref>
+    </sub-flow>
+
+    <!-- Security Error Logging Flow -->
+    <sub-flow name="logSecurityError">
+        <logger level="WARN" 
+                doc:name="Log Security Error"
+                category="com.mulesoft.mcp.exception.SecurityError"
+                message="Security Error occurred: Status Code: #[error.errorMessage.attributes.statusCode default 'Unknown'], Reason: #[error.errorMessage.attributes.reasonPhrase default 'Unknown'], URI: #[attributes.requestUri default 'Unknown'], Method: #[attributes.method default 'Unknown'], Client IP: #[attributes.remoteAddress default 'Unknown'], Correlation ID: #[correlationId]"/>
+        
+        <flow-ref name="logAuditEvent">
+            <flow-vars>
+                <flow-var name="auditAction" value="SECURITY_ERROR"/>
+                <flow-var name="auditDetails" value="Status: #[error.errorMessage.attributes.statusCode], URI: #[attributes.requestUri], Client IP: #[attributes.remoteAddress]"/>
+            </flow-vars>
+        </flow-ref>
+    </sub-flow>
+
+    <!-- Timeout Error Logging Flow -->
+    <sub-flow name="logTimeoutError">
+        <logger level="ERROR" 
+                doc:name="Log Timeout Error"
+                category="com.mulesoft.mcp.exception.TimeoutError"
+                message="Timeout Error occurred: Type: #[error.errorType], Description: #[error.detailedDescription], Correlation ID: #[correlationId], URI: #[attributes.requestUri default 'Unknown'], Method: #[attributes.method default 'Unknown']"/>
+        
+        <flow-ref name="logAuditEvent">
+            <flow-vars>
+                <flow-var name="auditAction" value="TIMEOUT_ERROR"/>
+                <flow-var name="auditDetails" value="Error Type: #[error.errorType], URI: #[attributes.requestUri], Method: #[attributes.method]"/>
+            </flow-vars>
+        </flow-ref>
+    </sub-flow>
+
+    <!-- Generic Error Logging Flow -->
+    <sub-flow name="logGenericError">
+        <logger level="ERROR" 
+                doc:name="Log Generic Error"
+                category="com.mulesoft.mcp.exception.GenericError"
+                message="Unexpected Error occurred: Type: #[error.errorType], Description: #[error.detailedDescription], Correlation ID: #[correlationId], Processor Path: #[error.failingComponent default 'Unknown'], URI: #[attributes.requestUri default 'Unknown'], Method: #[attributes.method default 'Unknown']"/>
+        
+        <flow-ref name="logAuditEvent">
+            <flow-vars>
+                <flow-var name="auditAction" value="GENERIC_ERROR"/>
+                <flow-var name="auditDetails" value="Error Type: #[error.errorType], Processor: #[error.failingComponent], URI: #[attributes.requestUri]"/>
+            </flow-vars>
+        </flow-ref>
+    </sub-flow>
+
+    <!-- Build Standardized Error Response -->
+    <sub-flow name="buildErrorResponse">
+        <ee:transform doc:name="Build Error Response">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var errorId = uuid()
+var timestamp = now()
+---
+{
+    error: {
+        id: errorId,
+        timestamp: timestamp as String { format: "yyyy-MM-dd'T'HH:mm:ss.SSSZ" },
+        correlationId: correlationId,
+        type: vars.errorType,
+        code: vars.statusCode as Number,
+        message: if (vars.statusCode as Number >= 500) 
+                   "Internal server error. Please contact support with error ID: " ++ errorId
+                 else 
+                   error.detailedDescription default "An error occurred while processing your request",
+        details: if (vars.statusCode as Number < 500) error.detailedDescription else null
+    }
+}]]></ee:set-payload>
+            </ee:message>
+            <ee:variables>
+                <ee:set-variable variableName="httpStatus" value="#[vars.statusCode as Number]"/>
+            </ee:variables>
+        </ee:transform>
+        
+        <set-payload value="#[payload]" doc:name="Set Error Payload" mimeType="application/json"/>
+    </sub-flow>
+
+</mule>

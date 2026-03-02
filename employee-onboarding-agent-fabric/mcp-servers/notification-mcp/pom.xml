@@ -32,7 +32,7 @@
 		<exchange.classifier>mcp</exchange.classifier>
 		<exchange.assetId>notification-mcp-server</exchange.assetId>
 		<tags>Email Notifications,MCP Server,HR Automation,Gmail Integration,Template Engine</tags>
-		<categories>Integration,Communication,Human Resources</categories>
+		<categories>["Integration","Communication","Human Resources"]</categories>
 		
 		<!-- ✅ CloudHub Properties -->
 		<mule.version>4.9.14</mule.version>

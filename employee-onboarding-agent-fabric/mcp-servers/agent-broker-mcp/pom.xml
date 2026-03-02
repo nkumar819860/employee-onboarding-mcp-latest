@@ -32,7 +32,7 @@
 		<exchange.classifier>mcp</exchange.classifier>
 		<exchange.assetId>agent-broker-mcp-server</exchange.assetId>
 		<tags>Agent Broker,MCP Server,Process Orchestration,Employee Onboarding,Workflow Management</tags>
-		<categories>Integration,Process Automation,Human Resources</categories>
+		<categories>["Integration","Process Automation","Human Resources"]</categories>
 		
 		<!-- ✅ CloudHub Properties -->
 		<mule.version>4.9.14</mule.version>

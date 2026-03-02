@@ -14,9 +14,18 @@
         "Template Engine"
     ],
     "categories": [
-        "Integration",
-        "Communication",
-        "Human Resources"
+        {
+            "key": "Integration",
+            "value": "Integration"
+        },
+        {
+            "key": "Communication",
+            "value": "Communication"
+        },
+        {
+            "key": "Human Resources",
+            "value": "Human Resources"
+        }
     ],
     "main": "notification-mcp-api.xml"
 }

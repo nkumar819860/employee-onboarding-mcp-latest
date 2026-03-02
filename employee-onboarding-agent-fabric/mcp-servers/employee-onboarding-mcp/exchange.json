@@ -14,9 +14,18 @@
         "Multi-Database Support"
     ],
     "categories": [
-        "Integration",
-        "Database",
-        "Human Resources"
+        {
+            "key": "Integration",
+            "value": "Integration"
+        },
+        {
+            "key": "Database",
+            "value": "Database"
+        },
+        {
+            "key": "Human Resources",
+            "value": "Human Resources"
+        }
     ],
     "main": "employee-onboarding-mcp-api.xml"
 }

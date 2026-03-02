@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule.xsd">
+
+    <!-- Request Start Logging Flow -->
+    <sub-flow name="logRequestStart">
+        <ee:transform doc:name="Set Request Context">
+            <ee:variables>
+                <ee:set-variable variableName="requestStartTime" value="#[now()]"/>
+                <ee:set-variable variableName="requestMethod" value="#[attributes.method default 'UNKNOWN']"/>
+                <ee:set-variable variableName="requestUri" value="#[attributes.requestUri default 'UNKNOWN']"/>
+                <ee:set-variable variableName="clientIP" value="#[attributes.remoteAddress default 'UNKNOWN']"/>
+                <ee:set-variable variableName="userAgent" value="#[attributes.headers.'user-agent' default 'UNKNOWN']"/>
+                <ee:set-variable variableName="contentType" value="#[attributes.headers.'content-type' default 'UNKNOWN']"/>
+            </ee:variables>
+        </ee:transform>
+        
+        <logger level="INFO" 
+                doc:name="Log Request Start"
+                category="com.mulesoft.mcp.request"
+                message="Request Started: Method: #[vars.requestMethod], URI: #[vars.requestUri], Client IP: #[vars.clientIP], User-Agent: #[vars.userAgent], Content-Type: #[vars.contentType], Correlation ID: #[correlationId]"/>
+        
+        <!-- Set MDC context for correlation -->
+        <set-variable value="#[correlationId]" variableName="correlationId"/>
+    </sub-flow>
+
+    <!-- Request End Logging Flow -->
+    <sub-flow name="logRequestEnd">
+        <ee:transform doc:name="Calculate Response Time">
+            <ee:variables>
+                <ee:set-variable variableName="requestEndTime" value="#[now()]"/>
+                <ee:set-variable variableName="responseTime" value="#[(vars.requestEndTime - vars.requestStartTime) as Number {unit: 'milliseconds'}]"/>
+                <ee:set-variable variableName="responseStatus" value="#[attributes.statusCode default 200]"/>
+            </ee:variables>
+        </ee:transform>
+        
+        <logger level="INFO" 
+                doc:name="Log Request End"
+                category="com.mulesoft.mcp.response"
+                message="Request Completed: Method: #[vars.requestMethod], URI: #[vars.requestUri], Status: #[vars.responseStatus], Response Time: #[vars.responseTime]ms, Correlation ID: #[correlationId]"/>
+        
+        <!-- Log performance metrics -->
+        <flow-ref name="logPerformanceMetrics"/>
+    </sub-flow>
+
+    <!-- Performance Metrics Logging Flow -->
+    <sub-flow name="logPerformanceMetrics">
+        <logger level="INFO" 
+                doc:name="Log Performance Metrics"
+                category="PERFORMANCE"
+                message="PERF_METRIC | Method: #[vars.requestMethod] | URI: #[vars.requestUri] | ResponseTime: #[vars.responseTime]ms | Status: #[vars.responseStatus] | ClientIP: #[vars.clientIP] | CorrelationId: #[correlationId] | Timestamp: #[vars.requestEndTime as String {format: 'yyyy-MM-dd HH:mm:ss.SSS'}]"/>
+        
+        <!-- Alert on slow requests (> 5 seconds) -->
+        <choice doc:name="Check for Slow Request">
+            <when expression="#[vars.responseTime > 5000]">
+                <logger level="WARN" 
+                        doc:name="Log Slow Request Alert"
+                        category="com.mulesoft.mcp.performance.slow"
+                        message="SLOW REQUEST ALERT: Request took #[vars.responseTime]ms to complete. Method: #[vars.requestMethod], URI: #[vars.requestUri], Correlation ID: #[correlationId]"/>
+            </when>
+        </choice>
+    </sub-flow>
+
+    <!-- Audit Event Logging Flow -->
+    <sub-flow name="logAuditEvent">
+        <ee:transform doc:name="Prepare Audit Context">
+            <ee:variables>
+                <ee:set-variable variableName="auditTimestamp" value="#[now()]"/>
+                <ee:set-variable variableName="sessionId" value="#[attributes.headers.'x-session-id' default 'NO_SESSION']"/>
+                <ee:set-variable variableName="userId" value="#[attributes.headers.'x-user-id' default vars.userId default 'ANONYMOUS']"/>
+            </ee:variables>
+        </ee:transform>
+        
+        <logger level="INFO" 
+                doc:name="Log Audit Event"
+                category="AUDIT"
+                message="AUDIT_EVENT | Action: #[vars.auditAction] | UserId: #[vars.userId] | ClientIP: #[vars.clientIP default attributes.remoteAddress default 'UNKNOWN'] | SessionId: #[vars.sessionId] | CorrelationId: #[correlationId] | Timestamp: #[vars.auditTimestamp as String {format: 'yyyy-MM-dd HH:mm:ss.SSS'}] | Details: #[vars.auditDetails default 'No additional details']"/>
+    </sub-flow>
+
+    <!-- Database Operation Logging Flow -->
+    <sub-flow name="logDatabaseOperation">
+        <ee:transform doc:name="Set DB Operation Context">
+            <ee:variables>
+                <ee:set-variable variableName="dbStartTime" value="#[now()]"/>
+            </ee:variables>
+        </ee:transform>
+        
+        <logger level="DEBUG" 
+                doc:name="Log DB Operation Start"
+                category="com.mulesoft.mcp.database"
+                message="Database Operation Started: Operation: #[vars.dbOperation default 'UNKNOWN'], Table: #[vars.dbTable default 'UNKNOWN'], Correlation ID: #[correlationId]"/>
+    </sub-flow>
+
+    <!-- Database Operation End Logging Flow -->
+    <sub-flow name="logDatabaseOperationEnd">
+        <ee:transform doc:name="Calculate DB Operation Time">
+            <ee:variables>
+                <ee:set-variable variableName="dbEndTime" value="#[now()]"/>
+                <ee:set-variable variableName="dbOperationTime" value="#[(vars.dbEndTime - vars.dbStartTime) as Number {unit: 'milliseconds'}]"/>
+            </ee:variables>
+        </ee:transform>
+        
+        <logger level="INFO" 
+                doc:name="Log DB Operation End"
+                category="com.mulesoft.mcp.database"
+                message="Database Operation Completed: Operation: #[vars.dbOperation], Table: #[vars.dbTable], Duration: #[vars.dbOperationTime]ms, Records Affected: #[vars.recordsAffected default 'N/A'], Correlation ID: #[correlationId]"/>
+        
+        <!-- Log to performance if operation is slow -->
+        <choice doc:name="Check for Slow DB Operation">
+            <when expression="#[vars.dbOperationTime > 1000]">
+                <logger level="WARN" 
+                        doc:name="Log Slow DB Operation"
+                        category="PERFORMANCE"
+                        message="SLOW_DB_OPERATION | Operation: #[vars.dbOperation] | Table: #[vars.dbTable] | Duration: #[vars.dbOperationTime]ms | CorrelationId: #[correlationId] | Timestamp: #[vars.dbEndTime as String {format: 'yyyy-MM-dd HH:mm:ss.SSS'}]"/>
+            </when>
+        </choice>
+    </sub-flow>
+
+    <!-- HTTP Client Request Logging Flow -->
+    <sub-flow name="logHttpClientRequest">
+        <ee:transform doc:name="Set HTTP Client Context">
+            <ee:variables>
+                <ee:set-variable variableName="httpClientStartTime" value="#[now()]"/>
+                <ee:set-variable variableName="targetUrl" value="#[vars.targetUrl default 'UNKNOWN']"/>
+                <ee:set-variable variableName="httpMethod" value="#[vars.httpMethod default 'GET']"/>
+            </ee:variables>
+        </ee:transform>
+        
+        <logger level="INFO" 
+                doc:name="Log HTTP Client Request"
+                category="com.mulesoft.mcp.http.client"
+                message="HTTP Client Request: Method: #[vars.httpMethod], URL: #[vars.targetUrl], Correlation ID: #[correlationId]"/>
+    </sub-flow>
+
+    <!-- HTTP Client Response Logging Flow -->
+    <sub-flow name="logHttpClientResponse">
+        <ee:transform doc:name="Calculate HTTP Client Time">
+            <ee:variables>
+                <ee:set-variable variableName="httpClientEndTime" value="#[now()]"/>
+                <ee:set-variable variableName="httpClientResponseTime" value="#[(vars.httpClientEndTime - vars.httpClientStartTime) as Number {unit: 'milliseconds'}]"/>
+                <ee:set-variable variableName="responseStatus" value="#[attributes.statusCode default 'UNKNOWN']"/>
+            </ee:variables>
+        </ee:transform>
+        
+        <logger level="INFO" 
+                doc:name="Log HTTP Client Response"
+                category="com.mulesoft.mcp.http.client"
+                message="HTTP Client Response: Method: #[vars.httpMethod], URL: #[vars.targetUrl], Status: #[vars.responseStatus], Response Time: #[vars.httpClientResponseTime]ms, Correlation ID: #[correlationId]"/>
+        
+        <!-- Log performance metrics for external calls -->
+        <logger level="INFO" 
+                doc:name="Log External API Performance"
+                category="PERFORMANCE"
+                message="EXTERNAL_API_CALL | Method: #[vars.httpMethod] | URL: #[vars.targetUrl] | ResponseTime: #[vars.httpClientResponseTime]ms | Status: #[vars.responseStatus] | CorrelationId: #[correlationId] | Timestamp: #[vars.httpClientEndTime as String {format: 'yyyy-MM-dd HH:mm:ss.SSS'}]"/>
+    </sub-flow>
+
+    <!-- Business Logic Logging Flow -->
+    <sub-flow name="logBusinessEvent">
+        <logger level="INFO" 
+                doc:name="Log Business Event"
+                category="com.mulesoft.mcp.business"
+                message="Business Event: Event: #[vars.businessEvent default 'UNKNOWN'], Entity: #[vars.entityType default 'UNKNOWN'], EntityId: #[vars.entityId default 'UNKNOWN'], Action: #[vars.businessAction default 'UNKNOWN'], User: #[vars.userId default 'ANONYMOUS'], Correlation ID: #[correlationId]"/>
+        
+        <!-- Log audit event for business operations -->
+        <flow-ref name="logAuditEvent">
+            <flow-vars>
+                <flow-var name="auditAction" value="#['BUSINESS_' ++ (vars.businessAction default 'UNKNOWN')]"/>
+                <flow-var name="auditDetails" value="#['Event: ' ++ (vars.businessEvent default 'UNKNOWN') ++ ', Entity: ' ++ (vars.entityType default 'UNKNOWN') ++ ', EntityId: ' ++ (vars.entityId default 'UNKNOWN')]"/>
+            </flow-vars>
+        </flow-ref>
+    </sub-flow>
+
+    <!-- Validation Result Logging Flow -->
+    <sub-flow name="logValidationResult">
+        <choice doc:name="Check Validation Result">
+            <when expression="#[vars.validationResult == true]">
+                <logger level="DEBUG" 
+                        doc:name="Log Validation Success"
+                        category="com.mulesoft.mcp.validation"
+                        message="Validation Successful: Type: #[vars.validationType default 'UNKNOWN'], Entity: #[vars.entityType default 'UNKNOWN'], Correlation ID: #[correlationId]"/>
+            </when>
+            <otherwise>
+                <logger level="WARN" 
+                        doc:name="Log Validation Failure"
+                        category="com.mulesoft.mcp.validation"
+                        message="Validation Failed: Type: #[vars.validationType default 'UNKNOWN'], Entity: #[vars.entityType default 'UNKNOWN'], Errors: #[vars.validationErrors default 'No specific errors'], Correlation ID: #[correlationId]"/>
+                
+                <!-- Log audit event for validation failures -->
+                <flow-ref name="logAuditEvent">
+                    <flow-vars>
+                        <flow-var name="auditAction" value="VALIDATION_FAILURE"/>
+                        <flow-var name="auditDetails" value="#['Type: ' ++ (vars.validationType default 'UNKNOWN') ++ ', Entity: ' ++ (vars.entityType default 'UNKNOWN') ++ ', Errors: ' ++ (vars.validationErrors default 'No specific errors')]"/>
+                    </flow-vars>
+                </flow-ref>
+            </otherwise>
+        </choice>
+    </sub-flow>
+
+    <!-- Security Event Logging Flow -->
+    <sub-flow name="logSecurityEvent">
+        <logger level="WARN" 
+                doc:name="Log Security Event"
+                category="com.mulesoft.mcp.security"
+                message="Security Event: Type: #[vars.securityEventType default 'UNKNOWN'], Action: #[vars.securityAction default 'UNKNOWN'], User: #[vars.userId default 'ANONYMOUS'], Client IP: #[vars.clientIP default attributes.remoteAddress default 'UNKNOWN'], Resource: #[vars.resourceAccessed default 'UNKNOWN'], Correlation ID: #[correlationId]"/>
+        
+        <!-- Always log security events to audit -->
+        <flow-ref name="logAuditEvent">
+            <flow-vars>
+                <flow-var name="auditAction" value="#['SECURITY_' ++ (vars.securityEventType default 'UNKNOWN')]"/>
+                <flow-var name="auditDetails" value="#['Action: ' ++ (vars.securityAction default 'UNKNOWN') ++ ', Resource: ' ++ (vars.resourceAccessed default 'UNKNOWN')]"/>
+            </flow-vars>
+        </flow-ref>
+    </sub-flow>
+
+    <!-- Configuration Change Logging Flow -->
+    <sub-flow name="logConfigurationChange">
+        <logger level="INFO" 
+                doc:name="Log Configuration Change"
+                category="com.mulesoft.mcp.config"
+                message="Configuration Change: Component: #[vars.configComponent default 'UNKNOWN'], Property: #[vars.configProperty default 'UNKNOWN'], Old Value: #[vars.oldValue default 'N/A'], New Value: #[vars.newValue default 'N/A'], Changed By: #[vars.userId default 'SYSTEM'], Correlation ID: #[correlationId]"/>
+        
+        <!-- Always audit configuration changes -->
+        <flow-ref name="logAuditEvent">
+            <flow-vars>
+                <flow-var name="auditAction" value="CONFIGURATION_CHANGE"/>
+                <flow-var name="auditDetails" value="#['Component: ' ++ (vars.configComponent default 'UNKNOWN') ++ ', Property: ' ++ (vars.configProperty default 'UNKNOWN') ++ ', Old: ' ++ (vars.oldValue default 'N/A') ++ ', New: ' ++ (vars.newValue default 'N/A')]"/>
+            </flow-vars>
+        </flow-ref>
+    </sub-flow>
+
+    <!-- Custom Debug Logging Flow -->
+    <sub-flow name="logDebugInfo">
+        <logger level="DEBUG" 
+                doc:name="Log Debug Information"
+                category="com.mulesoft.mcp.debug"
+                message="Debug Info: Component: #[vars.debugComponent default 'UNKNOWN'], Message: #[vars.debugMessage default 'No message'], Data: #[vars.debugData default 'No data'], Correlation ID: #[correlationId]"/>
+    </sub-flow>
+
+    <!-- Health Check Logging Flow -->
+    <sub-flow name="logHealthCheck">
+        <logger level="INFO" 
+                doc:name="Log Health Check"
+                category="com.mulesoft.mcp.health"
+                message="Health Check: Service: #[vars.serviceName default 'UNKNOWN'], Status: #[vars.healthStatus default 'UNKNOWN'], Response Time: #[vars.healthCheckTime default 'N/A']ms, Details: #[vars.healthDetails default 'No details'], Correlation ID: #[correlationId]"/>
+        
+        <!-- Log performance metrics for health checks -->
+        <logger level="INFO" 
+                doc:name="Log Health Check Performance"
+                category="PERFORMANCE"
+                message="HEALTH_CHECK | Service: #[vars.serviceName default 'UNKNOWN'] | Status: #[vars.healthStatus default 'UNKNOWN'] | ResponseTime: #[vars.healthCheckTime default 'N/A']ms | CorrelationId: #[correlationId] | Timestamp: #[now() as String {format: 'yyyy-MM-dd HH:mm:ss.SSS'}]"/>
+    </sub-flow>
+
+</mule>

@@ -32,7 +32,7 @@
 		<exchange.classifier>mcp</exchange.classifier>
 		<exchange.assetId>asset-allocation-mcp-server</exchange.assetId>
 		<tags>Asset Management,MCP Server,Employee Resources,IT Assets,Inventory Management</tags>
-		<categories>Integration,Asset Management,Human Resources</categories>
+		<categories>["Integration","Asset Management","Human Resources"]</categories>
 		
 		<!-- ✅ CloudHub Properties -->
 		<mule.version>4.9.14</mule.version>

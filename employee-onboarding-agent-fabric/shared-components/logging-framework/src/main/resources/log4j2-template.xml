@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Configuration>
     <Properties>
-        <!-- Service name for this MCP service -->
-        <Property name="serviceName">asset-allocation</Property>
+        <!-- Service name property to be replaced by each service -->
+        <Property name="serviceName">${sys:mcp.service.name:-mcp-service}</Property>
         <Property name="logPattern">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level [%X{correlationId}] [%X{processorPath}] [%c{1}] - %msg%n</Property>
         <Property name="errorPattern">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level [%X{correlationId}] [%X{processorPath}] [%c{1}] - %msg%n%throwable</Property>
     </Properties>
@@ -93,8 +93,8 @@
         <AsyncLogger name="com.zaxxer.hikari" level="WARN"/>
         <AsyncLogger name="org.h2" level="WARN"/>
 
-        <!-- Asset Allocation specific loggers -->
-        <AsyncLogger name="com.mulesoft.mcp.asset" level="INFO"/>
+        <!-- Email Connector Logger -->
+        <AsyncLogger name="org.mule.extension.email" level="INFO"/>
 
         <!-- Mule Runtime Loggers -->
         <AsyncLogger name="org.mule.runtime.core.internal.processor.LoggerMessageProcessor" level="INFO"/>

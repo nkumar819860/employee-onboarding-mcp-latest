@@ -14,9 +14,18 @@
         "Inventory Management"
     ],
     "categories": [
-        "Integration",
-        "Asset Management",
-        "Human Resources"
+        {
+            "key": "Integration",
+            "value": "Integration"
+        },
+        {
+            "key": "Asset Management",
+            "value": "Asset Management"
+        },
+        {
+            "key": "Human Resources",
+            "value": "Human Resources"
+        }
     ],
     "main": "asset-allocation-mcp-api.xml"
 }

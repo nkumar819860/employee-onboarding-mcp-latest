@@ -14,9 +14,18 @@
         "Workflow Management"
     ],
     "categories": [
-        "Integration",
-        "Process Automation",
-        "Human Resources"
+        {
+            "key": "Integration",
+            "value": "Integration"
+        },
+        {
+            "key": "Process Automation",
+            "value": "Process Automation"
+        },
+        {
+            "key": "Human Resources",
+            "value": "Human Resources"
+        }
     ],
     "main": "agent-broker-mcp-api.xml"
 }

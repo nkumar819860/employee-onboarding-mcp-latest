@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    EXAMPLE: How to integrate the centralized logging framework into your MCP service flows
+    
+    This file shows examples of how to:
+    1. Import the logging framework components
+    2. Add request/response logging to API flows
+    3. Use database operation logging
+    4. Implement business event logging
+    5. Use the global exception handling
+-->
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:db="http://www.mulesoft.org/schema/mule/db"
+      xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd">
+
+    <!-- STEP 1: Import the centralized logging framework components -->
+    <!-- These imports should be added to your service's main flow file -->
+    <!-- 
+    <import file="../../shared-components/logging-framework/src/main/mule/global-exception-handling.xml"/>
+    <import file="../../shared-components/logging-framework/src/main/mule/logging-utilities.xml"/>
+    -->
+
+    <!-- EXAMPLE 1: API Flow with Request/Response Logging -->
+    <flow name="enhanced-create-employee-flow" doc:name="Enhanced Create Employee Flow">
+        <!-- Step 1: Log request start -->
+        <flow-ref name="logRequestStart"/>
+        
+        <!-- Step 2: Validate input -->
+        <set-variable value="INPUT_VALIDATION" variableName="validationType"/>
+        <set-variable value="Employee" variableName="entityType"/>
+        
+        <choice doc:name="Validate Required Fields">
+            <when expression="#[payload.firstName != null and payload.lastName != null and payload.email != null]">
+                <set-variable value="true" variableName="validationResult"/>
+                <flow-ref name="logValidationResult"/>
+            </when>
+            <otherwise>
+                <set-variable value="false" variableName="validationResult"/>
+                <set-variable value="Missing required fields: firstName, lastName, email" variableName="validationErrors"/>
+                <flow-ref name="logValidationResult"/>
+                
+                <ee:transform doc:name="Validation Error Response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    success: false,
+    error: "VALIDATION_ERROR",
+    message: "Missing required fields",
+    details: vars.validationErrors,
+    timestamp: now()
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+                
+                <flow-ref name="logRequestEnd"/>
+                <return/>
+            </otherwise>
+        </choice>
+
+        <!-- Step 3: Log business event -->
+        <set-variable value="EMPLOYEE_CREATION_INITIATED" variableName="businessEvent"/>
+        <set-variable value="Employee" variableName="entityType"/>
+        <set-variable value="#[payload.employeeId default uuid()[0 to 7]]" variableName="entityId"/>
+        <set-variable value="CREATE" variableName="businessAction"/>
+        <flow-ref name="logBusinessEvent"/>
+
+        <!-- Step 4: Database operation with logging -->
+        <set-variable value="INSERT" variableName="dbOperation"/>
+        <set-variable value="EMPLOYEES" variableName="dbTable"/>
+        <flow-ref name="logDatabaseOperation"/>
+
+        <db:insert config-ref="Database_Config" target="insertResult">
+            <db:sql><![CDATA[INSERT INTO employees (employee_id, first_name, last_name, email) 
+                             VALUES (:employeeId, :firstName, :lastName, :email)]]></db:sql>
+            <db:input-parameters><![CDATA[#[{
+                employeeId: vars.entityId,
+                firstName: payload.firstName,
+                lastName: payload.lastName,
+                email: payload.email
+            }]]]></db:input-parameters>
+        </db:insert>
+
+        <set-variable value="#[vars.insertResult.affectedRows]" variableName="recordsAffected"/>
+        <flow-ref name="logDatabaseOperationEnd"/>
+
+        <!-- Step 5: Log successful business event -->
+        <set-variable value="EMPLOYEE_CREATED" variableName="businessEvent"/>
+        <set-variable value="CREATE_SUCCESS" variableName="businessAction"/>
+        <flow-ref name="logBusinessEvent"/>
+
+        <!-- Step 6: Transform response -->
+        <ee:transform doc:name="Success Response">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    success: true,
+    message: "Employee created successfully",
+    employeeId: vars.entityId,
+    timestamp: now()
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+
+        <!-- Step 7: Log request end -->
+        <flow-ref name="logRequestEnd"/>
+
+        <!-- Error handling will be handled by global exception handler -->
+    </flow>
+
+    <!-- EXAMPLE 2: HTTP Client Call with Logging -->
+    <flow name="enhanced-external-api-call" doc:name="Enhanced External API Call">
+        <!-- Step 1: Set HTTP client variables -->
+        <set-variable value="https://api.external-service.com/validate" variableName="targetUrl"/>
+        <set-variable value="POST" variableName="httpMethod"/>
+        
+        <!-- Step 2: Log HTTP client request -->
+        <flow-ref name="logHttpClientRequest"/>
+
+        <!-- Step 3: Make HTTP call -->
+        <http:request method="#[vars.httpMethod]" url="#[vars.targetUrl]" config-ref="HTTP_Request_config">
+            <http:body><![CDATA[#[payload]]]></http:body>
+        </http:request>
+
+        <!-- Step 4: Log HTTP client response -->
+        <flow-ref name="logHttpClientResponse"/>
+
+        <!-- Step 5: Process response -->
+        <ee:transform doc:name="Process API Response">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    externalValidation: payload.isValid default false,
+    externalMessage: payload.message default "No validation message",
+    timestamp: now()
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- EXAMPLE 3: Security Event Logging -->
+    <flow name="enhanced-authentication-check" doc:name="Enhanced Authentication Check">
+        <!-- Step 1: Check authentication -->
+        <set-variable value="#[attributes.headers.'authorization']" variableName="authHeader"/>
+        
+        <choice doc:name="Check Authorization">
+            <when expression="#[vars.authHeader != null and vars.authHeader startsWith 'Bearer ']">
+                <!-- Valid authorization -->
+                <set-variable value="AUTHENTICATION" variableName="securityEventType"/>
+                <set-variable value="LOGIN_SUCCESS" variableName="securityAction"/>
+                <set-variable value="#[attributes.requestPath]" variableName="resourceAccessed"/>
+                <flow-ref name="logSecurityEvent"/>
+            </when>
+            <otherwise>
+                <!-- Invalid or missing authorization -->
+                <set-variable value="AUTHENTICATION" variableName="securityEventType"/>
+                <set-variable value="LOGIN_FAILURE" variableName="securityAction"/>
+                <set-variable value="#[attributes.requestPath]" variableName="resourceAccessed"/>
+                <flow-ref name="logSecurityEvent"/>
+                
+                <ee:transform doc:name="Unauthorized Response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    success: false,
+    error: "UNAUTHORIZED",
+    message: "Invalid or missing authorization token",
+    timestamp: now()
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </otherwise>
+        </choice>
+    </flow>
+
+    <!-- EXAMPLE 4: Configuration Change Logging -->
+    <flow name="enhanced-configuration-update" doc:name="Enhanced Configuration Update">
+        <set-variable value="#[payload.component]" variableName="configComponent"/>
+        <set-variable value="#[payload.property]" variableName="configProperty"/>
+        <set-variable value="#[payload.oldValue]" variableName="oldValue"/>
+        <set-variable value="#[payload.newValue]" variableName="newValue"/>
+        <set-variable value="#[attributes.headers.'x-user-id' default 'SYSTEM']" variableName="userId"/>
+
+        <!-- Log configuration change -->
+        <flow-ref name="logConfigurationChange"/>
+
+        <!-- Process configuration update -->
+        <ee:transform doc:name="Update Configuration">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    success: true,
+    message: "Configuration updated successfully",
+    component: vars.configComponent,
+    property: vars.configProperty,
+    newValue: vars.newValue,
+    updatedBy: vars.userId,
+    timestamp: now()
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- EXAMPLE 5: Health Check with Logging -->
+    <flow name="enhanced-health-check" doc:name="Enhanced Health Check">
+        <set-variable value="EmployeeOnboardingMCP" variableName="serviceName"/>
+        
+        <!-- Test database connection -->
+        <try doc:name="Database Health Check">
+            <db:select config-ref="Database_Config">
+                <db:sql><![CDATA[SELECT 1 as test]]></db:sql>
+            </db:select>
+            
+            <set-variable value="HEALTHY" variableName="healthStatus"/>
+            <set-variable value="100" variableName="healthCheckTime"/>
+            <set-variable value="Database connection successful" variableName="healthDetails"/>
+            
+            <error-handler>
+                <on-error-continue type="ANY">
+                    <set-variable value="UNHEALTHY" variableName="healthStatus"/>
+                    <set-variable value="0" variableName="healthCheckTime"/>
+                    <set-variable value="#[error.description]" variableName="healthDetails"/>
+                </on-error-continue>
+            </error-handler>
+        </try>
+
+        <!-- Log health check results -->
+        <flow-ref name="logHealthCheck"/>
+
+        <!-- Return health status -->
+        <ee:transform doc:name="Health Response">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    service: vars.serviceName,
+    status: vars.healthStatus,
+    responseTime: vars.healthCheckTime,
+    details: vars.healthDetails,
+    timestamp: now()
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- EXAMPLE 6: Debug Logging Flow -->
+    <flow name="enhanced-debug-example" doc:name="Enhanced Debug Example">
+        <set-variable value="PayloadProcessor" variableName="debugComponent"/>
+        <set-variable value="Processing employee data transformation" variableName="debugMessage"/>
+        <set-variable value="#[payload]" variableName="debugData"/>
+        
+        <flow-ref name="logDebugInfo"/>
+
+        <!-- Your processing logic here -->
+        <ee:transform doc:name="Process Data">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload ++ {
+    processed: true,
+    processedAt: now()
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+</mule>
