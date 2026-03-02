@@ -1,37 +1,14 @@
 {
     "name": "Asset Allocation MCP Server",
-    "description": "MCP Server for Asset Allocation Operations - Managing laptops, ID cards, mobile phones, and other company assets with comprehensive inventory tracking",
-    "version": "1.0.0",
-    "main": "asset-allocation-mcp-server.xml",
+    "description": "MCP Server for Asset Allocation Operations - Managing laptops, ID cards, mobile phones, and other company assets",
+    "version": "2.0.0",
     "groupId": "47562e5d-bf49-440a-a0f5-a9cea0a89aa9",
-    "assetId": "asset-allocation-mcp",
     "classifier": "mcp",
-    "keywords": [
-        "mcp",
-        "asset-allocation",
-        "laptop",
-        "id-card",
-        "mobile-phone",
-        "inventory",
-        "employee-assets",
-        "asset-management",
-        "mulesoft"
-    ],
-    "author": "MCP Development Team",
-    "license": "MIT",
-    "homepage": "https://github.com/mulesoft/asset-allocation-mcp",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/mulesoft/asset-allocation-mcp.git"
-    },
-    "bugs": {
-        "url": "https://github.com/mulesoft/asset-allocation-mcp/issues"
-    },
     "contactName": "MCP Development Team",
     "contactEmail": "mcp-dev@company.com",
     "tags": [
         "Asset Management",
-        "MCP Server",
+        "MCP Server", 
         "Employee Resources",
         "IT Assets",
         "Inventory Management"
@@ -39,147 +16,7 @@
     "categories": [
         "Integration",
         "Asset Management",
-        "Human Resources",
-        "IT Operations",
-        "Agent Network"
+        "Human Resources"
     ],
-    "dependencies": [
-        {
-            "groupId": "org.mule.connectors",
-            "artifactId": "mule-http-connector",
-            "version": "1.10.0"
-        },
-        {
-            "groupId": "org.mule.connectors",
-            "artifactId": "mule-db-connector",
-            "version": "1.15.0"
-        },
-        {
-            "groupId": "org.postgresql",
-            "artifactId": "postgresql",
-            "version": "42.7.4"
-        },
-        {
-            "groupId": "com.h2database",
-            "artifactId": "h2",
-            "version": "2.2.224"
-        }
-    ],
-    "properties": {
-        "apiVersion": "v1",
-        "secure": "true",
-        "monitoring": "advanced",
-        "assetCategories": "laptop,id-card,mobile-phone,monitor,peripheral",
-        "multiDatabase": "postgresql-h2-fallback"
-    },
-    "documentation": {
-        "summary": "Complete asset allocation management system for tracking and managing company assets assigned to employees with comprehensive inventory control.",
-        "description": "This MCP server provides comprehensive asset allocation capabilities for enterprise IT asset management:\n\n## Key Features\n\n### Asset Categories Supported\n- **Laptops and Desktop Computers**: MacBook Pro, Dell Latitude, ThinkPad series\n- **Employee ID Cards**: Access cards, security badges, parking permits\n- **Mobile Devices**: iPhones, Android phones, tablets, mobile hotspots\n- **Monitors and Displays**: External monitors, ultrawide displays, projectors\n- **Peripherals**: Keyboards, mice, webcams, headsets, docking stations\n- **Other IT Equipment**: Cables, adapters, chargers, storage devices\n\n### Management Operations\n- **Asset Allocation**: Assign assets to employees with approval workflows\n- **Return Processing**: Handle asset returns with condition assessments\n- **Status Tracking**: Monitor asset lifecycle from procurement to disposal\n- **Approval Workflows**: Multi-level approval for high-value assets\n- **Maintenance Records**: Track repairs, upgrades, and service history\n- **Inventory Management**: Real-time availability and location tracking\n\n### Database Architecture\n- **Primary Database**: PostgreSQL for production environments with ACID compliance\n- **Fallback Database**: H2 in-memory database for development and testing\n- **Automatic Failover**: Seamless database switching with connection pooling\n- **Data Consistency**: Transaction management across all operations\n\n## API Endpoints\n\n### Asset Management\n- `/mcp/tools/allocate-asset` - Assign assets to employees with specifications\n- `/mcp/tools/return-asset` - Process asset returns with condition tracking\n- `/mcp/tools/list-assets` - List available assets with advanced filtering\n- `/mcp/tools/get-asset-details` - Get comprehensive asset information\n- `/mcp/tools/get-employee-assets` - List all assets assigned to an employee\n- `/mcp/tools/add-asset` - Add new assets to inventory with metadata\n- `/mcp/tools/update-asset-status` - Update asset status and condition\n- `/mcp/tools/transfer-asset` - Transfer assets between employees\n- `/mcp/tools/bulk-allocate` - Bulk asset allocation operations\n\n### Reporting and Analytics\n- `/mcp/tools/asset-utilization` - Generate utilization reports\n- `/mcp/tools/allocation-history` - Track allocation history and patterns\n- `/mcp/tools/maintenance-schedule` - View upcoming maintenance schedules\n- `/mcp/tools/cost-analysis` - Asset cost and depreciation analysis\n\n## Database Schema\n\n### Core Tables\n- **assets**: Asset inventory with specifications and metadata\n- **asset_categories**: Asset type definitions and properties\n- **asset_allocations**: Current and historical allocations\n- **employees**: Employee information for asset assignments\n- **departments**: Department-based asset policies\n- **asset_conditions**: Asset condition tracking and assessments\n- **maintenance_records**: Service and repair history\n- **approval_workflows**: Multi-level approval processes\n\n### Asset Properties\n- **Asset Tag**: Unique identifier with barcode/QR code\n- **Category**: Primary asset classification\n- **Brand/Model**: Manufacturer and model information\n- **Specifications**: Technical specifications and capabilities\n- **Purchase Info**: Cost, vendor, warranty details\n- **Condition**: Current condition and assessment history\n- **Location**: Physical location and assignment status\n- **Maintenance**: Service history and schedules\n\n## Configuration\n\n### Database Configuration\n```properties\n# PostgreSQL Primary Database\nasset.db.primary.url=jdbc:postgresql://localhost:5432/asset_allocation\nasset.db.primary.username=${ASSET_DB_USERNAME}\nasset.db.primary.password=${secure::ASSET_DB_PASSWORD}\n\n# H2 Fallback Database\nasset.db.fallback.url=jdbc:h2:mem:asset_allocation\nasset.db.fallback.driver=org.h2.Driver\n```\n\n### Asset Categories Configuration\n```properties\n# Supported Asset Categories\nasset.categories.laptop=MacBook Pro,Dell Latitude,ThinkPad\nasset.categories.mobile=iPhone,Samsung Galaxy,iPad\nasset.categories.monitor=Dell UltraSharp,LG 4K,Samsung Curved\nasset.categories.peripheral=Logitech MX,Apple Magic,Microsoft Surface\n```\n\n### Security and Compliance\n- **Asset Tracking**: Complete audit trail for all asset movements\n- **Access Control**: Role-based permissions for asset operations\n- **Data Encryption**: Sensitive asset data encrypted at rest\n- **Compliance**: SOX, GDPR, and industry compliance support\n\n## Integration Capabilities\n\n### MCP Protocol Support\n- **Full MCP Compliance**: Implements complete Model Context Protocol\n- **Agent Fabric Integration**: Seamless coordination with other MCP servers\n- **Event-Driven Architecture**: Real-time asset status updates\n- **Orchestration Support**: Integration with workflow orchestrators\n\n### External System Integration\n- **HR Systems**: Employee data synchronization\n- **Procurement Systems**: Asset lifecycle management\n- **Help Desk**: Maintenance and support ticket integration\n- **Financial Systems**: Cost tracking and depreciation\n- **Security Systems**: Access control and badge management\n\n## Monitoring and Observability\n\n### Performance Metrics\n- **Allocation Performance**: Track allocation processing times\n- **Database Performance**: Monitor query execution and connection pools\n- **Asset Utilization**: Monitor asset usage patterns and optimization\n- **Error Tracking**: Comprehensive error logging and alerting\n\n### Health Checks\n- **Database Connectivity**: PostgreSQL and H2 connection monitoring\n- **Asset Data Integrity**: Validate asset data consistency\n- **API Endpoint Health**: Monitor all API endpoint availability\n- **Integration Health**: Check external system connectivity\n\n## Business Rules and Workflows\n\n### Allocation Rules\n- **Department Policies**: Department-specific asset allocation rules\n- **Role-Based Allocation**: Asset types based on job roles\n- **Approval Thresholds**: Value-based approval requirements\n- **Quantity Limits**: Per-employee asset quantity restrictions\n\n### Return Processing\n- **Condition Assessment**: Standardized asset condition evaluation\n- **Refurbishment Workflows**: Asset preparation for reallocation\n- **Disposal Processes**: Secure data wiping and equipment disposal\n- **Warranty Tracking**: Warranty claim and replacement processes\n\n## Integration Patterns\n\nDesigned to integrate with:\n- Enterprise asset management systems\n- HR information systems (HRIS)\n- IT service management platforms (ITSM)\n- Procurement and vendor management systems\n- Financial and accounting systems\n- Security and access control systems\n- Employee onboarding and offboarding workflows"
-    },
-    "apiSpecification": {
-        "type": "OpenAPI",
-        "version": "3.0.3",
-        "location": "api/asset-allocation-mcp-api.yaml",
-        "description": "Complete OpenAPI specification with detailed asset management endpoints, database models, workflow definitions, and comprehensive examples",
-        "main": "api/asset-allocation-mcp-api.yaml"
-    },
-    "readme": {
-        "location": "README.md",
-        "format": "markdown"
-    },
-    "transport": {
-        "kind": "mule-application",
-        "path": "/mcp/tools"
-    },
-    "visualizer": {
-        "primaryColor": "#4A90E2",
-        "secondaryColor": "#7ED321", 
-        "backgroundColor": "#F5A623",
-        "textColor": "#FFFFFF",
-        "borderColor": "#BD10E0",
-        "icon": "💼",
-        "category": "Asset Management",
-        "displayName": "Asset Allocator",
-        "shortDescription": "IT asset allocation and inventory management",
-        "position": {
-            "x": 400,
-            "y": 100
-        },
-        "connectionPorts": {
-            "input": [
-                {
-                    "name": "allocation-requests",
-                    "type": "http",
-                    "position": "left",
-                    "color": "#4A90E2"
-                },
-                {
-                    "name": "inventory-updates", 
-                    "type": "database",
-                    "position": "top",
-                    "color": "#7ED321"
-                },
-                {
-                    "name": "employee-data",
-                    "type": "json",
-                    "position": "left",
-                    "color": "#F5A623"
-                }
-            ],
-            "output": [
-                {
-                    "name": "asset-assignments",
-                    "type": "json",
-                    "position": "right", 
-                    "color": "#4A90E2"
-                },
-                {
-                    "name": "allocation-events",
-                    "type": "event",
-                    "position": "bottom",
-                    "color": "#BD10E0"
-                },
-                {
-                    "name": "inventory-status",
-                    "type": "status",
-                    "position": "right",
-                    "color": "#7ED321"
-                }
-            ]
-        },
-        "metadata": {
-            "flowCount": 12,
-            "endpointCount": 9,
-            "databaseConnections": 2,
-            "supportedAssetTypes": [
-                "LAPTOP",
-                "ID_CARD", 
-                "MOBILE_PHONE",
-                "MONITOR",
-                "PERIPHERAL"
-            ],
-            "supportedOperations": [
-                "ALLOCATE_ASSET",
-                "RETURN_ASSET",
-                "LIST_ASSETS",
-                "GET_ASSET_DETAILS",
-                "BULK_ALLOCATE",
-                "TRANSFER_ASSET",
-                "UPDATE_STATUS"
-            ]
-        },
-        "healthCheck": {
-            "endpoint": "/mcp/health",
-            "expectedStatus": 200,
-            "timeout": 5000
-        },
-        "documentation": {
-            "quickStart": "Send POST to /mcp/tools/allocate-asset with employee ID and asset details",
-            "commonUses": [
-                "Laptop and device allocation to new employees",
-                "Asset return processing and inventory management", 
-                "IT equipment tracking and lifecycle management"
-            ]
-        }
-    }
+    "main": "asset-allocation-mcp-api.xml"
 }

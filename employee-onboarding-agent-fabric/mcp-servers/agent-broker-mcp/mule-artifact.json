@@ -1,6 +1,6 @@
 {
   "name": "agent-broker-mcp-server",
-  "minMuleVersion": "4.4.0",
+  "minMuleVersion": "4.9.6",
   "javaSpecificationVersions": [
     "17"
   ],

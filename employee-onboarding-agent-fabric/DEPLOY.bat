@@ -228,25 +228,28 @@ echo.
 echo ==============================
 echo 📤 PUBLISHING TO EXCHANGE
 echo ==============================
-echo 📤 Publishing MCP assets to Anypoint Exchange...
+echo 📤 Publishing MCP assets to Anypoint Exchange using Connected App...
 
-REM Interactive credentials
-echo ==============================
-echo 👤 ENTER CREDENTIALS
-echo ==============================
-set /p EXCHANGE_USERNAME=Username: 
-set /p EXCHANGE_PASSWORD=Password: 
-set /p EXCHANGE_MFA=MFA ^(Enter if none^): 
+echo ✅ Using Connected App credentials from .env file
+echo   Client ID: %ANYPOINT_CLIENT_ID:~0,8%...
+echo   Organization: %ANYPOINT_ORG_ID:~0,8%...
 
 REM Parent POM publication
 if exist "exchange.json" (
     echo 📦 Publishing parent POM...
     call mvn deploy -DskipMuleApplicationDeployment -DskipTests -q ^
-        -Danypoint.username="!EXCHANGE_USERNAME!" ^
-        -Danypoint.password="!EXCHANGE_PASSWORD!" ^
+        -Danypoint.client.id="%ANYPOINT_CLIENT_ID%" ^
+        -Danypoint.client.secret="%ANYPOINT_CLIENT_SECRET%" ^
         -Danypoint.businessGroup.id="%ANYPOINT_ORG_ID%" ^
         -Danypoint.platform.base.uri="https://anypoint.mulesoft.com" ^
         -Danypoint.exchange.base.uri="https://anypoint.mulesoft.com/exchange"
+        
+    if !errorlevel! neq 0 (
+        echo ❌ Parent POM publishing failed
+        cd /d "%SCRIPT_DIR%"
+        pause
+        exit /b 1
+    )
 )
 
 REM Child modules
@@ -254,16 +257,26 @@ for /l %%i in (1,1,%SERVER_COUNT%) do (
     call set "SRV=%%SERVER%%i%%"
     echo 📤 Publishing !SRV! to Exchange...
     cd "mcp-servers\!SRV!"
+    
     call mvn deploy -DskipMuleApplicationDeployment -DskipTests -q ^
-        -Danypoint.username="!EXCHANGE_USERNAME!" ^
-        -Danypoint.password="!EXCHANGE_PASSWORD!" ^
+        -Danypoint.client.id="%ANYPOINT_CLIENT_ID%" ^
+        -Danypoint.client.secret="%ANYPOINT_CLIENT_SECRET%" ^
         -Danypoint.businessGroup.id="%ANYPOINT_ORG_ID%" ^
         -Danypoint.platform.base.uri="https://anypoint.mulesoft.com" ^
         -Danypoint.exchange.base.uri="https://anypoint.mulesoft.com/exchange"
+    
+    if !errorlevel! neq 0 (
+        echo ❌ Exchange publishing failed for !SRV!
+        cd /d "%SCRIPT_DIR%"
+        pause
+        exit /b 1
+    )
+    
+    echo ✅ !SRV! published to Exchange successfully
     cd /d "%SCRIPT_DIR%"
 )
 
-echo ✅ Exchange publishing completed
+echo ✅ Exchange publishing completed using Connected App authentication
 goto :CLOUDHUB_DEPLOYMENT
 
 :CLOUDHUB_DEPLOYMENT

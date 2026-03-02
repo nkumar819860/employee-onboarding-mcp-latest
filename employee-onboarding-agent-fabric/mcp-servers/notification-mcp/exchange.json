@@ -1,30 +1,11 @@
 {
     "name": "Notification MCP Server",
-    "description": "MCP Server for Email Notifications - Employee Onboarding & Asset Allocation confirmations using Gmail SMTP with professional HTML templates",
-    "version": "1.0.0",
-    "main": "notification-mcp-server.xml",
+    "description": "MCP Server for Email Notifications - Employee Onboarding & Asset Allocation confirmations using Gmail SMTP",
+    "version": "2.0.0",
     "groupId": "47562e5d-bf49-440a-a0f5-a9cea0a89aa9",
-    "assetId": "notification-mcp",
     "classifier": "mcp",
-    "minMuleVersion": "4.4.0",
-    "keywords": [
-        "mcp",
-        "notification",
-        "email",
-        "gmail",
-        "onboarding",
-        "asset-allocation",
-        "smtp",
-        "template-based",
-        "mulesoft"
-    ],
-    "author": "MCP Development Team",
-    "license": "MIT",
-    "homepage": "https://github.com/mulesoft/notification-mcp",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/mulesoft/notification-mcp.git"
-    },
+    "contactName": "MCP Development Team",
+    "contactEmail": "mcp-dev@company.com",
     "tags": [
         "Email Notifications",
         "MCP Server",
@@ -35,80 +16,7 @@
     "categories": [
         "Integration",
         "Communication",
-        "Human Resources",
-        "Notification Systems"
+        "Human Resources"
     ],
-    "dependencies": [
-        {
-            "groupId": "org.mule.connectors",
-            "artifactId": "mule-http-connector",
-            "version": "1.10.0"
-        },
-        {
-            "groupId": "org.mule.connectors",
-            "artifactId": "mule-email-connector",
-            "version": "1.8.0"
-        }
-    ],
-    "transport": {
-        "kind": "mule-application",
-        "path": "/mcp/tools"
-    },
-    "apiSpecification": {
-        "type": "OpenAPI",
-        "location": "api/notification-mcp-api.yaml"
-    },
-    "visualizer": {
-        "primaryColor": "#FF6B6B",
-        "secondaryColor": "#4ECDC4",
-        "icon": "📧"
-    },
-    "mcp": {
-        "capabilities": {
-            "tools": true,
-            "resources": false,
-            "prompts": false,
-            "logging": true
-        },
-        "transport": {
-            "kind": "http",
-            "path": "/mcp/tools"
-        },
-        "tools": [
-            {
-                "name": "send-welcome-email",
-                "description": "Send employee welcome notification",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "employeeId": {"type": "string"},
-                        "firstName": {"type": "string"},
-                        "email": {"type": "string"}
-                    },
-                    "required": ["employeeId", "email"]
-                }
-            },
-            {
-                "name": "send-asset-notification",
-                "description": "Send asset allocation confirmation",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "employeeId": {"type": "string"},
-                        "assets": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "assetTag": {"type": "string"},
-                                    "category": {"type": "string"}
-                                }
-                            }
-                        }
-                    },
-                    "required": ["employeeId"]
-                }
-            }
-        ]
-    }
+    "main": "notification-mcp-api.xml"
 }

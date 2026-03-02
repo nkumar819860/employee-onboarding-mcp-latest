@@ -12,114 +12,96 @@
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
-	<groupId>980c5346-1838-46a0-a1d9-42a6f8bf34a5</groupId>
+	<!-- ✅ FIXED: GroupId matches org -->
+	<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
 	<artifactId>employee-onboarding-mcp</artifactId>
-	<version>1.0.2</version>
+	<version>2.0.0</version>
 	<packaging>mule-application</packaging>
 
 	<name>Employee Onboarding MCP Server</name>
-	<description>MCP Server for Employee Database Operations</description>
+	<description>MCP Server for Employee Database Operations with PostgreSQL/H2 Fallback Support</description>
 
-	<!-- Self-contained properties -->
 	<properties>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		
 		<!-- ✅ Exchange Metadata -->
 		<exchange.skip>false</exchange.skip>
 		<exchange.publish>true</exchange.publish>
 		<exchange.classifier>mcp</exchange.classifier>
-		<tags>employee-onboarding,mcp-server,database-operations,profile-management,multi-database</tags>
-		<categories>[]</categories>
-		<fields>[]</fields>
+		<exchange.assetId>employee-onboarding-mcp-server</exchange.assetId>
+		<tags>Employee Management,MCP Server,Database Operations,Profile Management,Multi-Database Support</tags>
+		<categories>Integration,Database,Human Resources</categories>
+		
+		<!-- ✅ CloudHub Properties -->
 		<mule.version>4.9.14</mule.version>
 		<mule.runtime.version>4.9-java17</mule.runtime.version>
-		<java.version>17</java.version>
 		<mule.maven.plugin.version>4.5.0</mule.maven.plugin.version>
-		<mule.http.connector.version>1.9.0</mule.http.connector.version>
-		<mule.db.connector.version>1.14.17</mule.db.connector.version>
-		<mule.email.connector.version>1.7.4</mule.email.connector.version>
-		<mule.file.connector.version>1.5.0</mule.file.connector.version>
-		<postgresql.version>42.7.4</postgresql.version>
-		<h2.version>2.2.224</h2.version>
 		<application.name>employee-onboarding-mcp-server</application.name>
-		<!-- CloudHub deployment properties - can be overridden by -D parameters 
-			or .env -->
 		<anypoint.business.group>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</anypoint.business.group>
 		<anypoint.platform.env>Sandbox</anypoint.platform.env>
 		<cloudhub.region>us-east-1</cloudhub.region>
 		<cloudhub.workers>1</cloudhub.workers>
 		<cloudhub.worker.type>MICRO</cloudhub.worker.type>
-		<!-- Authentication Properties - Load from command line parameters -->
-		<!-- These will be provided by the deploy script via -D parameters -->
 		<anypoint.platform.client_id>aec0b3117f7d4d4e8433a7d3d23bc80e</anypoint.platform.client_id>
 		<anypoint.platform.client_secret>9bc9D86a77b343b98a148C0313239aDA</anypoint.platform.client_secret>
 	</properties>
 
+	<distributionManagement>
+		<repository>
+			<id>anypoint-exchange</id>
+			<name>Anypoint Exchange</name>
+			<url>https://maven.anypoint.mulesoft.com/api/v3/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
+		</repository>
+	</distributionManagement>
+
+	<repositories>
+		<repository>
+			<id>anypoint-exchange</id>
+			<name>Anypoint Exchange V3</name>
+			<url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+			<layout>default</layout>
+		</repository>
+	</repositories>
+
 	<dependencies>
-		<!-- APIKit Router for Contract-First API Development -->
 		<dependency>
 			<groupId>org.mule.modules</groupId>
 			<artifactId>mule-apikit-module</artifactId>
 			<version>1.11.1</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
-
-		<!-- HTTP Connector -->
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-http-connector</artifactId>
 			<classifier>mule-plugin</classifier>
 		</dependency>
-
-		<!-- DB Connector -->
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-db-connector</artifactId>
 			<classifier>mule-plugin</classifier>
 		</dependency>
-
-		<!-- Sockets Connector -->
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-sockets-connector</artifactId>
 			<version>1.2.7</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
-
-		<!-- PostgreSQL Driver -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 		</dependency>
-
-		<!-- H2 Driver (local testing) -->
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 	</dependencies>
-	<!-- ✅ Exchange Repository -->
-	<!-- Distribution Management for Exchange -->
-	<distributionManagement>
-		<repository>
-			<id>anypoint-exchange-v3</id>
-			<name>Anypoint Exchange</name>
-			<url>https://maven.anypoint.mulesoft.com/api/v3/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
-		</repository>
-	</distributionManagement>
-	<repositories>
-		<repository>
-			<id>anypoint-exchange-v3</id>
-			<name>Anypoint Exchange V3</name>
-			<url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
-			<layout>default</layout>
-		</repository>
-	</repositories>
+
 	<build>
 		<plugins>
-			<!-- ✅ SINGLE Mule Maven Plugin (CloudHub Deploy) -->
+			<!-- ✅ Mule Maven Plugin - Exchange + CloudHub -->
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>mule-maven-plugin</artifactId>
@@ -154,43 +136,63 @@
 						<workerType>${cloudhub.worker.type}</workerType>
 						<objectStoreV2>true</objectStoreV2>
 						<properties>
-							<env>${anypoint.platform.env}</env>
-							<http.port>8081</http.port>
-							<https.port>8082</https.port>
-							<mule.env>cloudhub</mule.env>
-							<secure.key>mule</secure.key>
+							<keyValuePairs>
+								<keyValuePair>
+									<key>env</key>
+									<value>${anypoint.platform.env}</value>
+								</keyValuePair>
+								<keyValuePair>
+									<key>http.port</key>
+									<value>8081</value>
+								</keyValuePair>
+								<keyValuePair>
+									<key>https.port</key>
+									<value>8082</value>
+								</keyValuePair>
+								<keyValuePair>
+									<key>mule.env</key>
+									<value>Sandbox</value>
+								</keyValuePair>
+								<keyValuePair>
+									<key>secure.key</key>
+									<value>mule</value>
+								</keyValuePair>
+							</keyValuePairs>
 						</properties>
 					</cloudHubDeployment>
 				</configuration>
 			</plugin>
 
-			<!-- ✅ ADD THIS PLUGIN after mule-maven-plugin -->
+			<!-- ✅ Exchange Publish Plugin -->
 			<plugin>
-				<groupId>org.mule.tools.maven</groupId>
-				<artifactId>exchange-mule-maven-plugin</artifactId>
-				<version>0.0.21</version>
-				<executions>
-					<execution>
-						<id>deploy</id>
-						<phase>deploy</phase>
-						<goals>
-							<goal>exchange-deploy</goal>
-						</goals>
-						<configuration>
-							<!-- ✅ Uses YOUR Connected App -->
-							<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
-							<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
-							<connectedAppGrantType>client_credentials</connectedAppGrantType>
-							<!-- ✅ Uses YOUR exchange.classifier -->
-							<classifier>${exchange.classifier}</classifier>
-							<businessGroupId>${anypoint.business.group}</businessGroupId>
-						</configuration>
-					</execution>
-				</executions>
+			  <groupId>org.mule.tools.maven</groupId>
+			  <artifactId>exchange-mule-maven-plugin</artifactId>
+			  <version>0.0.23</version>
+			  <executions>
+				<!-- ✅ FIRST: Pre-deploy (Creates/Validates asset) -->
+				<execution>
+				  <id>pre-deploy</id>
+				  <phase>generate-resources</phase>
+				  <goals>
+					<goal>exchange-pre-deploy</goal>
+				  </goals>
+				</execution>
+				<!-- ✅ SECOND: Deploy (Publishes artifact) -->
+				<execution>
+				  <id>publish</id>
+				  <phase>deploy</phase>
+				  <goals>
+					<goal>exchange-deploy</goal>
+				  </goals>
+				  <configuration>
+					<classifier>${exchange.classifier}</classifier>
+					<businessGroupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</businessGroupId>
+					<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
+					<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
+				  </configuration>
+				</execution>
+			  </executions>
 			</plugin>
-
 		</plugins>
 	</build>
-
-
 </project>

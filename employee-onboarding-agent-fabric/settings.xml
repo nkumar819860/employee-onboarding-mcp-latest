@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 
+                             http://maven.apache.org/xsd/settings-1.0.0.xsd">
+    
+    <!-- ✅ Server Authentication -->
+    <servers>
+        <server>
+            <id>anypoint-exchange</id>
+            <username>~~~Client~~~</username>
+            <password>${anypoint.client_id}~?~${anypoint.client_secret}</password>
+        </server>
+        <server>
+            <id>mulesoft-releases</id>
+            <username>~~~Client~~~</username>
+            <password>${anypoint.client_id}~?~${anypoint.client_secret}</password>
+        </server>
+        <server>
+            <id>mule-ee-releases</id>
+            <username>~~~Client~~~</username>
+            <password>${anypoint.client_id}~?~${anypoint.client_secret}</password>
+        </server>
+    </servers>
+    
+    <!-- ✅ Repository Profiles -->
+    <profiles>
+        <profile>
+            <id>mulesoft-repositories</id>
+            <repositories>
+                <repository>
+                    <id>mulesoft-releases</id>
+                    <name>MuleSoft Releases Repository</name>
+                    <url>https://repository.mulesoft.org/releases/</url>
+                    <layout>default</layout>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                        <checksumPolicy>warn</checksumPolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+                
+                <repository>
+                    <id>mulesoft-public</id>
+                    <name>MuleSoft Public Repository</name>
+                    <url>https://repository.mulesoft.org/nexus/content/repositories/public/</url>
+                    <layout>default</layout>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+                
+                <repository>
+                    <id>mule-ee-releases</id>
+                    <name>MuleSoft Enterprise Edition Releases</name>
+                    <url>https://repository.mulesoft.org/nexus/content/repositories/releases-ee/</url>
+                    <layout>default</layout>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+                
+                <repository>
+                    <id>anypoint-exchange</id>
+                    <name>Anypoint Exchange Repository</name>
+                    <url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+                    <layout>default</layout>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                        <updatePolicy>always</updatePolicy>
+                    </snapshots>
+                </repository>
+                
+                <!-- Organization-specific Exchange Repository -->
+                <repository>
+                    <id>anypoint-exchange-org</id>
+                    <name>Anypoint Exchange Organization Repository</name>
+                    <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
+                    <layout>default</layout>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                        <updatePolicy>always</updatePolicy>
+                    </snapshots>
+                </repository>
+            </repositories>
+            
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>mulesoft-releases</id>
+                    <name>MuleSoft Plugin Releases Repository</name>
+                    <url>https://repository.mulesoft.org/releases/</url>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </pluginRepository>
+                
+                <pluginRepository>
+                    <id>mule-ee-releases</id>
+                    <name>MuleSoft EE Plugin Releases Repository</name>
+                    <url>https://repository.mulesoft.org/nexus/content/repositories/releases-ee/</url>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </pluginRepository>
+                
+                <pluginRepository>
+                    <id>mulesoft-public</id>
+                    <name>MuleSoft Public Plugin Repository</name>
+                    <url>https://repository.mulesoft.org/nexus/content/repositories/public/</url>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+        
+        <!-- ✅ Java 17 Profile -->
+        <profile>
+            <id>java17</id>
+            <activation>
+                <jdk>17</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.source>17</maven.compiler.source>
+                <maven.compiler.target>17</maven.compiler.target>
+                <java.version>17</java.version>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+            </properties>
+        </profile>
+        
+        <!-- ✅ CloudHub Profile -->
+        <profile>
+            <id>cloudhub</id>
+            <properties>
+                <mule.version>4.9.14</mule.version>
+                <mule.runtime.version>4.9-java17</mule.runtime.version>
+                <mule.maven.plugin.version>4.5.0</mule.maven.plugin.version>
+                <anypoint.platform.client_id>aec0b3117f7d4d4e8433a7d3d23bc80e</anypoint.platform.client_id>
+                <anypoint.platform.client_secret>9bc9D86a77b343b98a148C0313239aDA</anypoint.platform.client_secret>
+                <anypoint.business.group>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</anypoint.business.group>
+                <anypoint.platform.env>Sandbox</anypoint.platform.env>
+                <cloudhub.region>us-east-1</cloudhub.region>
+            </properties>
+        </profile>
+    </profiles>
+    
+    <!-- ✅ Active Profiles -->
+    <activeProfiles>
+        <activeProfile>mulesoft-repositories</activeProfile>
+        <activeProfile>java17</activeProfile>
+        <activeProfile>cloudhub</activeProfile>
+    </activeProfiles>
+    
+    <!-- ✅ Plugin Groups -->
+    <pluginGroups>
+        <pluginGroup>org.mule.tools</pluginGroup>
+        <pluginGroup>org.mule.tools.maven</pluginGroup>
+    </pluginGroups>
+    
+    <!-- ✅ Local Repository -->
+    <localRepository>${user.home}/.m2/repository</localRepository>
+    
+    <!-- ✅ Mirror Configuration (Optional) -->
+    <mirrors>
+        <!-- Uncomment if using enterprise nexus mirror -->
+        <!--
+        <mirror>
+            <id>nexus-mirror</id>
+            <mirrorOf>external:*</mirrorOf>
+            <name>Corporate Nexus Mirror</name>
+            <url>https://nexus.company.com/repository/maven-public/</url>
+        </mirror>
+        -->
+    </mirrors>
+    
+</settings>
