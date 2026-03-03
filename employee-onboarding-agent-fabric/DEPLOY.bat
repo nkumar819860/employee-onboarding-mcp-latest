@@ -270,7 +270,7 @@ for /l %%i in (1,1,%SERVER_COUNT%) do (
     call mvn deploy -DskipMuleApplicationDeployment -DskipTests -q ^
         -Danypoint.client.id="%ANYPOINT_CLIENT_ID%" ^
         -Danypoint.client.secret="%ANYPOINT_CLIENT_SECRET%" ^
-        -Danypoint.businessGroup.id="%ANYPOINT_ORG_ID%" ^
+        -Danypoint.businessGroup.id="%BUSINESS_GROUP_ID%" ^
         -Danypoint.platform.base.uri="https://anypoint.mulesoft.com" ^
         -Danypoint.exchange.base.uri="https://anypoint.mulesoft.com/exchange"
     
@@ -322,7 +322,7 @@ for /l %%i in (1,1,%SERVER_COUNT%) do (
         -DmuleDeploy ^
         -Danypoint.client.id="%ANYPOINT_CLIENT_ID%" ^
         -Danypoint.client.secret="%ANYPOINT_CLIENT_SECRET%" ^
-        -Danypoint.businessGroup.id="%ANYPOINT_ORG_ID%" ^
+        -Danypoint.businessGroup.id="%BUSINESS_GROUP_ID%" ^
         -Danypoint.environment="%ANYPOINT_ENV%" ^
         -Dcloudhub.applicationName="!SRV!-server" ^
         -Dcloudhub.muleVersion="%MULE_VERSION%" ^
