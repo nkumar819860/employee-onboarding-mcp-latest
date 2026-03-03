@@ -20,9 +20,9 @@ echo ========================================
 echo Working directory: %CD%
 echo.
 
-REM === STEP 1: LOAD ENVIRONMENT VARIABLES ===
+REM === STEP 1: LOAD ENVIRONMENT VARIABLES AND MAVEN SETTINGS ===
 echo ==============================
-echo [LOADING] ENVIRONMENT VARIABLES
+echo [LOADING] ENVIRONMENT VARIABLES AND MAVEN SETTINGS
 echo ==============================
 
 if not exist ".env" (
@@ -49,6 +49,45 @@ for /f "usebackq tokens=1,2 delims== eol=#" %%a in (".env") do (
 
 echo.
 echo ✅ Environment variables loaded successfully
+
+REM === LOAD MAVEN SETTINGS FROM .M2 ===
+echo ==============================
+echo 🔧 LOADING MAVEN SETTINGS FROM .M2
+echo ==============================
+
+set "MAVEN_SETTINGS_FILE=%USERPROFILE%\.m2\settings.xml"
+if exist "%MAVEN_SETTINGS_FILE%" (
+    echo ✅ Found Maven settings.xml at: %MAVEN_SETTINGS_FILE%
+    
+    REM Parse Maven settings.xml for Exchange credentials
+    echo 📋 Parsing Maven settings for Exchange credentials...
+    
+    REM Use PowerShell to parse XML and extract credentials
+    for /f "usebackq delims=" %%i in (`powershell -Command "& { [xml]$xml = Get-Content '%MAVEN_SETTINGS_FILE%'; $server = $xml.settings.servers.server | Where-Object { $_.id -eq 'anypoint-exchange' -or $_.id -eq 'anypoint-exchange-v3' } | Select-Object -First 1; if ($server) { Write-Output $server.password } else { Write-Output 'NOT_FOUND' } }"`) do (
+        set "MAVEN_EXCHANGE_PASSWORD=%%i"
+    )
+    
+    for /f "usebackq delims=" %%i in (`powershell -Command "& { [xml]$xml = Get-Content '%MAVEN_SETTINGS_FILE%'; $server = $xml.settings.servers.server | Where-Object { $_.id -eq 'anypoint-exchange' -or $_.id -eq 'anypoint-exchange-v3' } | Select-Object -First 1; if ($server) { Write-Output $server.username } else { Write-Output 'NOT_FOUND' } }"`) do (
+        set "MAVEN_EXCHANGE_USERNAME=%%i"
+    )
+    
+    if "!MAVEN_EXCHANGE_PASSWORD!"=="NOT_FOUND" (
+        echo ⚠️  Warning: No Exchange credentials found in Maven settings.xml
+        echo    Will use Connected App credentials from .env instead
+        set "USE_MAVEN_SETTINGS=false"
+    ) else (
+        echo ✅ Maven Exchange credentials loaded successfully
+        echo   Username: !MAVEN_EXCHANGE_USERNAME!
+        echo   Password: !MAVEN_EXCHANGE_PASSWORD:~0,8!...
+        set "USE_MAVEN_SETTINGS=true"
+    )
+) else (
+    echo ⚠️  Warning: Maven settings.xml not found at: %MAVEN_SETTINGS_FILE%
+    echo    Will use Connected App credentials from .env instead
+    set "USE_MAVEN_SETTINGS=false"
+)
+
+echo.
 
 REM === STEP 2: VALIDATE REQUIRED VARIABLES ===
 echo ==============================
@@ -252,11 +291,20 @@ echo.
 echo ==============================
 echo 📤 PUBLISHING TO EXCHANGE
 echo ==============================
-echo 📤 Publishing MCP assets to Anypoint Exchange using Connected App...
 
-echo ✅ Using Connected App credentials from .env file
-echo   Client ID: %ANYPOINT_CLIENT_ID:~0,8%...
-echo   Organization: %ANYPOINT_ORG_ID:~0,8%...
+if "!USE_MAVEN_SETTINGS!"=="true" (
+    echo 📤 Publishing MCP assets to Anypoint Exchange using Maven settings.xml credentials...
+    echo ✅ Using Maven settings from: %MAVEN_SETTINGS_FILE%
+    echo   Username: !MAVEN_EXCHANGE_USERNAME!
+    echo   Password: !MAVEN_EXCHANGE_PASSWORD:~0,8!...
+    set "MAVEN_SETTINGS_PARAM=-s "%MAVEN_SETTINGS_FILE%""
+) else (
+    echo 📤 Publishing MCP assets to Anypoint Exchange using Connected App credentials...
+    echo ✅ Using Connected App credentials from .env file
+    echo   Client ID: %ANYPOINT_CLIENT_ID:~0,8%...
+    echo   Organization: %ANYPOINT_ORG_ID:~0,8%...
+    set "MAVEN_SETTINGS_PARAM="
+)
 
 REM Skip parent POM publication - only publish individual MCP applications
 echo 📋 Skipping parent POM publishing (not required for Exchange)
@@ -267,12 +315,21 @@ for /l %%i in (1,1,%SERVER_COUNT%) do (
     echo 📤 Publishing !SRV! to Exchange...
     cd "mcp-servers\!SRV!"
     
-    call mvn deploy -DskipMuleApplicationDeployment -DskipTests -q ^
-        -Danypoint.client.id="%ANYPOINT_CLIENT_ID%" ^
-        -Danypoint.client.secret="%ANYPOINT_CLIENT_SECRET%" ^
-        -Danypoint.businessGroup.id="%BUSINESS_GROUP_ID%" ^
-        -Danypoint.platform.base.uri="https://anypoint.mulesoft.com" ^
-        -Danypoint.exchange.base.uri="https://anypoint.mulesoft.com/exchange"
+    if "!USE_MAVEN_SETTINGS!"=="true" (
+        REM Use Maven settings.xml for authentication
+        call mvn deploy -DskipMuleApplicationDeployment -DskipTests -q !MAVEN_SETTINGS_PARAM! ^
+            -Danypoint.businessGroup.id="%BUSINESS_GROUP_ID%" ^
+            -Danypoint.platform.base.uri="https://anypoint.mulesoft.com" ^
+            -Danypoint.exchange.base.uri="https://anypoint.mulesoft.com/exchange"
+    ) else (
+        REM Use Connected App credentials from .env
+        call mvn deploy -DskipMuleApplicationDeployment -DskipTests -q ^
+            -Danypoint.client.id="%ANYPOINT_CLIENT_ID%" ^
+            -Danypoint.client.secret="%ANYPOINT_CLIENT_SECRET%" ^
+            -Danypoint.businessGroup.id="%BUSINESS_GROUP_ID%" ^
+            -Danypoint.platform.base.uri="https://anypoint.mulesoft.com" ^
+            -Danypoint.exchange.base.uri="https://anypoint.mulesoft.com/exchange"
+    )
     
     if !errorlevel! neq 0 (
         echo ❌ Exchange publishing failed for !SRV!
