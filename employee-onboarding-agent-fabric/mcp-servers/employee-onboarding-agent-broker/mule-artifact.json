@@ -1,0 +1,18 @@
+{
+    "configs": [
+        "employee-onborading-agent-broker.xml",
+        "global.xml"
+    ],
+    "name": "agent-broker-mcp-server",
+    "classLoaderModelLoaderDescriptor": {
+        "attributes": {"exportedResources": []},
+        "id": "mule"
+    },
+    "requiredProduct": "MULE_EE",
+    "minMuleVersion": "4.9.6",
+    "bundleDescriptorLoader": {
+        "attributes": {},
+        "id": "mule"
+    },
+    "javaSpecificationVersions": ["17"]
+}

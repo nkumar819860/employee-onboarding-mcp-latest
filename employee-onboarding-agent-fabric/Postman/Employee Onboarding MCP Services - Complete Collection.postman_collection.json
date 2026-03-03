@@ -813,25 +813,25 @@
       }
     }
   ],
-  "variable": [
+   "variable": [
     {
       "key": "agent_broker_url",
-      "value": "https://localhost:8084",
+      "value": "employee-onboarding-agent-broker.us-e1.cloudhub.io",
       "description": "Agent Broker MCP base URL"
     },
     {
       "key": "employee_onboarding_url",
-      "value": "https://localhost:8081/api",
+      "value": "employee-onboarding-mcp-server.us-e1.cloudhub.io",
       "description": "Employee Onboarding MCP base URL"
     },
     {
       "key": "asset_allocation_url",
-      "value": "https://localhost:8083/api",
+      "value": "assets-allocation-mcp-server.us-e1.cloudhub.io",
       "description": "Asset Allocation MCP base URL"
     },
     {
       "key": "notification_url",
-      "value": "https://localhost:8082",
+      "value": "email-notification-mcp-server.us-e1.cloudhub.io",
       "description": "Notification MCP base URL"
     }
   ]

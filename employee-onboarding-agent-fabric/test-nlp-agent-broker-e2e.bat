@@ -61,7 +61,7 @@ echo ==============================
 echo 🔍 AGENT BROKER SERVICE CHECK
 echo ==============================
 
-set AGENT_BROKER_URL=https://agent-broker-mcp-server.%CLOUDHUB_REGION%.cloudhub.io
+set AGENT_BROKER_URL=https://employee-onboarding-agent-broker.%CLOUDHUB_REGION%.cloudhub.io
 
 echo Testing Agent Broker MCP Server availability...
 powershell -Command "& { try { $response = Invoke-WebRequest -Uri '%AGENT_BROKER_URL%/health' -UseBasicParsing -TimeoutSec 10 -Method GET; if ($response.StatusCode -eq 200) { Write-Host '✅ Agent Broker MCP Server: HEALTHY' -ForegroundColor Green; exit 0 } else { Write-Host '❌ Agent Broker MCP Server: HTTP ' + $response.StatusCode -ForegroundColor Red; exit 1 } } catch { Write-Host '❌ Agent Broker MCP Server: NOT ACCESSIBLE' -ForegroundColor Red; exit 1 } }"

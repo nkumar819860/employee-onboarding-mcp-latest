@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
+		<artifactId>employee-onboarding-mcp-parent</artifactId>
+		<version>1.0.0</version>
+		<relativePath>../../pom.xml</relativePath>
+	</parent>
+	<!-- ✅ FIXED: GroupId matches org -->
+	<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
+	<artifactId>assets-allocation-mcp-server</artifactId>
+	<version>2.0.2</version>
+	<packaging>mule-application</packaging>
+	<name>Asset Allocation MCP Server</name>
+	<description>MCP Server for Asset Allocation Operations - Managing laptops, ID cards, mobile phones, and other company assets</description>
+	<properties>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<!-- ✅ Exchange Metadata -->
+		<exchange.skip>false</exchange.skip>
+		<exchange.publish>true</exchange.publish>
+		<exchange.classifier>mcp</exchange.classifier>
+		<exchange.assetId>assets-allocation-mcp-server-server</exchange.assetId>
+		<tags>Asset Management,MCP Server,Employee Resources,IT Assets,Inventory Management</tags>
+		<!-- ✅ CloudHub Properties -->
+		<mule.version>4.9.14</mule.version>
+		<mule.runtime.version>4.9-java17</mule.runtime.version>
+		<mule.maven.plugin.version>4.5.0</mule.maven.plugin.version>
+		<application.name>assets-allocation-mcp-server-server</application.name>
+		<anypoint.business.group>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</anypoint.business.group>
+		<anypoint.platform.env>Sandbox</anypoint.platform.env>
+		<cloudhub.region>us-east-1</cloudhub.region>
+		<cloudhub.workers>1</cloudhub.workers>
+		<cloudhub.worker.type>MICRO</cloudhub.worker.type>
+		<anypoint.platform.client_id>aec0b3117f7d4d4e8433a7d3d23bc80e</anypoint.platform.client_id>
+		<anypoint.platform.client_secret>9bc9D86a77b343b98a148C0313239aDA</anypoint.platform.client_secret>
+	</properties>
+	<distributionManagement>
+		<repository>
+			<id>anypoint-exchange</id>
+			<name>Anypoint Exchange</name>
+			<url>https://maven.anypoint.mulesoft.com/api/v3/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
+		</repository>
+	</distributionManagement>
+	<repositories>
+		<repository>
+			<id>anypoint-exchange</id>
+			<name>Anypoint Exchange V3</name>
+			<url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+			<layout>default</layout>
+		</repository>
+	</repositories>
+	<dependencies>
+		<dependency>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-apikit-module</artifactId>
+			<version>1.11.1</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-http-connector</artifactId>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-db-connector</artifactId>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-sockets-connector</artifactId>
+			<version>1.2.7</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+	</dependencies>
+	<build>
+		<plugins>
+			<!-- ✅ Mule Maven Plugin - Exchange + CloudHub -->
+			<plugin>
+				<groupId>org.mule.tools.maven</groupId>
+				<artifactId>mule-maven-plugin</artifactId>
+				<version>${mule.maven.plugin.version}</version>
+				<extensions>true</extensions>
+				<configuration>
+					<!-- ✅ Shared Libraries -->
+					<sharedLibraries>
+						<sharedLibrary>
+							<groupId>com.h2database</groupId>
+							<artifactId>h2</artifactId>
+						</sharedLibrary>
+						<sharedLibrary>
+							<groupId>org.postgresql</groupId>
+							<artifactId>postgresql</artifactId>
+						</sharedLibrary>
+					</sharedLibraries>
+					<!-- ✅ CloudHub Deployment -->
+					<cloudHubDeployment>
+						<uri>https://anypoint.mulesoft.com</uri>
+						<muleVersion>${mule.runtime.version}</muleVersion>
+						<javaVersion>17</javaVersion>
+						<businessGroupId>${anypoint.business.group}</businessGroupId>
+						<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
+						<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
+						<connectedAppGrantType>client_credentials</connectedAppGrantType>
+						<applicationName>${application.name}</applicationName>
+						<environment>${anypoint.platform.env}</environment>
+						<region>${cloudhub.region}</region>
+						<workers>${cloudhub.workers}</workers>
+						<workerType>${cloudhub.worker.type}</workerType>
+						<objectStoreV2>true</objectStoreV2>
+						<properties>
+							<keyValuePairs>
+								<keyValuePair>
+									<key>env</key>
+									<value>${anypoint.platform.env}</value>
+								</keyValuePair>
+								<keyValuePair>
+									<key>http.port</key>
+									<value>8081</value>
+								</keyValuePair>
+								<keyValuePair>
+									<key>https.port</key>
+									<value>8082</value>
+								</keyValuePair>
+								<keyValuePair>
+									<key>mule.env</key>
+									<value>Sandbox</value>
+								</keyValuePair>
+								<keyValuePair>
+									<key>secure.key</key>
+									<value>mule</value>
+								</keyValuePair>
+							</keyValuePairs>
+						</properties>
+					</cloudHubDeployment>
+				</configuration>
+			</plugin>
+			<!-- ✅ Exchange Maven Plugin - Enhanced Configuration with Asset Files -->
+			<plugin>
+				<groupId>org.mule.tools.maven</groupId>
+				<artifactId>exchange-mule-maven-plugin</artifactId>
+				<version>0.0.23</version>
+				<configuration>
+					<!-- ✅ Global Configuration -->
+					<classifier>${exchange.classifier}</classifier>
+					<businessGroupId>${anypoint.business.group}</businessGroupId>
+					<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
+					<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
+					<skipValidation>false</skipValidation>
+					<skipDeployment>false</skipDeployment>
+					
+					<!-- ✅ Enhanced Asset Documentation -->
+					<includeReadme>true</includeReadme>
+					<includeApiSpec>true</includeApiSpec>
+					<readmePath>README.md</readmePath>
+					<apiSpecPath>src/main/resources/api/assets-allocation-mcp-server-api.yaml</apiSpecPath>
+					
+					<!-- ✅ Additional Asset Files -->
+					<assetFiles>
+						<assetFile>
+							<source>README.md</source>
+							<target>README.md</target>
+						</assetFile>
+						<assetFile>
+							<source>src/main/resources/api/assets-allocation-mcp-server-api.yaml</source>
+							<target>api/assets-allocation-mcp-server-api.yaml</target>
+						</assetFile>
+						<assetFile>
+							<source>exchange.json</source>
+							<target>exchange.json</target>
+						</assetFile>
+						<assetFile>
+							<source>mule-artifact.json</source>
+							<target>mule-artifact.json</target>
+						</assetFile>
+					</assetFiles>
+					
+					<!-- ✅ Asset Metadata Enhancement -->
+					<categories>
+						<category>MCP Server</category>
+						<category>Asset Management</category>
+						<category>IT Assets</category>
+						<category>Employee Resources</category>
+					</categories>
+					
+					<!-- ✅ Custom Fields -->
+					<customFields>
+						<customField>
+							<name>mcp-server-type</name>
+							<value>asset-allocation</value>
+						</customField>
+						<customField>
+							<name>integration-pattern</name>
+							<value>asset-management</value>
+						</customField>
+						<customField>
+							<name>supported-operations</name>
+							<value>allocate-asset,get-asset,update-asset,delete-asset,list-assets,check-asset-availability</value>
+						</customField>
+						<customField>
+							<name>runtime-version</name>
+							<value>${mule.runtime.version}</value>
+						</customField>
+						<customField>
+							<name>asset-categories</name>
+							<value>LAPTOP,DESKTOP,ID_CARD,ACCESS_CARD,MOBILE_PHONE,TABLET,MONITOR</value>
+						</customField>
+					</customFields>
+				</configuration>
+				<executions>
+					<!-- ✅ Main Deploy: Only during deploy phase -->
+					<execution>
+						<id>deploy</id>
+						<phase>deploy</phase>
+						<goals>
+							<goal>exchange-deploy</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

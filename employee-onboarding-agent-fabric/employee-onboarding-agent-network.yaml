@@ -15,7 +15,7 @@ llm:
     base_url: "https://api.groq.com/openai/v1"
     temperature: 0.7
     max_tokens: 4096
-    timeout: 30
+    timeout: 30s
     fallback_models:
       - llama3-70b-8192  # For complex reasoning
       - mixtral-8x7b-32768  # For technical tasks
@@ -208,10 +208,10 @@ mcp_servers:
     description: "Asset allocation service with optimization capabilities"
     environments:
       production:
-        url: "https://asset-allocation-mcp-server.us-e1.cloudhub.io"
+        url: "https://assets-allocation-mcp-server.us-e1.cloudhub.io"
         flex_gateway_url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/assets"
       staging:
-        url: "https://asset-allocation-mcp-server-staging.us-e1.cloudhub.io"
+        url: "https://assets-allocation-mcp-server-staging.us-e1.cloudhub.io"
       development:
         url: "http://localhost:8082"
         docker_url: "http://localhost:8082"
@@ -222,11 +222,11 @@ mcp_servers:
       enabled: true
       algorithms: ["ml_prediction", "cost_optimization", "rule_based"]
       
-  - name: notification-mcp-server
+  - name: email-notification-mcp-server
     description: "Multi-channel notification service with personalization"
     environments:
       production:
-        url: "https://notification-mcp-server.us-e1.cloudhub.io"
+        url: "https://email-notification-mcp-server.us-e1.cloudhub.io"
         flex_gateway_url: "https://employee-onboarding-gateway.sandbox.anypoint.mulesoft.com/notifications"
       staging:
         url: "https://notification-mcp-server-staging.us-e1.cloudhub.io"

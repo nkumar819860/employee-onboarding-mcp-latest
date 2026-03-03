@@ -1,0 +1,82 @@
+{
+    "name": "Asset Allocation MCP Server",
+    "description": "MCP Server for Asset Allocation Operations - Managing laptops, ID cards, mobile phones, and other company assets",
+    "version": "2.0.0",
+    "main": "pom.xml",
+    "groupId": "47562e5d-bf49-440a-a0f5-a9cea0a89aa9",
+    "assetId": "assets-allocation-mcp-server",
+    "classifier": "mule-application",
+	"type": "muleApplication",
+    "keywords": [
+        "mcp",
+        "asset-management",
+        "employee-resources",
+        "it-assets",
+        "inventory-management",
+        "allocation",
+        "mulesoft"
+    ],
+    "author": "MCP Development Team",
+    "license": "MIT",
+    "homepage": "https://github.com/mulesoft/employee-onboarding-mcp-parent",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mulesoft/employee-onboarding-mcp-parent.git"
+    },
+    "bugs": {
+        "url": "https://github.com/mulesoft/employee-onboarding-mcp-parent/issues"
+    },
+    "tags": [
+        "Asset Management",
+        "MCP Server", 
+        "Employee Resources",
+        "IT Assets",
+        "Inventory Management"
+    ],
+    "categories": [
+        "Asset Management"
+    ],
+    "contactName": "MCP Development Team",
+    "contactEmail": "mcp-dev@company.com",
+    "dependencies": [
+        {
+            "groupId": "org.mule.connectors",
+            "artifactId": "mule-db-connector",
+            "version": "1.14.17"
+        },
+        {
+            "groupId": "org.mule.connectors",
+            "artifactId": "mule-http-connector",
+            "version": "1.9.0"
+        },
+        {
+            "groupId": "com.h2database",
+            "artifactId": "h2",
+            "version": "2.1.214"
+        },
+        {
+            "groupId": "org.postgresql",
+            "artifactId": "postgresql",
+            "version": "42.7.2"
+        }
+    ],
+    "properties": {
+        "muleVersion": "4.9.0",
+        "runtimeVersion": "4.9-java17",
+        "javaVersion": "17"
+    },
+    "documentation": {
+        "summary": "MCP Server for comprehensive IT asset management and allocation operations",
+        "description": "The Asset Allocation MCP Server provides comprehensive management of IT assets for employee onboarding processes. It handles the complete lifecycle of asset allocation, from inventory management to assignment tracking, ensuring efficient distribution of company resources to new employees.\n\n## Key Features\n\n### Asset Management\n- **Inventory Tracking**: Real-time inventory management for all IT assets\n- **Asset Categories**: Support for laptops, ID cards, mobile phones, monitors, and peripherals\n- **Availability Checking**: Real-time asset availability validation\n- **Reservation System**: Asset reservation for pending allocations\n\n### Allocation Operations\n- **Employee Assignment**: Asset allocation based on employee role and department\n- **Bulk Allocation**: Support for multiple asset assignment in single operation\n- **Return Processing**: Asset return and reallocation workflows\n- **Transfer Management**: Asset transfer between employees\n\n### API Endpoints\n- `POST /assets/allocate` - Allocate assets to employee\n- `GET /assets/available` - Check available assets by type\n- `POST /assets/return` - Process asset returns\n- `GET /assets/employee/{employeeId}` - Get employee's allocated assets\n- `PUT /assets/{assetId}/status` - Update asset status\n- `GET /assets/inventory` - Get complete inventory report\n- `POST /assets/reserve` - Reserve assets for allocation\n- `DELETE /assets/reservation/{reservationId}` - Cancel asset reservation\n- `GET /health` - Health check endpoint\n\n### Asset Types Supported\n\n#### Hardware Assets\n- **Laptops**: Various models with specifications tracking\n- **Mobile Phones**: Smartphones with plan assignments\n- **Monitors**: External displays with resolution specifications\n- **Keyboards & Mice**: Input peripherals\n- **Headsets**: Audio equipment for remote work\n- **Webcams**: Video conferencing equipment\n- **Docking Stations**: Laptop connectivity solutions\n\n#### Identity Assets\n- **ID Cards**: Employee identification badges\n- **Access Cards**: Building and system access credentials\n- **Security Tokens**: Multi-factor authentication devices\n\n#### Software Assets\n- **License Keys**: Software license assignments\n- **VPN Credentials**: Remote access configurations\n- **Email Accounts**: Corporate email setup\n\n### Data Model\n```json\n{\n  \"allocationId\": \"string\",\n  \"employeeId\": \"string\",\n  \"assets\": [\n    {\n      \"assetId\": \"string\",\n      \"assetType\": \"laptop|phone|id-card|monitor|peripheral\",\n      \"brand\": \"string\",\n      \"model\": \"string\",\n      \"serialNumber\": \"string\",\n      \"specifications\": {\n        \"processor\": \"string\",\n        \"memory\": \"string\",\n        \"storage\": \"string\",\n        \"screenSize\": \"string\",\n        \"resolution\": \"string\"\n      },\n      \"condition\": \"new|good|fair|needs-repair\",\n      \"purchaseDate\": \"date\",\n      \"warrantyExpiry\": \"date\",\n      \"location\": \"string\",\n      \"assignedDate\": \"date\",\n      \"returnDate\": \"date\",\n      \"status\": \"available|allocated|reserved|maintenance|retired\"\n    }\n  ],\n  \"allocationDate\": \"date\",\n  \"expectedReturnDate\": \"date\",\n  \"actualReturnDate\": \"date\",\n  \"status\": \"pending|allocated|returned|partially-returned\",\n  \"notes\": \"string\",\n  \"approvedBy\": \"string\",\n  \"createdAt\": \"timestamp\",\n  \"updatedAt\": \"timestamp\"\n}\n```\n\n## Technical Specifications\n\n### Database Configuration\n- **Primary**: PostgreSQL 13+ for production asset tracking\n- **Fallback**: H2 in-memory database for development\n- **Connection Management**: Automatic retry and failover logic\n- **Schema Management**: Asset tables with audit trails\n\n### Asset Tracking Features\n- **Barcode Integration**: Support for barcode scanning workflows\n- **RFID Support**: Radio frequency identification tracking\n- **GPS Tracking**: Location tracking for mobile assets\n- **Maintenance Scheduling**: Automated maintenance reminders\n\n### Business Logic\n- **Role-based Allocation**: Asset assignment based on job roles\n- **Department Policies**: Department-specific asset allocation rules\n- **Approval Workflows**: Multi-level approval for high-value assets\n- **Cost Center Tracking**: Asset cost allocation to departments\n\n### Integration Capabilities\n- **CMDB Integration**: Configuration Management Database sync\n- **Procurement Systems**: Integration with purchase order systems\n- **HR Systems**: Employee data synchronization\n- **Financial Systems**: Asset depreciation and cost tracking\n\n## Asset Lifecycle Management\n\n### Procurement Phase\n1. Asset acquisition and registration\n2. Initial configuration and setup\n3. Quality assurance and testing\n4. Inventory system entry\n\n### Allocation Phase\n1. Employee onboarding trigger\n2. Role-based asset determination\n3. Availability checking and reservation\n4. Physical asset preparation\n5. Assignment and delivery\n\n### Active Phase\n1. Usage monitoring and tracking\n2. Maintenance scheduling\n3. Warranty management\n4. Performance monitoring\n\n### Return Phase\n1. Return request processing\n2. Asset condition assessment\n3. Data wiping and security cleanup\n4. Refurbishment or retirement decision\n\n## Security and Compliance\n\n### Data Protection\n- Secure asset data encryption\n- Access control and audit logging\n- Personal data anonymization\n- Compliance with data protection regulations\n\n### Asset Security\n- Device encryption enforcement\n- Remote wipe capabilities\n- Theft and loss reporting\n- Insurance claim processing\n\n## Integration Points\n\n- **Agent Broker MCP**: Receives orchestrated asset allocation requests\n- **Employee Onboarding MCP**: Retrieves employee data for asset assignment\n- **Notification MCP**: Sends asset allocation and return notifications\n- **External CMDB**: Synchronizes asset configuration data\n\n## Reporting and Analytics\n\n- Asset utilization reports\n- Cost analysis and budgeting\n- Maintenance scheduling reports\n- Compliance and audit trails\n- Employee asset history\n\n## Configuration\n\nSupports environment-specific configuration:\n- Database connection settings\n- Asset type definitions\n- Allocation policies and rules\n- Integration endpoint configurations\n- Security and encryption settings"
+    },
+    "apiSpecification": {
+        "type": "OpenAPI",
+        "version": "3.0.3",
+        "location": "src/main/resources/api/assets-allocation-mcp-server-api.yaml",
+        "description": "Complete OpenAPI specification for asset management and allocation operations"
+    },
+    "transport": {
+        "kind": "http",
+        "path": "/api/v1"
+    }
+}

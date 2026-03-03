@@ -580,7 +580,7 @@
   "variable": [
     {
       "key": "agent_broker_url",
-      "value": "agent-broker-mcp-server.us-e1.cloudhub.io",
+      "value": "employee-onboarding-agent-broker.us-e1.cloudhub.io",
       "description": "Agent Broker MCP base URL"
     },
     {
@@ -590,12 +590,12 @@
     },
     {
       "key": "asset_allocation_url",
-      "value": "asset-allocation-mcp-server.us-e1.cloudhub.io",
+      "value": "assets-allocation-mcp-server.us-e1.cloudhub.io",
       "description": "Asset Allocation MCP base URL"
     },
     {
       "key": "notification_url",
-      "value": "notification-service-mcp.us-e1.cloudhub.io",
+      "value": "email-notification-mcp-server.us-e1.cloudhub.io",
       "description": "Notification MCP base URL"
     }
   ]
