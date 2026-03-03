@@ -2,6 +2,7 @@
     "name": "Employee Agent Broker",
     "description": "Agent Broker MCP Server for Employee Onboarding Process Orchestration",
     "version": "2.0.0",
+    "type": "muleApplication", 
     "main": "pom.xml",
     "groupId": "47562e5d-bf49-440a-a0f5-a9cea0a89aa9",
     "assetId": "agent-broker-mcp",

@@ -17,5 +17,6 @@
     "secureProperties": [
         "gmail.username",
         "gmail.password"
-    ]
+    ],
+     "type": "muleApplication"
 }

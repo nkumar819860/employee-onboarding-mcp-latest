@@ -23,7 +23,7 @@
 		<!-- ✅ Exchange Metadata -->
 		<exchange.skip>false</exchange.skip>
 		<exchange.publish>true</exchange.publish>
-		<exchange.classifier>mule-application</exchange.classifier>
+		<exchange.classifier>template</exchange.classifier>
 		<exchange.assetId>asset-allocation-mcp-server</exchange.assetId>
 		<tags>Asset Management,MCP Server,Employee Resources,IT Assets,Inventory Management</tags>
 		<!-- ✅ CloudHub Properties -->

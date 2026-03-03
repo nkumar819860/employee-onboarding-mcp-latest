@@ -3,6 +3,7 @@
     "description": "MCP Server for Employee Database Operations with PostgreSQL/H2 Fallback Support",
     "version": "2.0.0",
     "main": "pom.xml",
+    "type": "muleApplication", 
     "groupId": "47562e5d-bf49-440a-a0f5-a9cea0a89aa9",
     "assetId": "employee-onboarding-mcp",
     "classifier": "mule-application",

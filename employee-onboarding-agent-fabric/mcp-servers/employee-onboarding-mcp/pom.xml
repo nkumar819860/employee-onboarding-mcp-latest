@@ -24,7 +24,7 @@
 		<!-- ✅ Exchange / MCP metadata -->
 		<exchange.skip>false</exchange.skip>
 		<exchange.publish>true</exchange.publish>
-		<exchange.classifier>mule-application</exchange.classifier>
+		<exchange.classifier>template</exchange.classifier>
 		<exchange.assetId>employee-onboarding-mcp-server</exchange.assetId>
 		<tags>Employee Management,MCP Server,Database Operations,Profile
 			Management,Multi-Database Support</tags>

@@ -23,8 +23,8 @@
 		<!-- ✅ Exchange Metadata -->
 		<exchange.skip>false</exchange.skip>
 		<exchange.publish>true</exchange.publish>
-		<!-- Use an explicit classifier for "Agent" -->
-		<exchange.classifier>agent</exchange.classifier>
+		<!-- Use template classifier for MCP applications -->
+		<exchange.classifier>template</exchange.classifier>
 		<exchange.assetId>agent-broker-mcp-server</exchange.assetId>
 		<tags>Agent Broker,MCP Server,Process Orchestration,Employee Onboarding,Workflow Management</tags>
 		<!-- ✅ CloudHub Properties -->

@@ -1,5 +1,6 @@
 {
     "name": "asset-allocation-mcp-server",
     "minMuleVersion": "4.9.6",
-    "javaSpecificationVersions": ["17"]
+    "javaSpecificationVersions": ["17"],
+    "type": "muleApplication", 
 }
