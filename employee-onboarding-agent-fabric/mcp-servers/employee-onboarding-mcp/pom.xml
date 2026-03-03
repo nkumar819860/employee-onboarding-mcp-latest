@@ -3,30 +3,24 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
 	<modelVersion>4.0.0</modelVersion>
-
 	<parent>
 		<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
 		<artifactId>employee-onboarding-mcp-parent</artifactId>
 		<version>1.0.0</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
-
 	<!-- ✅ GroupId matches your org ID -->
 	<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
 	<artifactId>employee-onboarding-mcp</artifactId>
 	<version>2.0.0</version>
 	<packaging>mule-application</packaging>
-
 	<name>Employee Onboarding MCP Server</name>
 	<description>MCP Server for Employee Database Operations with PostgreSQL/H2 Fallback Support</description>
-
 	<properties>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
 		<!-- ✅ Exchange / MCP metadata -->
 		<exchange.skip>false</exchange.skip>
 		<exchange.publish>true</exchange.publish>
@@ -34,11 +28,6 @@
 		<exchange.assetId>employee-onboarding-mcp-server</exchange.assetId>
 		<tags>Employee Management,MCP Server,Database Operations,Profile
 			Management,Multi-Database Support</tags>
-		<categories>[
-			{"key":"Integration","value":"Integration"},
-			{"key":"Human Resources","value":"Human Resources"}
-			]</categories>
-
 		<!-- ✅ CloudHub / Runtime -->
 		<mule.version>4.9.14</mule.version>
 		<mule.runtime.version>4.9-java17</mule.runtime.version>
@@ -52,7 +41,6 @@
 		<anypoint.platform.client_id>aec0b3117f7d4d4e8433a7d3d23bc80e</anypoint.platform.client_id>
 		<anypoint.platform.client_secret>9bc9D86a77b343b98a148C0313239aDA</anypoint.platform.client_secret>
 	</properties>
-
 	<distributionManagement>
 		<repository>
 			<id>anypoint-exchange</id>
@@ -60,7 +48,6 @@
 			<url>https://maven.anypoint.mulesoft.com/api/v3/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
 		</repository>
 	</distributionManagement>
-
 	<repositories>
 		<repository>
 			<id>anypoint-exchange</id>
@@ -69,7 +56,6 @@
 			<layout>default</layout>
 		</repository>
 	</repositories>
-
 	<dependencies>
 		<dependency>
 			<groupId>org.mule.modules</groupId>
@@ -103,7 +89,6 @@
 			<scope>runtime</scope>
 		</dependency>
 	</dependencies>
-
 	<build>
 		<plugins>
 			<!-- ✅ Mule Maven Plugin (CloudHub + Exchange) -->
@@ -124,7 +109,6 @@
 							<artifactId>postgresql</artifactId>
 						</sharedLibrary>
 					</sharedLibraries>
-
 					<!-- ✅ CloudHub deployment -->
 					<cloudHubDeployment>
 						<uri>https://anypoint.mulesoft.com</uri>
@@ -167,7 +151,6 @@
 					</cloudHubDeployment>
 				</configuration>
 			</plugin>
-
 			<!-- ✅ Exchange Maven Plugin - FIXED Configuration -->
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
@@ -205,5 +188,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
 </project>

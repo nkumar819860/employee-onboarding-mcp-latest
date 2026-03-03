@@ -2,41 +2,30 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
 	<modelVersion>4.0.0</modelVersion>
-
 	<parent>
 		<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
 		<artifactId>employee-onboarding-mcp-parent</artifactId>
 		<version>1.0.0</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
-
 	<!-- ✅ FIXED: GroupId matches org -->
 	<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
 	<artifactId>notification-mcp</artifactId>
 	<version>2.0.0</version>
 	<packaging>mule-application</packaging>
-
 	<name>Notification MCP Server</name>
 	<description>MCP Server for Email Notifications - Employee Onboarding and Asset Allocation confirmations using Gmail SMTP</description>
-
 	<properties>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		
 		<!-- ✅ Exchange Metadata -->
 		<exchange.skip>false</exchange.skip>
 		<exchange.publish>true</exchange.publish>
 		<exchange.classifier>mule-application</exchange.classifier>
 		<exchange.assetId>notification-mcp-server</exchange.assetId>
 		<tags>Email Notifications,MCP Server,HR Automation,Gmail Integration,Template Engine</tags>
-		<categories>[
-		  {"key":"Integration","value":"Integration"},
-		  {"key":"Human Resources","value":"Human Resources"}
-		]</categories>
-		
 		<!-- ✅ CloudHub Properties -->
 		<mule.version>4.9.14</mule.version>
 		<mule.runtime.version>4.9-java17</mule.runtime.version>
@@ -47,16 +36,13 @@
 		<cloudhub.region>us-east-1</cloudhub.region>
 		<cloudhub.workers>1</cloudhub.workers>
 		<cloudhub.worker.type>MICRO</cloudhub.worker.type>
-		
 		<!-- ✅ Connected App Credentials - Standardized -->
 		<anypoint.platform.client_id>aec0b3117f7d4d4e8433a7d3d23bc80e</anypoint.platform.client_id>
 		<anypoint.platform.client_secret>9bc9D86a77b343b98a148C0313239aDA</anypoint.platform.client_secret>
-		
 		<!-- ✅ Additional Properties for consistency -->
 		<java.version>17</java.version>
 		<app.runtime>4.9-java17</app.runtime>
 	</properties>
-
 	<distributionManagement>
 		<repository>
 			<id>anypoint-exchange</id>
@@ -64,9 +50,7 @@
 			<url>https://maven.anypoint.mulesoft.com/api/v3/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
 		</repository>
 	</distributionManagement>
-
 	<!-- ✅ Repositories inherited from parent POM and settings.xml -->
-
 	<dependencies>
 		<dependency>
 			<groupId>org.mule.modules</groupId>
@@ -105,7 +89,6 @@
 			<scope>runtime</scope>
 		</dependency>
 	</dependencies>
-
 	<build>
 		<plugins>
 			<!-- ✅ Mule Maven Plugin - Exchange + CloudHub -->
@@ -126,7 +109,6 @@
 							<artifactId>postgresql</artifactId>
 						</sharedLibrary>
 					</sharedLibraries>
-
 					<!-- ✅ CloudHub Deployment -->
 					<cloudHubDeployment>
 						<uri>https://anypoint.mulesoft.com</uri>
@@ -169,7 +151,6 @@
 					</cloudHubDeployment>
 				</configuration>
 			</plugin>
-
 			<!-- ✅ Exchange Publish Plugin - FIXED Configuration -->
 			<plugin>
 			  <groupId>org.mule.tools.maven</groupId>
@@ -205,7 +186,6 @@
 				</execution>
 			  </executions>
 			</plugin>
-
 			<!-- ✅ Maven Compiler Plugin for Java 17 -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
