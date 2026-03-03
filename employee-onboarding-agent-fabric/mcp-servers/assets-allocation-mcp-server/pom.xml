@@ -30,7 +30,7 @@
 		<mule.version>4.9.14</mule.version>
 		<mule.runtime.version>4.9-java17</mule.runtime.version>
 		<mule.maven.plugin.version>4.5.0</mule.maven.plugin.version>
-		<application.name>assets-allocation-mcp-server-server</application.name>
+		<application.name>assets-allocation-mcp-server</application.name>
 		<anypoint.business.group>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</anypoint.business.group>
 		<anypoint.platform.env>Sandbox</anypoint.platform.env>
 		<cloudhub.region>us-east-1</cloudhub.region>
