@@ -175,13 +175,23 @@
                 <extensions>true</extensions>
             </plugin>
 
-            <!-- ✅ Exchange Publish Plugin - Configured to run after validate phase -->
+            <!-- ✅ Exchange Publish Plugin - FIXED Configuration -->
             <plugin>
                 <groupId>org.mule.tools.maven</groupId>
                 <artifactId>exchange-mule-maven-plugin</artifactId>
                 <version>0.0.23</version>
+                <configuration>
+                    <!-- ✅ Global Configuration -->
+                    <classifier>pom</classifier>
+                    <businessGroupId>${anypoint.business.group}</businessGroupId>
+                    <connectedAppClientId>${connected.app.client.id}</connectedAppClientId>
+                    <connectedAppClientSecret>${connected.app.client.secret}</connectedAppClientSecret>
+                    <skipValidation>false</skipValidation>
+                    <skipDeployment>false</skipDeployment>
+                </configuration>
                 <executions>
-                    <!-- ✅ FIRST: Pre-deploy after validate phase -->
+                    <!-- ✅ DISABLED: Pre-deploy (Causing connectivity issues) -->
+                    <!--
                     <execution>
                         <id>pre-deploy</id>
                         <phase>process-sources</phase>
@@ -189,19 +199,14 @@
                             <goal>exchange-pre-deploy</goal>
                         </goals>
                     </execution>
-                    <!-- ✅ SECOND: Deploy after compile phase -->
+                    -->
+                    <!-- ✅ Main Deploy: Only during deploy phase -->
                     <execution>
-                        <id>publish</id>
-                        <phase>process-classes</phase>
+                        <id>deploy</id>
+                        <phase>deploy</phase>
                         <goals>
                             <goal>exchange-deploy</goal>
                         </goals>
-                        <configuration>
-                            <classifier>pom</classifier>
-                            <businessGroupId>${anypoint.business.group}</businessGroupId>
-                            <connectedAppClientId>${connected.app.client.id}</connectedAppClientId>
-                            <connectedAppClientSecret>${connected.app.client.secret}</connectedAppClientSecret>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>

@@ -27,5 +27,5 @@
             "value": "Human Resources"
         }
     ],
-    "main": "asset-allocation-mcp-api.xml"
+    "main": "asset-allocation-mcp-api.yaml"
 }
