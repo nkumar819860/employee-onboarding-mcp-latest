@@ -170,13 +170,23 @@
 				</configuration>
 			</plugin>
 
-			<!-- ✅ Exchange Publish Plugin -->
+			<!-- ✅ Exchange Publish Plugin - FIXED Configuration -->
 			<plugin>
 			  <groupId>org.mule.tools.maven</groupId>
 			  <artifactId>exchange-mule-maven-plugin</artifactId>
 			  <version>0.0.23</version>
+			  <configuration>
+				<!-- ✅ Global Configuration -->
+				<classifier>${exchange.classifier}</classifier>
+				<businessGroupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</businessGroupId>
+				<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
+				<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
+				<skipValidation>false</skipValidation>
+				<skipDeployment>false</skipDeployment>
+			  </configuration>
 			  <executions>
-				<!-- ✅ FIRST: Pre-deploy (Creates/Validates asset) -->
+				<!-- ✅ DISABLED: Pre-deploy (Causing connectivity issues) -->
+				<!--
 				<execution>
 				  <id>pre-deploy</id>
 				  <phase>generate-resources</phase>
@@ -184,19 +194,14 @@
 					<goal>exchange-pre-deploy</goal>
 				  </goals>
 				</execution>
-				<!-- ✅ SECOND: Deploy (Publishes artifact) -->
+				-->
+				<!-- ✅ Main Deploy: Only during deploy phase -->
 				<execution>
-				  <id>publish</id>
+				  <id>deploy</id>
 				  <phase>deploy</phase>
 				  <goals>
 					<goal>exchange-deploy</goal>
 				  </goals>
-				  <configuration>
-					<classifier>${exchange.classifier}</classifier>
-					<businessGroupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</businessGroupId>
-					<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
-					<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
-				  </configuration>
 				</execution>
 			  </executions>
 			</plugin>

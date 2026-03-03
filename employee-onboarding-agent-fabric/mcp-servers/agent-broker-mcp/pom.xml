@@ -196,16 +196,24 @@
 				</configuration>
 			</plugin>
 
-			<!-- ✅ Exchange Publish Plugin - SKIP during compile, only run when explicitly needed -->
+			<!-- ✅ Exchange Publish Plugin - FIXED Configuration -->
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>exchange-mule-maven-plugin</artifactId>
 				<version>0.0.23</version>
 				<configuration>
+					<!-- ✅ Global Configuration -->
 					<skip>${exchange.skip}</skip>
+					<classifier>${exchange.classifier}</classifier>
+					<businessGroupId>${anypoint.business.group}</businessGroupId>
+					<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
+					<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
+					<skipValidation>false</skipValidation>
+					<skipDeployment>false</skipDeployment>
 				</configuration>
 				<executions>
-					<!-- ✅ FIRST: Pre-deploy (Creates/Validates asset) -->
+					<!-- ✅ DISABLED: Pre-deploy (Causing connectivity issues) -->
+					<!--
 					<execution>
 						<id>pre-deploy</id>
 						<phase>generate-resources</phase>
@@ -216,20 +224,16 @@
 							<skip>${exchange.skip}</skip>
 						</configuration>
 					</execution>
-					<!-- ✅ SECOND: Deploy (Publishes artifact) -->
+					-->
+					<!-- ✅ Main Deploy: Only during deploy phase -->
 					<execution>
-						<id>publish</id>
+						<id>deploy</id>
 						<phase>deploy</phase>
 						<goals>
 							<goal>exchange-deploy</goal>
 						</goals>
 						<configuration>
 							<skip>${exchange.skip}</skip>
-							<!-- IMPORTANT: use 'agent' classifier to mark this as Agent -->
-							<classifier>${exchange.classifier}</classifier>
-							<businessGroupId>${anypoint.business.group}</businessGroupId>
-							<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
-							<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
 						</configuration>
 					</execution>
 				</executions>

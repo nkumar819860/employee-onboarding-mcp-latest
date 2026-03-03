@@ -168,13 +168,23 @@
 				</configuration>
 			</plugin>
 
-			<!-- ✅ Exchange Maven Plugin (publish as MCP‑server asset) -->
+			<!-- ✅ Exchange Maven Plugin - FIXED Configuration -->
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
 				<artifactId>exchange-mule-maven-plugin</artifactId>
 				<version>0.0.23</version>
+				<configuration>
+					<!-- ✅ Global Configuration -->
+					<classifier>${exchange.classifier}</classifier>
+					<businessGroupId>${anypoint.business.group}</businessGroupId>
+					<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
+					<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
+					<skipValidation>false</skipValidation>
+					<skipDeployment>false</skipDeployment>
+				</configuration>
 				<executions>
-					<!-- Pre‑deploy: validates asset in Exchange -->
+					<!-- ✅ DISABLED: Pre-deploy (Causing connectivity issues) -->
+					<!--
 					<execution>
 						<id>pre-deploy</id>
 						<phase>generate-resources</phase>
@@ -182,19 +192,14 @@
 							<goal>exchange-pre-deploy</goal>
 						</goals>
 					</execution>
-					<!-- Deploy: publishes the artifact to Exchange -->
+					-->
+					<!-- ✅ Main Deploy: Only during deploy phase -->
 					<execution>
-						<id>publish</id>
+						<id>deploy</id>
 						<phase>deploy</phase>
 						<goals>
 							<goal>exchange-deploy</goal>
 						</goals>
-						<configuration>
-							<classifier>${exchange.classifier}</classifier>
-							<businessGroupId>${anypoint.business.group}</businessGroupId>
-							<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
-							<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
-						</configuration>
 					</execution>
 				</executions>
 			</plugin>
