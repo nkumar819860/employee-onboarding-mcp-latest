@@ -27,8 +27,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<!-- ✅ Exchange Metadata -->
-		<exchange.skip>true</exchange.skip>
-		<exchange.publish>false</exchange.publish>
+		<exchange.skip>false</exchange.skip>
+		<exchange.publish>true</exchange.publish>
 		<!-- Use an explicit classifier for "Agent" -->
 		<exchange.classifier>agent</exchange.classifier>
 		<exchange.assetId>agent-broker-mcp-server</exchange.assetId>
@@ -193,38 +193,14 @@
 				</configuration>
 			</plugin>
 
-			<!-- ✅ Exchange Publish Plugin - FIXED Configuration -->
+			<!-- ✅ Maven Deploy Plugin - Direct Exchange Publishing -->
 			<plugin>
-				<groupId>org.mule.tools.maven</groupId>
-				<artifactId>exchange-mule-maven-plugin</artifactId>
-				<version>0.0.23</version>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<version>3.1.1</version>
 				<configuration>
-					<!-- ✅ Global Configuration -->
-					<skip>${exchange.skip}</skip>
-					<classifier>${exchange.classifier}</classifier>
-					<businessGroupId>${anypoint.business.group}</businessGroupId>
-					<connectedAppClientId>${anypoint.platform.client_id}</connectedAppClientId>
-					<connectedAppClientSecret>${anypoint.platform.client_secret}</connectedAppClientSecret>
-					<skipValidation>false</skipValidation>
-					<skipDeployment>false</skipDeployment>
+					<skip>false</skip>
 				</configuration>
-				<executions>
-					<!-- ✅ DISABLED: Pre-deploy (Causing connectivity issues) -->
-					<!-- <execution> <id>pre-deploy</id> <phase>generate-resources</phase> 
-						<goals> <goal>exchange-pre-deploy</goal> </goals> <configuration> <skip>${exchange.skip}</skip> 
-						</configuration> </execution> -->
-					<!-- ✅ Main Deploy: Only during deploy phase -->
-					<execution>
-						<id>deploy</id>
-						<phase>deploy</phase>
-						<goals>
-							<goal>exchange-deploy</goal>
-						</goals>
-						<configuration>
-							<skip>${exchange.skip}</skip>
-						</configuration>
-					</execution>
-				</executions>
 			</plugin>
 
 		</plugins>
