@@ -167,7 +167,7 @@
 					<includeReadme>true</includeReadme>
 					<includeApiSpec>true</includeApiSpec>
 					<readmePath>README.md</readmePath>
-					<apiSpecPath>src/main/resources/api/assets-allocation-mcp-server-api.yaml</apiSpecPath>
+					<apiSpecPath>src/main/resources/api/assets-allocation-mcp-server.yaml</apiSpecPath>
 					
 					<!-- ✅ Additional Asset Files -->
 					<assetFiles>
@@ -176,8 +176,8 @@
 							<target>README.md</target>
 						</assetFile>
 						<assetFile>
-							<source>src/main/resources/api/assets-allocation-mcp-server-api.yaml</source>
-							<target>api/assets-allocation-mcp-server-api.yaml</target>
+							<source>src/main/resources/api/assets-allocation-mcp-server.yaml</source>
+							<target>api/assets-allocation-mcp-server.yaml</target>
 						</assetFile>
 						<assetFile>
 							<source>exchange.json</source>

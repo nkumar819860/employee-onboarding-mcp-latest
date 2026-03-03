@@ -1,0 +1,25 @@
+{
+  "name": "Employee Onboarding Parent POM",
+  "description": "Parent POM for Employee Onboarding Agent Fabric MCP Servers - provides common configuration and dependencies for all MCP server modules",
+  "classifier": "custom",
+  "version": "1.0.0",
+  "groupId": "com.mulesoft.training",
+  "assetId": "employee-onboarding-parent",
+  "organizationId": "YOUR_ORG_ID_HERE",
+  "tags": [
+    "parent-pom",
+    "mcp-servers",
+    "employee-onboarding",
+    "agent-fabric",
+    "mulesoft",
+    "maven"
+  ],
+  "categories": [
+    "parent-pom",
+    "build-tools"
+  ],
+  "customFields": {},
+  "dependencies": [],
+  "contactName": "MuleSoft Training Team",
+  "contactEmail": "training@mulesoft.com"
+}

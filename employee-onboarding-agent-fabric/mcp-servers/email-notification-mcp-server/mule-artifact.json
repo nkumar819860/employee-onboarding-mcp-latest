@@ -8,7 +8,7 @@
         "attributes": {"exportedResources": []},
         "id": "mule"
     },
-    "minMuleVersion": "4.9.5",
+    "minMuleVersion": "4.9.6",
     "bundleDescriptorLoader": {
         "attributes": {},
         "id": "mule"

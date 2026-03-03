@@ -171,6 +171,11 @@ mcp_servers:
       development:
         url: "http://localhost:8080"
         docker_url: "http://localhost:8080"
+      local:
+        url: "http://localhost:8080"
+        description: "Local development server for testing and development"
+        health_check_enabled: true
+        debug_mode: true
     timeout: 45000
     retry_attempts: 5
     health_check: "/health"
@@ -194,6 +199,11 @@ mcp_servers:
       development:
         url: "http://localhost:8081"
         docker_url: "http://localhost:8081"
+      local:
+        url: "http://localhost:8081"
+        description: "Local employee management server"
+        health_check_enabled: true
+        debug_mode: true
     timeout: 30000
     retry_attempts: 3
     health_check: "/health"
@@ -215,6 +225,11 @@ mcp_servers:
       development:
         url: "http://localhost:8082"
         docker_url: "http://localhost:8082"
+      local:
+        url: "http://localhost:8082"
+        description: "Local asset allocation server"
+        health_check_enabled: true
+        debug_mode: true
     timeout: 30000
     retry_attempts: 3
     health_check: "/health"
@@ -233,6 +248,11 @@ mcp_servers:
       development:
         url: "http://localhost:8083"
         docker_url: "http://localhost:8083"
+      local:
+        url: "http://localhost:8083"
+        description: "Local notification server"
+        health_check_enabled: true
+        debug_mode: true
     timeout: 25000
     retry_attempts: 3
     health_check: "/health"
@@ -546,6 +566,29 @@ environments:
       GROQ_API_KEY: "${DEV_GROQ_API_KEY}"
       DATABASE_URL: "jdbc:h2:mem:testdb"
       EMAIL_FROM_ADDRESS: "dev-noreply@company.com"
+      
+  - name: local
+    description: "Local development environment with localhost URLs"
+    active: true
+    configuration:
+      mcp_broker_url: "http://localhost:8080"
+      employee_service_url: "http://localhost:8081"
+      asset_service_url: "http://localhost:8082"
+      notification_service_url: "http://localhost:8083"
+      encryption_level: "basic"
+      monitoring_level: "debug"
+      audit_retention: "7_days"
+      local_development_features:
+        hot_reload: true
+        detailed_logging: true
+        mock_external_services: true
+        bypass_authentication: true
+    variables:
+      GROQ_API_KEY: "${LOCAL_GROQ_API_KEY}"
+      DATABASE_URL: "jdbc:h2:mem:localdb"
+      EMAIL_FROM_ADDRESS: "local-dev@localhost"
+      DEBUG_MODE: "true"
+      LOCAL_TESTING: "true"
 
 # Advanced Integration Configuration
 integrations:

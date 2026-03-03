@@ -1,6 +1,6 @@
 {
   "name": "employee-onboarding-mcp-server",
-  "minMuleVersion": "4.9.5",
+  "minMuleVersion": "4.9.6",
   "javaSpecificationVersions": [
     "17"
   ]

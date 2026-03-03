@@ -1,0 +1,174 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: mcp-postgres
+    environment:
+      POSTGRES_DB: employee_onboarding
+      POSTGRES_USER: mcp_user
+      POSTGRES_PASSWORD: mcp_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mcp_user -d employee_onboarding"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Agent Broker MCP Server
+  agent-broker-mcp:
+    build:
+      context: ./services/agent-broker-mcp
+      dockerfile: Dockerfile
+    container_name: agent-broker-mcp
+    ports:
+      - "8081:8081"
+    environment:
+      - MULE_ENV=docker
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=employee_onboarding
+      - DB_USER=mcp_user
+      - DB_PASSWORD=mcp_password
+      - EMPLOYEE_ONBOARDING_MCP_HOST=employee-onboarding-mcp
+      - EMPLOYEE_ONBOARDING_MCP_PORT=8082
+      - ASSET_ALLOCATION_MCP_HOST=asset-allocation-mcp
+      - ASSET_ALLOCATION_MCP_PORT=8083
+      - NOTIFICATION_MCP_HOST=notification-mcp
+      - NOTIFICATION_MCP_PORT=8084
+    depends_on:
+      postgres:
+        condition: service_healthy
+      employee-onboarding-mcp:
+        condition: service_healthy
+      asset-allocation-mcp:
+        condition: service_healthy
+      notification-mcp:
+        condition: service_healthy
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Employee Onboarding MCP Server
+  employee-onboarding-mcp:
+    build:
+      context: ./services/employee-onboarding-mcp
+      dockerfile: Dockerfile
+    container_name: employee-onboarding-mcp
+    ports:
+      - "8082:8082"
+    environment:
+      - MULE_ENV=docker
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=employee_onboarding
+      - DB_USER=mcp_user
+      - DB_PASSWORD=mcp_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Asset Allocation MCP Server
+  asset-allocation-mcp:
+    build:
+      context: ./services/asset-allocation-mcp
+      dockerfile: Dockerfile
+    container_name: asset-allocation-mcp
+    ports:
+      - "8083:8083"
+    environment:
+      - MULE_ENV=docker
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=employee_onboarding
+      - DB_USER=mcp_user
+      - DB_PASSWORD=mcp_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Notification MCP Server
+  notification-mcp:
+    build:
+      context: ./services/notification-mcp
+      dockerfile: Dockerfile
+    container_name: notification-mcp
+    ports:
+      - "8084:8084"
+    environment:
+      - MULE_ENV=docker
+      - SMTP_HOST=mailcatcher
+      - SMTP_PORT=1025
+      - SMTP_USER=""
+      - SMTP_PASSWORD=""
+    depends_on:
+      - mailcatcher
+    networks:
+      - mcp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # MailCatcher for testing email notifications
+  mailcatcher:
+    image: sj26/mailcatcher:latest
+    container_name: mailcatcher
+    ports:
+      - "1080:1080"  # Web interface
+      - "1025:1025"  # SMTP port
+    networks:
+      - mcp-network
+
+  # React Client (Optional - for testing UI)
+  react-client:
+    build:
+      context: ./services/react-client
+      dockerfile: Dockerfile
+    container_name: react-client
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_AGENT_BROKER_URL=http://localhost:8081
+      - REACT_APP_ENVIRONMENT=docker
+    depends_on:
+      - agent-broker-mcp
+    networks:
+      - mcp-network
+
+volumes:
+  postgres_data:
+
+networks:
+  mcp-network:
+    driver: bridge
