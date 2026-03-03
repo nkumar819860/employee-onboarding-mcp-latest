@@ -16,7 +16,7 @@
 	<import file="global.xml"/>
 
 	<!-- APIKit Router Configuration -->
-	<apikit:config name="notification-config" api="api/notification-mcp-api.yaml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	<apikit:config name="notification-config" api="api/email-notification-mcp-server.yaml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
 
 	<!-- Main APIKit Router Flow -->
 	<flow name="notification-main">

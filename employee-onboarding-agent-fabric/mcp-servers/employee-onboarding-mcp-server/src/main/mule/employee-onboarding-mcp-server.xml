@@ -1083,12 +1083,12 @@ output application/json
 					phone VARCHAR(20),
 					department_id INTEGER,
 					position VARCHAR(100),
-					hire_date DATE DEFAULT CURRENT_DATE,
+					hire_date DATE DEFAULT CURRENT_DATE(),
 					status VARCHAR(20) DEFAULT 'PENDING',
 					salary DECIMAL(10,2),
-					address CLOB,
-					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-					updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+					address VARCHAR(2000),
+					created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+					updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
 				)
 			]]></db:sql>
 		</db:execute-ddl>

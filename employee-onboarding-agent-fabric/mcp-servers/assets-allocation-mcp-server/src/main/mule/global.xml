@@ -52,7 +52,7 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 
 	<!-- APIKit Configuration -->
 	<apikit:config name="asset-allocation-mcp-api-config"
-		api="api/asset-allocation-mcp-api.yaml"
+		api="api/assets-allocation-mcp-server.yaml"
 		outboundHeadersMapName="outboundHeaders"
 		httpStatusVarName="httpStatus" doc:name="APIKit Config" />
 

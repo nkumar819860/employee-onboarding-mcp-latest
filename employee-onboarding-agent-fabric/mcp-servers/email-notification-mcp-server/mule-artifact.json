@@ -8,15 +8,15 @@
         "attributes": {"exportedResources": []},
         "id": "mule"
     },
-    "minMuleVersion": "4.9.6",
+    "minMuleVersion": "4.9.5",
     "bundleDescriptorLoader": {
         "attributes": {},
         "id": "mule"
     },
     "javaSpecificationVersions": ["17"],
+    "type": "muleApplication",
     "secureProperties": [
         "gmail.username",
         "gmail.password"
-    ],
-     "type": "muleApplication"
+    ]
 }

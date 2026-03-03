@@ -26,7 +26,7 @@
 				<http:headers>#[vars.outboundHeaders default {}]</http:headers>
 			</http:error-response>
 		</http:listener>
-		<apikit:router config-ref="assets-allocation-mcp-api-config" doc:name="APIKit Router"/>
+		<apikit:router config-ref="asset-allocation-mcp-api-config" doc:name="APIKit Router"/>
 		<error-handler>
 			<on-error-propagate type="APIKIT:BAD_REQUEST">
 				<ee:transform doc:name="Transform Message">
@@ -587,23 +587,31 @@ output application/json
 
 	<!-- MCP Server Info Implementation -->
 	<flow name="mcp-server-info-implementation" doc:name="MCP Server Discovery">
+		<set-variable variableName="serverName" value="${mcp.server.name}" doc:name="Set Server Name"/>
+		<set-variable variableName="serverVersion" value="${mcp.server.version}" doc:name="Set Server Version"/>
+		<set-variable variableName="serverDescription" value="${mcp.server.description}" doc:name="Set Server Description"/>
+		<set-variable variableName="serverBaseUrl" value="${mcp.server.baseUrl}" doc:name="Set Server Base URL"/>
+		<set-variable variableName="environment" value="${env}" doc:name="Set Environment"/>
+		<set-variable variableName="auditEnabled" value="${mcp.features.audit.enabled}" doc:name="Set Audit Enabled"/>
+		<set-variable variableName="cacheEnabled" value="${cache.enabled}" doc:name="Set Cache Enabled"/>
+		
 		<ee:transform doc:name="Server Metadata Response">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
-	name: "${mcp.server.name}",
-	version: "${mcp.server.version}",
-	description: "${mcp.server.description}",
-	baseUrl: "${mcp.server.baseUrl}",
-	environment: "${env}",
+	name: vars.serverName,
+	version: vars.serverVersion,
+	description: vars.serverDescription,
+	baseUrl: vars.serverBaseUrl,
+	environment: vars.environment,
 	capabilities: {
 		databases: ["postgresql", "h2"],
 		fallbackMode: "mock",
 		multiTenant: false,
-		audit: "${mcp.features.audit.enabled}",
-		cache: "${cache.enabled}"
+		audit: vars.auditEnabled,
+		cache: vars.cacheEnabled
 	},
 	endpoints: {
 		health: "/api/health",
@@ -1411,6 +1419,9 @@ output application/java
 
 	<!-- Application Health Status -->
 	<flow name="application-health-status" doc:name="Application Health Check">
+		<set-variable variableName="serverVersion" value="${mcp.server.version}" doc:name="Set Server Version"/>
+		<set-variable variableName="environment" value="${env}" doc:name="Set Environment"/>
+		
 		<ee:transform doc:name="Application Health Response">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
@@ -1421,8 +1432,8 @@ output application/java
 	healthy: true,
 	status: "UP",
 	details: {
-		version: "${mcp.server.version}",
-		environment: "${env}",
+		version: vars.serverVersion,
+		environment: vars.environment,
 		memory: java!java::lang::Runtime::getRuntime().freeMemory(),
 		uptime: "running"
 	}
@@ -1433,6 +1444,11 @@ output application/java
 
 	<!-- Configuration Health Status -->
 	<flow name="configuration-health-status" doc:name="Configuration Health Check">
+		<set-variable variableName="dbStrategy" value="${db.strategy}" doc:name="Set DB Strategy"/>
+		<set-variable variableName="mockMode" value="${mcp.features.mock.enabled}" doc:name="Set Mock Mode"/>
+		<set-variable variableName="auditEnabled" value="${mcp.features.audit.enabled}" doc:name="Set Audit Enabled"/>
+		<set-variable variableName="cacheEnabled" value="${cache.enabled}" doc:name="Set Cache Enabled"/>
+		
 		<ee:transform doc:name="Configuration Health Response">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
@@ -1443,10 +1459,10 @@ output application/java
 	healthy: true,
 	status: "UP",
 	details: {
-		database: "${db.strategy}",
-		mockMode: "${mcp.features.mock.enabled}",
-		auditEnabled: "${mcp.features.audit.enabled}",
-		cacheEnabled: "${cache.enabled}"
+		database: vars.dbStrategy,
+		mockMode: vars.mockMode,
+		auditEnabled: vars.auditEnabled,
+		cacheEnabled: vars.cacheEnabled
 	}
 }]]></ee:set-payload>
 			</ee:message>

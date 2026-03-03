@@ -3,7 +3,7 @@
         "employee-onborading-agent-broker.xml",
         "global.xml"
     ],
-    "name": "agent-broker-mcp-server",
+    "name": "employee-onboarding-agent-broker",
     "classLoaderModelLoaderDescriptor": {
         "attributes": {"exportedResources": []},
         "id": "mule"

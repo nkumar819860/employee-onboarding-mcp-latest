@@ -25,7 +25,7 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 	<!-- ================================================================== -->
 	
 	<apikit:config name="employee-onboarding-mcp-api-config" 
-		api="api/employee-onboarding-mcp-api.yaml" 
+		api="api/employee-onboarding-mcp-server.yaml" 
 		outboundHeadersMapName="outboundHeaders" 
 		httpStatusVarName="httpStatus" 
 		doc:name="APIKit Router Configuration"/>
