@@ -32,7 +32,7 @@
 		<exchange.classifier>mule-application</exchange.classifier>
 		<exchange.assetId>asset-allocation-mcp-server</exchange.assetId>
 		<tags>Asset Management,MCP Server,Employee Resources,IT Assets,Inventory Management</tags>
-				<categories>[
+		<categories>[
 		  {"key":"Integration","value":"Integration"},
 		  {"key":"Human Resources","value":"Human Resources"}
 		]</categories>

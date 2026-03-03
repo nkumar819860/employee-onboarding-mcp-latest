@@ -3,10 +3,12 @@
 	xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:sockets="http://www.mulesoft.org/schema/mule/sockets"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-	http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+	http://www.mulesoft.org/schema/mule/sockets http://www.mulesoft.org/schema/mule/sockets/current/mule-sockets.xsd">
 
 	<!-- Global Configuration Properties -->
 	<configuration-properties
@@ -25,40 +27,56 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 	</http:listener-config>
 
 
-	<!-- HTTP Request Configurations for CloudHub MCP Servers (Fixed - removed port specifications for CloudHub) -->
-<http:request-config
-    name="employee-onboarding-mcp-config"
-    doc:name="Employee Onboarding MCP Config"
-    basePath="/api">
-    <http:request-connection 
-        protocol="HTTPS"
-        host="employee-onboarding-mcp-server.us-e1.cloudhub.io">
-    </http:request-connection>
-</http:request-config>
+	<!-- HTTP Request Configurations for CloudHub MCP Servers (Fixed for CloudHub 
+		400 error - no auto port appending) -->
+	<http:request-config
+		name="employee-onboarding-mcp-config"
+		doc:name="Employee Onboarding MCP Config" basePath="/api">
+		<http:request-connection protocol="HTTPS"
+			host="${employee.onboarding.mcp.host}" port="443"
+			usePersistentConnections="false">
+			<http:client-socket-properties>
+				<sockets:tcp-client-socket-properties
+					connectionTimeout="30000" />
+			</http:client-socket-properties>
+		</http:request-connection>
+	</http:request-config>
 
+	<http:request-config
+		name="asset-allocation-mcp-config"
+		doc:name="Asset Allocation MCP Config" basePath="/api">
+		<http:request-connection protocol="HTTPS"
+			host="${asset.allocation.mcp.host}" port="443"
+			usePersistentConnections="false">
+			<http:client-socket-properties>
+				<sockets:tcp-client-socket-properties
+					connectionTimeout="30000" />
+			</http:client-socket-properties>
+		</http:request-connection>
+	</http:request-config>
 
+	<http:request-config name="notification-mcp-config"
+		doc:name="Notification MCP Config" basePath="/api">
+		<http:request-connection protocol="HTTPS"
+			host="${notification.mcp.host}" port="443"
+			usePersistentConnections="false">
+			<http:client-socket-properties>
+				<sockets:tcp-client-socket-properties
+					connectionTimeout="30000" />
+			</http:client-socket-properties>
+		</http:request-connection>
+	</http:request-config>
 
-<http:request-config
-    name="asset-allocation-mcp-config"
-    doc:name="Asset Allocation MCP Config"
-    basePath="/api">
-    <http:request-connection 
-        protocol="HTTPS"
-        host="asset-allocation-mcp-server.us-e1.cloudhub.io">
-    </http:request-connection>
-</http:request-config>
+	<http:request-config name="llm-http-config"
+		doc:name="LLM HTTP Config" basePath="/llm/chat">
+		<http:request-connection protocol="HTTPS"
+			host="llm-gateway.cloudhub.io" port="443" />
+		<http:default-headers>
+			<http:default-header key="Authorization"
+				value="Bearer #[p('groq.api.key')]" />
+		</http:default-headers>
+	</http:request-config>
 
-
-
-<http:request-config
-    name="notification-mcp-config"
-    doc:name="Notification MCP Config"
-    basePath="/api">
-    <http:request-connection 
-        protocol="HTTPS"
-        host="notification-mcp-server.us-e1.cloudhub.io">
-    </http:request-connection>
-</http:request-config>
 
 
 

@@ -1,53 +1,54 @@
 openapi: 3.0.3
 info:
-  title: Employee Onboarding Agent Broker API
+  title: "Employee Onboarding Agent Broker API"
   description: |
     Agent Broker MCP Server for Employee Onboarding Process Orchestration - coordinates employee onboarding, asset allocation, and notifications.
-    
+
     This service acts as the central orchestrator for the complete employee onboarding process, integrating with multiple MCP servers to provide:
     - Complete employee onboarding workflow orchestration
     - Multi-step process coordination with error handling
     - Integration with Employee Onboarding, Asset Allocation, and Notification MCP servers
     - Comprehensive status tracking and reporting
     - Failure recovery and retry mechanisms
-    
+
     ## Key Features
     - **End-to-end Orchestration**: Manages the complete employee onboarding lifecycle
     - **Multi-Service Integration**: Coordinates between employee management, asset allocation, and notification services
     - **Error Handling**: Comprehensive error handling with detailed failure reporting
     - **Status Tracking**: Real-time status monitoring of onboarding progress
     - **Atomic Operations**: Ensures data consistency across all integrated services
-    
+
     ## Orchestration Flow
     1. **Employee Profile Creation**: Creates employee record in the HR system
     2. **Asset Allocation**: Allocates required assets (laptop, ID card, phone, etc.)
     3. **Welcome Email**: Sends professional welcome email with onboarding information
     4. **Asset Notification**: Sends detailed asset allocation confirmation
     5. **Completion Notification**: Sends comprehensive onboarding completion summary
-    
+
     ## Integration Architecture
     The Agent Broker integrates with:
     - **Employee Onboarding MCP**: Employee profile and data management
     - **Asset Allocation MCP**: IT asset allocation and tracking
     - **Notification MCP**: Email notification and communication services
-    
+
     ## Error Handling
     - Service-level error handling with detailed error reporting
     - Automatic retry capabilities for transient failures
     - Comprehensive logging and audit trail
     - Graceful degradation for non-critical failures
-  version: 1.0.0
+
+  version: "1.0.0"
   contact:
-    name: MCP Development Team
-    email: mcp-dev@company.com
+    name: "MCP Development Team"
+    email: "mcp-dev@company.com"
   license:
     name: MIT
-    url: https://opensource.org/licenses/MIT
+    url: "https://opensource.org/licenses/MIT"
 
 servers:
-  - url: http://localhost:8084/api
+  - url: "http://localhost:8084/api"
     description: Local development server
-  - url: https://agent-broker-mcp-server.us-e1.cloudhub.io/api
+  - url: "https://agent-broker-mcp-server.us-e1.cloudhub.io/api"
     description: Production CloudHub server
 
 tags:
@@ -61,6 +62,8 @@ tags:
     description: Onboarding status and progress tracking
   - name: Recovery
     description: Error recovery and retry operations
+  - name: LLM Reasoning
+    description: LLM‑based reasoning and orchestration planning
 
 paths:
   /health:
@@ -71,7 +74,7 @@ paths:
       description: Returns the current health status of the agent broker and orchestration capabilities
       operationId: healthCheck
       responses:
-        '200':
+        "200":
           description: Service is healthy
           content:
             application/json:
@@ -88,7 +91,6 @@ paths:
                   timestamp:
                     type: string
                     format: date-time
-                    example: "2024-01-15 10:30:45"
                   orchestrationEnabled:
                     type: string
                     example: "true"
@@ -101,7 +103,7 @@ paths:
       description: Returns comprehensive information about the agent broker MCP server capabilities and integrated services
       operationId: getMcpInfo
       responses:
-        '200':
+        "200":
           description: MCP server information
           content:
             application/json:
@@ -138,6 +140,9 @@ paths:
                       - name: retry-failed-step
                         description: Retry a failed onboarding step
                         endpoint: /mcp/tools/retry-failed-step
+                      - name: think
+                        description: Use LLM to reason about onboarding requests
+                        endpoint: /mcp/tools/think
 
   /mcp/tools/orchestrate-employee-onboarding:
     post:
@@ -146,32 +151,32 @@ paths:
       summary: Orchestrate complete employee onboarding process
       description: |
         Executes the complete employee onboarding workflow including:
-        
+
         **Step 1: Employee Profile Creation**
         - Creates employee record in the HR system
         - Validates employee data and assigns employee ID
         - Establishes department and role associations
-        
+
         **Step 2: Asset Allocation**
         - Allocates required IT assets based on role and department
         - Supports laptops, ID cards, mobile phones, access cards, and peripherals
         - Manages approval workflows for restricted asset categories
-        
+
         **Step 3: Welcome Email Notification**
         - Sends professional welcome email with company information
         - Includes onboarding details, start date, and orientation information
         - Provides manager contact and next steps
-        
+
         **Step 4: Asset Allocation Notification**
         - Sends detailed asset allocation confirmation
         - Includes asset specifications, care instructions, and policies
         - Provides IT contact information for support
-        
+
         **Step 5: Onboarding Completion Notification**
         - Sends comprehensive onboarding completion summary
         - Includes complete asset inventory and employee information
         - Notifies HR and manager of successful completion
-        
+
         The orchestration ensures atomic operations across all services with comprehensive error handling and rollback capabilities.
       operationId: orchestrateEmployeeOnboarding
       requestBody:
@@ -179,78 +184,9 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - firstName
-                - lastName
-                - email
-              properties:
-                firstName:
-                  type: string
-                  description: Employee's first name
-                  example: John
-                lastName:
-                  type: string
-                  description: Employee's last name
-                  example: Smith
-                email:
-                  type: string
-                  format: email
-                  description: Employee's email address
-                  example: john.smith@company.com
-                department:
-                  type: string
-                  description: Employee's department
-                  example: Engineering
-                position:
-                  type: string
-                  description: Employee's job position
-                  example: Senior Software Engineer
-                startDate:
-                  type: string
-                  format: date
-                  description: Employee's start date
-                  example: "2024-01-15"
-                manager:
-                  type: string
-                  description: Employee's direct manager
-                  example: Sarah Johnson
-                managerName:
-                  type: string
-                  description: Manager's full name for notifications
-                  example: Sarah Johnson
-                managerEmail:
-                  type: string
-                  format: email
-                  description: Manager's email address
-                  example: sarah.johnson@company.com
-                orientationDate:
-                  type: string
-                  format: date
-                  description: Scheduled orientation date
-                  example: "2024-01-16"
-                companyName:
-                  type: string
-                  description: Company name for personalization
-                  example: TechCorp Inc
-                assets:
-                  type: array
-                  description: Specific assets to allocate (optional - system will use role-based defaults)
-                  items:
-                    type: object
-                    properties:
-                      assetTag:
-                        type: string
-                        example: LAPTOP-001
-                      category:
-                        type: string
-                        example: LAPTOP
-                      priority:
-                        type: string
-                        enum: [HIGH, MEDIUM, LOW]
-                        example: HIGH
+              $ref: "#/components/schemas/OnboardingRequest"
       responses:
-        '200':
+        "200":
           description: Employee onboarding orchestration completed successfully
           content:
             application/json:
@@ -344,41 +280,12 @@ paths:
                   timestamp:
                     type: string
                     format: date-time
-        '500':
+        "500":
           description: Orchestration failed
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: error
-                  message:
-                    type: string
-                    example: Employee onboarding orchestration failed
-                  error:
-                    type: string
-                    description: Detailed error description
-                    example: HTTP:CONNECTIVITY - Unable to connect to Asset Allocation MCP Server
-                  employeeEmail:
-                    type: string
-                    example: john.smith@company.com
-                  failedAt:
-                    type: string
-                    description: Step where orchestration failed
-                    example: Asset Allocation
-                  startTime:
-                    type: string
-                    format: date-time
-                    example: "2024-01-15 09:00:00"
-                  errorTime:
-                    type: string
-                    format: date-time
-                    example: "2024-01-15 09:02:15"
-                  timestamp:
-                    type: string
-                    format: date-time
+                $ref: "#/components/schemas/ErrorResponse"
 
   /mcp/tools/get-onboarding-status:
     post:
@@ -406,7 +313,7 @@ paths:
                   description: Employee ID to get status for
                   example: EMP001
       responses:
-        '200':
+        "200":
           description: Employee status retrieved successfully
           content:
             application/json:
@@ -455,12 +362,12 @@ paths:
                   timestamp:
                     type: string
                     format: date-time
-        '500':
+        "500":
           description: Failed to retrieve employee status
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
   /mcp/tools/retry-failed-step:
     post:
@@ -469,13 +376,13 @@ paths:
       summary: Retry a failed onboarding step
       description: |
         Provides retry functionality for failed onboarding steps. Currently returns a development placeholder.
-        
+
         **Future Implementation Will Support:**
         - Individual step retry (profile creation, asset allocation, notifications)
         - Selective retry based on failure type
         - State recovery and continuation from failed point
         - Comprehensive retry logging and tracking
-        
+
         **Planned Retry Scenarios:**
         - Network connectivity issues
         - Temporary service unavailability
@@ -493,10 +400,9 @@ paths:
                 - employeeId
                 - step
               properties:
-                employeeId:
-                  type: string
-                  description: Employee ID for retry
-                  example: EMP001
+                employeeTarget:
+                  type: object
+                  $ref: "#/components/schemas/OnboardingRequest"
                 step:
                   type: string
                   enum: [profileCreation, assetAllocation, welcomeEmail, assetNotification, onboardingComplete]
@@ -512,7 +418,7 @@ paths:
                   default: 3
                   example: 3
       responses:
-        '200':
+        "200":
           description: Retry functionality status
           content:
             application/json:
@@ -534,6 +440,75 @@ paths:
                   timestamp:
                     type: string
                     format: date-time
+
+  # ============ LLM REASONING ENDPOINT ============
+  /mcp/tools/think:
+    post:
+      tags:
+        - LLM Reasoning
+      summary: Use LLM to reason about onboarding requests and suggest orchestration steps
+      description: |
+        Uses an LLM (e.g., Groq‑based) to:
+        - Parse natural‑language onboarding requests (e.g., "onboard Pradeep in Hyderabad with a laptop and Slack").
+        - Suggest a JSON plan of MCP tool calls.
+        - Allow Agent Broker to execute or refine the plan.
+      operationId: think
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prompt]
+              properties:
+                prompt:
+                  type: string
+                  description: "Natural‑language onboarding request (e.g., 'Onboard Pradeep in Hyderabad with a laptop and Slack')."
+                  example: "Onboard Pradeep Kumar in Hyderabad with a laptop and Slack access."
+      responses:
+        "200":
+          description: LLM reasoning completed with suggested steps
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, message, toolCalls]
+                properties:
+                  status:
+                    type: string
+                    enum: [llm-completed]
+                  message:
+                    type: string
+                  toolCalls:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        tool:
+                          type: string
+                        endpoint:
+                          type: string
+                        payload:
+                          type: object
+                  rawResponse:
+                    type: object
+                    description: Full LLM API response
+        "400":
+          description: Bad request (missing or invalid payload)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error:
+                    type: string
+        "500":
+          description: LLM call failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
   schemas:
@@ -582,7 +557,7 @@ components:
         assets:
           type: array
           items:
-            $ref: '#/components/schemas/AssetRequest'
+            $ref: "#/components/schemas/AssetRequest"
 
     AssetRequest:
       type: object
@@ -640,12 +615,11 @@ components:
       in: header
       name: X-API-Key
       description: API key for authentication
-    
     OAuth2:
       type: oauth2
       flows:
         clientCredentials:
-          tokenUrl: https://auth.company.com/oauth/token
+          tokenUrl: "https://auth.company.com/oauth/token"
           scopes:
             onboarding:read: Read onboarding data
             onboarding:write: Orchestrate onboarding processes
@@ -657,4 +631,4 @@ security:
 
 externalDocs:
   description: Agent Broker MCP Server Documentation
-  url: https://github.com/mulesoft/agent-broker-mcp/blob/main/README.md
+  url: "https://github.com/mulesoft/agent-broker-mcp/blob/main/README.md"

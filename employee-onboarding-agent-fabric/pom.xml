@@ -158,6 +158,11 @@
                     <artifactId>mule-maven-plugin</artifactId>
                     <version>${mule.maven.plugin.version}</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.mule.tools.maven</groupId>
+                    <artifactId>exchange-mule-maven-plugin</artifactId>
+                    <version>0.0.23</version>
+                </plugin>
             </plugins>
         </pluginManagement>
         
@@ -168,6 +173,37 @@
                 <artifactId>mule-maven-plugin</artifactId>
                 <version>${mule.maven.plugin.version}</version>
                 <extensions>true</extensions>
+            </plugin>
+
+            <!-- ✅ Exchange Publish Plugin - Configured to run after validate phase -->
+            <plugin>
+                <groupId>org.mule.tools.maven</groupId>
+                <artifactId>exchange-mule-maven-plugin</artifactId>
+                <version>0.0.23</version>
+                <executions>
+                    <!-- ✅ FIRST: Pre-deploy after validate phase -->
+                    <execution>
+                        <id>pre-deploy</id>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>exchange-pre-deploy</goal>
+                        </goals>
+                    </execution>
+                    <!-- ✅ SECOND: Deploy after compile phase -->
+                    <execution>
+                        <id>publish</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>exchange-deploy</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>pom</classifier>
+                            <businessGroupId>${anypoint.business.group}</businessGroupId>
+                            <connectedAppClientId>${connected.app.client.id}</connectedAppClientId>
+                            <connectedAppClientSecret>${connected.app.client.secret}</connectedAppClientSecret>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

@@ -1,22 +1,18 @@
 {
-  "name": "agent-broker-mcp-server",
-  "minMuleVersion": "4.9.6",
-  "javaSpecificationVersions": [
-    "17"
-  ],
-  "requiredProduct": "MULE_EE",
-  "classLoaderModelLoaderDescriptor": {
-    "id": "mule",
-    "attributes": {
-      "exportedResources": []
-    }
-  },
-  "bundleDescriptorLoader": {
-    "id": "mule",
-    "attributes": {}
-  },
-  "configs": [
-    "agent-broker-mcp-api.xml",
-    "global.xml"
-  ]
+    "configs": [
+        "agent-broker-mcp-api.xml",
+        "global.xml"
+    ],
+    "name": "agent-broker-mcp-server",
+    "classLoaderModelLoaderDescriptor": {
+        "attributes": {"exportedResources": []},
+        "id": "mule"
+    },
+    "requiredProduct": "MULE_EE",
+    "minMuleVersion": "4.9.6",
+    "bundleDescriptorLoader": {
+        "attributes": {},
+        "id": "mule"
+    },
+    "javaSpecificationVersions": ["17"]
 }
