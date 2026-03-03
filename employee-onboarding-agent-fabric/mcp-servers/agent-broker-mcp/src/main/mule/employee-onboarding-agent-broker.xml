@@ -904,8 +904,9 @@ output application/java
 ]]></ee:set-variable>
 					</ee:variables>
 				</ee:transform>
-				<raise-error type="APIKIT:BAD_REQUEST"
-					description="#[payload.error]" />
+				<!-- Return 400 error directly without raising APIKIT:BAD_REQUEST -->
+				<set-variable variableName="httpStatus" value="400" doc:name="Set Bad Request Status" />
+				<!-- Error response will be handled by the flow's response handling -->
 			</when>
 			<otherwise>
 				<!-- Build LLM request body -->
