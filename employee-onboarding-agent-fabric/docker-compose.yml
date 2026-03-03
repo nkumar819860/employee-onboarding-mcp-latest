@@ -28,11 +28,11 @@ services:
       - mcp-network
 
   # Employee Onboarding MCP Server
-  employee-onboarding-mcp:
+  employee-onboarding-mcp-server:
     build:
-      context: ./mcp-servers/employee-onboarding-mcp
+      context: ./mcp-servers/employee-onboarding-mcp-server
       dockerfile: Dockerfile
-    container_name: employee-onboarding-mcp
+    container_name: employee-onboarding-mcp-server
     ports:
       - "${EMPLOYEE_HTTP_PORT:-8081}:8081"
     environment:
@@ -57,11 +57,11 @@ services:
       - mcp-network
 
   # Asset Allocation MCP Server
-  asset-allocation-mcp:
+  assets-allocation-mcp-server:
     build:
-      context: ./mcp-servers/asset-allocation-mcp
+      context: ./mcp-servers/assets-allocation-mcp-server
       dockerfile: Dockerfile
-    container_name: asset-allocation-mcp
+    container_name: assets-allocation-mcp-server
     ports:
       - "${ASSET_HTTP_PORT:-8082}:8082"
     environment:
@@ -86,11 +86,11 @@ services:
       - mcp-network
 
   # Notification MCP Server
-  notification-mcp:
+  email-notification-mcp-server:
     build:
-      context: ./mcp-servers/notification-mcp
+      context: ./mcp-servers/email-notification-mcp-server
       dockerfile: Dockerfile
-    container_name: notification-mcp-server
+    container_name: email-notification-mcp-server
     ports:
       - "${NOTIFICATION_HTTP_PORT:-8083}:8083"
     environment:
@@ -116,11 +116,11 @@ services:
       - mcp-network
 
   # Agent Broker MCP Server (Main Orchestrator)
-  agent-broker-mcp:
+  employee-onboarding-agent-broker:
     build:
-      context: ./mcp-servers/agent-broker-mcp
+      context: ./mcp-servers/employee-onboarding-agent-broker
       dockerfile: Dockerfile
-    container_name: agent-broker-mcp
+    container_name: employee-onboarding-agent-broker
     ports:
       - "8080:8080"
     environment:
@@ -128,9 +128,9 @@ services:
       - http.port=8080
       - agent.broker.orchestration.enabled=true
     depends_on:
-      employee-onboarding-mcp:
+      employee-onboarding-mcp-server:
         condition: service_started
-      asset-allocation-mcp:
+      assets-allocation-mcp-server:
         condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
@@ -155,10 +155,10 @@ services:
       - REACT_APP_ASSET_API_URL=http://localhost:8082
       - REACT_APP_NOTIFICATION_API_URL=http://localhost:8083
     depends_on:
-      - agent-broker-mcp
-      - employee-onboarding-mcp
-      - asset-allocation-mcp
-      - notification-mcp
+      - employee-onboarding-agent-broker
+      - employee-onboarding-mcp-server
+      - assets-allocation-mcp-server
+      - email-notification-mcp-server
     networks:
       - mcp-network
 
