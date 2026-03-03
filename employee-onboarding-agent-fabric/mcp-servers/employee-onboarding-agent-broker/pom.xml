@@ -6,13 +6,13 @@
 	<parent>
 		<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
 		<artifactId>employee-onboarding-mcp-parent</artifactId>
-		<version>1.0.0</version>
+		<version>3.0.1</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 	<!-- ✅ GroupId matches org -->
 	<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
 	<artifactId>employee-onboarding-agent-broker</artifactId>
-	<version>2.0.2</version>
+	<version>2.0.4</version>
 	<packaging>mule-application</packaging>
 	<name>employee-onborading-agent-broker</name>
 	<description>Agent Broker MCP Server for Employee Onboarding Process Orchestration</description>
@@ -24,8 +24,8 @@
 		<exchange.skip>false</exchange.skip>
 		<exchange.publish>true</exchange.publish>
 		<exchange.assetId>employee-onboarding-agent-broker</exchange.assetId>
-		<!-- Use agent classifier for MCP agent applications -->
-		<exchange.classifier>agent</exchange.classifier>
+		<!-- Use MCP classifier for MCP server applications -->
+		<exchange.classifier>mcp</exchange.classifier>
 		<tags>Agent Broker,MCP Server,Process Orchestration,Employee Onboarding,Workflow Management</tags>
 		<!-- ✅ CloudHub Properties -->
 		<mule.version>4.9.14</mule.version>
@@ -187,19 +187,14 @@
 					<skipDeployment>false</skipDeployment>
 					
 					<!-- ✅ Enhanced Asset Documentation -->
-					<includeReadme>true</includeReadme>
+					<includeReadme>false</includeReadme>
 					<includeApiSpec>true</includeApiSpec>
-					<readmePath>README.md</readmePath>
-					<apiSpecPath>src/main/resources/api/employee-onboarding-agent-broker.yaml</apiSpecPath>
+					<apiSpecPath>src/main/resources/api/agent-broker-mcp-api.yaml</apiSpecPath>
 					
 					<!-- ✅ Additional Asset Files -->
 					<assetFiles>
 						<assetFile>
-							<source>README.md</source>
-							<target>README.md</target>
-						</assetFile>
-						<assetFile>
-							<source>src/main/resources/api/employee-onboarding-agent-broker.yaml</source>
+							<source>src/main/resources/api/agent-broker-mcp-api.yaml</source>
 							<target>api/agent-broker-mcp-api.yaml</target>
 						</assetFile>
 						<assetFile>

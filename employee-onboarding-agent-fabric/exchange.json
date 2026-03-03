@@ -1,12 +1,12 @@
 {
     "name": "Employee Onboarding Agent Fabric",
     "description": "Enterprise-grade agent fabric for complete employee onboarding automation - Multi-module MCP server suite with orchestration capabilities",
-    "version": "2.0.0",
+    "version": "3.0.2",
     "main": "pom.xml",
     "groupId": "47562e5d-bf49-440a-a0f5-a9cea0a89aa9",
-    "assetId": "employee-onboarding-agent-fabric",
-    "classifier": "mule-application",
-	"type": "muleApplication", 
+    "assetId": "employee-onboarding-mcp-parent",
+    "classifier": "pom",
+	"type": "template",
     "keywords": [
         "mcp",
         "parent-pom",
@@ -41,10 +41,10 @@
     "contactName": "MCP Development Team",
     "contactEmail": "mcp-dev@company.com",
     "modules": [
-        "mcp-servers/notification-mcp",
-        "mcp-servers/employee-onboarding-mcp", 
-        "mcp-servers/asset-allocation-mcp",
-        "mcp-servers/agent-broker-mcp"
+        "mcp-servers/email-notification-mcp-server",
+        "mcp-servers/employee-onboarding-mcp-server", 
+        "mcp-servers/asset-allocation-mcp-server",
+        "mcp-servers/employee-onboarding-agent-broker"
     ],
     "dependencies": [
         {

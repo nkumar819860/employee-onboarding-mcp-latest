@@ -1,6 +1,6 @@
 {
     "configs": [
-        "employee-onborading-agent-broker.xml",
+        "employee-onboarding-agent-broker.xml",
         "global.xml"
     ],
     "name": "employee-onboarding-agent-broker",

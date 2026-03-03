@@ -1,67 +1,111 @@
 {
-    "name": "Employee Onboarding Agent Broker v2.0",
-    "description": "Agent Broker MCP Server for Employee Onboarding Process Orchestration",
-    "version": "2.0.3",
+    "name": "Employee Onboarding Agent Broker MCP Server",
+    "description": "Centralized orchestration MCP server for complete employee onboarding workflow management, coordinating all onboarding processes across multiple services",
+    "version": "2.0.4",
     "main": "pom.xml",
     "groupId": "47562e5d-bf49-440a-a0f5-a9cea0a89aa9",
     "assetId": "employee-onboarding-agent-broker",
-    "classifier": "mule-application",
-	"type": "agent", 
+    "classifier": "mcp",
+    "type": "mcpServer",
     "keywords": [
-        "mcp",
+        "mcp-server",
         "agent-broker",
-        "process-orchestration",
         "employee-onboarding",
+        "orchestration",
         "workflow-management",
-        "nlp",
-        "mulesoft"
+        "process-automation",
+        "mulesoft",
+        "java17"
     ],
     "author": "MCP Development Team",
     "license": "MIT",
-    "homepage": "https://github.com/mulesoft/employee-onboarding-mcp-parent",
+    "homepage": "https://github.com/mulesoft/employee-onboarding-mcp-agent-broker",
     "repository": {
         "type": "git",
-        "url": "https://github.com/mulesoft/employee-onboarding-mcp-parent.git"
+        "url": "https://github.com/mulesoft/employee-onboarding-mcp-agent-broker.git"
     },
     "bugs": {
-        "url": "https://github.com/mulesoft/employee-onboarding-mcp-parent/issues"
+        "url": "https://github.com/mulesoft/employee-onboarding-mcp-agent-broker/issues"
     },
     "tags": [
         "Agent Broker",
-        "MCP Server",
+        "MCP Server", 
         "Process Orchestration",
         "Employee Onboarding",
         "Workflow Management"
     ],
     "categories": [
-        "Process Automation"
+        "MCP Server",
+        "Process Automation",
+        "Employee Onboarding"
     ],
     "contactName": "MCP Development Team",
     "contactEmail": "mcp-dev@company.com",
     "dependencies": [
         {
+            "groupId": "org.mule.distributions",
+            "artifactId": "mule-runtime-impl-bom",
+            "version": "4.9.14",
+            "type": "pom",
+            "scope": "import"
+        },
+        {
             "groupId": "org.mule.connectors",
             "artifactId": "mule-http-connector",
-            "version": "1.9.0"
+            "version": "1.10.0"
+        },
+        {
+            "groupId": "org.mule.connectors",
+            "artifactId": "mule-db-connector", 
+            "version": "1.15.0"
+        },
+        {
+            "groupId": "org.mule.modules",
+            "artifactId": "mule-apikit-module",
+            "version": "1.11.1"
         }
     ],
     "properties": {
-        "muleVersion": "4.9.0",
+        "muleVersion": "4.9.14",
         "runtimeVersion": "4.9-java17",
-        "javaVersion": "17"
+        "javaVersion": "17",
+        "packaging": "mule-application",
+        "mcpServerType": "agent-broker"
     },
     "documentation": {
-        "summary": "Central orchestrator MCP Server for complete employee onboarding workflow management",
-        "description": "The Agent Broker MCP Server serves as the central orchestrator for the entire employee onboarding process. It coordinates all activities across multiple specialized MCP servers, manages workflow states, and provides intelligent Natural Language Processing (NLP) capabilities for conversational interactions.\n\n## Key Features\n\n### Process Orchestration\n- **Centralized Workflow Management**: Coordinates all onboarding steps across multiple services\n- **State Management**: Tracks and maintains workflow progress and status\n- **Error Recovery**: Intelligent error handling and retry mechanisms\n- **Parallel Processing**: Manages concurrent operations for efficiency\n\n### Service Integration\n- **Employee Onboarding MCP**: Manages employee profile creation and validation\n- **Asset Allocation MCP**: Coordinates IT asset assignment and allocation\n- **Notification MCP**: Triggers appropriate email communications\n- **External Systems**: Integrates with HR systems and enterprise applications\n\n### Natural Language Processing\n- **Conversational Interface**: Process onboarding requests through natural language\n- **Intent Recognition**: Understands user requests and maps to appropriate actions\n- **Context Awareness**: Maintains conversation context for multi-turn interactions\n- **Response Generation**: Provides intelligent, contextual responses\n\n### API Endpoints\n- `POST /orchestrate/employee-onboarding` - Complete onboarding orchestration\n- `GET /orchestrate/status/{processId}` - Get onboarding process status\n- `POST /orchestrate/retry/{processId}` - Retry failed onboarding steps\n- `POST /nlp/process-request` - Natural language request processing\n- `GET /orchestrate/processes` - List all active processes\n- `DELETE /orchestrate/process/{processId}` - Cancel onboarding process\n- `GET /health` - Health check endpoint\n\n### Orchestration Workflow\n\n#### Phase 1: Profile Creation\n1. Validate employee information\n2. Create employee profile in database\n3. Generate unique employee ID\n4. Store initial onboarding state\n\n#### Phase 2: Asset Allocation\n1. Determine required assets based on role\n2. Check asset availability\n3. Reserve and allocate assets\n4. Generate asset assignment records\n\n#### Phase 3: Notifications\n1. Send welcome email to employee\n2. Send asset allocation confirmation\n3. Notify IT and HR teams\n4. Send manager notifications\n\n#### Phase 4: Completion\n1. Verify all steps completed successfully\n2. Update employee status to active\n3. Send final confirmation emails\n4. Archive onboarding process\n\n### Data Model\n```json\n{\n  \"processId\": \"string\",\n  \"employeeData\": {\n    \"firstName\": \"string\",\n    \"lastName\": \"string\",\n    \"email\": \"string\",\n    \"phone\": \"string\",\n    \"department\": \"string\",\n    \"position\": \"string\",\n    \"startDate\": \"date\",\n    \"salary\": \"number\",\n    \"manager\": \"string\",\n    \"managerEmail\": \"string\",\n    \"companyName\": \"string\"\n  },\n  \"assets\": [\"string\"],\n  \"status\": \"pending|in-progress|completed|failed\",\n  \"steps\": [\n    {\n      \"stepName\": \"string\",\n      \"status\": \"pending|in-progress|completed|failed\",\n      \"startTime\": \"timestamp\",\n      \"endTime\": \"timestamp\",\n      \"error\": \"string\"\n    }\n  ],\n  \"createdAt\": \"timestamp\",\n  \"completedAt\": \"timestamp\"\n}\n```\n\n## Technical Specifications\n\n### Orchestration Engine\n- **Workflow State Management**: Redis-based state persistence\n- **Retry Logic**: Exponential backoff with configurable retry policies\n- **Circuit Breakers**: Fault tolerance for external service calls\n- **Dead Letter Queue**: Failed process handling and analysis\n\n### NLP Capabilities\n- **Intent Classification**: Machine learning-based intent recognition\n- **Entity Extraction**: Named entity recognition for employee data\n- **Context Management**: Session-based conversation state\n- **Response Templates**: Dynamic response generation\n\n### Security Features\n- Secure inter-service communication\n- Request validation and sanitization\n- Audit logging for all operations\n- Role-based access control\n\n### Performance Optimization\n- Asynchronous processing for long-running operations\n- Connection pooling for external services\n- Caching for frequently accessed data\n- Load balancing for high availability\n\n## Integration Architecture\n\n### Service Communication\n- **HTTP/REST**: Primary communication protocol\n- **Message Queues**: Asynchronous processing support\n- **Event Streaming**: Real-time status updates\n- **Health Monitoring**: Continuous service health checks\n\n### Error Handling Strategy\n- **Graceful Degradation**: Partial functionality during service outages\n- **Compensation Transactions**: Rollback capabilities for failed processes\n- **Alerting**: Real-time notifications for critical failures\n- **Monitoring**: Comprehensive process monitoring and analytics\n\n## NLP Processing Flow\n\n1. **Input Analysis**: Parse and analyze natural language input\n2. **Intent Classification**: Determine user intent and required actions\n3. **Entity Extraction**: Extract relevant employee and process data\n4. **Workflow Mapping**: Map intent to appropriate orchestration workflow\n5. **Process Execution**: Execute the determined workflow\n6. **Response Generation**: Generate appropriate natural language response\n\n## Configuration\n\nSupports environment-specific configuration:\n- Service endpoint configurations\n- Retry and timeout policies\n- NLP model configurations\n- Security and authentication settings\n- Monitoring and alerting thresholds"
+        "summary": "Agent Broker MCP Server for centralized employee onboarding orchestration and workflow management.",
+        "description": "The Employee Onboarding Agent Broker MCP Server serves as the central orchestrator for the complete employee onboarding process. This MCP server coordinates and manages the entire onboarding workflow by integrating with multiple specialized MCP servers.\n\n## Key Features\n\n### Orchestration Capabilities\n- **End-to-End Workflow Management**: Coordinates complete employee onboarding from initiation to completion\n- **Multi-Service Integration**: Seamlessly integrates with Employee Onboarding, Asset Allocation, and Notification MCP servers\n- **Process State Management**: Tracks and manages onboarding progress across all stages\n- **Error Handling & Recovery**: Provides retry mechanisms and failure recovery for robust processing\n\n### Core MCP Operations\n\n#### `orchestrate-employee-onboarding`\nComplete employee onboarding orchestration including profile creation, asset allocation, and notifications.\n\n**Parameters:**\n- `firstName` (required): Employee first name\n- `lastName` (required): Employee last name\n- `email` (required): Employee email address\n- `phone`: Employee phone number\n- `department`: Department name\n- `position`: Job position/title\n- `startDate`: Start date (YYYY-MM-DD format)\n- `salary`: Annual salary\n- `manager`: Manager name\n- `managerEmail`: Manager email address\n- `companyName`: Company name\n- `assets`: Array of assets to allocate (laptop, phone, id-card)\n\n#### `get-onboarding-status`\nRetrieve the current status of an employee onboarding process.\n\n**Parameters:**\n- `employeeId`: Employee ID\n- `email`: Employee email address (alternative to employeeId)\n\n#### `retry-failed-step`\nRetry a specific failed step in the employee onboarding process.\n\n**Parameters:**\n- `employeeId` (required): Employee ID\n- `step` (required): Step to retry (profile-creation, asset-allocation, welcome-email, asset-notification, onboarding-complete)\n\n#### `check-system-health`\nCheck the health status of all employee onboarding system components.\n\n### Technical Architecture\n\n#### Integration Pattern\n- **Service Orchestration**: Implements orchestration pattern for managing complex workflows\n- **Event-Driven Architecture**: Uses event-driven communication between services\n- **Compensation Pattern**: Implements compensation actions for transaction rollback\n- **Circuit Breaker**: Provides resilience against downstream service failures\n\n#### Database Integration\n- **Primary Database**: PostgreSQL for production environments\n- **Fallback Database**: H2 in-memory database for development and testing\n- **Transaction Management**: Ensures ACID compliance across operations\n- **Connection Pooling**: Optimized database connection management\n\n#### API Design\n- **OpenAPI 3.0.3 Specification**: Complete API documentation with examples\n- **RESTful Design**: Follows REST principles for consistent API design\n- **JSON Schema Validation**: Request/response validation using JSON schemas\n- **Error Standardization**: Consistent error response format across all endpoints\n\n### Deployment & Runtime\n\n#### CloudHub 2.0 Ready\n- **Java 17 Compatible**: Runs on modern Java runtime\n- **Mule 4.9 Runtime**: Latest stable Mule runtime version\n- **Auto-scaling**: Supports horizontal scaling based on load\n- **Health Monitoring**: Built-in health checks and monitoring\n\n#### Configuration Management\n- **Environment Variables**: Configurable through environment variables\n- **Secure Properties**: Encrypted configuration for sensitive data\n- **Profile-based Configuration**: Different configurations for dev/staging/prod\n\n### Integration Endpoints\n\n#### Downstream Services\n- **Employee Onboarding MCP**: `/api/employees/*` - Employee profile management\n- **Asset Allocation MCP**: `/api/assets/*` - IT asset management\n- **Notification MCP**: `/api/notifications/*` - Email notification services\n\n#### Monitoring & Observability\n- **Application Logs**: Structured logging with correlation IDs\n- **Performance Metrics**: Response time and throughput monitoring\n- **Health Checks**: Liveness and readiness probes\n- **Distributed Tracing**: Request tracing across service boundaries\n\n### Security Features\n- **Authentication**: Secure authentication mechanisms\n- **Authorization**: Role-based access control\n- **Input Validation**: Comprehensive input validation and sanitization\n- **Audit Logging**: Complete audit trail of all operations\n\n## Getting Started\n\n### Prerequisites\n- Mule Runtime 4.9+ with Java 17\n- PostgreSQL database (or H2 for development)\n- Dependent MCP servers (Employee Onboarding, Asset Allocation, Notification)\n\n### Configuration\n1. Configure database connection properties\n2. Set up downstream MCP server endpoints\n3. Configure email notification settings\n4. Deploy to CloudHub 2.0 or Runtime Fabric\n\n### Usage Example\n\n```bash\n# Complete employee onboarding\ncurl -X POST http://localhost:8081/api/onboarding/orchestrate \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@company.com\",\n    \"department\": \"Engineering\",\n    \"position\": \"Software Engineer\",\n    \"startDate\": \"2024-01-15\",\n    \"assets\": [\"laptop\", \"id-card\", \"phone\"]\n  }'\n```\n\nThis MCP server provides a complete solution for enterprise employee onboarding automation, ensuring consistent and reliable processing of all onboarding workflows."
     },
     "apiSpecification": {
         "type": "OpenAPI",
         "version": "3.0.3",
         "location": "src/main/resources/api/agent-broker-mcp-api.yaml",
-        "description": "Complete OpenAPI specification for process orchestration and NLP operations"
+        "description": "Complete OpenAPI 3.0.3 specification for the Agent Broker MCP Server with all orchestration endpoints, schemas, and examples"
+    },
+    "mcpMetadata": {
+        "serverType": "agent-broker",
+        "protocol": "http",
+        "capabilities": [
+            "orchestration",
+            "workflow-management",
+            "process-automation",
+            "error-recovery",
+            "health-monitoring"
+        ],
+        "operations": [
+            "orchestrate-employee-onboarding",
+            "get-onboarding-status", 
+            "retry-failed-step",
+            "check-system-health"
+        ],
+        "dependencies": [
+            "employee-onboarding-mcp-server",
+            "assets-allocation-mcp-server",
+            "email-notification-mcp-server"
+        ]
     },
     "transport": {
         "kind": "http",
-        "path": "/api/v1"
+        "path": "/api"
     }
 }

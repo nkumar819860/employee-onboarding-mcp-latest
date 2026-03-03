@@ -4,7 +4,7 @@
   <!-- âœ… FIXED: Use your Business Group ID -->
   <groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
   <artifactId>employee-onboarding-mcp-parent</artifactId>
-  <version>3.0.5-011343</version>
+  <version>3.0.5-2057</version>
   <packaging>pom</packaging>
   <!-- âœ… FIXED: Correct module paths matching actual directory structure -->
   <modules>

@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
 		<artifactId>employee-onboarding-mcp-parent</artifactId>
-		<version>1.0.0</version>
+		<version>3.0.1</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 	<!-- ✅ FIXED: GroupId matches org -->
