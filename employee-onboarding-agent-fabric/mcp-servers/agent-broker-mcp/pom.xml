@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
@@ -30,10 +32,12 @@
 		<!-- Use an explicit classifier for "Agent" -->
 		<exchange.classifier>agent</exchange.classifier>
 		<exchange.assetId>agent-broker-mcp-server</exchange.assetId>
-		<tags>Agent Broker,MCP Server,Process Orchestration,Employee Onboarding,Workflow Management</tags>
+		<tags>Agent Broker,MCP Server,Process Orchestration,Employee
+			Onboarding,Workflow Management</tags>
 		<categories>
-	  [{"key":"Integration","value":"Integration"},{"key":"Human Resources","value":"Human Resources"}]
-	</categories>
+			[{"key":"Integration","value":"Integration"},{"key":"Human
+			Resources","value":"Human Resources"}]
+		</categories>
 
 		<!-- ✅ CloudHub Properties -->
 		<mule.version>4.9.14</mule.version>
@@ -46,11 +50,10 @@
 		<cloudhub.workers>1</cloudhub.workers>
 		<cloudhub.worker.type>MICRO</cloudhub.worker.type>
 
-		<!-- Optional: if you want to keep these in settings.xml instead -->
-		<!--
-	<anypoint.platform.client_id>aec0b3117f7d4d4e8433a7d3d23bc80e</anypoint.platform.client_id>
-	<anypoint.platform.client_secret>9bc9D86a77b343b98a148C0313239aDA</anypoint.platform.client_secret>
-	-->
+
+		<anypoint.platform.client_id>aec0b3117f7d4d4e8433a7d3d23bc80e</anypoint.platform.client_id>
+		<anypoint.platform.client_secret>9bc9D86a77b343b98a148C0313239aDA</anypoint.platform.client_secret>
+
 	</properties>
 
 	<distributionManagement>
@@ -100,14 +103,8 @@
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<!-- ✅ MCP Connector for Agent Broker - Commented out until available -->
-		<!--
-		<dependency>
-			<groupId>com.mulesoft.connectors</groupId>
-			<artifactId>mule-mcp-connector</artifactId>
-			<version>1.0.0</version>
-			<classifier>mule-plugin</classifier>
-		</dependency>
-		-->
+		<!-- <dependency> <groupId>com.mulesoft.connectors</groupId> <artifactId>mule-mcp-connector</artifactId> 
+			<version>1.0.0</version> <classifier>mule-plugin</classifier> </dependency> -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
@@ -213,18 +210,9 @@
 				</configuration>
 				<executions>
 					<!-- ✅ DISABLED: Pre-deploy (Causing connectivity issues) -->
-					<!--
-					<execution>
-						<id>pre-deploy</id>
-						<phase>generate-resources</phase>
-						<goals>
-							<goal>exchange-pre-deploy</goal>
-						</goals>
-						<configuration>
-							<skip>${exchange.skip}</skip>
-						</configuration>
-					</execution>
-					-->
+					<!-- <execution> <id>pre-deploy</id> <phase>generate-resources</phase> 
+						<goals> <goal>exchange-pre-deploy</goal> </goals> <configuration> <skip>${exchange.skip}</skip> 
+						</configuration> </execution> -->
 					<!-- ✅ Main Deploy: Only during deploy phase -->
 					<execution>
 						<id>deploy</id>
