@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.mulesoft.training</groupId>
+    <groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
     <artifactId>employee-onboarding-parent</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
@@ -12,83 +12,119 @@
     <name>Employee Onboarding Parent POM</name>
     <description>Parent POM for Employee Onboarding Agent Fabric MCP Servers</description>
 
+    <!-- ✅ FIXED: Define missing properties -->
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        
-        <!-- Mule Runtime Version -->
-        <mule.version>4.6.9</mule.version>
-        <mule.maven.plugin.version>4.3.0</mule.maven.plugin.version>
-        
-        <!-- MuleSoft Repository Configuration -->
-        <mule.maven.plugin.version>4.3.0</mule.maven.plugin.version>
-        <exchange.url>https://maven.anypoint.mulesoft.com/api/v1/maven</exchange.url>
-        <mule.ee.distribution.version>4.6.9</mule.ee.distribution.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <mule.version>4.9.6</mule.version>
+        <mule.maven.plugin.version>4.5.0</mule.maven.plugin.version>
+        <exchange.maven.plugin.version>0.0.28</exchange.maven.plugin.version>
+        <!-- ✅ CRITICAL: Define exchange.url -->
+        <exchange.url>https://maven.anypoint.mulesoft.com/api/v3/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</exchange.url>
+        <anypoint.organization.id>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</anypoint.organization.id>
     </properties>
 
+    <!-- ✅ Modules commented out - uncomment when folders exist -->
+    <modules>
+        <!-- 
+        <module>employee-onboarding-mcp-server</module>
+        <module>asset-allocation-mcp-server</module>
+        <module>email-notification-mcp-server</module>
+        <module>employee-onboarding-agent-broker</module>
+        -->
+    </modules>
+
+    <!-- ✅ FIXED: Correct Mule BOM -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.mule.runtime</groupId>
+                <artifactId>mule-bom-parent</artifactId>
+                <version>${mule.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-clean-plugin</artifactId>
-                <version>3.2.0</version>
-            </plugin>
-            <plugin>
-                <groupId>org.mule.tools.maven</groupId>
-                <artifactId>exchange-maven-plugin</artifactId>
-                <version>0.0.28</version>
-                <inherited>false</inherited>
-                <executions>
-                    <execution>
-                        <id>publish-to-exchange</id>
-                        <phase>deploy</phase>
-                        <goals>
-                            <goal>exchange-deploy</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <organizationId>${anypoint.organization.id}</organizationId>
-                </configuration>
-            </plugin>
-        </plugins>
+        <pluginManagement>
+            <plugins>
+                <!-- ✅ Mule Maven Plugin for CloudHub Deploy -->
+                <plugin>
+                    <groupId>org.mule.tools.maven</groupId>
+                    <artifactId>mule-maven-plugin</artifactId>
+                    <version>${mule.maven.plugin.version}</version>
+                    <extensions>true</extensions>
+                </plugin>
+                
+                <!-- ✅ Exchange Plugin -->
+                <plugin>
+                    <groupId>org.mule.tools.maven</groupId>
+                    <artifactId>exchange-maven-plugin</artifactId>
+                    <version>${exchange.maven.plugin.version}</version>
+                </plugin>
+                
+                <!-- ✅ Maven Compiler -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.11.0</version>
+                    <configuration>
+                        <source>17</source>
+                        <target>17</target>
+                    </configuration>
+                </plugin>
+
+                <!-- ✅ Maven Clean -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>3.2.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 
     <distributionManagement>
         <repository>
-            <id>exchange-server</id>
-            <name>MuleSoft Exchange Environment</name>
+            <id>anypoint-exchange</id>
+            <name>MuleSoft Exchange</name>
             <url>${exchange.url}</url>
             <layout>default</layout>
         </repository>
     </distributionManagement>
 
     <repositories>
+        <!-- ✅ FIXED: Matching IDs -->
         <repository>
-            <id>anypoint-exchange-v3</id>
-            <name>Anypoint Exchange V3</name>
-            <url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
-            <layout>default</layout>
+            <id>anypoint-exchange</id>
+            <name>Anypoint Exchange</name>
+            <url>${exchange.url}</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
         </repository>
         <repository>
             <id>mulesoft-releases</id>
-            <name>MuleSoft Releases Repository</name>
+            <name>MuleSoft Releases</name>
             <url>https://repository.mulesoft.org/releases/</url>
-            <layout>default</layout>
+        </repository>
+        <repository>
+            <id>mulesoft-public</id>
+            <name>MuleSoft Public</name>
+            <url>https://repository.mulesoft.org/nexus/content/repositories/public/</url>
         </repository>
     </repositories>
 
     <pluginRepositories>
         <pluginRepository>
             <id>mulesoft-releases</id>
-            <name>MuleSoft Releases Repository</name>
-            <layout>default</layout>
             <url>https://repository.mulesoft.org/releases/</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
+        </pluginRepository>
+        <pluginRepository>
+            <id>mulesoft-public</id>
+            <url>https://repository.mulesoft.org/nexus/content/repositories/public/</url>
         </pluginRepository>
     </pluginRepositories>
 
