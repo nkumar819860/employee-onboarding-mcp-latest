@@ -1348,10 +1348,38 @@ output application/json
 		<logger level="INFO" message="PostgreSQL tables created successfully"/>
 	</flow>
 
-	<!-- Create H2 Tables -->
-	<flow name="create-h2-tables" doc:name="Create H2 Tables">
-		<db:execute-script config-ref="H2_Database_Config" file="init-h2.sql" />
-		<logger level="INFO" message="H2 tables created successfully"/>
+	<!-- Create H2 Tables using Script-Based Approach -->
+	<flow name="create-h2-tables" doc:name="Create H2 Tables via Script">
+		<logger level="INFO" message="Initializing H2 database using script-based approach..."/>
+		
+		<try doc:name="Execute H2 Initialization Script">
+			<db:execute-script config-ref="H2_Database_Config" file="init-script.sql" />
+			<logger level="INFO" message="✅ H2 database initialization script executed successfully"/>
+			
+			<!-- Verify script execution with summary query -->
+			<db:select config-ref="H2_Database_Config" doc:name="Verify Script Execution">
+				<db:sql><![CDATA[
+					SELECT 
+						'Script Execution Summary' as status,
+						(SELECT COUNT(*) FROM departments WHERE name != '_SCRIPT_INIT_COMPLETE_') as departments_count,
+						(SELECT COUNT(*) FROM employees) as employees_count,  
+						(SELECT COUNT(*) FROM asset_categories) as categories_count,
+						(SELECT COUNT(*) FROM assets) as assets_count,
+						(SELECT COUNT(*) FROM asset_allocations) as allocations_count,
+						(SELECT COUNT(*) FROM assets WHERE status = 'AVAILABLE') as available_assets,
+						(SELECT COUNT(*) FROM assets WHERE status = 'ALLOCATED') as allocated_assets,
+						CURRENT_TIMESTAMP as verified_at
+				]]></db:sql>
+			</db:select>
+			
+			<logger level="INFO" message="📊 Database initialization summary: #[payload[0]]"/>
+			
+			<error-handler>
+				<on-error-propagate type="ANY">
+					<logger level="ERROR" message="❌ H2 script execution failed: #[error.description]"/>
+				</on-error-propagate>
+			</error-handler>
+		</try>
 	</flow>
 
 	<!-- ========================================================================================= -->

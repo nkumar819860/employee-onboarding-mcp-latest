@@ -844,74 +844,35 @@ output application/json
 	</flow>
 
 	<!-- ========================================================================================= -->
-	<!-- DATABASE INITIALIZATION & HEALTH MANAGEMENT - PRODUCTION READY -->
+	<!-- DATABASE INITIALIZATION - NOW HANDLED BY H2 POST-SCRIPT -->
 	<!-- ========================================================================================= -->
 
-	<flow name="database-initialization" initialState="started" doc:name="Smart Database Initialization">
-		<scheduler doc:name="Database Init Scheduler">
+	<flow name="database-verification" initialState="started" doc:name="Database Schema Verification">
+		<scheduler doc:name="Database Verification Scheduler">
 			<scheduling-strategy>
-				<fixed-frequency frequency="300" startDelay="5" timeUnit="SECONDS"/>
+				<fixed-frequency frequency="300" startDelay="10" timeUnit="SECONDS"/>
 			</scheduling-strategy>
 		</scheduler>
 		
-		<choice doc:name="Database Initialization Enabled?">
+		<choice doc:name="Database Verification Enabled?">
 			<when expression="${db.initialization.enabled}">
-				<flow-ref name="smart-database-setup" doc:name="Initialize Database"/>
+				<logger level="INFO" message="Verifying database schema initialization via H2 post-script"/>
+				<try doc:name="Verify Schema">
+					<db:select config-ref="H2_Database_Config">
+						<db:sql>SELECT COUNT(*) as table_count FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'PUBLIC'</db:sql>
+					</db:select>
+					<logger level="INFO" message="Database schema verification successful - Tables found: #[payload[0].table_count]"/>
+					<error-handler>
+						<on-error-continue type="ANY">
+							<logger level="WARN" message="Database schema verification failed - tables may not be initialized: #[error.description]"/>
+						</on-error-continue>
+					</error-handler>
+				</try>
 			</when>
 			<otherwise>
-				<logger level="DEBUG" message="Database initialization disabled via configuration"/>
+				<logger level="DEBUG" message="Database schema verification disabled via configuration"/>
 			</otherwise>
 		</choice>
-		
-		<!-- Run only once then disable -->
-		<set-variable variableName="initComplete" value="true"/>
-	</flow>
-
-	<!-- Smart Database Setup with Fallback Strategy -->
-	<flow name="smart-database-setup" doc:name="Smart Database Setup">
-		<logger level="INFO" message="Starting intelligent database initialization - Strategy: ${db.strategy}"/>
-		
-		<try doc:name="Primary Database Setup">
-			<choice doc:name="Database Strategy Selection">
-				<when expression='#["${db.strategy}" == "postgresql"]'>
-					<flow-ref name="setup-postgresql-database"/>
-					<set-variable variableName="activeDatabase" value="postgresql"/>
-				</when>
-				<when expression='#["${db.strategy}" == "h2"]'>
-					<flow-ref name="setup-h2-database"/>
-					<set-variable variableName="activeDatabase" value="h2"/>
-				</when>
-				<otherwise>
-					<!-- Auto-detection: Try PostgreSQL first -->
-					<flow-ref name="detect-and-setup-database"/>
-				</otherwise>
-			</choice>
-			
-			<logger level="INFO" message="Database initialization completed successfully with: #[vars.activeDatabase]"/>
-			
-			<error-handler>
-				<on-error-continue type="ANY">
-					<logger level="ERROR" message="All database initialization failed - switching to mock mode: #[error.description]"/>
-					<set-variable variableName="activeDatabase" value="mock"/>
-				</on-error-continue>
-			</error-handler>
-		</try>
-	</flow>
-
-	<!-- Auto-Detection Flow (moved out to avoid nested error handlers) -->
-	<flow name="detect-and-setup-database" doc:name="Detect and Setup Database">
-		<try doc:name="Try PostgreSQL First">
-			<flow-ref name="setup-postgresql-database"/>
-			<set-variable variableName="activeDatabase" value="postgresql"/>
-			<logger level="INFO" message="Auto-detection successful: Using PostgreSQL"/>
-			<error-handler>
-				<on-error-continue type="ANY">
-					<logger level="WARN" message="PostgreSQL unavailable, falling back to H2: #[error.description]"/>
-					<flow-ref name="setup-h2-database"/>
-					<set-variable variableName="activeDatabase" value="h2"/>
-				</on-error-continue>
-			</error-handler>
-		</try>
 	</flow>
 
 	<!-- List Employees Fallback Database Flow -->

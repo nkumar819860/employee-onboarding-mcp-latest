@@ -118,10 +118,10 @@ output application/json
 		</db:generic-connection>
 	</db:config>
 
-	<!-- H2 Configuration with Connection Pooling -->
-	<db:config name="H2_Database_Config" doc:name="H2 Fallback Config">
+	<!-- H2 Configuration with Connection Pooling and Script Initialization -->
+	<db:config name="H2_Database_Config" doc:name="H2 Database Config with Scripts">
 		<db:generic-connection 
-			url="${db.h2.url}" 
+			url="${db.h2.url};INIT=RUNSCRIPT FROM 'classpath:init-h2.sql'" 
 			driverClassName="${db.h2.driverClassName}" 
 			user="${db.h2.username}" 
 			password="${db.h2.password}">
@@ -129,7 +129,13 @@ output application/json
 				maxPoolSize="${db.h2.maxPoolSize}" 
 				minPoolSize="${db.h2.minPoolSize}" 
 				acquireIncrement="1" 
-				preparedStatementCacheSize="5"/>
+				preparedStatementCacheSize="10"/>
+			<db:column-types>
+				<db:column-type typeName="TIMESTAMP" id="93" className="java.sql.Timestamp"/>
+				<db:column-type typeName="DATE" id="91" className="java.sql.Date"/>
+				<db:column-type typeName="VARCHAR" id="12" className="java.lang.String"/>
+				<db:column-type typeName="DECIMAL" id="3" className="java.math.BigDecimal"/>
+			</db:column-types>
 		</db:generic-connection>
 	</db:config>
 
