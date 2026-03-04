@@ -10,7 +10,7 @@ WORKDIR /opt/mule
 RUN chmod +x /opt/mule/bin/mule
 
 # Copy MCP JAR
-COPY target/employee-onboarding-mcp-*-*.jar /opt/mule/apps/
+COPY mcp-servers/employee-onboarding-mcp-server/target/employee-onboarding-mcp-server-*.jar /opt/mule/apps/
 
 # Optional: copy resources (if you want them in apps/classes)
 COPY mcp-servers/employee-onboarding-mcp-server/src/main/resources/ /opt/mule/apps/classes/

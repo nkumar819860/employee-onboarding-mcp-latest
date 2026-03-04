@@ -10,7 +10,7 @@ WORKDIR /opt/mule
 RUN chmod +x /opt/mule/bin/mule
 
 # Copy MCP JAR
-COPY mcp-servers/assets-allocation-mcp-server/target/assets-allocation-mcp-*-*.jar /opt/mule/apps/
+COPY mcp-servers/assets-allocation-mcp-server/target/assets-allocation-mcp-server-*-mule-application.jar /opt/mule/apps/
 COPY mcp-servers/assets-allocation-mcp-server/src/main/resources/ /opt/mule/apps/classes/
 
 
