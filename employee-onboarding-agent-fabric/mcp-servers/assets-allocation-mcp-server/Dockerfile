@@ -1,10 +1,20 @@
-FROM mandius/mule-rt-4.9.6:latest
+# ✅ Using local Mule EE 4.9.6, not mandius/mule-rt-4.9.6
+FROM eclipse-temurin:17-jre
+
+# Copy pre-extracted Mule EE 4.9.6 runtime from the same folder
+COPY mule-ee-4.9.6/ /opt/mule/
 
 WORKDIR /opt/mule
 
-COPY target/assets-allocation-mcp-*-*.jar /opt/mule/apps/
-COPY src/main/resources/ /opt/mule/apps/classes/
+# Ensure mule script is executable
+RUN chmod +x /opt/mule/bin/mule
 
+# Copy MCP JAR
+COPY mcp-servers/assets-allocation-mcp-server/target/assets-allocation-mcp-*-*.jar /opt/mule/apps/
+COPY mcp-servers/assets-allocation-mcp-server/src/main/resources/ /opt/mule/apps/classes/
+
+
+# Environment variables
 ENV http.host=0.0.0.0 \
     http.port=8082 \
     mcp.serverName=asset-mcp \

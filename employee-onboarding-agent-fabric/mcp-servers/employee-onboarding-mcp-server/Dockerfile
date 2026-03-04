@@ -1,9 +1,21 @@
-FROM mandius/mule-rt-4.9.6:latest
+# Use local Mule EE 4.9.6, not mandius/mule-rt-4.9.6
+FROM eclipse-temurin:17-jre
+
+# Copy pre-extracted Mule EE runtime from the same folder
+COPY mule-ee-4.9.6/ /opt/mule/
 
 WORKDIR /opt/mule
-COPY target/employee-onboarding-mcp-*-*.jar /opt/mule/apps/
-COPY src/main/resources/ /opt/mule/apps/classes/
 
+# Ensure mule script is executable
+RUN chmod +x /opt/mule/bin/mule
+
+# Copy MCP JAR
+COPY target/employee-onboarding-mcp-*-*.jar /opt/mule/apps/
+
+# Optional: copy resources (if you want them in apps/classes)
+COPY mcp-servers/employee-onboarding-mcp-server/src/main/resources/ /opt/mule/apps/classes/
+
+# Environment variables
 ENV http.host=0.0.0.0 \
     http.port=8081 \
     mcp.serverName=employee-mcp \

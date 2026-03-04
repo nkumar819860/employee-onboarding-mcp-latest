@@ -30,8 +30,8 @@ services:
   # Employee Onboarding MCP Server
   employee-onboarding-mcp-server:
     build:
-      context: ./mcp-servers/employee-onboarding-mcp-server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: mcp-servers/employee-onboarding-mcp-server/Dockerfile
     container_name: employee-onboarding-mcp-server
     ports:
       - "${EMPLOYEE_HTTP_PORT:-8081}:8081"
@@ -59,8 +59,8 @@ services:
   # Asset Allocation MCP Server
   assets-allocation-mcp-server:
     build:
-      context: ./mcp-servers/assets-allocation-mcp-server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: mcp-servers/assets-allocation-mcp-server/Dockerfile
     container_name: assets-allocation-mcp-server
     ports:
       - "${ASSET_HTTP_PORT:-8082}:8082"
@@ -88,8 +88,8 @@ services:
   # Notification MCP Server
   email-notification-mcp-server:
     build:
-      context: ./mcp-servers/email-notification-mcp-server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: mcp-servers/email-notification-mcp-server/Dockerfile
     container_name: email-notification-mcp-server
     ports:
       - "${NOTIFICATION_HTTP_PORT:-8083}:8083"
@@ -118,8 +118,8 @@ services:
   # Agent Broker MCP Server (Main Orchestrator)
   employee-onboarding-agent-broker:
     build:
-      context: ./mcp-servers/employee-onboarding-agent-broker
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: mcp-servers/employee-onboarding-agent-broker/Dockerfile
     container_name: employee-onboarding-agent-broker
     ports:
       - "8080:8080"

@@ -1,0 +1,30 @@
+Manifest-Version: 1.0
+Created-By: Maven JAR Plugin 3.4.2
+Build-Jdk-Spec: 17
+Specification-Title: API Gateway Contracts Service Implementation
+Specification-Version: 1.5
+Specification-Vendor: MuleSoft, Inc.
+Implementation-Title: API Gateway Contracts Service Implementation
+Implementation-Version: 1.5.6
+Implementation-Vendor: MuleSoft, Inc.
+Automatic-Module-Name: com.mulesoft.anypoint.gw.service.contracts
+Build-Date: 
+Build-Revision: 83066f0d
+Description: API Gateway Platform
+Dev-List-Email: mule-esb@mulesoft.com
+Git-branch: 1.5.6
+Git-commit-id: 83066f0dcbe6b651df204ae178609d78b0d3edea
+Git-commit-id-describe: 1.5.6-rc3-2-g83066f0
+Git-commit-time: 2025-05-30T20:16:35+0000
+Git-remote-origin-url: https://github.com/mulesoft-emu/api-gateway-contr
+ act-service.git
+Git-tags: 
+License: MSA v1.0 http://www.mulesoft.com/
+More-Info: For more information go to https://www.mulesoft.com/platform/
+ soa/mule-esb-enterprise
+Product-Url: https://www.mulesoft.com/platform/soa/mule-esb-enterprise
+Recommended-Jdks: [17,18),[21,22)
+Support: Get commercial support: http://www.mulesoft.com/support
+Supported-Jdks: [17,22)
+Vendor-Url: http://www.mulesoft.com
+

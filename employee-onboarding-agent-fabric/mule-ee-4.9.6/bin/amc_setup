@@ -1,0 +1,134 @@
+#!/bin/bash
+
+umask 0077
+
+# Get the fully qualified path to the script
+case $0 in
+    /*)
+        SCRIPT="$0"
+        ;;
+    *)
+        PWD=`pwd`
+        SCRIPT="$PWD/$0"
+        ;;
+esac
+
+# Compare the version number as String.
+compare_versions() {
+    local IFS='.'
+    local -a v1=($1)
+    local -a v2=($2)
+
+    for ((i = 0; i < ${#v1[@]}; i++)); do
+        ((10#${v1[i]:-0} != 10#${v2[i]:-0})) && { echo "$((10#${v1[i]:-0} - 10#${v2[i]:-0}))"; return; }
+    done
+
+    echo "0"
+}
+
+
+# Resolve the true real path without any sym links.
+CHANGED=true
+while [ "X$CHANGED" != "X" ]
+do
+    # Change spaces to ":" so the tokens can be parsed.
+    SAFESCRIPT=`echo $SCRIPT | sed -e 's; ;:;g'`
+    # Get the real path to this script, resolving any symbolic links
+    TOKENS=`echo $SAFESCRIPT | sed -e 's;/; ;g'`
+    REALPATH=
+    for C in $TOKENS; do
+        # Change any ":" in the token back to a space.
+        C=`echo $C | sed -e 's;:; ;g'`
+        REALPATH="$REALPATH/$C"
+        # If REALPATH is a sym link, resolve it.  Loop for nested links.
+        while [ -h "$REALPATH" ] ; do
+            LS="`ls -ld "$REALPATH"`"
+            LINK="`expr "$LS" : '.*-> \(.*\)$'`"
+            if expr "$LINK" : '/.*' > /dev/null; then
+                # LINK is absolute.
+                REALPATH="$LINK"
+            else
+                # LINK is relative.
+                REALPATH="`dirname "$REALPATH"`""/$LINK"
+            fi
+        done
+    done
+
+    if [ "$REALPATH" = "$SCRIPT" ]
+    then
+        CHANGED=""
+    else
+        SCRIPT="$REALPATH"
+    fi
+done
+
+# Save the startup directory
+STARTUP_DIR=`pwd`
+
+# Change the current directory to the location of the script
+cd "`dirname "$REALPATH"`"
+REALDIR=`pwd`
+
+# REALDIR points to bin now, strip off the bin part so
+# we get a the base directory
+BASE_DIR="`dirname "${REALDIR}"`"
+
+if [ ! -d "$BASE_DIR/tools" ]
+then
+    mkdir "$BASE_DIR/tools"
+fi
+
+if [ -f "$BASE_DIR/bin/agent-setup-2.7.4-amc-final.jar" ]
+then
+    mv "$BASE_DIR/bin/agent-setup-2.7.4-amc-final.jar" "$BASE_DIR/tools"
+fi
+
+JAVA_VERSION=$("java" -version 2>&1 | awk -F '"' '/version/ {print $2}')
+FIPS_ENABLED=0
+for i in "$@"
+do
+  if [[ "$i" == "--fips" ]]; then
+      FIPS_ENABLED=1
+      break;
+  fi
+done
+
+FIPS_CMD_ARG=""
+
+COMPARE_JAVA11=$(compare_versions "$JAVA_VERSION" "11")
+COMPARE_JAVA17=$(compare_versions "$JAVA_VERSION" "17")
+
+if [[ $FIPS_ENABLED -eq 0 ]]; then
+    # Check if fips is enabled in wrapper.conf
+
+    if [[ ! -f "$BASE_DIR/conf/wrapper.conf" ]]; then
+        echo "Unable to find wrapper.conf file in $BASE_DIR/conf directory"
+        exit 1
+    fi
+
+    FIPS_PROPERTY_PATTERN="^wrapper\.java\.additional\.[0-9]*=-Dmule.security.model=fips140-2"
+    FIPS_PROPERTY_LINE_EXISTS=$(grep -E "$FIPS_PROPERTY_PATTERN" "$BASE_DIR/conf/wrapper.conf")
+
+    if [[ $FIPS_PROPERTY_LINE_EXISTS ]]; then
+        FIPS_ENABLED=1
+        FIPS_CMD_ARG="--fips"
+    fi
+fi
+
+if [[ "$COMPARE_JAVA11" -gt 0 && $FIPS_ENABLED -eq 1 ]]; then
+    BC_FIPS_PATTERN="$BASE_DIR/lib/boot/bc-fips*"
+    BC_FIPS_FILES=( $BC_FIPS_PATTERN )
+
+    BCPKIX_FIPS_PATTERN="$BASE_DIR/lib/boot/bcpkix-fips*"
+    BCPKIX_FIPS_FILES=( $BCPKIX_FIPS_PATTERN )
+
+    BCTLS_FIPS_PATTERN="$BASE_DIR/lib/boot/bctls-fips*"
+    BCTLS_FIPS_FILES=( $BCTLS_FIPS_PATTERN )
+
+    BC="${BC_FIPS_FILES[0]}:${BCPKIX_FIPS_FILES[0]}:${BCTLS_FIPS_FILES[0]}:"
+    java -DagentVersion=2.7.4 -cp "$BC$BASE_DIR/tools/agent-setup-2.7.4-amc-final.jar" com.mulesoft.agent.installer.AgentInstaller $* $FIPS_CMD_ARG
+elif [[ "$COMPARE_JAVA17" -lt 0 ]]; then
+    java -DagentVersion=2.7.4 -jar "$BASE_DIR/tools/agent-setup-2.7.4-amc-final.jar" $* $FIPS_CMD_ARG
+else
+    java -DagentVersion=2.7.4 --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED -jar "$BASE_DIR/tools/agent-setup-2.7.4-amc-final.jar" $* $FIPS_CMD_ARG
+fi
