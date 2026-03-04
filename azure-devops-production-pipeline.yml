@@ -1,0 +1,1015 @@
+# PRODUCTION-GRADE AZURE DEVOPS PIPELINE
+# Angular Frontend + MuleSoft Backend Deployment to VM with BeyondTrust PAM & MFA
+# 
+# FEATURES:
+# - Multi-environment support (Dev/Staging/Prod)
+# - BeyondTrust privileged access management
+# - MFA authentication workflow
+# - Angular build with optimization
+# - MuleSoft backend deployment
+# - Tomcat server deployment
+# - Zero-downtime deployment strategy
+# - Comprehensive security controls
+# - Automated testing and validation
+# - Rollback capabilities
+# - Audit logging and compliance
+
+trigger:
+  branches:
+    include:
+    - main
+    - develop
+    - release/*
+  paths:
+    exclude:
+    - docs/*
+    - README.md
+    - '**/*.md'
+
+pr:
+  branches:
+    include:
+    - main
+    - develop
+  paths:
+    exclude:
+    - docs/*
+    - README.md
+
+# Build agent pool configuration
+pool:
+  vmImage: 'ubuntu-latest'
+
+# PIPELINE VARIABLES - CONFIGURE THESE IN AZURE DEVOPS LIBRARY
+variables:
+  # Build Configuration
+  - name: nodeVersion
+    value: '20.x'
+  - name: angularCliVersion
+    value: '18.x'
+  - name: mavenVersion
+    value: '3.9.x'
+  - name: javaVersion
+    value: '17'
+  
+  # Application Configuration
+  - name: angularAppName
+    value: 'employee-onboarding-app'
+  - name: appContext
+    value: 'onboarding'
+  - name: muleSoftAppName
+    value: 'employee-onboarding-backend'
+  
+  # Deployment Configuration
+  - name: deploymentStrategy
+    value: 'rolling' # rolling, blue-green, canary
+  - name: healthCheckRetries
+    value: 12
+  - name: healthCheckInterval
+    value: 10
+  
+  # Environment-specific variable groups (configure in Azure DevOps)
+  - group: 'beyondtrust-config'      # BeyondTrust API configuration
+  - group: 'vm-infrastructure'       # VM and network configuration  
+  - group: 'mulesoft-config'         # MuleSoft deployment configuration
+  - group: 'security-config'         # Security and MFA configuration
+
+# PIPELINE STAGES
+stages:
+
+#############################################################################
+# STAGE 1: BUILD & TEST ANGULAR APPLICATION
+#############################################################################
+- stage: Build_Angular
+  displayName: '🔨 Build & Test Angular App'
+  jobs:
+  - job: AngularBuildJob
+    displayName: 'Angular Build & Test'
+    steps:
+    
+    # Install Node.js
+    - task: NodeTool@0
+      displayName: 'Install Node.js $(nodeVersion)'
+      inputs:
+        versionSpec: $(nodeVersion)
+
+    # Cache node_modules for faster builds
+    - task: Cache@2
+      displayName: 'Cache node_modules'
+      inputs:
+        key: '"angular" | "$(Agent.OS)" | package-lock.json'
+        path: 'frontend/node_modules'
+        cacheHitVar: 'NODE_MODULES_RESTORED'
+
+    # Install dependencies
+    - script: |
+        cd frontend
+        npm install -g @angular/cli@$(angularCliVersion)
+        npm ci
+      displayName: 'Install Angular CLI & Dependencies'
+
+    # Run linting
+    - script: |
+        cd frontend
+        npm run lint -- --max-warnings=0
+      displayName: 'Run Angular Linting'
+
+    # Run unit tests
+    - script: |
+        cd frontend
+        npm run test:ci -- --watch=false --browsers=ChromeHeadlessCI --code-coverage
+      displayName: 'Run Unit Tests'
+
+    # Publish test results
+    - task: PublishTestResults@2
+      displayName: 'Publish Test Results'
+      condition: always()
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: 'frontend/test-results.xml'
+        mergeTestResults: true
+
+    # Publish code coverage
+    - task: PublishCodeCoverageResults@2
+      displayName: 'Publish Code Coverage'
+      condition: always()
+      inputs:
+        summaryFileLocation: 'frontend/coverage/lcov.info'
+        pathToSources: 'frontend/src'
+
+    # Build for production
+    - script: |
+        cd frontend
+        npm run build:prod -- --base-href /$(appContext)/ --output-hashing=all
+      displayName: 'Build Angular App for Production'
+
+    # Archive Angular application
+    - task: ArchiveFiles@2
+      displayName: 'Archive Angular App'
+      inputs:
+        rootFolderOrFile: 'frontend/dist/$(angularAppName)'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/angular-app-$(Build.BuildId).zip'
+
+    # Publish Angular artifact
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Angular Artifact'
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)/angular-app-$(Build.BuildId).zip'
+        artifactName: 'angular-app'
+
+#############################################################################
+# STAGE 2: BUILD & TEST MULESOFT BACKEND
+#############################################################################
+- stage: Build_MuleSoft
+  displayName: '🔧 Build & Test MuleSoft Backend'
+  dependsOn: [] # Run in parallel with Angular build
+  jobs:
+  - job: MuleSoftBuildJob
+    displayName: 'MuleSoft Build & Test'
+    steps:
+    
+    # Install Java
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java $(javaVersion)'
+      inputs:
+        versionSpec: $(javaVersion)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    # Install Maven
+    - task: Maven@4
+      displayName: 'Install Maven $(mavenVersion)'
+      inputs:
+        mavenVersionOption: 'Path'
+        mavenPath: '/usr/share/maven'
+
+    # Cache Maven dependencies
+    - task: Cache@2
+      displayName: 'Cache Maven Dependencies'
+      inputs:
+        key: '"maven" | "$(Agent.OS)" | backend/**/pom.xml'
+        path: '$(Pipeline.Workspace)/.m2/repository'
+
+    # Run MUnit tests
+    - task: Maven@4
+      displayName: 'Run MUnit Tests'
+      inputs:
+        mavenPomFile: 'backend/pom.xml'
+        goals: 'clean test'
+        options: '-Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository'
+
+    # Publish MUnit test results
+    - task: PublishTestResults@2
+      displayName: 'Publish MUnit Test Results'
+      condition: always()
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: 'backend/target/surefire-reports/*.xml'
+
+    # Build MuleSoft application
+    - task: Maven@4
+      displayName: 'Build MuleSoft Application'
+      inputs:
+        mavenPomFile: 'backend/pom.xml'
+        goals: 'clean package'
+        options: '-Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository -DskipMunitTests'
+
+    # Publish MuleSoft artifact
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish MuleSoft Artifact'
+      inputs:
+        pathToPublish: 'backend/target'
+        artifactName: 'mulesoft-app'
+
+#############################################################################
+# STAGE 3: SECURITY SCANNING & COMPLIANCE
+#############################################################################
+- stage: Security_Scanning
+  displayName: '🔒 Security Scanning & Compliance'
+  dependsOn: 
+  - Build_Angular
+  - Build_MuleSoft
+  condition: succeeded()
+  jobs:
+  - job: SecurityScanJob
+    displayName: 'Security Scanning'
+    steps:
+
+    # OWASP Dependency Check for Angular
+    - task: Npm@1
+      displayName: 'Angular Security Audit'
+      inputs:
+        command: 'custom'
+        workingDir: 'frontend'
+        customCommand: 'audit --audit-level moderate'
+
+    # OWASP Dependency Check for MuleSoft
+    - task: Maven@4
+      displayName: 'MuleSoft OWASP Dependency Check'
+      inputs:
+        mavenPomFile: 'backend/pom.xml'
+        goals: 'org.owasp:dependency-check-maven:check'
+        options: '-Dformat=XML'
+
+    # SonarCloud analysis (if configured)
+    - task: SonarCloudPrepare@2
+      displayName: 'Prepare SonarCloud Analysis'
+      condition: and(succeeded(), ne(variables['sonarCloudServiceConnection'], ''))
+      inputs:
+        SonarCloud: '$(sonarCloudServiceConnection)'
+        organization: '$(sonarCloudOrganization)'
+        scannerMode: 'CLI'
+
+#############################################################################
+# STAGE 4: BEYONDTRUST AUTHENTICATION & MFA
+#############################################################################
+- stage: BeyondTrust_Authentication
+  displayName: '🔐 BeyondTrust PAM Authentication & MFA'
+  dependsOn: Security_Scanning
+  condition: succeeded()
+  variables:
+  - group: beyondtrust-secrets # Secure variable group
+  jobs:
+  - job: AuthenticationJob
+    displayName: 'PAM Authentication'
+    steps:
+
+    # MFA Challenge Initiation
+    - task: PowerShell@2
+      displayName: 'Initiate MFA Challenge'
+      name: initiateMFA
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "##[section]Initiating MFA Challenge for deployment approval"
+          
+          $headers = @{
+            'Authorization' = "Bearer $(btApiKey)"
+            'Content-Type' = 'application/json'
+          }
+          
+          $mfaBody = @{
+            username = "$(deploymentUser)"
+            reason = "Production deployment approval for Build #$(Build.BuildId)"
+          } | ConvertTo-Json
+
+          try {
+            $mfaResponse = Invoke-RestMethod -Uri "$(beyondtrustApiUrl)/auth/mfa/challenge" -Method POST -Headers $headers -Body $mfaBody
+            Write-Host "✅ MFA challenge sent. Challenge ID: $($mfaResponse.challengeId)"
+            Write-Host "##vso[task.setvariable variable=mfaChallengeId]$($mfaResponse.challengeId)"
+          }
+          catch {
+            Write-Error "❌ MFA challenge failed: $_"
+            exit 1
+          }
+
+    # Manual MFA Approval (Manual Validation task)
+    - task: ManualValidation@1
+      displayName: '📱 MFA Approval Required'
+      inputs:
+        notifyUsers: '$(deploymentApprovers)'
+        instructions: |
+          🔐 **PRODUCTION DEPLOYMENT APPROVAL REQUIRED**
+          
+          **Build**: $(Build.BuildId)
+          **Branch**: $(Build.SourceBranch)
+          **Commit**: $(Build.SourceVersion)
+          **Environment**: $(deploymentEnvironment)
+          **MFA Challenge ID**: $(mfaChallengeId)
+          
+          Please complete MFA authentication in BeyondTrust and approve this deployment.
+          
+          ⚠️ This will deploy to production infrastructure.
+
+    # Validate MFA and Request Privileged Session
+    - task: PowerShell@2
+      displayName: 'Validate MFA & Request PAM Session'
+      name: requestPAMSession
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "##[section]Validating MFA and requesting privileged session"
+          
+          $headers = @{
+            'Authorization' = "Bearer $(btApiKey)"
+            'Content-Type' = 'application/json'
+          }
+          
+          # Validate MFA completion
+          $mfaValidation = Invoke-RestMethod -Uri "$(beyondtrustApiUrl)/auth/mfa/status/$(mfaChallengeId)" -Method GET -Headers $headers
+          
+          if ($mfaValidation.status -ne "completed") {
+            Write-Error "❌ MFA not completed. Status: $($mfaValidation.status)"
+            exit 1
+          }
+          
+          Write-Host "✅ MFA validated successfully"
+          
+          # Request privileged session
+          $sessionBody = @{
+            platform = "Linux/Unix"
+            hostname = "$(vmHostname)"
+            accountName = "$(serviceAccount)"
+            reason = "Production deployment - Angular + MuleSoft - Build #$(Build.BuildId)"
+            durationSeconds = 3600  # 1 hour session
+            mfaChallengeId = "$(mfaChallengeId)"
+          } | ConvertTo-Json -Depth 3
+
+          try {
+            $sessionResponse = Invoke-RestMethod -Uri "$(beyondtrustApiUrl)/PasswordSafe/api/v3/ManagedAccounts/$(managedAccountId)/Checkouts" -Method POST -Headers $headers -Body $sessionBody
+            
+            Write-Host "✅ BeyondTrust privileged session granted for 1 hour"
+            Write-Host "Session ID: $($sessionResponse.SessionID)"
+            
+            # Set secure variables for deployment stages
+            Write-Host "##vso[task.setvariable variable=btPassword;issecret=true]$($sessionResponse.Password)"
+            Write-Host "##vso[task.setvariable variable=btSessionId]$($sessionResponse.SessionID)"
+            Write-Host "##vso[task.setvariable variable=sessionExpiryTime]$($sessionResponse.ExpiryTime)"
+            
+            # Log audit trail
+            $auditLog = @{
+              timestamp = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+              buildId = "$(Build.BuildId)"
+              sessionId = $sessionResponse.SessionID
+              user = "$(deploymentUser)"
+              action = "PAM_SESSION_GRANTED"
+              environment = "$(deploymentEnvironment)"
+            } | ConvertTo-Json
+            
+            Write-Host "##[section]Audit Log: $auditLog"
+            
+          }
+          catch {
+            Write-Error "❌ BeyondTrust session request failed: $_"
+            exit 1
+          }
+
+#############################################################################
+# STAGE 5: DEPLOY TO VM - MULESOFT BACKEND
+#############################################################################
+- stage: Deploy_MuleSoft_Backend
+  displayName: '🚀 Deploy MuleSoft Backend to VM'
+  dependsOn: BeyondTrust_Authentication
+  condition: and(succeeded(), ne(variables['btPassword'], ''))
+  jobs:
+  - deployment: DeployMuleSoftBackend
+    displayName: 'MuleSoft Backend Deployment'
+    environment: 'production-vm'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          # Download MuleSoft artifact
+          - download: current
+            artifact: 'mulesoft-app'
+            displayName: 'Download MuleSoft Artifact'
+
+          # Pre-deployment health check
+          - task: Bash@3
+            displayName: '🏥 Pre-deployment Health Check'
+            inputs:
+              targetType: 'inline'
+              script: |
+                echo "Checking system readiness for MuleSoft deployment..."
+                
+                # Check disk space
+                df -h
+                
+                # Check memory
+                free -h
+                
+                # Check if ports are available
+                netstat -tuln | grep -E ':8081|:8082|:8083'
+
+          # Copy MuleSoft application to VM
+          - task: CopyFilesOverSSH@0
+            displayName: '📁 Copy MuleSoft App to VM'
+            inputs:
+              sshUsername: $(serviceAccount)
+              sshPassword: $(btPassword)
+              sourceFolder: '$(Pipeline.Workspace)/mulesoft-app/'
+              targetFolder: '/tmp/mulesoft-deploy/$(Build.BuildId)/'
+              host: $(vmPrivateIp)
+              port: $(sshPort)
+
+          # Deploy MuleSoft application
+          - task: SSH@0
+            displayName: '🔄 Deploy MuleSoft Backend'
+            inputs:
+              sshUsername: $(serviceAccount)
+              sshPassword: $(btPassword)
+              host: $(vmPrivateIp)
+              port: $(sshPort)
+              scriptType: 'inline'
+              inline: |
+                set -e
+                
+                BUILD_ID="$(Build.BuildId)"
+                MULE_HOME="/opt/mule"
+                APP_NAME="$(muleSoftAppName)"
+                DEPLOY_DIR="/tmp/mulesoft-deploy/$BUILD_ID"
+                APPS_DIR="$MULE_HOME/apps"
+                BACKUP_DIR="/opt/backups/mulesoft/$(date +%Y%m%d_%H%M%S)"
+                
+                echo "🔧 Starting MuleSoft deployment..."
+                
+                # Create backup directory
+                sudo mkdir -p "$BACKUP_DIR"
+                
+                # Stop MuleSoft runtime
+                echo "⏹️ Stopping MuleSoft runtime..."
+                sudo systemctl stop mule || true
+                
+                # Backup existing application
+                if [ -f "$APPS_DIR/$APP_NAME.jar" ]; then
+                  echo "💾 Backing up existing application..."
+                  sudo cp "$APPS_DIR/$APP_NAME.jar" "$BACKUP_DIR/"
+                fi
+                
+                # Deploy new version
+                echo "📦 Deploying new MuleSoft application..."
+                sudo cp "$DEPLOY_DIR"/*.jar "$APPS_DIR/$APP_NAME.jar"
+                sudo chown mule:mule "$APPS_DIR/$APP_NAME.jar"
+                sudo chmod 644 "$APPS_DIR/$APP_NAME.jar"
+                
+                # Update configuration if provided
+                if [ -f "$DEPLOY_DIR/config.properties" ]; then
+                  sudo cp "$DEPLOY_DIR/config.properties" "$MULE_HOME/conf/"
+                  sudo chown mule:mule "$MULE_HOME/conf/config.properties"
+                fi
+                
+                # Start MuleSoft runtime
+                echo "▶️ Starting MuleSoft runtime..."
+                sudo systemctl start mule
+                sudo systemctl enable mule
+                
+                # Wait for startup
+                echo "⏳ Waiting for MuleSoft startup..."
+                sleep 30
+                
+                # Check service status
+                sudo systemctl status mule --no-pager -l
+                
+                echo "✅ MuleSoft deployment completed"
+
+          # MuleSoft health check
+          - task: Bash@3
+            displayName: '🏥 MuleSoft Health Check'
+            inputs:
+              targetType: 'inline'
+              script: |
+                echo "🔍 Running MuleSoft health checks..."
+                
+                MULESOFT_URL="http://$(vmPrivateIp):8081/api/health"
+                MAX_RETRIES=$(healthCheckRetries)
+                RETRY_INTERVAL=$(healthCheckInterval)
+                
+                for i in $(seq 1 $MAX_RETRIES); do
+                  echo "Health check attempt $i/$MAX_RETRIES..."
+                  
+                  if curl -f -m 10 "$MULESOFT_URL" >/dev/null 2>&1; then
+                    echo "✅ MuleSoft backend is healthy"
+                    
+                    # Additional API endpoint checks
+                    curl -f "$MULESOFT_URL" | jq '.'
+                    
+                    exit 0
+                  fi
+                  
+                  if [ $i -lt $MAX_RETRIES ]; then
+                    echo "⏳ Retrying in ${RETRY_INTERVAL}s..."
+                    sleep $RETRY_INTERVAL
+                  fi
+                done
+                
+                echo "❌ MuleSoft health check failed after $MAX_RETRIES attempts"
+                exit 1
+
+#############################################################################
+# STAGE 6: DEPLOY TO VM - ANGULAR FRONTEND  
+#############################################################################
+- stage: Deploy_Angular_Frontend
+  displayName: '🌐 Deploy Angular Frontend to Tomcat'
+  dependsOn: Deploy_MuleSoft_Backend
+  condition: succeeded()
+  jobs:
+  - deployment: DeployAngularFrontend
+    displayName: 'Angular Frontend Deployment'
+    environment: 'production-vm'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          # Download Angular artifact
+          - download: current
+            artifact: 'angular-app'
+            displayName: 'Download Angular Artifact'
+
+          # Copy Angular application to VM
+          - task: CopyFilesOverSSH@0
+            displayName: '📁 Copy Angular App to VM'
+            inputs:
+              sshUsername: $(serviceAccount)
+              sshPassword: $(btPassword)
+              sourceFolder: '$(Pipeline.Workspace)/angular-app/'
+              targetFolder: '/tmp/tomcat-deploy/$(Build.BuildId)/'
+              host: $(vmPrivateIp)
+              port: $(sshPort)
+
+          # Zero-downtime Tomcat deployment
+          - task: SSH@0
+            displayName: '🔄 Zero-downtime Tomcat Deployment'
+            inputs:
+              sshUsername: $(serviceAccount)
+              sshPassword: $(btPassword)
+              host: $(vmPrivateIp)
+              port: $(sshPort)
+              scriptType: 'inline'
+              inline: |
+                set -e
+                
+                BUILD_ID="$(Build.BuildId)"
+                APP_CONTEXT="$(appContext)"
+                TOMCAT_WEBAPPS="/var/lib/tomcat9/webapps"
+                APP_PATH="$TOMCAT_WEBAPPS/$APP_CONTEXT"
+                TEMP_PATH="$TOMCAT_WEBAPPS/$APP_CONTEXT.new"
+                BACKUP_PATH="/opt/backups/tomcat/$(date +%Y%m%d_%H%M%S)_$APP_CONTEXT"
+                DEPLOY_ZIP="/tmp/tomcat-deploy/$BUILD_ID/angular-app-$BUILD_ID.zip"
+                
+                echo "🔧 Starting zero-downtime Tomcat deployment..."
+                
+                # Create backup directory
+                sudo mkdir -p "$(dirname $BACKUP_PATH)"
+                
+                # Prepare new version in temporary location
+                echo "📦 Preparing new version..."
+                sudo mkdir -p "$TEMP_PATH"
+                sudo unzip -q "$DEPLOY_ZIP" -d "$TEMP_PATH"
+                sudo chown -R tomcat:tomcat "$TEMP_PATH"
+                sudo chmod -R 755 "$TEMP_PATH"
+                
+                # Backup current version
+                if [ -d "$APP_PATH" ]; then
+                  echo "💾 Backing up current version..."
+                  sudo mv "$APP_PATH" "$BACKUP_PATH"
+                fi
+                
+                # Atomic swap
+                echo "🔄 Performing atomic deployment..."
+                sudo mv "$TEMP_PATH" "$APP_PATH"
+                
+                # Restart Tomcat gracefully
+                echo "♻️ Gracefully restarting Tomcat..."
+                sudo systemctl reload tomcat9 || sudo systemctl restart tomcat9
+                
+                # Wait for Tomcat startup
+                sleep 15
+                
+                # Verify Tomcat status
+                sudo systemctl status tomcat9 --no-pager -l
+                
+                echo "✅ Tomcat deployment completed successfully"
+
+          # Angular health check
+          - task: Bash@3
+            displayName: '🌐 Angular Frontend Health Check'
+            inputs:
+              targetType: 'inline'
+              script: |
+                echo "🔍 Running Angular frontend health checks..."
+                
+                APP_URL="http://$(vmPrivateIp):8080/$(appContext)/"
+                EXTERNAL_URL="http://$(vmPublicIp):8080/$(appContext)/"
+                MAX_RETRIES=$(healthCheckRetries)
+                RETRY_INTERVAL=$(healthCheckInterval)
+                
+                # Internal health check
+                for i in $(seq 1 $MAX_RETRIES); do
+                  echo "Internal health check attempt $i/$MAX_RETRIES..."
+                  
+                  if curl -f -m 10 "$APP_URL" >/dev/null 2>&1; then
+                    echo "✅ Angular app accessible internally"
+                    break
+                  fi
+                  
+                  if [ $i -lt $MAX_RETRIES ]; then
+                    echo "⏳ Retrying in ${RETRY_INTERVAL}s..."
+                    sleep $RETRY_INTERVAL
+                  else
+                    echo "❌ Internal health check failed"
+                    exit 1
+                  fi
+                done
+                
+                # External health check
+                for i in $(seq 1 $MAX_RETRIES); do
+                  echo "External health check attempt $i/$MAX_RETRIES..."
+                  
+                  if curl -f -m 10 "$EXTERNAL_URL" >/dev/null 2>&1; then
+                    echo "✅ Angular app accessible externally"
+                    
+                    # Check key application endpoints
+                    curl -f "$EXTERNAL_URL" | grep -q "Employee Onboarding" || {
+                      echo "⚠️ Warning: Application content check failed"
+                    }
+                    
+                    break
+                  fi
+                  
+                  if [ $i -lt $MAX_RETRIES ]; then
+                    echo "⏳ Retrying in ${RETRY_INTERVAL}s..."
+                    sleep $RETRY_INTERVAL
+                  else
+                    echo "❌ External health check failed"
+                    exit 1
+                  fi
+                done
+
+#############################################################################
+# STAGE 7: END-TO-END TESTING & VALIDATION
+#############################################################################
+- stage: E2E_Testing
+  displayName: '🧪 End-to-End Testing & Validation'
+  dependsOn: Deploy_Angular_Frontend
+  condition: succeeded()
+  jobs:
+  - job: E2ETestingJob
+    displayName: 'E2E Testing'
+    steps:
+
+    # Frontend-Backend Integration Test
+    - task: Bash@3
+      displayName: '🔗 Frontend-Backend Integration Test'
+      inputs:
+        targetType: 'inline'
+        script: |
+          echo "🧪 Running end-to-end integration tests..."
+          
+          FRONTEND_URL="http://$(vmPublicIp):8080/$(appContext)"
+          BACKEND_URL="http://$(vmPrivateIp):8081/api"
+          
+          # Test backend API endpoints
+          echo "Testing backend API..."
+          curl -f "$BACKEND_URL/health" | jq '.'
+          curl -f "$BACKEND_URL/employees" | jq '.'
+          
+          # Test frontend-backend communication
+          echo "Testing frontend-backend integration..."
+          
+          # Create test employee via API
+          TEST_EMPLOYEE=$(cat <<EOF
+          {
+            "firstName": "Test",
+            "lastName": "Employee",
+            "email": "test.employee@company.com",
+            "department": "IT",
+            "position": "Developer"
+          }
+          EOF
+          )
+          
+          EMPLOYEE_ID=$(curl -s -X POST "$BACKEND_URL/employees" \
+            -H "Content-Type: application/json" \
+            -d "$TEST_EMPLOYEE" | jq -r '.id')
+          
+          if [ "$EMPLOYEE_ID" != "null" ] && [ -n "$EMPLOYEE_ID" ]; then
+            echo "✅ Employee created successfully: ID=$EMPLOYEE_ID"
+            
+            # Verify employee retrieval
+            curl -f "$BACKEND_URL/employees/$EMPLOYEE_ID" | jq '.'
+            
+            # Clean up test data
+            curl -X DELETE "$BACKEND_URL/employees/$EMPLOYEE_ID"
+            echo "✅ Test data cleaned up"
+          else
+            echo "❌ Failed to create test employee"
+            exit 1
+          fi
+
+    # Performance Testing
+    - task: Bash@3
+      displayName: '⚡ Performance Testing'
+      inputs:
+        targetType: 'inline'
+        script: |
+          echo "⚡ Running performance tests..."
+          
+          FRONTEND_URL="http://$(vmPublicIp):8080/$(appContext)"
+          
+          # Install Apache Bench if not available
+          sudo apt-get update && sudo apt-get install -y apache2-utils
+          
+          # Performance test parameters
+          CONCURRENT_USERS=10
+          TOTAL_REQUESTS=100
+          
+          echo "Testing frontend performance with $CONCURRENT_USERS concurrent users, $TOTAL_REQUESTS total requests..."
+          
+          ab -n $TOTAL_REQUESTS -c $CONCURRENT_USERS "$FRONTEND_URL/" > performance_results.txt
+          
+          # Parse results
+          REQUESTS_PER_SECOND=$(grep "Requests per second" performance_results.txt | awk '{print $4}')
+          MEAN_RESPONSE_TIME=$(grep "Time per request" performance_results.txt | head -1 | awk '{print $4}')
+          
+          echo "📊 Performance Results:"
+          echo "  - Requests per second: $REQUESTS_PER_SECOND"
+          echo "  - Mean response time: $MEAN_RESPONSE_TIME ms"
+          
+          # Performance thresholds
+          if (( $(echo "$REQUESTS_PER_SECOND > 50" | bc -l) )); then
+            echo "✅ Performance test passed"
+          else
+            echo "⚠️ Performance below threshold (>50 req/s)"
+          fi
+
+    # Security Validation
+    - task: Bash@3
+      displayName: '🔒 Security Validation'
+      inputs:
+        targetType: 'inline'
+        script: |
+          echo "🔒 Running security validation..."
+          
+          FRONTEND_URL="http://$(vmPublicIp):8080/$(appContext)"
+          BACKEND_URL="http://$(vmPrivateIp):8081/api"
+          
+          # Check security headers
+          echo "Checking security headers..."
+          HEADERS=$(curl -s -I "$FRONTEND_URL")
+          
+          if echo "$HEADERS" | grep -q "X-Content-Type-Options"; then
+            echo "✅ X-Content-Type-Options header present"
+          else
+            echo "⚠️ Missing X-Content-Type-Options header"
+          fi
+          
+          if echo "$HEADERS" | grep -q "X-Frame-Options"; then
+            echo "✅ X-Frame-Options header present"
+          else
+            echo "⚠️ Missing X-Frame-Options header"
+          fi
+          
+          # Check for sensitive information exposure
+          RESPONSE=$(curl -s "$FRONTEND_URL")
+          if echo "$RESPONSE" | grep -qi "password\|secret\|token"; then
+            echo "⚠️ Potential sensitive information exposure detected"
+          else
+            echo "✅ No obvious sensitive information exposure"
+          fi
+
+#############################################################################
+# STAGE 8: CLEANUP & AUDIT
+#############################################################################
+- stage: Cleanup_And_Audit
+  displayName: '🧹 Cleanup & Audit Trail'
+  dependsOn: E2E_Testing
+  condition: always() # Run regardless of previous stage results
+  jobs:
+  - job: CleanupJob
+    displayName: 'Cleanup & Audit'
+    steps:
+
+    # Return BeyondTrust credentials
+    - task: PowerShell@2
+      displayName: '🔓 Return BeyondTrust Session'
+      condition: always()
+      inputs:
+        targetType: 'inline'
+        script: |
+          if ("$(btSessionId)" -ne "") {
+            Write-Host "##[section]Returning BeyondTrust privileged session"
+            
+            $headers = @{
+              'Authorization' = "Bearer $(btApiKey)"
+              'Content-Type' = 'application/json'
+            }
+            
+            try {
+              Invoke-RestMethod -Uri "$(beyondtrustApiUrl)/PasswordSafe/api/v3/Checkouts/$(btSessionId)/Checkin" -Method POST -Headers $headers
+              Write-Host "✅ BeyondTrust session returned and credentials rotated"
+              
+              # Log audit trail
+              $auditLog = @{
+                timestamp = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+                buildId = "$(Build.BuildId)"
+                sessionId = "$(btSessionId)"
+                user = "$(deploymentUser)"
+                action = "PAM_SESSION_RETURNED"
+                environment = "$(deploymentEnvironment)"
+              } | ConvertTo-Json
+              
+              Write-Host "##[section]Audit Log: $auditLog"
+            }
+            catch {
+              Write-Warning "⚠️ Failed to return BeyondTrust session: $_"
+            }
+          } else {
+            Write-Host "No active BeyondTrust session to return"
+          }
+
+    # Cleanup temporary files
+    - task: SSH@0
+      displayName: '🧹 Cleanup Temporary Files'
+      condition: always()
+      inputs:
+        sshUsername: $(serviceAccount)
+        sshPassword: $(btPassword)
+        host: $(vmPrivateIp)
+        port: $(sshPort)
+        scriptType: 'inline'
+        inline: |
+          echo "🧹 Cleaning up temporary deployment files..."
+          
+          # Remove deployment temporary directories
+          sudo rm -rf /tmp/mulesoft-deploy/$(Build.BuildId) || true
+          sudo rm -rf /tmp/tomcat-deploy/$(Build.BuildId) || true
+          
+          # Clean old backups (keep last 5)
+          sudo find /opt/backups/mulesoft -type d -name "*" | sort | head -n -5 | xargs sudo rm -rf || true
+          sudo find /opt/backups/tomcat -type d -name "*" | sort | head -n -5 | xargs sudo rm -rf || true
+          
+          echo "✅ Cleanup completed"
+
+    # Generate deployment report
+    - task: PowerShell@2
+      displayName: '📊 Generate Deployment Report'
+      condition: always()
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "##[section]Generating deployment report"
+          
+          $deploymentReport = @{
+            buildId = "$(Build.BuildId)"
+            buildNumber = "$(Build.BuildNumber)"
+            sourceVersion = "$(Build.SourceVersion)"
+            sourceBranch = "$(Build.SourceBranch)"
+            requestedBy = "$(Build.RequestedFor)"
+            startTime = "$(System.JobStartTime)"
+            environment = "$(deploymentEnvironment)"
+            angularApp = @{
+              name = "$(angularAppName)"
+              context = "$(appContext)"
+              url = "http://$(vmPublicIp):8080/$(appContext)/"
+            }
+            muleSoftApp = @{
+              name = "$(muleSoftAppName)"
+              url = "http://$(vmPrivateIp):8081/api/health"
+            }
+            infrastructure = @{
+              vmHostname = "$(vmHostname)"
+              vmPrivateIp = "$(vmPrivateIp)"
+              vmPublicIp = "$(vmPublicIp)"
+            }
+            security = @{
+              beyondTrustSession = if ("$(btSessionId)" -ne "") { "$(btSessionId)" } else { "N/A" }
+              mfaChallengeId = if ("$(mfaChallengeId)" -ne "") { "$(mfaChallengeId)" } else { "N/A" }
+            }
+          } | ConvertTo-Json -Depth 4
+          
+          Write-Host "##[section]Deployment Report:"
+          Write-Host $deploymentReport
+          
+          # Save report as artifact
+          $deploymentReport | Out-File -FilePath "$(Agent.TempDirectory)/deployment-report-$(Build.BuildId).json"
+
+    # Publish deployment report
+    - task: PublishBuildArtifacts@1
+      displayName: '📄 Publish Deployment Report'
+      condition: always()
+      inputs:
+        pathToPublish: '$(Agent.TempDirectory)/deployment-report-$(Build.BuildId).json'
+        artifactName: 'deployment-report'
+
+#############################################################################
+# STAGE 9: ROLLBACK CAPABILITY (ON FAILURE)
+#############################################################################
+- stage: Rollback_On_Failure
+  displayName: '🔄 Rollback on Failure'
+  dependsOn: 
+  - Deploy_MuleSoft_Backend
+  - Deploy_Angular_Frontend
+  - E2E_Testing
+  condition: failed()
+  jobs:
+  - job: RollbackJob
+    displayName: 'Automated Rollback'
+    steps:
+
+    # Emergency rollback procedure
+    - task: SSH@0
+      displayName: '🚨 Emergency Rollback'
+      inputs:
+        sshUsername: $(serviceAccount)
+        sshPassword: $(btPassword)
+        host: $(vmPrivateIp)
+        port: $(sshPort)
+        scriptType: 'inline'
+        inline: |
+          set -e
+          
+          echo "🚨 Initiating emergency rollback..."
+          
+          # Find latest backup directories
+          MULE_BACKUP=$(sudo find /opt/backups/mulesoft -type d -name "*" | sort | tail -1)
+          TOMCAT_BACKUP=$(sudo find /opt/backups/tomcat -type d -name "*" | sort | tail -1)
+          
+          # Rollback MuleSoft
+          if [ -n "$MULE_BACKUP" ] && [ -d "$MULE_BACKUP" ]; then
+            echo "📦 Rolling back MuleSoft from: $MULE_BACKUP"
+            
+            sudo systemctl stop mule
+            sudo cp "$MULE_BACKUP"/* /opt/mule/apps/ || true
+            sudo systemctl start mule
+            
+            echo "✅ MuleSoft rollback completed"
+          fi
+          
+          # Rollback Angular/Tomcat  
+          if [ -n "$TOMCAT_BACKUP" ] && [ -d "$TOMCAT_BACKUP" ]; then
+            echo "🌐 Rolling back Angular from: $TOMCAT_BACKUP"
+            
+            sudo rm -rf "/var/lib/tomcat9/webapps/$(appContext)"
+            sudo cp -r "$TOMCAT_BACKUP" "/var/lib/tomcat9/webapps/$(appContext)"
+            sudo systemctl restart tomcat9
+            
+            echo "✅ Angular rollback completed"
+          fi
+          
+          echo "🔄 Rollback procedure completed"
+
+    # Post-rollback health check
+    - task: Bash@3
+      displayName: '🏥 Post-Rollback Health Check'
+      inputs:
+        targetType: 'inline'
+        script: |
+          echo "🔍 Verifying rollback success..."
+          
+          # Check MuleSoft
+          if curl -f -m 10 "http://$(vmPrivateIp):8081/api/health" >/dev/null 2>&1; then
+            echo "✅ MuleSoft backend operational after rollback"
+          else
+            echo "❌ MuleSoft backend still failing after rollback"
+          fi
+          
+          # Check Angular
+          if curl -f -m 10 "http://$(vmPublicIp):8080/$(appContext)/" >/dev/null 2>&1; then
+            echo "✅ Angular frontend operational after rollback"
+          else
+            echo "❌ Angular frontend still failing after rollback"
+          fi
+
+    # Notify stakeholders of rollback
+    - task: PowerShell@2
+      displayName: '📧 Notify Stakeholders of Rollback'
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "##[warning]ROLLBACK EXECUTED - Build $(Build.BuildId)"
+          Write-Host "##[warning]Previous stable version has been restored"
+          Write-Host "##[warning]Please investigate deployment issues before next deployment attempt"

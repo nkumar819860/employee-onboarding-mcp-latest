@@ -52,7 +52,7 @@ CREATE TABLE employees (
 
 ### Prerequisites
 - Java 17+
-- Mule Runtime 4.9.14+
+- Mule Runtime 4.9.6+
 - PostgreSQL 12+ (recommended) or H2 (development)
 
 ### Installation

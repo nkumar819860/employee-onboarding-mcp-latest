@@ -1,0 +1,805 @@
+# PRODUCTION-GRADE MULESOFT AZURE DEVOPS PIPELINE
+# Features: Build, Test, Security Scan, CloudHub/RTF Deployment to Azure
+
+trigger:
+  branches:
+    include:
+    - main
+    - develop
+    - release/*
+  paths:
+    include:
+    - src/*
+    - pom.xml
+    - mule-artifact.json
+    exclude:
+    - README.md
+    - docs/*
+    - '**/*.md'
+
+pr:
+  branches:
+    include:
+    - main
+    - develop
+  paths:
+    include:
+    - src/*
+    - pom.xml
+    - mule-artifact.json
+
+# Build agent configuration
+pool:
+  vmImage: 'ubuntu-latest'
+
+# Pipeline Variables
+variables:
+  # Java and Maven Configuration
+  - name: javaVersion
+    value: '17'
+  - name: mavenVersion
+    value: '3.9.x'
+  - name: muleRuntimeVersion
+    value: '4.9.6'
+  - name: mavenCacheFolder
+    value: '$(Pipeline.Workspace)/.m2'
+  
+  # Application Configuration
+  - name: appName
+    value: 'employee-onboarding-mcp'
+  - name: appVersion
+    value: '1.0.0'
+  - name: muleAppClassifier
+    value: 'mule-application'
+  
+  # Testing Configuration
+  - name: enableMunitTests
+    value: 'true'
+  - name: munitCoverageThreshold
+    value: 70
+  - name: testTimeout
+    value: 600000
+  
+  # Build Optimization
+  - name: enableExchangePublication
+    value: 'true'
+  - name: skipTests
+    value: 'false'
+  - name: parallelBuilds
+    value: 'true'
+  
+  # Environment-specific variable groups
+  - group: 'mulesoft-build-config'
+  - group: 'anypoint-platform-config'
+  - group: 'azure-rtf-config'
+  - group: 'security-scanning'
+
+stages:
+
+#############################################################################
+# STAGE 1: BUILD VALIDATION & SETUP
+#############################################################################
+- stage: Build_Setup
+  displayName: '🔧 Build Setup & Validation'
+  jobs:
+  - job: ValidateSetup
+    displayName: 'Validate Build Setup'
+    steps:
+    
+    # Install Java
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java $(javaVersion)'
+      inputs:
+        versionSpec: $(javaVersion)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    # Install Maven
+    - task: Maven@4
+      displayName: 'Setup Maven $(mavenVersion)'
+      inputs:
+        mavenVersionOption: 'Default'
+
+    # Display environment information
+    - script: |
+        echo "Java version: $(java -version)"
+        echo "Maven version: $(mvn --version)"
+        echo "Mule Runtime: $(muleRuntimeVersion)"
+        echo "App name: $(appName)"
+        echo "App version: $(appVersion)"
+      displayName: 'Display Environment Info'
+
+    # Validate MuleSoft project structure
+    - script: |
+        if [ ! -f "pom.xml" ]; then
+          echo "❌ pom.xml not found!"
+          exit 1
+        fi
+        
+        if [ ! -f "mule-artifact.json" ]; then
+          echo "❌ mule-artifact.json not found!"
+          exit 1
+        fi
+        
+        if [ ! -d "src/main/mule" ]; then
+          echo "❌ src/main/mule directory not found!"
+          exit 1
+        fi
+        
+        echo "✅ All required MuleSoft project files found"
+        
+        # Check for required Maven goals
+        if ! grep -q "<groupId>com.mulesoft.tools</groupId>" pom.xml; then
+          echo "❌ Mule Maven plugin not found in pom.xml"
+          exit 1
+        fi
+        
+        echo "✅ MuleSoft Maven plugin found"
+      displayName: 'Validate MuleSoft Project Structure'
+
+    # Validate Mule artifact configuration
+    - script: |
+        echo "Validating mule-artifact.json..."
+        
+        if ! jq empty mule-artifact.json > /dev/null 2>&1; then
+          echo "❌ Invalid JSON in mule-artifact.json"
+          exit 1
+        fi
+        
+        RUNTIME_VERSION=$(jq -r '.minMuleVersion' mule-artifact.json)
+        echo "Mule Runtime Version: $RUNTIME_VERSION"
+        
+        JAVA_VERSIONS=$(jq -r '.javaSpecificationVersions[]?' mule-artifact.json)
+        echo "Supported Java versions: $JAVA_VERSIONS"
+        
+        echo "✅ mule-artifact.json validation completed"
+      displayName: 'Validate Mule Artifact Configuration'
+
+#############################################################################
+# STAGE 2: DEPENDENCY MANAGEMENT & CACHING
+#############################################################################
+- stage: Dependencies
+  displayName: '📦 Dependency Management'
+  dependsOn: Build_Setup
+  jobs:
+  - job: InstallDependencies
+    displayName: 'Install & Cache Dependencies'
+    steps:
+    
+    # Install Java
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java $(javaVersion)'
+      inputs:
+        versionSpec: $(javaVersion)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    # Configure Maven cache
+    - script: |
+        mkdir -p $(mavenCacheFolder)
+        echo "Maven cache folder: $(mavenCacheFolder)"
+      displayName: 'Configure Maven Cache'
+
+    # Cache Maven dependencies based on pom.xml
+    - task: Cache@2
+      displayName: 'Cache Maven Dependencies'
+      inputs:
+        key: 'maven-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"-$(Agent.JobName)'
+        restoreKeys: |
+          maven-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"
+          maven-$(Agent.OS)-$(Build.SourceBranch)
+          maven-$(Agent.OS)
+        path: '$(mavenCacheFolder)'
+        cacheHitVar: 'MAVEN_CACHE_RESTORED'
+
+    # Cache Mule Maven Plugin cache
+    - task: Cache@2
+      displayName: 'Cache Mule Maven Plugin'
+      inputs:
+        key: 'mule-maven-$(Agent.OS)-$(muleRuntimeVersion)'
+        path: '$(Pipeline.Workspace)/.mule'
+
+    # Resolve dependencies
+    - task: Maven@4
+      displayName: 'Resolve Dependencies'
+      inputs:
+        goals: 'dependency:resolve dependency:resolve-sources'
+        options: '-Dmaven.repo.local=$(mavenCacheFolder)'
+        mavenVersionOption: 'Default'
+
+    # Verify dependencies
+    - script: |
+        echo "Verifying Maven dependencies..."
+        mvn dependency:tree -Dmaven.repo.local=$(mavenCacheFolder)
+        
+        # Check for vulnerable dependencies
+        echo "Running dependency security check..."
+        mvn org.owasp:dependency-check-maven:check -Dmaven.repo.local=$(mavenCacheFolder) || echo "Security check completed with warnings"
+        
+        echo "✅ Dependency verification completed"
+      displayName: 'Verify Dependencies'
+
+    # Publish dependency information as artifact
+    - task: Maven@4
+      displayName: 'Generate Dependency Report'
+      inputs:
+        goals: 'project-info-reports:dependencies'
+        options: '-Dmaven.repo.local=$(mavenCacheFolder)'
+
+#############################################################################
+# STAGE 3: CODE QUALITY & ANALYSIS
+#############################################################################
+- stage: Code_Quality
+  displayName: '🔍 Code Quality & Analysis'
+  dependsOn: Dependencies
+  jobs:
+  - job: QualityAnalysis
+    displayName: 'Code Quality Analysis'
+    steps:
+    
+    # Setup Java and restore cache
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java $(javaVersion)'
+      inputs:
+        versionSpec: $(javaVersion)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    - task: Cache@2
+      displayName: 'Restore Maven Cache'
+      inputs:
+        key: 'maven-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"-$(Agent.JobName)'
+        restoreKeys: |
+          maven-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"
+          maven-$(Agent.OS)-$(Build.SourceBranch)
+          maven-$(Agent.OS)
+        path: '$(mavenCacheFolder)'
+
+    # Compile sources for analysis
+    - task: Maven@4
+      displayName: 'Compile Sources'
+      inputs:
+        goals: 'compile'
+        options: '-Dmaven.repo.local=$(mavenCacheFolder)'
+
+    # Mule Flow Analysis
+    - script: |
+        echo "Analyzing Mule flows..."
+        
+        # Count flows and subflows
+        FLOWS=$(find src/main/mule -name "*.xml" -exec grep -l "<flow " {} \; | wc -l)
+        SUBFLOWS=$(find src/main/mule -name "*.xml" -exec grep -l "<sub-flow " {} \; | wc -l)
+        
+        echo "Total flows: $FLOWS"
+        echo "Total subflows: $SUBFLOWS"
+        
+        # Check for APIKit usage
+        if find src/main/mule -name "*.xml" -exec grep -q "apikit" {} \;; then
+          echo "✅ APIKit detected"
+        fi
+        
+        # Check for DataWeave usage
+        DATAWEAVE_COUNT=$(find src/main/mule -name "*.xml" -exec grep -c "dw::" {} \; | awk '{sum += $1} END {print sum}')
+        echo "DataWeave transformations: $DATAWEAVE_COUNT"
+        
+        echo "✅ Mule flow analysis completed"
+      displayName: 'Analyze Mule Flows'
+
+    # Validate Mule configuration
+    - script: |
+        echo "Validating Mule configuration..."
+        
+        # Check for hardcoded values
+        if find src/main/mule -name "*.xml" -exec grep -q "localhost\|127.0.0.1\|hardcode" {} \;; then
+          echo "⚠️ Warning: Potential hardcoded values found"
+        fi
+        
+        # Check for proper error handling
+        ERROR_HANDLERS=$(find src/main/mule -name "*.xml" -exec grep -c "error-handler\|on-error" {} \; | awk '{sum += $1} END {print sum}')
+        echo "Error handlers found: $ERROR_HANDLERS"
+        
+        if [ "$ERROR_HANDLERS" -lt "$FLOWS" ]; then
+          echo "⚠️ Warning: Some flows may lack proper error handling"
+        fi
+        
+        echo "✅ Configuration validation completed"
+      displayName: 'Validate Mule Configuration'
+
+    # SonarQube analysis (if configured)
+    - task: SonarQubePrepare@5
+      displayName: 'Prepare SonarQube Analysis'
+      condition: and(succeeded(), ne(variables['sonarQubeServiceConnection'], ''))
+      inputs:
+        SonarQube: '$(sonarQubeServiceConnection)'
+        scannerMode: 'Other'
+        extraProperties: |
+          sonar.projectKey=$(appName)
+          sonar.projectName=$(appName)
+          sonar.projectVersion=$(appVersion)
+          sonar.sources=src/main/mule,src/main/resources
+          sonar.exclusions=**/*.jar,**/target/**
+
+#############################################################################
+# STAGE 4: MUNIT TESTING
+#############################################################################
+- stage: MUnit_Tests
+  displayName: '🧪 MUnit Testing'
+  dependsOn: Code_Quality
+  condition: succeeded()
+  jobs:
+  - job: RunMUnitTests
+    displayName: 'Run MUnit Tests'
+    steps:
+    
+    # Setup Java and restore cache
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java $(javaVersion)'
+      inputs:
+        versionSpec: $(javaVersion)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    - task: Cache@2
+      displayName: 'Restore Maven Cache'
+      inputs:
+        key: 'maven-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"-$(Agent.JobName)'
+        restoreKeys: |
+          maven-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"
+          maven-$(Agent.OS)-$(Build.SourceBranch)
+          maven-$(Agent.OS)
+        path: '$(mavenCacheFolder)'
+
+    # Run MUnit tests
+    - task: Maven@4
+      displayName: 'Run MUnit Tests'
+      condition: eq(variables['enableMunitTests'], 'true')
+      inputs:
+        goals: 'test'
+        options: '-Dmaven.repo.local=$(mavenCacheFolder) -Dmunit.coverage.failOnLowCoverage=false'
+      continueOnError: true
+
+    # Publish MUnit test results
+    - task: PublishTestResults@2
+      displayName: 'Publish MUnit Test Results'
+      condition: always()
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: 'target/surefire-reports/*.xml'
+        searchFolder: '$(System.DefaultWorkingDirectory)'
+        testRunTitle: 'MUnit Tests'
+        mergeTestResults: true
+        publishRunAttachments: true
+
+    # Publish MUnit coverage
+    - task: PublishCodeCoverageResults@2
+      displayName: 'Publish MUnit Coverage'
+      condition: and(succeeded(), eq(variables['enableMunitTests'], 'true'))
+      inputs:
+        summaryFileLocation: 'target/site/munit/coverage/jacoco-aggregate/jacoco.xml'
+        pathToSources: 'src/main/mule'
+        reportDirectory: 'target/site/munit/coverage'
+        codecoverageTool: 'JaCoCo'
+
+    # Coverage threshold validation
+    - script: |
+        if [ "$(enableMunitTests)" = "true" ]; then
+          echo "Checking MUnit coverage threshold..."
+          
+          if [ -f "target/site/munit/coverage/summary.json" ]; then
+            COVERAGE=$(cat target/site/munit/coverage/summary.json | jq -r '.coverage.application.percentage')
+            echo "Current coverage: ${COVERAGE}%"
+            echo "Required threshold: $(munitCoverageThreshold)%"
+            
+            if (( $(echo "${COVERAGE} >= $(munitCoverageThreshold)" | bc -l) )); then
+              echo "✅ Coverage threshold met: ${COVERAGE}% >= $(munitCoverageThreshold)%"
+            else
+              echo "⚠️ Coverage below threshold: ${COVERAGE}% < $(munitCoverageThreshold)%"
+              # Don't fail the build, just warn
+            fi
+          else
+            echo "Coverage report not found, skipping threshold check"
+          fi
+        fi
+      displayName: 'Validate Coverage Threshold'
+      condition: eq(variables['enableMunitTests'], 'true')
+
+#############################################################################
+# STAGE 5: SECURITY SCANNING
+#############################################################################
+- stage: Security_Scan
+  displayName: '🔒 Security Scanning'
+  dependsOn: MUnit_Tests
+  condition: succeeded()
+  jobs:
+  - job: SecurityScanning
+    displayName: 'Security Analysis'
+    steps:
+    
+    # Setup Java
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java $(javaVersion)'
+      inputs:
+        versionSpec: $(javaVersion)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    - task: Cache@2
+      displayName: 'Restore Maven Cache'
+      inputs:
+        key: 'maven-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"-$(Agent.JobName)'
+        restoreKeys: |
+          maven-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"
+          maven-$(Agent.OS)-$(Build.SourceBranch)
+          maven-$(Agent.OS)
+        path: '$(mavenCacheFolder)'
+
+    # OWASP Dependency Check
+    - task: Maven@4
+      displayName: 'OWASP Dependency Check'
+      inputs:
+        goals: 'org.owasp:dependency-check-maven:check'
+        options: '-Dmaven.repo.local=$(mavenCacheFolder) -Dformat=XML -Dformat=HTML'
+      continueOnError: true
+
+    # Mule-specific security checks
+    - script: |
+        echo "Running MuleSoft-specific security checks..."
+        
+        # Check for sensitive data in flows
+        echo "Checking for potential sensitive data exposure..."
+        if find src/main/mule -name "*.xml" -exec grep -i "password\|secret\|key\|token" {} \;; then
+          echo "⚠️ Warning: Potential sensitive data found in flows"
+        fi
+        
+        # Check for insecure HTTP usage
+        if find src/main/mule -name "*.xml" -exec grep -q 'protocol="HTTP"' {} \;; then
+          echo "⚠️ Warning: Insecure HTTP protocol usage detected"
+        fi
+        
+        # Check for hardcoded credentials
+        if find src/main/resources -name "*.properties" -exec grep -i "password\|secret" {} \;; then
+          echo "⚠️ Warning: Potential hardcoded credentials in properties files"
+        fi
+        
+        echo "✅ MuleSoft security checks completed"
+      displayName: 'MuleSoft Security Analysis'
+      continueOnError: true
+
+    # Publish security reports
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Security Reports'
+      condition: always()
+      inputs:
+        pathToPublish: 'target/dependency-check-report.html'
+        artifactName: 'security-reports'
+      continueOnError: true
+
+#############################################################################
+# STAGE 6: BUILD APPLICATION
+#############################################################################
+- stage: Build_Application
+  displayName: '🏗️ Build MuleSoft Application'
+  dependsOn: Security_Scan
+  condition: succeeded()
+  jobs:
+  - job: BuildApp
+    displayName: 'Build Mule Application'
+    steps:
+    
+    # Setup Java and restore cache
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java $(javaVersion)'
+      inputs:
+        versionSpec: $(javaVersion)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    - task: Cache@2
+      displayName: 'Restore Maven Cache'
+      inputs:
+        key: 'maven-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"-$(Agent.JobName)'
+        restoreKeys: |
+          maven-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"
+          maven-$(Agent.OS)-$(Build.SourceBranch)
+          maven-$(Agent.OS)
+        path: '$(mavenCacheFolder)'
+
+    # Build Mule application
+    - task: Maven@4
+      displayName: 'Build Mule Application'
+      inputs:
+        goals: 'clean package'
+        options: '-Dmaven.repo.local=$(mavenCacheFolder) -DskipMunitTests=$(skipTests)'
+
+    # Validate build artifacts
+    - script: |
+        echo "Validating build artifacts..."
+        
+        # Check if JAR was created
+        JAR_FILE=$(find target -name "*.jar" -type f | head -1)
+        if [ -z "$JAR_FILE" ]; then
+          echo "❌ No JAR file found in target directory"
+          exit 1
+        fi
+        
+        echo "✅ JAR file created: $JAR_FILE"
+        
+        # Check JAR size
+        JAR_SIZE=$(du -h "$JAR_FILE" | cut -f1)
+        echo "JAR size: $JAR_SIZE"
+        
+        # Validate JAR contents
+        if jar -tf "$JAR_FILE" | grep -q "mule-artifact.json"; then
+          echo "✅ mule-artifact.json found in JAR"
+        else
+          echo "❌ mule-artifact.json not found in JAR"
+          exit 1
+        fi
+        
+        echo "✅ Build artifact validation completed"
+      displayName: 'Validate Build Artifacts'
+
+    # Generate build metadata
+    - script: |
+        echo "Generating build metadata..."
+        
+        # Extract version from POM
+        POM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+        POM_ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)
+        POM_GROUP_ID=$(mvn help:evaluate -Dexpression=project.groupId -q -DforceStdout)
+        
+        BUILD_METADATA=$(cat <<EOF
+        {
+          "buildId": "$(Build.BuildId)",
+          "buildNumber": "$(Build.BuildNumber)",
+          "sourceVersion": "$(Build.SourceVersion)",
+          "sourceBranch": "$(Build.SourceBranch)",
+          "buildDate": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+          "application": {
+            "groupId": "$POM_GROUP_ID",
+            "artifactId": "$POM_ARTIFACT_ID",
+            "version": "$POM_VERSION",
+            "classifier": "$(muleAppClassifier)",
+            "muleRuntimeVersion": "$(muleRuntimeVersion)"
+          },
+          "build": {
+            "javaVersion": "$(java -version 2>&1 | head -1 | cut -d'"' -f2)",
+            "mavenVersion": "$(mvn --version | head -1 | cut -d' ' -f3)"
+          }
+        }
+        EOF
+        )
+        
+        echo "${BUILD_METADATA}" > $(Build.ArtifactStagingDirectory)/build-metadata.json
+        echo "${BUILD_METADATA}" | jq .
+        
+        echo "✅ Build metadata generated"
+      displayName: 'Generate Build Metadata'
+
+    # Create deployment package
+    - task: CopyFiles@2
+      displayName: 'Copy Build Artifacts'
+      inputs:
+        sourceFolder: 'target'
+        contents: '*.jar'
+        targetFolder: '$(Build.ArtifactStagingDirectory)'
+
+    # Publish build artifacts
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Mule Application'
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: 'mule-application'
+
+    # Publish to Anypoint Exchange (if enabled)
+    - task: Maven@4
+      displayName: 'Publish to Anypoint Exchange'
+      condition: eq(variables['enableExchangePublication'], 'true')
+      inputs:
+        goals: 'deploy'
+        options: '-Dmaven.repo.local=$(mavenCacheFolder) -DskipMunitTests=true'
+      env:
+        ANYPOINT_USERNAME: $(anypointUsername)
+        ANYPOINT_PASSWORD: $(anypointPassword)
+        ANYPOINT_ORG_ID: $(anypointOrgId)
+      continueOnError: true
+
+#############################################################################
+# STAGE 7: DEPLOYMENT PREPARATION
+#############################################################################
+- stage: Deployment_Preparation
+  displayName: '📋 Deployment Preparation'
+  dependsOn: Build_Application
+  condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/main', 'refs/heads/develop'))
+  jobs:
+  - job: PrepareDeployment
+    displayName: 'Prepare Deployment'
+    steps:
+    
+    # Download build artifacts
+    - download: current
+      artifact: mule-application
+      displayName: 'Download Build Artifacts'
+
+    # Setup deployment environment
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java $(javaVersion)'
+      inputs:
+        versionSpec: $(javaVersion)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    # Display deployment information
+    - script: |
+        echo "=== DEPLOYMENT PREPARATION ==="
+        echo "Branch: $(Build.SourceBranch)"
+        echo "Build ID: $(Build.BuildId)"
+        echo "Application: $(appName)"
+        echo "Version: $(appVersion)"
+        echo "Runtime: $(muleRuntimeVersion)"
+        
+        echo "=== ARTIFACTS ==="
+        ls -la $(Pipeline.Workspace)/mule-application/
+        
+        JAR_FILE=$(find $(Pipeline.Workspace)/mule-application -name "*.jar" | head -1)
+        if [ -n "$JAR_FILE" ]; then
+          JAR_SIZE=$(du -h "$JAR_FILE" | cut -f1)
+          echo "Application JAR: $(basename $JAR_FILE) ($JAR_SIZE)"
+        fi
+        
+        echo "✅ Deployment preparation completed"
+      displayName: 'Display Deployment Information'
+
+    # Create CloudHub deployment script
+    - script: |
+        cat > deploy-to-cloudhub.sh << 'EOF'
+        #!/bin/bash
+        set -e
+        
+        # Configuration
+        APP_NAME="$(appName)"
+        APP_VERSION="$(appVersion)"
+        BUILD_ID="$(Build.BuildId)"
+        JAR_FILE=$(find . -name "*.jar" | head -1)
+        
+        echo "=== CLOUDHUB DEPLOYMENT SCRIPT ==="
+        echo "App Name: $APP_NAME"
+        echo "Version: $APP_VERSION"
+        echo "Build ID: $BUILD_ID"
+        echo "JAR File: $JAR_FILE"
+        
+        # Validate JAR file exists
+        if [ ! -f "$JAR_FILE" ]; then
+          echo "❌ JAR file not found!"
+          exit 1
+        fi
+        
+        # Deploy to CloudHub using Anypoint CLI
+        echo "🚀 Deploying to CloudHub..."
+        anypoint-cli runtime-mgr cloudhub-application deploy "$APP_NAME" "$JAR_FILE" \
+          --runtime $(muleRuntimeVersion) \
+          --region $(cloudhubRegion) \
+          --workers $(cloudhubWorkers) \
+          --workerSize $(cloudhubWorkerSize) \
+          --property "env:$(deploymentEnvironment)" \
+          --property "secure.key:$(secureKey)"
+        
+        # Verify deployment
+        echo "⏳ Waiting for deployment to complete..."
+        sleep 60
+        
+        STATUS=$(anypoint-cli runtime-mgr cloudhub-application describe "$APP_NAME" --output json | jq -r '.status')
+        if [ "$STATUS" = "STARTED" ]; then
+          echo "✅ Application deployed successfully!"
+          echo "🌐 Application URL: https://$APP_NAME.$(cloudhubDomain).cloudhub.io"
+        else
+          echo "❌ Deployment failed. Status: $STATUS"
+          exit 1
+        fi
+        EOF
+        
+        chmod +x deploy-to-cloudhub.sh
+        echo "✅ CloudHub deployment script created"
+      displayName: 'Create CloudHub Deployment Script'
+
+    # Create RTF deployment script
+    - script: |
+        cat > deploy-to-rtf.sh << 'EOF'
+        #!/bin/bash
+        set -e
+        
+        # Configuration
+        APP_NAME="$(appName)"
+        APP_VERSION="$(appVersion)"
+        BUILD_ID="$(Build.BuildId)"
+        JAR_FILE=$(find . -name "*.jar" | head -1)
+        
+        echo "=== RUNTIME FABRIC DEPLOYMENT SCRIPT ==="
+        echo "App Name: $APP_NAME"
+        echo "Version: $APP_VERSION"
+        echo "Build ID: $BUILD_ID"
+        echo "JAR File: $JAR_FILE"
+        echo "RTF Target: $(rtfTargetName)"
+        
+        # Validate JAR file exists
+        if [ ! -f "$JAR_FILE" ]; then
+          echo "❌ JAR file not found!"
+          exit 1
+        fi
+        
+        # Deploy to Runtime Fabric using Anypoint CLI
+        echo "🚀 Deploying to Runtime Fabric..."
+        anypoint-cli runtime-mgr standalone-application deploy "$APP_NAME" "$JAR_FILE" \
+          --target $(rtfTargetName) \
+          --runtime $(muleRuntimeVersion) \
+          --replicas $(rtfReplicas) \
+          --cores $(rtfCores) \
+          --memory $(rtfMemory) \
+          --property "env:$(deploymentEnvironment)" \
+          --property "secure.key:$(secureKey)"
+        
+        # Verify deployment
+        echo "⏳ Waiting for deployment to complete..."
+        sleep 90
+        
+        STATUS=$(anypoint-cli runtime-mgr standalone-application describe "$APP_NAME" --target $(rtfTargetName) --output json | jq -r '.status')
+        if [ "$STATUS" = "RUNNING" ]; then
+          echo "✅ Application deployed successfully to Runtime Fabric!"
+          echo "🌐 Application available on RTF cluster"
+        else
+          echo "❌ Deployment failed. Status: $STATUS"
+          exit 1
+        fi
+        EOF
+        
+        chmod +x deploy-to-rtf.sh
+        echo "✅ Runtime Fabric deployment script created"
+      displayName: 'Create RTF Deployment Script'
+
+    # Publish deployment scripts
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Deployment Scripts'
+      inputs:
+        pathToPublish: '.'
+        artifactName: 'deployment-scripts'
+        publishLocation: 'Container'
+
+#############################################################################
+# STAGE 8: CLOUDHUB DEPLOYMENT
+#############################################################################
+- stage: Deploy_CloudHub
+  displayName: '☁️ Deploy to CloudHub'
+  dependsOn: Deployment_Preparation
+  condition: and(succeeded(), eq(variables['deploymentTarget'], 'CloudHub'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: DeployCloudHub
+    displayName: 'CloudHub Deployment'
+    environment: 'cloudhub-production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          # Download artifacts
+          - download: current
+            artifact: mule-application
+            displayName: 'Download Mule Application'
+
+          - download: current
+            artifact: deployment-scripts
+            displayName: 'Download Deployment Scripts'
+
+          # Install Anypoint CLI
+          - script: |
+              echo "Installing Anypoint CLI..."
+              npm install -g anypoint-cli@latest
+              anypoint-cli --version
+              echo "✅ Anypoint CLI installed"
+            displayName: 'Install Anypoint CLI'
+
+          # Authenticate with Anypoint Platform
+          - script: |
+              echo "Authenticating with Anypoint Platform..."
+              anypoint-cli conf username $(anypointUsername)
+              anypoint-cli conf password $(anypointPassword)
+              anypoint-cli

@@ -1,0 +1,1900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MuleSoft Azure DevOps RTF Pipeline - Comprehensive Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.3rem;
+            font-weight: 400;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            gap: 10px;
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 15px 25px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            min-width: 150px;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .nav-tab:not(.active) {
+            color: #666;
+        }
+
+        .nav-tab:not(.active):hover {
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .content-section {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .content-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+        }
+
+        .subsection {
+            margin-bottom: 40px;
+        }
+
+        .subsection-title {
+            color: #34495e;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            font-size: 1.5rem;
+        }
+
+        .variable-group {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .variable-group h4 {
+            color: #667eea;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .variable-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .variable-name {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #e74c3c;
+            font-size: 1.1rem;
+        }
+
+        .variable-description {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .variable-example {
+            background: #f1f2f6;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 25px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 20px 0;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .prerequisite-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 20px;
+            background: white;
+            margin: 15px 0;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .prerequisite-icon {
+            background: #667eea;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .prerequisite-content h4 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .security-alert {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .security-alert .alert-title {
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .policy-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .policy-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .policy-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .policy-icon {
+            background: #667eea;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .policy-title {
+            color: #2c3e50;
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .step-list {
+            counter-reset: step-counter;
+        }
+
+        .step-item {
+            counter-increment: step-counter;
+            background: white;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        .step-item::before {
+            content: counter(step-counter);
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            position: absolute;
+            left: -15px;
+            top: 25px;
+        }
+
+        .step-title {
+            color: #2c3e50;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            margin-left: 20px;
+        }
+
+        .step-content {
+            margin-left: 20px;
+        }
+
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .warning-box {
+            background: #fef9e7;
+            border-left: 4px solid #f39c12;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .success-box {
+            background: #eafaf1;
+            border-left: 4px solid #27ae60;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .config-table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .config-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .config-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .badge-required {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .badge-optional {
+            background: #74b9ff;
+            color: white;
+        }
+
+        .badge-security {
+            background: #fd79a8;
+            color: white;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .nav-tabs {
+                flex-direction: column;
+            }
+
+            .nav-tab {
+                min-width: auto;
+            }
+
+            .content-section {
+                padding: 20px;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 MuleSoft Azure DevOps RTF Pipeline</h1>
+            <div class="subtitle">Comprehensive Guide: Variables, Prerequisites, Security & Policy Management</div>
+        </div>
+
+        <nav class="nav-tabs">
+            <div class="nav-tab active" onclick="showSection('variables')">📊 Variables</div>
+            <div class="nav-tab" onclick="showSection('prerequisites')">📋 Prerequisites</div>
+            <div class="nav-tab" onclick="showSection('security')">🔒 Security</div>
+            <div class="nav-tab" onclick="showSection('policies')">🛡️ Policies</div>
+            <div class="nav-tab" onclick="showSection('deployment')">🚀 Deployment</div>
+        </nav>
+
+        <!-- Variables Section -->
+        <div id="variables" class="content-section active">
+            <h2 class="section-title">📊 Pipeline Variables Configuration</h2>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">
+                    <span class="icon">⚙️</span>
+                    Core Application Variables
+                </h3>
+                
+                <div class="variable-group">
+                    <h4>Java & Maven Configuration</h4>
+                    
+                    <div class="variable-item">
+                        <div class="variable-name">javaVersion</div>
+                        <div class="variable-description">Java version for building MuleSoft applications</div>
+                        <div class="variable-example">Default: '17' | Options: '8', '11', '17', '21'</div>
+                    </div>
+                    
+                    <div class="variable-item">
+                        <div class="variable-name">mavenVersion</div>
+                        <div class="variable-description">Maven version for dependency management</div>
+                        <div class="variable-example">Default: '3.9.x' | Recommended: '3.8.x' or higher</div>
+                    </div>
+                    
+                    <div class="variable-item">
+                        <div class="variable-name">muleRuntimeVersion</div>
+                        <div class="variable-description">Mule Runtime version for deployment</div>
+                        <div class="variable-example">Default: '4.9.6' | Options: '4.8.x', '4.9.x'</div>
+                    </div>
+                </div>
+
+                <div class="variable-group">
+                    <h4>Application Configuration</h4>
+                    
+                    <div class="variable-item">
+                        <div class="variable-name">appName</div>
+                        <div class="variable-description">Application identifier for deployment</div>
+                        <div class="variable-example">Format: 'employee-onboarding-mcp' | Pattern: [a-z-]+</div>
+                    </div>
+                    
+                    <div class="variable-item">
+                        <div class="variable-name">appVersion</div>
+                        <div class="variable-description">Application version with build number</div>
+                        <div class="variable-example">Format: '1.0.0-$(Build.BuildNumber)' | SemVer compliant</div>
+                    </div>
+                    
+                    <div class="variable-item">
+                        <div class="variable-name">projectGroupId</div>
+                        <div class="variable-description">Maven group ID for organization</div>
+                        <div class="variable-example">Format: 'com.mulesoft.services' | Reverse domain notation</div>
+                    </div>
+                </div>
+
+                <div class="variable-group">
+                    <h4>Azure RTF Configuration</h4>
+                    
+                    <div class="variable-item">
+                        <div class="variable-name">rtfClusterName</div>
+                        <div class="variable-description">Azure Kubernetes Service cluster name for RTF</div>
+                        <div class="variable-example">Example: 'azure-rtf-prod' | Must exist in Azure</div>
+                    </div>
+                    
+                    <div class="variable-item">
+                        <div class="variable-name">rtfNamespace</div>
+                        <div class="variable-description">Kubernetes namespace for MuleSoft applications</div>
+                        <div class="variable-example">Default: 'mulesoft-apps' | Lowercase, hyphenated</div>
+                    </div>
+                    
+                    <div class="variable-item">
+                        <div class="variable-name">rtfReplicas</div>
+                        <div class="variable-description">Number of application replicas for high availability</div>
+                        <div class="variable-example">Default: '2' | Minimum: 1, Recommended: 2-5</div>
+                    </div>
+                    
+                    <div class="variable-item">
+                        <div class="variable-name">rtfCpuCores</div>
+                        <div class="variable-description">CPU cores allocation per replica</div>
+                        <div class="variable-example">Default: '1' | Options: '0.5', '1', '2', '4'</div>
+                    </div>
+                    
+                    <div class="variable-item">
+                        <div class="variable-name">rtfMemoryLimit</div>
+                        <div class="variable-description">Memory limit per replica</div>
+                        <div class="variable-example">Default: '1Gi' | Options: '512Mi', '1Gi', '2Gi', '4Gi'</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title">
+                    <span class="icon">🔧</span>
+                    Pipeline Parameters
+                </h3>
+                
+                <table class="config-table">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Type</th>
+                            <th>Default</th>
+                            <th>Options</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>targetEnvironment</code></td>
+                            <td>String</td>
+                            <td>dev</td>
+                            <td>dev, test, staging, prod</td>
+                            <td>Target deployment environment</td>
+                        </tr>
+                        <tr>
+                            <td><code>deploymentStrategy</code></td>
+                            <td>String</td>
+                            <td>standard</td>
+                            <td>standard, blue-green, canary, rolling</td>
+                            <td>Deployment strategy for RTF</td>
+                        </tr>
+                        <tr>
+                            <td><code>applyPolicies</code></td>
+                            <td>Boolean</td>
+                            <td>true</td>
+                            <td>true, false</td>
+                            <td>Apply API security policies</td>
+                        </tr>
+                        <tr>
+                            <td><code>enablePerformanceTesting</code></td>
+                            <td>Boolean</td>
+                            <td>false</td>
+                            <td>true, false</td>
+                            <td>Enable performance testing phase</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="info-box">
+                <strong>💡 Variable Groups Configuration:</strong><br>
+                Configure these Azure DevOps variable groups in your project:
+                <ul>
+                    <li><strong>mulesoft-build-config</strong>: Build-related variables</li>
+                    <li><strong>anypoint-platform-config</strong>: Anypoint Platform credentials</li>
+                    <li><strong>azure-rtf-config</strong>: Azure and RTF configuration</li>
+                    <li><strong>security-scanning</strong>: Security tools configuration</li>
+                    <li><strong>deployment-secrets</strong>: Sensitive deployment data</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Prerequisites Section -->
+        <div id="prerequisites" class="content-section">
+            <h2 class="section-title">📋 Prerequisites & Setup Requirements</h2>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">
+                    <span class="icon">☁️</span>
+                    Azure Infrastructure Requirements
+                </h3>
+                
+                <div class="prerequisite-item">
+                    <div class="prerequisite-icon">1</div>
+                    <div class="prerequisite-content">
+                        <h4>Azure Kubernetes Service (AKS) Cluster</h4>
+                        <p>A properly configured AKS cluster with Runtime Fabric installed. Minimum requirements:</p>
+                        <ul>
+                            <li>Kubernetes version 1.24 or higher</li>
+                            <li>Minimum 3 nodes with 4 vCPUs and 16GB RAM each</li>
+                            <li>Premium storage class configured</li>
+                            <li>Network connectivity to Anypoint Platform</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="prerequisite-item">
+                    <div class="prerequisite-icon">2</div>
+                    <div class="prerequisite-content">
+                        <h4>Azure DevOps Project & Service Connections</h4>
+                        <p>Configure Azure DevOps with proper service connections:</p>
+                        <ul>
+                            <li>Azure Resource Manager service connection</li>
+                            <li>Kubernetes service connection to AKS cluster</li>
+                            <li>Docker registry connection (if using custom images)</li>
+                            <li>Proper RBAC permissions configured</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="prerequisite-item">
+                    <div class="prerequisite-icon">3</div>
+                    <div class="prerequisite-content">
+                        <h4>Runtime Fabric Installation</h4>
+                        <p>Runtime Fabric must be installed and configured on AKS:</p>
+                        <div class="code-block">
+# Install Runtime Fabric using Helm
+helm repo add mulesoft https://repository-master.mulesoft.org/helm
+helm install rtf mulesoft/rtf \
+  --namespace rtf \
+  --set mule.licenseKeyBase64=<YOUR_LICENSE> \
+  --set cluster.provider=aks</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title">
+                    <span class="icon">🔑</span>
+                    Anypoint Platform Configuration
+                </h3>
+                
+                <div class="step-list">
+                    <div class="step-item">
+                        <div class="step-title">Connected App Setup</div>
+                        <div class="step-content">
+                            <p>Create a Connected App in Anypoint Platform with required scopes:</p>
+                            <ul>
+                                <li>Runtime Manager: Read, Write</li>
+                                <li>API Manager: Read, Write</li>
+                                <li>Exchange: Read, Write</li>
+                                <li>Design Center: Read, Write</li>
+                            </ul>
+                            <div class="code-block">
+# Store credentials securely in Azure DevOps variables
+ANYPOINT_CLIENT_ID: $(connectedAppClientId)
+ANYPOINT_CLIENT_SECRET: $(connectedAppClientSecret)
+ANYPOINT_ORG_ID: $(anypointOrgId)</div>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-title">Environment Configuration</div>
+                        <div class="step-content">
+                            <p>Configure environments in Anypoint Platform:</p>
+                            <ul>
+                                <li>Development environment</li>
+                                <li>Testing/Staging environment</li>
+                                <li>Production environment</li>
+                                <li>Proper user permissions and access controls</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-title">Runtime Fabric Target Registration</div>
+                        <div class="step-content">
+                            <p>Register the RTF cluster as a deployment target:</p>
+                            <div class="code-block">
+# Using Anypoint CLI
+anypoint-cli runtime-mgr fabric create azure-rtf-prod \
+  --region us-east-1 \
+  --vendor aks \
+  --version 1.15.x</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title">
+                    <span class="icon">🛠️</span>
+                    Development Environment Setup
+                </h3>
+                
+                <div class="warning-box">
+                    <strong>⚠️ Important:</strong> Ensure your MuleSoft project follows the standard Maven structure and includes all required configuration files.
+                </div>
+
+                <table class="config-table">
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th>Version</th>
+                            <th>Purpose</th>
+                            <th>Configuration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Java JDK</td>
+                            <td>17+</td>
+                            <td>Runtime environment</td>
+                            <td>JAVA_HOME configured</td>
+                        </tr>
+                        <tr>
+                            <td>Maven</td>
+                            <td>3.8+</td>
+                            <td>Build tool</td>
+                            <td>Anypoint Exchange repository</td>
+                        </tr>
+                        <tr>
+                            <td>Anypoint CLI</td>
+                            <td>Latest</td>
+                            <td>Deployment management</td>
+                            <td>Authentication configured</td>
+                        </tr>
+                        <tr>
+                            <td>kubectl</td>
+                            <td>1.24+</td>
+                            <td>Kubernetes management</td>
+                            <td>AKS cluster access</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Security Section -->
+        <div id="security" class="content-section">
+            <h2 class="section-title">🔒 Security Configuration & Best Practices</h2>
+            
+            <div class="security-alert">
+                <div class="alert-title">🚨 Critical Security Notice</div>
+                <p>All sensitive information must be stored in Azure Key Vault or Azure DevOps secure variables. Never commit credentials, tokens, or certificates to source control.</p>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title">
+                    <span class="icon">🔐</span>
+                    Credential Management
+                </h3>
+                
+                <div class="step-list">
+                    <div class="step-item">
+                        <div class="step-title">Azure Key Vault Integration</div>
+                        <div class="step-content">
+                            <p>Store all sensitive credentials in Azure Key Vault:</p>
+                            <div class="code-block">
+# Key Vault secrets structure
+anypoint-username: $(kv-anypoint-username)
+anypoint-password: $(kv-anypoint-password)
+mule-license-key: $(kv-mule-license-base64)
+ssl-certificates: $(kv-ssl-cert-base64)</div>
+                            
+                            <div class="info-box">
+                                <strong>Configure Key Vault access:</strong>
+                                <ol>
+                                    <li>Create Azure Key Vault instance</li>
+                                    <li>Add service principal access policy</li>
+                                    <li>Configure Azure DevOps Key Vault task</li>
+                                    <li>Reference secrets using $(variable-name) syntax</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-title">Secure Properties Configuration</div>
+                        <div class="step-content">
+                            <p>Configure secure properties in your Mule application:</p>
+                            <div class="code-block">
+# secure-properties.yaml
+secure:
+  properties:
+    key: "${secure.key}"
+    
+database:
+  host: "secure::database.host"
+  username: "secure::database.username"
+  password: "secure::database.password"</div>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-title">Certificate Management</div>
+                        <div class="step-content">
+                            <p>Manage SSL/TLS certificates securely:</p>
+                            <ul>
+                                <li>Store certificates in Azure Key Vault as base64-encoded secrets</li>
+                                <li>Use Azure certificate auto-rotation features</li>
+                                <li>Implement certificate expiry monitoring</li>
+                                <li>Configure proper cipher suites and protocols</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title">
+                    <span class="icon">🛡️</span>
+                    Security Scanning & Compliance
+                </h3>
+                
+                <div class="variable-group">
+                    <h4>OWASP Dependency Scanning</h4>
+                    <p>The pipeline automatically scans dependencies for known vulnerabilities:</p>
+                    
+                    <div class="code-block">
+# OWASP Configuration in pom.xml
+<plugin>
+  <groupId>org.owasp</groupId>
+  <artifactId>dependency-check-maven</artifactId>
+  <version>8.4.0</version>
+  <configuration>
+    <format>XML,HTML,JSON</format>
+    <failBuildOnCVSS>7</failBuildOnCVSS>
+    <suppressionFile>owasp-suppressions.xml</suppressionFile>
+  </configuration>
+</plugin></div>
+                    
+                    <div class="info-box">
+                        <strong>Security Scanning Features:</strong>
+                        <ul>
+                            <li>🔍 <strong>Dependency Vulnerability Assessment:</strong> Scans all Maven dependencies</li>
+                            <li>🛡️ <strong>Container Security:</strong> Trivy scanning for base images</li>
+                            <li>🔒 <strong>Code Security:</strong> Static analysis for hardcoded credentials</li>
+                            <li>📊 <strong>Security Reporting:</strong> Comprehensive vulnerability reports</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="variable-group">
+                    <h4>Network Security Configuration</h4>
+                    
+                    <div class="variable-item">
+                        <div class="variable-name">enableTLS</div>
+                        <div class="variable-description">Enable TLS/SSL for all communications</div>
+                        <div class="variable-example">Default: 'true' | Required for production environments</div>
+                    </div>
+                    
+                    <div class="variable-item">
+                        <div class="variable-name">tlsVersion</div>
+                        <div class="variable-description">TLS version for secure communications</div>
+                        <div class="variable-example">Default: '1.2' | Options: '1.2', '1.3'</div>
+                    </div>
+                    
+                    <div class="variable-item">
+                        <div class="variable-name">networkPolicies</div>
+                        <div class="variable-description">Enable Kubernetes network policies</div>
+                        <div class="variable-example">Restricts pod-to-pod communication in RTF</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title">
+                    <span class="icon">🔍</span>
+                    Security Compliance Checklist
+                </h3>
+                
+                <div class="step-list">
+                    <div class="step-item">
+                        <div class="step-title">Data Protection Compliance</div>
+                        <div class="step-content">
+                            <p>Ensure compliance with data protection regulations:</p>
+                            <ul>
+                                <li>✅ All PII data encrypted in transit and at rest</li>
+                                <li>✅ Access logging and audit trails enabled</li>
+                                <li>✅ Data retention policies configured</li>
+                                <li>✅ Right to erasure mechanisms implemented</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-title">Access Control & Authentication</div>
+                        <div class="step-content">
+                            <p>Implement robust access control mechanisms:</p>
+                            <div class="code-block">
+# API Manager Security Policies
+- Client ID Enforcement
+- Rate Limiting
+- OAuth 2.0 Token Validation
+- IP Whitelisting
+- Header Injection/Removal</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prerequisites Section -->
+        <div id="prerequisites" class="content-section">
+            <h2 class="section-title">📋 Prerequisites & Setup Requirements</h2>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">
+                    <span class="icon">☁️</span>
+                    Azure Infrastructure Requirements
+                </h3>
+                
+                <div class="prerequisite-item">
+                    <div class="prerequisite-icon">1</div>
+                    <div class="prerequisite-content">
+                        <h4>Azure Kubernetes Service (AKS) Cluster</h4>
+                        <p>A properly configured AKS cluster with Runtime Fabric installed. Minimum requirements:</p>
+                        <ul>
+                            <li>✅ Kubernetes version 1.24 or higher</li>
+                            <li>✅ Minimum 3 nodes with 4 vCPUs and 16GB RAM each</li>
+                            <li>✅ Premium storage class configured</li>
+                            <li>✅ Network connectivity to Anypoint Platform</li>
+                            <li>✅ Container registry access configured</li>
+                        </ul>
+                        
+                        <div class="code-block">
+# Create AKS cluster with RTF specifications
+az aks create \
+  --resource-group mulesoft-rtf-rg \
+  --name azure-rtf-prod \
+  --node-count 3 \
+  --node-vm-size Standard_D4s_v3 \
+  --kubernetes-version 1.28 \
+  --enable-addons monitoring \
+  --generate-ssh-keys</div>
+                    </div>
+                </div>
+
+                <div class="prerequisite-item">
+                    <div class="prerequisite-icon">2</div>
+                    <div class="prerequisite-content">
+                        <h4>Azure DevOps Project & Service Connections</h4>
+                        <p>Configure Azure DevOps with proper service connections:</p>
+                        <ul>
+                            <li>✅ Azure Resource Manager service connection</li>
+                            <li>✅ Kubernetes service connection to AKS cluster</li>
+                            <li>✅ Docker registry connection (if using custom images)</li>
+                            <li>✅ Proper RBAC permissions configured</li>
+                            <li>✅ Variable groups created with appropriate access</li>
+                        </ul>
+                        
+                        <div class="warning-box">
+                            <strong>⚠️ RBAC Configuration:</strong> Ensure the service principal has:
+                            <ul>
+                                <li>Azure Kubernetes Service Cluster Admin Role</li>
+                                <li>Key Vault Secrets Officer (for secret access)</li>
+                                <li>Storage Blob Data Contributor (for artifacts)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="prerequisite-item">
+                    <div class="prerequisite-icon">3</div>
+                    <div class="prerequisite-content">
+                        <h4>Runtime Fabric Installation & Configuration</h4>
+                        <p>Runtime Fabric must be properly installed and configured:</p>
+                        <div class="code-block">
+# 1. Install RTF using Helm
+helm repo add mulesoft https://repository-master.mulesoft.org/helm
+helm repo update
+
+# 2. Create namespace
+kubectl create namespace rtf
+
+# 3. Install RTF with Azure-specific configuration
+helm install rtf mulesoft/rtf \
+  --namespace rtf \
+  --set mule.licenseKeyBase64=<BASE64_LICENSE> \
+  --set cluster.provider=aks \
+  --set cluster.region=eastus \
+  --set ingress.enabled=true \
+  --set monitoring.enabled=true</div>
+                        
+                        <div class="success-box">
+                            <strong>✅ Verification Steps:</strong>
+                            <ol>
+                                <li>Check RTF pods status: <code>kubectl get pods -n rtf</code></li>
+                                <li>Verify RTF registration in Anypoint Platform</li>
+                                <li>Test connectivity from Anypoint Platform to RTF</li>
+                                <li>Validate resource quotas and limits</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title">
+                    <span class="icon">🔑</span>
+                    Anypoint Platform Configuration
+                </h3>
+                
+                <div class="step-list">
+                    <div class="step-item">
+                        <div class="step-title">Connected App Setup</div>
+                        <div class="step-content">
+                            <p>Create a Connected App in Anypoint Platform with required scopes:</p>
+                            <ul>
+                                <li>✅ <strong>Runtime Manager:</strong> Read, Write</li>
+                                <li>✅ <strong>API Manager:</strong> Read, Write</li>
+                                <li>✅ <strong>Exchange:</strong> Read, Write</li>
+                                <li>✅ <strong>Design Center:</strong> Read, Write</li>
+                                <li>✅ <strong>Monitoring:</strong> Read</li>
+                            </ul>
+                            <div class="code-block">
+# Connected App Configuration
+Name: "Azure DevOps Pipeline"
+Grant Types: Client Credentials
+Scopes: 
+  - "Runtime Manager: Read, Write"
+  - "API Manager: Read, Write" 
+  - "Exchange: Read, Write"
+  - "Design Center: Read, Write"</div>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-title">Environment & Business Group Setup</div>
+                        <div class="step-content">
+                            <p>Configure proper environment structure:</p>
+                            <table class="config-table">
+                                <thead>
+                                    <tr>
+                                        <th>Environment</th>
+                                        <th>Purpose</th>
+                                        <th>RTF Target</th>
+                                        <th>Policies</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Development</td>
+                                        <td>Feature development & testing</td>
+                                        <td>azure-rtf-dev</td>
+                                        <td>Basic security policies</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Testing</td>
+                                        <td>Integration & system testing</td>
+                                        <td>azure-rtf-test</td>
+                                        <td>Enhanced security policies</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Staging</td>
+                                        <td>Pre-production validation</td>
+                                        <td>azure-rtf-staging</td>
+                                        <td>Production-like policies</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Production</td>
+                                        <td>Live application deployment</td>
+                                        <td>azure-rtf-prod</td>
+                                        <td>Full security policy suite</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Policies Section -->
+        <div id="policies" class="content-section">
+            <h2 class="section-title">🛡️ API Policy Management & Configuration</h2>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">
+                    <span class="icon">🚨</span>
+                    Security Policies
+                </h3>
+                
+                <div class="policy-card">
+                    <div class="policy-header">
+                        <div class="policy-icon">🔒</div>
+                        <div class="policy-title">Client ID Enforcement</div>
+                        <span class="badge badge-required">Required</span>
+                    </div>
+                    <p><strong>Purpose:</strong> Ensures all API requests include valid client credentials for authentication.</p>
+                    <div class="code-block">
+# Client ID Enforcement Policy Configuration
+{
+  "credentialsOriginHasHttpBasicAuthenticationHeader": "customExpression",
+  "clientIdExpression": "#[attributes.headers['client_id']]",
+  "clientSecretExpression": "#[attributes.headers['client_secret']]",
+  "errorResponseOnInvalidClient": {
+    "statusCode": 401,
+    "reasonPhrase": "Unauthorized - Invalid Client Credentials"
+  }
+}</div>
+                    <div class="info-box">
+                        <strong>Implementation:</strong> Applied automatically during the API Policy Management stage when <code>applyPolicies</code> parameter is set to <code>true</code>.
+                    </div>
+                </div>
+
+                <div class="policy-card">
+                    <div class="policy-header">
+                        <div class="policy-icon">⏱️</div>
+                        <div class="policy-title">Rate Limiting</div>
+                        <span class="badge badge-required">Required</span>
+                    </div>
+                    <p><strong>Purpose:</strong> Protects APIs from abuse by limiting request frequency per client.</p>
+                    <div class="code-block">
+# Rate Limiting Policy Configuration  
+{
+  "maximumRequests": 1000,
+  "timePeriod": 60000,
+  "timeUnit": "MILLISECONDS",
+  "keySelector": "#[attributes.headers['client_id']]",
+  "exposeHeaders": true,
+  "errorResponse": {
+    "statusCode": 429,
+    "reasonPhrase": "Too Many Requests"
+  }
+}</div>
+                    <div class="warning-box">
+                        <strong>⚠️ Rate Limit Guidelines:</strong>
+                        <ul>
+                            <li>Development: 100 requests/minute</li>
+                            <li>Testing: 500 requests/minute</li>
+                            <li>Production: 1000+ requests/minute</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="policy-card">
+                    <div class="policy-header">
+                        <div class="policy-icon">🌐</div>
+                        <div class="policy-title">CORS Policy</div>
+                        <span class="badge badge-optional">Optional</span>
+                    </div>
+                    <p><strong>Purpose:</strong> Enables cross-origin requests for web applications.</p>
+                    <div class="code-block">
+# CORS Policy Configuration
+{
+  "allowedOrigins": ["https://mycompany.com", "https://app.mycompany.com"],
+  "allowedMethods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  "allowedHeaders": ["Content-Type", "Authorization", "X-Requested-With"],
+  "maxAge": 3600,
+  "allowCredentials": true
+}</div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title">
+                    <span class="icon">🛡️</span>
+                    Advanced Security Policies
+                </h3>
+                
+                <div class="policy-card">
+                    <div class="policy-header">
+                        <div class="policy-icon">🏠</div>
+                        <div class="policy-title">IP Whitelisting</div>
+                        <span class="badge badge-security">Security</span>
+                    </div>
+                    <p><strong>Purpose:</strong> Restricts API access to specific IP addresses or ranges.</p>
+                    <div class="code-block">
+# IP Whitelisting Policy
+{
+  "ipList": [
+    "192.168.1.0/24",
+    "10.0.0.0/16", 
+    "172.16.0.0/12"
+  ],
+  "errorResponse": {
+    "statusCode": 403,
+    "reasonPhrase": "Forbidden - IP not whitelisted"
+  }
+}</div>
+                </div>
+
+                <div class="policy-card">
+                    <div class="policy-header">
+                        <div class="policy-icon">🔐</div>
+                        <div class="policy-title">OAuth 2.0 Token Validation</div>
+                        <span class="badge badge-security">Security</span>
+                    </div>
+                    <p><strong>Purpose:</strong> Validates OAuth 2.0 access tokens for secure API access.</p>
+                    <div class="code-block">
+# OAuth 2.0 Token Validation Policy
+{
+  "authorizationServerUrl": "https://oauth-server.company.com",
+  "introspectionUrl": "https://oauth-server.company.com/introspect",
+  "clientId": "${oauth.client.id}",
+  "clientSecret": "${oauth.client.secret}",
+  "scopes": ["read", "write", "admin"]
+}</div>
+                </div>
+
+                <div class="policy-card">
+                    <div class="policy-header">
+                        <div class="policy-icon">📝</div>
+                        <div class="policy-title">Message Logging</div>
+                        <span class="badge badge-optional">Optional</span>
+                    </div>
+                    <p><strong>Purpose:</strong> Logs API requests and responses for audit and debugging.</p>
+                    <div class="code-block">
+# Message Logging Policy
+{
+  "logLevel": "INFO",
+  "logRequestHeaders": true,
+  "logResponseHeaders": false,
+  "logRequestBody": false,
+  "logResponseBody": false,
+  "maxPayloadSize": 1024,
+  "category": "com.mulesoft.policy.message-logging"
+}</div>
+                    
+                    <div class="warning-box">
+                        <strong>⚠️ Privacy Notice:</strong> Be cautious when logging request/response bodies as they may contain sensitive data. Always comply with privacy regulations.
+                    </div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title">
+                    <span class="icon">⚙️</span>
+                    Policy Application Process
+                </h3>
+                
+                <div class="step-list">
+                    <div class="step-item">
+                        <div class="step-title">Automatic Policy Application</div>
+                        <div class="step-content">
+                            <p>The pipeline automatically applies policies when <code>applyPolicies</code> parameter is enabled:</p>
+                            <div class="code-block">
+# Pipeline applies policies in this order:
+1. Client ID Enforcement (Authentication)
+2. Rate Limiting (Traffic Control)  
+3. CORS (Cross-Origin Access)
+4. IP Whitelisting (Network Security)
+5. Message Logging (Audit Trail)</div>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-title">Custom Policy Configuration</div>
+                        <div class="step-content">
+                            <p>To add custom policies, modify the policy management stage:</p>
+                            <div class="code-block">
+# Add custom policy in pipeline
+anypoint-cli api-mgr policy apply \
+  --apiId "$API_ID" \
+  --policyId custom-security-policy \
+  --configurationData '{
+    "customParameter": "value",
+    "securityLevel": "high"
+  }'</div>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-title">Policy Validation & Testing</div>
+                        <div class="step-content">
+                            <p>After policy application, the pipeline validates policy effectiveness:</p>
+                            <ul>
+                                <li>✅ Policy application status verification</li>
+                                <li>✅ API endpoint accessibility testing</li>
+                                <li>✅ Policy configuration validation</li>
+                                <li>✅ Performance impact assessment</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deployment Section -->
+        <div id="deployment" class="content-section">
+            <h2 class="section-title">🚀 Deployment Strategies & Configuration</h2>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">
+                    <span class="icon">📦</span>
+                    Deployment Strategies
+                </h3>
+                
+                <div class="policy-card">
+                    <div class="policy-header">
+                        <div class="policy-icon">📦</div>
+                        <div class="policy-title">Standard Deployment</div>
+                        <span class="badge badge-optional">Default</span>
+                    </div>
+                    <p><strong>Use Case:</strong> Regular deployments with minimal complexity.</p>
+                    <ul>
+                        <li>✅ Simple deployment process</li>
+                        <li>✅ Suitable for development and testing</li>
+                        <li>⚠️ Brief downtime during deployment</li>
+                    </ul>
+                    <div class="code-block">
+# Standard Deployment Configuration
+replicas: 2
+strategy: Recreate
+maxUnavailable: 50%
+maxSurge: 0</div>
+                </div>
+
+                <div class="policy-card">
+                    <div class="policy-header">
+                        <div class="policy-icon">🔵</div>
+                        <div class="policy-title">Blue-Green Deployment</div>
+                        <span class="badge badge-required">Production</span>
+                    </div>
+                    <p><strong>Use Case:</strong> Zero-downtime deployments with instant rollback capability.</p>
+                    <ul>
+                        <li>✅ Zero downtime deployment</li>
+                        <li>✅ Instant rollback capability</li>
+                        <li>✅ Full environment isolation</li>
+                        <li>⚠️ Requires double resources temporarily</li>
+                    </ul>
+                    <div class="code-block">
+# Blue-Green Deployment Process
+1. Deploy new version to "Blue" environment
+2. Run health checks and validation
+3. Switch traffic from "Green" to "Blue"
+4. Monitor for issues
+5. Decommission old "Green" environment</div>
+                </div>
+
+                <div class="policy-card">
+                    <div class="policy-header">
+                        <div class="policy-icon">🐤</div>
+                        <div class="policy-title">Canary Deployment</div>
+                        <span class="badge badge-optional">Advanced</span>
+                    </div>
+                    <p><strong>Use Case:</strong> Gradual rollout to subset of users for risk mitigation.</p>
+                    <ul>
+                        <li>✅ Gradual traffic shifting</li>
+                        <li>✅ Risk mitigation</li>
+                        <li>✅ A/B testing capabilities</li>
+                        <li>⚠️ Complex monitoring required</li>
+                    </ul>
+                    <div class="code-block">
+# Canary Deployment Configuration
+initial_traffic: 10%
+increment_step: 25%
+success_criteria:
+  - error_rate < 1%
+  - response_time < 500ms
+  - success_rate > 99%</div>
+                </div>
+
+                <div class="policy-card">
+                    <div class="policy-header">
+                        <div class="policy-icon">🔄</div>
+                        <div class="policy-title">Rolling Update</div>
+                        <span class="badge badge-optional">Balanced</span>
+                    </div>
+                    <p><strong>Use Case:</strong> Gradual replacement of instances with minimal resource usage.</p>
+                    <ul>
+                        <li>✅ Gradual instance replacement</li>
+                        <li>✅ Resource efficient</li>
+                        <li>✅ Configurable update pace</li>
+                        <li>⚠️ Temporary mixed versions</li>
+                    </ul>
+                    <div class="code-block">
+# Rolling Update Configuration
+maxUnavailable: 25%
+maxSurge: 25%
+progressDeadlineSeconds: 600
+revisionHistoryLimit: 3</div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title">
+                    <span class="icon">🔧</span>
+                    Runtime Fabric Configuration
+                </h3>
+                
+                <div class="variable-group">
+                    <h4>Resource Allocation Guidelines</h4>
+                    
+                    <table class="config-table">
+                        <thead>
+                            <tr>
+                                <th>Application Type</th>
+                                <th>CPU Cores</th>
+                                <th>Memory</th>
+                                <th>Replicas</th>
+                                <th>Use Case</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Lightweight API</td>
+                                <td>0.5</td>
+                                <td>512Mi</td>
+                                <td>2</td>
+                                <td>Simple REST APIs</td>
+                            </tr>
+                            <tr>
+                                <td>Standard Service</td>
+                                <td>1</td>
+                                <td>1Gi</td>
+                                <td>2-3</td>
+                                <td>Business logic APIs</td>
+                            </tr>
+                            <tr>
+                                <td>Data Processing</td>
+                                <td>2</td>
+                                <td>2Gi</td>
+                                <td>2-4</td>
+                                <td>ETL, data transformation</td>
+                            </tr>
+                            <tr>
+                                <td>High Volume API</td>
+                                <td>4</td>
+                                <td>4Gi</td>
+                                <td>4-6</td>
+                                <td>High-traffic production APIs</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="variable-group">
+                    <h4>Monitoring & Observability</h4>
+                    <p>Configure comprehensive monitoring for RTF deployments:</p>
+                    
+                    <div class="code-block">
+# Monitoring Configuration
+monitoring:
+  enabled: true
+  metrics:
+    - application.performance
+    - system.resources
+    - network.traffic
+    - security.events
+  
+alerting:
+  channels:
+    - email: devops@company.com
+    - slack: #mulesoft-alerts
+    - webhook: https://monitoring.company.com/alerts</div>
+                </div>
+            </div>
+
+            <div class="subsection">
+                <h3 class="subsection-title">
+                    <span class="icon">🎯</span>
+                    Deployment Best Practices
+                </h3>
+                
+                <div class="step-list">
+                    <div class="step-item">
+                        <div class="step-title">Pre-Deployment Validation</div>
+                        <div class="step-content">
+                            <p>Essential checks before deployment:</p>
+                            <ul>
+                                <li>✅ MUnit test coverage ≥ 70%</li>
+                                <li>✅ Security scan passed</li>
+                                <li>✅ Build artifacts validated</li>
+                                <li>✅ Target environment health verified</li>
+                                <li>✅ Resource quotas sufficient</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-title">Post-Deployment Validation</div>
+                        <div class="step-content">
+                            <p>Verification steps after successful deployment:</p>
+                            <div class="code-block">
+# Automated Post-Deployment Checks
+1. Application health endpoint verification
+2. API functionality smoke tests  
+3. Performance baseline validation
+4. Security policy effectiveness check
+5. Monitoring and alerting validation</div>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-title">Rollback Strategy</div>
+                        <div class="step-content">
+                            <p>Automated rollback triggers and processes:</p>
+                            <ul>
+                                <li>🚨 <strong>Trigger Conditions:</strong> Health check failures, high error rates, performance degradation</li>
+                                <li>🔄 <strong>Rollback Process:</strong> Automatic reversion to previous stable version</li>
+                                <li>📢 <strong>Notifications:</strong> Immediate alerts to operations team</li>
+                                <li>📊 <strong>Post-Mortem:</strong> Automatic incident report generation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🚀 <strong>MuleSoft Azure DevOps RTF Pipeline</strong> | Built with ❤️ using Poppins font</p>
+            <p>📚 Comprehensive CI/CD solution for enterprise MuleSoft applications on Azure</p>
+        </div>
+    </div>
+
+    <script>
+        function showSection(sectionId) {
+            // Hide all sections
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+
+            // Activate selected tab
+            event.target.classList.add('active');
+        }
+
+        // Add smooth scrolling for internal links
+        document.addEventListener('DOMContentLoaded', function() {
+            const links = document.querySelectorAll('a[href^="#"]');
+            links.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        });
+
+        // Add code block copy functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const codeBlocks = document.querySelectorAll('.code-block');
+            codeBlocks.forEach(block => {
+                block.style.position = 'relative';
+                block.style.cursor = 'pointer';
+                block.title = 'Click to copy';
+                
+                block.addEventListener('click', function() {
+                    const text = this.textContent;
+                    navigator.clipboard.writeText(text).then(function() {
+                        // Show success feedback
+                        const originalTitle = block.title;
+                        block.title = 'Copied!';
+                        block.style.background = '#27ae60';
+                        
+                        setTimeout(() => {
+                            block.title = originalTitle;
+                            block.style.background = '#2c3e50';
+                        }, 1500);
+                    }).catch(function(err) {
+                        console.error('Failed to copy text: ', err);
+                        block.title = 'Copy failed';
+                        setTimeout(() => {
+                            block.title = 'Click to copy';
+                        }, 1500);
+                    });
+                });
+                
+                // Add copy icon
+                const copyIcon = document.createElement('div');
+                copyIcon.innerHTML = '📋';
+                copyIcon.style.position = 'absolute';
+                copyIcon.style.top = '10px';
+                copyIcon.style.right = '10px';
+                copyIcon.style.background = 'rgba(255, 255, 255, 0.2)';
+                copyIcon.style.padding = '5px 8px';
+                copyIcon.style.borderRadius = '5px';
+                copyIcon.style.fontSize = '14px';
+                copyIcon.style.opacity = '0.7';
+                copyIcon.style.pointerEvents = 'none';
+                block.appendChild(copyIcon);
+            });
+        });
+
+        // Add search functionality
+        function addSearchFunctionality() {
+            const searchBox = document.createElement('div');
+            searchBox.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: rgba(255, 255, 255, 0.95);
+                    padding: 15px;
+                    border-radius: 10px;
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+                    z-index: 1000;
+                    display: none;
+                " id="search-panel">
+                    <input type="text" 
+                           placeholder="Search guide..." 
+                           id="search-input"
+                           style="
+                               width: 250px;
+                               padding: 10px;
+                               border: 2px solid #667eea;
+                               border-radius: 5px;
+                               font-size: 14px;
+                               outline: none;
+                           ">
+                    <button onclick="closeSearch()" 
+                            style="
+                                margin-left: 10px;
+                                padding: 10px;
+                                background: #e74c3c;
+                                color: white;
+                                border: none;
+                                border-radius: 5px;
+                                cursor: pointer;
+                            ">✖</button>
+                    <div id="search-results" style="
+                        max-height: 300px;
+                        overflow-y: auto;
+                        margin-top: 10px;
+                        display: none;
+                    "></div>
+                </div>
+                
+                <div style="
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #667eea;
+                    color: white;
+                    padding: 12px 15px;
+                    border-radius: 50%;
+                    cursor: pointer;
+                    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+                    z-index: 1001;
+                " onclick="toggleSearch()" id="search-toggle" title="Search Guide">
+                    🔍
+                </div>
+            `;
+            
+            document.body.appendChild(searchBox);
+        }
+
+        function toggleSearch() {
+            const panel = document.getElementById('search-panel');
+            const toggle = document.getElementById('search-toggle');
+            
+            if (panel.style.display === 'none' || !panel.style.display) {
+                panel.style.display = 'block';
+                toggle.style.display = 'none';
+                document.getElementById('search-input').focus();
+            } else {
+                panel.style.display = 'none';
+                toggle.style.display = 'block';
+            }
+        }
+
+        function closeSearch() {
+            document.getElementById('search-panel').style.display = 'none';
+            document.getElementById('search-toggle').style.display = 'block';
+            document.getElementById('search-results').style.display = 'none';
+        }
+
+        // Search functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            addSearchFunctionality();
+            
+            // Add search input listener
+            setTimeout(() => {
+                const searchInput = document.getElementById('search-input');
+                if (searchInput) {
+                    searchInput.addEventListener('input', function() {
+                        const query = this.value.toLowerCase();
+                        const resultsDiv = document.getElementById('search-results');
+                        
+                        if (query.length < 2) {
+                            resultsDiv.style.display = 'none';
+                            return;
+                        }
+                        
+                        const sections = document.querySelectorAll('.content-section');
+                        const results = [];
+                        
+                        sections.forEach(section => {
+                            const text = section.textContent.toLowerCase();
+                            const title = section.querySelector('.section-title')?.textContent || 'Section';
+                            
+                            if (text.includes(query)) {
+                                results.push({
+                                    title: title,
+                                    section: section.id,
+                                    snippet: getSnippet(section.textContent, query)
+                                });
+                            }
+                        });
+                        
+                        displaySearchResults(results);
+                    });
+                }
+            }, 100);
+        });
+
+        function getSnippet(text, query) {
+            const index = text.toLowerCase().indexOf(query.toLowerCase());
+            const start = Math.max(0, index - 50);
+            const end = Math.min(text.length, index + query.length + 50);
+            let snippet = text.substring(start, end);
+            
+            if (start > 0) snippet = '...' + snippet;
+            if (end < text.length) snippet = snippet + '...';
+            
+            return snippet.replace(new RegExp(query, 'gi'), '<mark>$&</mark>');
+        }
+
+        function displaySearchResults(results) {
+            const resultsDiv = document.getElementById('search-results');
+            
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<p style="color: #666; text-align: center; padding: 10px;">No results found</p>';
+                resultsDiv.style.display = 'block';
+                return;
+            }
+            
+            const html = results.map(result => `
+                <div style="
+                    padding: 10px;
+                    border-bottom: 1px solid #eee;
+                    cursor: pointer;
+                    hover: background: #f8f9fa;
+                " onclick="navigateToSection('${result.section}')">
+                    <strong style="color: #667eea;">${result.title}</strong>
+                    <p style="font-size: 12px; margin: 5px 0 0 0; color: #666;">${result.snippet}</p>
+                </div>
+            `).join('');
+            
+            resultsDiv.innerHTML = html;
+            resultsDiv.style.display = 'block';
+        }
+
+        function navigateToSection(sectionId) {
+            showSection(sectionId);
+            closeSearch();
+            
+            // Scroll to top after section change
+            setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 100);
+        }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + K for search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                toggleSearch();
+            }
+            
+            // Escape to close search
+            if (e.key === 'Escape') {
+                closeSearch();
+            }
+        });
+
+        // Add progress indicator
+        function addProgressIndicator() {
+            const progressBar = document.createElement('div');
+            progressBar.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 4px;
+                    background: rgba(102, 126, 234, 0.1);
+                    z-index: 9999;
+                " id="progress-container">
+                    <div style="
+                        height: 100%;
+                        background: linear-gradient(45deg, #667eea, #764ba2);
+                        width: 0%;
+                        transition: width 0.3s ease;
+                    " id="progress-bar"></div>
+                </div>
+            `;
+            
+            document.body.appendChild(progressBar);
+            
+            // Update progress on scroll
+            window.addEventListener('scroll', updateProgress);
+        }
+
+        function updateProgress() {
+            const scrollTop = window.pageYOffset;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPercent = (scrollTop / docHeight) * 100;
+            
+            const progressBar = document.getElementById('progress-bar');
+            if (progressBar) {
+                progressBar.style.width = scrollPercent + '%';
+            }
+        }
+
+        // Initialize all features when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            addProgressIndicator();
+            
+            // Add smooth transitions to all elements
+            const style = document.createElement('style');
+            style.textContent = `
+                * {
+                    scroll-behavior: smooth;
+                }
+                
+                .nav-tab, .policy-card, .prerequisite-item, .step-item {
+                    transition: all 0.3s ease;
+                }
+                
+                .policy-card:hover, .prerequisite-item:hover, .step-item:hover {
+                    transform: translateY(-2px);
+                }
+                
+                .code-block:hover {
+                    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+                }
+                
+                @media print {
+                    .nav-tabs, #search-toggle, #search-panel, #progress-container {
+                        display: none !important;
+                    }
+                    
+                    .content-section {
+                        display: block !important;
+                        page-break-inside: avoid;
+                    }
+                    
+                    .policy-card, .prerequisite-item, .step-item {
+                        page-break-inside: avoid;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        });
+
+        // Add version and last updated info
+        function addVersionInfo() {
+            const versionInfo = document.createElement('div');
+            versionInfo.innerHTML = `
+                <div style="
+                    position: fixed;
+                    bottom: 20px;
+                    left: 20px;
+                    background: rgba(0, 0, 0, 0.8);
+                    color: white;
+                    padding: 10px 15px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    z-index: 1000;
+                    opacity: 0.7;
+                ">
+                    <div>📖 Guide v2.1.0</div>
+                    <div>🗓️ Updated: ${new Date().toLocaleDateString()}</div>
+                </div>
+            `;
+            document.body.appendChild(versionInfo);
+        }
+
+        // Initialize version info
+        document.addEventListener('DOMContentLoaded', addVersionInfo);
+    </script>
+</body>
+</html>

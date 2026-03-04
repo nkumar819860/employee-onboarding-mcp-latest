@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+ 
+    <modelVersion>4.0.0</modelVersion> 
+    <groupId>com.inveniobusinessolutions</groupId> 
+    <artifactId>employee-onboarding-parent</artifactId> 
+    <version>2.5.1</version> 
+    <packaging>pom</packaging> 
+ 
+    <name>Employee Onboarding Parent POM</name> 
+    <description>Parent POM for Employee Onboarding MCP Servers</description> 
+ 
+    <distributionManagement> 
+        <repository> 
+            <id>anypoint-exchange</id> 
+            <name>MuleSoft Exchange</name> 
+            <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url> 
+        </repository> 
+    </distributionManagement> 
+ 
+</project> 

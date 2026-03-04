@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
     <artifactId>employee-onboarding-parent</artifactId>
-    <version>1.0.0</version>
+    <version>2.5.0</version>
     <packaging>pom</packaging>
 
     <name>Employee Onboarding Parent POM</name>
@@ -17,7 +17,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <mule.version>4.9.6</mule.version>
+        <mule.version>4.9.14</mule.version>
         <mule.maven.plugin.version>4.5.0</mule.maven.plugin.version>
         <exchange.maven.plugin.version>0.0.28</exchange.maven.plugin.version>
         <!-- ✅ CRITICAL: Define exchange.url -->
@@ -35,15 +35,56 @@
         -->
     </modules>
 
-    <!-- ✅ FIXED: Correct Mule BOM -->
+    <!-- ✅ FIXED: Complete dependency management for child POMs -->
     <dependencyManagement>
         <dependencies>
+            <!-- ✅ Mule Runtime BOM -->
             <dependency>
-                <groupId>org.mule.runtime</groupId>
-                <artifactId>mule-bom-parent</artifactId>
+                <groupId>org.mule.distributions</groupId>
+                <artifactId>mule-runtime-impl-bom</artifactId>
                 <version>${mule.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            
+            <!-- ✅ Mule Connectors with explicit versions -->
+            <dependency>
+                <groupId>org.mule.connectors</groupId>
+                <artifactId>mule-http-connector</artifactId>
+                <version>1.10.0</version>
+                <classifier>mule-plugin</classifier>
+            </dependency>
+            <dependency>
+                <groupId>org.mule.connectors</groupId>
+                <artifactId>mule-db-connector</artifactId>
+                <version>1.15.0</version>
+                <classifier>mule-plugin</classifier>
+            </dependency>
+            <dependency>
+                <groupId>org.mule.connectors</groupId>
+                <artifactId>mule-email-connector</artifactId>
+                <version>1.8.0</version>
+                <classifier>mule-plugin</classifier>
+            </dependency>
+            
+            <!-- ✅ MuleSoft Modules -->
+            <dependency>
+                <groupId>com.mulesoft.modules</groupId>
+                <artifactId>mule-secure-configuration-property-module</artifactId>
+                <version>1.2.7</version>
+                <classifier>mule-plugin</classifier>
+            </dependency>
+            
+            <!-- ✅ Database Dependencies -->
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>42.7.4</version>
+            </dependency>
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>2.2.224</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

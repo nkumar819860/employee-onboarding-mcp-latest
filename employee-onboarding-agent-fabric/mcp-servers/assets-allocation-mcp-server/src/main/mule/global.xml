@@ -49,9 +49,9 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 	<db:config doc:name="PostgreSQL Config"
 		name="PostgreSQL_Database_Config">
 		<db:generic-connection
-			driverClassName="${db.driverClassName}"
-			password="${db.password}" url="${db.url}"
-			user="${db.username}">
+			driverClassName="${db.postgres.driverClassName}"
+			password="${db.postgres.password}" url="${db.postgres.url}"
+			user="${db.postgres.username}">
 			<db:pooling-profile 
 				maxPoolSize="10" 
 				minPoolSize="2" 

@@ -45,7 +45,7 @@
         {
             "groupId": "org.mule.distributions",
             "artifactId": "mule-runtime-impl-bom",
-            "version": "4.9.14",
+            "version": "4.9.6",
             "type": "pom",
             "scope": "import"
         },
@@ -66,7 +66,7 @@
         }
     ],
     "properties": {
-        "muleVersion": "4.9.14",
+        "muleVersion": "4.9.6",
         "runtimeVersion": "4.9-java17",
         "javaVersion": "17",
         "packaging": "mule-application",

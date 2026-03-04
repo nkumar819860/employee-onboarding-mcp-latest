@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angular CI/CD Pipeline - Comprehensive Setup Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Open Sans', sans-serif;
+
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 30px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            background: linear-gradient(135deg, #ff6b6b, #ffd93d);
+            color: white;
+            margin: -20px -20px 40px -20px;
+            border-radius: 0 0 20px 20px;
+        }
+        
+        .header h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .nav {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 5px solid #007bff;
+        }
+        
+        .nav h3 {
+            color: #007bff;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .nav ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+        
+        .nav li {
+            padding: 8px 0;
+        }
+        
+        .nav a {
+            color: #495057;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            padding: 5px 10px;
+            border-radius: 5px;
+            display: block;
+        }
+        
+        .nav a:hover {
+            color: #007bff;
+            background: rgba(0, 123, 255, 0.1);
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-left: 5px solid #28a745;
+        }
+        
+        .section h2 {
+            color: #28a745;
+            font-size: 2em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .section h3 {
+            color: #007bff;
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+        
+        .section h4 {
+            color: #6c757d;
+            font-size: 1.2em;
+            margin: 20px 0 10px 0;
+        }
+        
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            overflow-x: auto;
+            position: relative;
+            border-left: 4px solid #4299e1;
+        }
+        
+        .code-block pre {
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .code-header {
+            background: #1a202c;
+            color: #a0aec0;
+            padding: 10px 20px;
+            margin: -20px -20px 15px -20px;
+            font-weight: bold;
+            border-radius: 10px 10px 0 0;
+            font-size: 12px;
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-left: 5px solid #2196f3;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+        
+        .warning-box {
+            background: linear-gradient(135deg, #fff3e0, #ffcc80);
+            border-left: 5px solid #ff9800;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+        
+        .success-box {
+            background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+            border-left: 5px solid #4caf50;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+        
+        .checklist {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .checklist h4 {
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+        
+        .checklist ul {
+            list-style: none;
+        }
+        
+        .checklist li {
+            padding: 8px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        
+        .checklist li:before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .table th {
+            background: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #007bff;
+            color: white;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .badge.secret {
+            background: #dc3545;
+        }
+        
+        .badge.optional {
+            background: #6c757d;
+        }
+        
+        .steps {
+            counter-reset: step-counter;
+        }
+        
+        .step {
+            counter-increment: step-counter;
+            position: relative;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #007bff;
+        }
+        
+        .step:before {
+            content: counter(step-counter);
+            position: absolute;
+            left: -15px;
+            top: 20px;
+            background: #007bff;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .nav ul {
+                grid-template-columns: 1fr;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .table {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Angular CI/CD Pipeline</h1>
+            <p>Complete Azure DevOps Setup Guide with Caching, Testing & Optimization</p>
+        </div>
+
+        <nav class="nav">
+            <h3>📋 Quick Navigation</h3>
+            <ul>
+                <li><a href="#prerequisites">Prerequisites</a></li>
+                <li><a href="#project-setup">Project Setup</a></li>
+                <li><a href="#variables">Variable Configuration</a></li>
+                <li><a href="#caching">Caching Strategy</a></li>
+                <li><a href="#pipeline-stages">Pipeline Stages</a></li>
+                <li><a href="#testing">Testing Configuration</a></li>
+                <li><a href="#security">Security Scanning</a></li>
+                <li><a href="#deployment">Deployment Setup</a></li>
+                <li><a href="#troubleshooting">Troubleshooting</a></li>
+            </ul>
+        </nav>
+
+        <section id="prerequisites" class="section">
+            <h2>📋 Prerequisites</h2>
+            
+            <h3>Required Software Versions</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Software</th>
+                        <th>Version</th>
+                        <th>Purpose</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Node.js</strong></td>
+                        <td>20.x (LTS)</td>
+                        <td>JavaScript runtime</td>
+                        <td>Latest stable LTS version</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Angular CLI</strong></td>
+                        <td>18.x</td>
+                        <td>Angular development toolkit</td>
+                        <td>Compatible with Angular 18+</td>
+                    </tr>
+                    <tr>
+                        <td><strong>npm</strong></td>
+                        <td>10.x+</td>
+                        <td>Package manager</td>
+                        <td>Comes with Node.js</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Azure DevOps</strong></td>
+                        <td>2020+</td>
+                        <td>CI/CD platform</td>
+                        <td>Azure DevOps Services recommended</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Required Permissions</h3>
+            <div class="checklist">
+                <h4>Azure DevOps Permissions</h4>
+                <ul>
+                    <li>Project Administrator or Build Administrator</li>
+                    <li>Variable Group management permissions</li>
+                    <li>Pipeline creation and edit permissions</li>
+                    <li>Environment management permissions</li>
+                </ul>
+            </div>
+
+            <div class="info-box">
+                <strong>💡 Pro Tip:</strong> Ensure you have the latest Azure DevOps extensions installed for the best experience with modern Angular features.
+            </div>
+        </section>
+
+        <section id="project-setup" class="section">
+            <h2>🏗️ Angular Project Setup</h2>
+            
+            <h3>Required Project Structure</h3>
+            <div class="code-block">
+                <div class="code-header">Project Directory Structure</div>
+                <pre>
+your-angular-project/
+├── src/                          # Application source code
+│   ├── app/                      # Angular app modules
+│   ├── assets/                   # Static assets
+│   ├── environments/             # Environment configurations
+│   └── index.html               # Main HTML file
+├── package.json                  # NPM dependencies & scripts
+├── angular.json                  # Angular CLI configuration
+├── tsconfig.json                # TypeScript configuration
+├── karma.conf.js                # Karma test configuration
+├── karma-ci.conf.js             # CI-specific Karma config
+├── .eslintrc.json               # ESLint configuration (optional)
+├── .prettierrc                   # Prettier configuration (optional)
+└── owasp-suppressions.xml       # OWASP suppressions (optional)
+                </pre>
+            </div>
+
+            <h3>Required package.json Scripts</h3>
+            <div class="code-block">
+                <div class="code-header">package.json - Required Scripts</div>
+                <pre>
+{
+  "name": "employee-onboarding-app",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "ng build",
+    "build:prod": "ng build --configuration=production",
+    "test": "ng test",
+    "test:ci": "ng test --karma-config karma-ci.conf.js",
+    "lint": "ng lint",
+    "e2e": "ng e2e"
+  },
+  "dependencies": {
+    "@angular/animations": "^18.0.0",
+    "@angular/common": "^18.0.0",
+    "@angular/compiler": "^18.0.0",
+    "@angular/core": "^18.0.0",
+    "@angular/forms": "^18.0.0",
+    "@angular/platform-browser": "^18.0.0",
+    "@angular/platform-browser-dynamic": "^18.0.0",
+    "@angular/router": "^18.0.0"
+  },
+  "devDependencies": {
+    "@angular/cli": "^18.0.0",
+    "@angular/compiler-cli": "^18.0.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0"
+  }
+}
+                </pre>
+            </div>
+
+            <h3>CI-Specific Karma Configuration</h3>
+            <div class="code-block">
+                <div class="code-header">karma-ci.conf.js</div>
+                <pre>
+const karmaConfig = require('./karma.conf.js');
+
+module.exports = function (config) {
+  karmaConfig(config);
+  
+  config.set({
+    // Use headless Chrome for CI
+    browsers: ['ChromeHeadlessCI'],
+    customLaunchers: {
+      ChromeHeadlessCI: {
+        base: 'ChromeHeadless',
+        flags: [
+          '--no-sandbox',
+          '--disable-web-security',
+          '--disable-gpu',
+          '--remote-debugging-port=9222'
+        ]
+      }
+    },
+    
+    // Single run for CI
+    singleRun: true,
+    autoWatch: false,
+    
+    // Reporters for CI
+    reporters: ['progress', 'junit', 'coverage'],
+    
+    // JUnit reporter for Azure DevOps
+    junitReporter: {
+      outputDir: './test-results/',
+      outputFile: 'test-results.xml',
+      useBrowserName: false
+    },
+    
+    // Coverage reporter
+    coverageReporter: {
+      dir: './coverage/',
+      reporters: [
+        { type: 'html' },
+        { type: 'lcov' },
+        { type: 'json-summary' }
+      ]
+    }
+  });
+};
+                </pre>
+            </div>
+
+            <div class="success-box">
+                <strong>✅ Setup Complete:</strong> Your Angular project is now configured for optimal CI/CD pipeline integration.
+            </div>
+        </section>
+
+        <section id="variables" class="section">
+            <h2>⚙️ Variable Configuration</h2>
+            
+            <h3>Pipeline-Level Variables</h3>
+            <p>Configure these variables directly in your Azure DevOps pipeline YAML file:</p>
+            
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Variable Name</th>
+                        <th>Default Value</th>
+                        <th>Description</th>
+                        <th>Customizable</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>nodeVersion</code></td>
+                        <td>20.x</td>
+                        <td>Node.js version to use</td>
+                        <td>✅</td>
+                    </tr>
+                    <tr>
+                        <td><code>angularCliVersion</code></td>
+                        <td>18.x</td>
+                        <td>Angular CLI version</td>
+                        <td>✅</td>
+                    </tr>
+                    <tr>
+                        <td><code>appName</code></td>
+                        <td>employee-onboarding-app</td>
+                        <td>Application name</td>
+                        <td>✅</td>
+                    </tr>
+                    <tr>
+                        <td><code>appContext</code></td>
+                        <td>onboarding</td>
+                        <td>Application context path</td>
+                        <td>✅</td>
+                    </tr>
+                    <tr>
+                        <td><code>buildConfiguration</code></td>
+                        <td>production</td>
+                        <td>Angular build configuration</td>
+                        <td>✅</td>
+                    </tr>
+                    <tr>
+                        <td><code>enableCodeCoverage</code></td>
+                        <td>true</td>
+                        <td>Enable code coverage reporting</td>
+                        <td>✅</td>
+                    </tr>
+                    <tr>
+                        <td><code>coverageThreshold</code></td>
+                        <td>80</td>
+                        <td>Minimum code coverage percentage</td>
+                        <td>✅</td>
+                    </tr>
+                    <tr>
+                        <td><code>maxBundleSize</code></td>
+                        <td>2mb</td>
+                        <td>Maximum allowed bundle size</td>
+                        <td>✅</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Variable Groups Setup</h3>
+            <div class="steps">
+                <div class="step">
+                    <h4>Create angular-build-config Variable Group</h4>
+                    <p>Navigate to <strong>Pipelines → Library → Variable groups</strong> and create:</p>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Variable</th>
+                                <th>Value</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>buildOptimization</code></td>
+                                <td>true</td>
+                                <td><span class="badge">Standard</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>sourceMaps</code></td>
+                                <td>false</td>
+                                <td><span class="badge">Standard</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>extractLicenses</code></td>
+                                <td>true</td>
+                                <td><span class="badge">Standard</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>vendorChunk</code></td>
+                                <td>true</td>
+                                <td><span class="badge">Standard</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="step">
+                    <h4>Create security-scanning Variable Group</h4>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Variable</th>
+                                <th>Value</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>enableSecurityScanning</code></td>
+                                <td>true</td>
+                                <td><span class="badge">Standard</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>owaspSuppressionFile</code></td>
+                                <td>owasp-suppressions.xml</td>
+                                <td><span class="badge">Standard</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>npmAuditLevel</code></td>
+                                <td>moderate</td>
+                                <td><span class="badge">Standard</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <strong>⚠️ Important:</strong> Always validate your variable names and values before saving. Incorrect configurations can cause pipeline failures.
+            </div>
+        </section>
+
+        <section id="caching" class="section">
+            <h2>🚀 Caching Strategy</h2>
+            
+            <p>Our pipeline implements a multi-level caching strategy to optimize build times and resource usage:</p>
+
+            <h3>Cache Layers</h3>
+            <div class="highlight">
+                <h4>1. Node Modules Cache</h4>
+                <p><strong>Purpose:</strong> Cache npm packages to avoid repeated downloads</p>
+                <p><strong>Key Strategy:</strong> Based on package-lock.json hash + OS + branch</p>
+                <p><strong>Expected Speed Improvement:</strong> 60-80% faster dependency installation</p>
+            </div>
+
+            <div class="highlight">
+                <h4>2. Angular Build Cache</h4>
+                <p><strong>Purpose:</strong> Cache Angular compiler output</p>
+                <p><strong>Location:</strong> .angular/cache directory</p>
+                <p><strong>Expected Speed Improvement:</strong> 40-60% faster builds</p>
+            </div>
+
+            <div class="highlight">
+                <h4>3. NPM Global Cache</h4>
+                <p><strong>Purpose:</strong> Cache global npm packages like Angular CLI</p>
+                <p><strong>Key Strategy:</strong> Based on Node.js version</p>
+                <p><strong>Expected Speed Improvement:</strong> 20-30% faster CLI installation</p>
+            </div>
+
+            <h3>Cache Configuration Examples</h3>
+            <div class="code-block">
+                <div class="code-header">Node Modules Cache Configuration</div>
+                <pre>
+- task: Cache@2
+  displayName: 'Cache node_modules'
+  inputs:
+    key: 'npm-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"-$(Agent.JobName)'
+    restoreKeys: |
+      npm-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"
+      npm-$(Agent.OS)-$(Build.SourceBranch)
+      npm-$(Agent.OS)
+    path: 'node_modules'
+    cacheHitVar: 'NODE_MODULES_RESTORED'
+                </pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">Angular Build Cache Configuration</div>
+                <pre>
+- task: Cache@2
+  displayName: 'Cache Angular Build Cache'
+  inputs:
+    key: 'angular-cache-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"'
+    restoreKeys: |
+      angular-cache-$(Agent.OS)-$(Build.SourceBranch)
+      angular-cache-$(Agent.OS)
+    path: '.angular/cache'
+                </pre>
+            </div>
+
+            <h3>Cache Performance Metrics</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Stage</th>
+                        <th>Without Cache</th>
+                        <th>With Cache</th>
+                        <th>Improvement</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Dependency Installation</td>
+                        <td>3-5 minutes</td>
+                        <td>30-60 seconds</td>
+                        <td>🚀 80% faster</td>
+                    </tr>
+                    <tr>
+                        <td>Angular Build</td>
+                        <td>2-4 minutes</td>
+                        <td>1-2 minutes</td>
+                        <td>🚀 50% faster</td>
+                    </tr>
+                    <tr>
+                        <td>Total Pipeline</td>
+                        <td>8-12 minutes</td>
+                        <td>4-6 minutes</td>
+                        <td>🚀 60% faster</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="success-box">
+                <strong>✅ Cache Benefits:</strong> Proper caching can reduce your pipeline execution time by 60% or more, saving both time and Azure DevOps build minutes.
+            </div>
+        </section>
+
+        <section id="pipeline-stages" class="section">
+            <h2>🏗️ Pipeline Stages Overview</h2>
+            
+            <p>Our Angular CI/CD pipeline consists of 8 optimized stages:</p>
+
+            <div class="steps">
+                <div class="step">
+                    <h4>🔧 Build Setup & Validation</h4>
+                    <ul>
+                        <li>Install Node.js and npm</li>
+                        <li>Validate project structure</li>
+                        <li>Check required configuration files</li>
+                        <li>Verify package.json scripts</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <h4>📦 Dependency Management</h4>
+                    <ul>
+                        <li>Configure npm cache settings</li>
+                        <li>Restore cached node_modules</li>
+                        <li>Install Angular CLI globally</li>
+                        <li>Install project dependencies</li>
+                        <li>Run security audit</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <h4>🔍 Code Quality & Linting</h4>
+                    <ul>
+                        <li>Run ESLint analysis</li>
+                        <li>Check Prettier formatting</li>
+                        <li>Execute Angular lint</li>
+                        <li>TypeScript compilation check</li>
+                        <li>Publish lint results</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <h4>🧪 Unit Testing</h4>
+                    <ul>
+                        <li>Install Chrome for headless testing</li>
+                        <li>Run Karma unit tests</li>
+                        <li>Generate code coverage reports</li>
+                        <li>Validate coverage thresholds</li>
+                        <li>Publish test results</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <h4>🔒 Security Scanning</h4>
+                    <ul>
+                        <li>NPM security audit</li>
+                        <li>OWASP dependency check</li>
+                        <li>Bundle size analysis (optional)</li>
+                        <li>Vulnerability reporting</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <h4>🏗️ Build Application</h4>
+                    <ul>
+                        <li>Production build with optimization</li>
+                        <li>Bundle size validation</li>
+                        <li>Generate build metadata</li>
+                        <li>Create deployment package</li>
+                        <li>Publish build artifacts</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <h4>📋 Deployment Preparation</h4>
+                    <ul>
+                        <li>Download build artifacts</li>
+                        <li>Generate deployment scripts</li>
+                        <li>Create environment-specific configs</li>
+                        <li>Prepare deployment packages</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <h4>🧹 Cleanup & Reporting</h4>
+                    <ul>
+                        <li>Generate pipeline reports</li>
+                        <li>Clean temporary files</li>
+                        <li>Archive important logs</li>
+                        <li>Send notifications</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="testing" class="section">
+            <h2>🧪 Testing Configuration</h2>
+            
+            <h3>Unit Testing Setup</h3>
+            <p>Our pipeline includes comprehensive unit testing with the following features:</p>
+            
+            <div class="highlight">
+                <h4>Test Configuration Features</h4>
+                <ul>
+                    <li><strong>Headless Chrome:</strong> Fast, reliable browser testing</li>
+                    <li><strong>Code Coverage:</strong> Detailed coverage reports with thresholds</li>
+                    <li><strong>JUnit Reports:</strong> Azure DevOps integration</li>
+                    <li><strong>Parallel Execution:</strong> Faster test completion</li>
+                </ul>
+            </div>
+
+            <h3>Test Commands</h3>
+            <div class="code-block">
+                <div class="code-header">Test Execution Command</div>
+                <pre>
+ng test --watch=false \
+        --browsers=ChromeHeadless \
+        --code-coverage=true \
+        --source-map=false \
+        --progress=false \
+        --karma-config=karma-ci.conf.js
+                </pre>
+            </div>
+
+            <h3>Coverage Configuration</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Threshold</th>
+                        <th>Action

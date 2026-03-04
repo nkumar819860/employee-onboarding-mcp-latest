@@ -1,12 +1,19 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <!-- âœ… FIXED: Use your Business Group ID -->
+
+  <!-- ✅ PARENT POM REFERENCE -->
+  <parent>
+    <groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
+    <artifactId>employee-onboarding-parent</artifactId>
+    <version>2.5.0</version>
+  </parent>
+
   <groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
   <artifactId>employee-onboarding-mcp-parent</artifactId>
   <version>3.0.5-011343</version>
   <packaging>pom</packaging>
-  <!-- âœ… FIXED: Correct module paths matching actual directory structure -->
+  <!-- ✅ FIXED: Correct module paths matching actual directory structure -->
   <modules>
     <module>mcp-servers/employee-onboarding-agent-broker</module>
     <module>mcp-servers/employee-onboarding-mcp-server</module>
@@ -17,16 +24,16 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <!-- âœ… EXCHANGE PLUGIN FIX: Enable exchange publishing with MCP classifier -->
+    <!-- ✅ EXCHANGE PLUGIN FIX: Enable exchange publishing with MCP classifier -->
     <exchange.skip>false</exchange.skip>
     <exchange.publish>true</exchange.publish>
     <exchange.classifier>mcp</exchange.classifier>
-    <!-- âœ… Java 17 Compatible RUNTIME -->
-    <mule.version>4.9.14</mule.version>
+    <!-- ✅ Java 17 Compatible RUNTIME -->
+    <mule.version>4.9.6</mule.version>
     <mule.runtime.version>4.9-java17</mule.runtime.version>
     <java.version>17</java.version>
     <mule.maven.plugin.version>4.5.0</mule.maven.plugin.version>
-    <!-- âœ… LATEST Java 17 Compatible Connector Versions -->
+    <!-- ✅ LATEST Java 17 Compatible Connector Versions -->
     <mule.http.connector.version>1.10.0</mule.http.connector.version>
     <mule.db.connector.version>1.15.0</mule.db.connector.version>
     <mule.email.connector.version>1.8.0</mule.email.connector.version>
@@ -36,13 +43,13 @@
     <postgresql.version>42.7.4</postgresql.version>
     <h2.version>2.2.224</h2.version>
     <mule.http.request.version>1.9.0</mule.http.request.version>
-    <!-- âœ… Connected App -->
+    <!-- ✅ Connected App -->
     <connected.app.client.id>aec0b3117f7d4d4e8433a7d3d23bc80e</connected.app.client.id>
     <connected.app.client.secret>9bc9D86a77b343b98a148C0313239aDA</connected.app.client.secret>
     <anypoint.business.group>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</anypoint.business.group>
     <anypoint.platform.env>Sandbox</anypoint.platform.env>
   </properties>
-  <!-- âœ… FIXED: Repositories FIRST -->
+  <!-- ✅ FIXED: Repositories FIRST -->
   <repositories>
     <repository>
       <id>mulesoft-releases</id>
@@ -69,7 +76,7 @@
   </pluginRepositories>
   <dependencyManagement>
     <dependencies>
-      <!-- âœ… Mule BOM - CRITICAL -->
+      <!-- ✅ Mule BOM - CRITICAL -->
       <dependency>
         <groupId>org.mule.distributions</groupId>
         <artifactId>mule-runtime-impl-bom</artifactId>
@@ -77,7 +84,7 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-      <!-- âœ… Connectors - OVERRIDE BOM for Java 17 -->
+      <!-- ✅ Connectors - OVERRIDE BOM for Java 17 -->
       <dependency>
         <groupId>org.mule.connectors</groupId>
         <artifactId>mule-db-connector</artifactId>
@@ -108,7 +115,7 @@
         <version>${mule.secure.configuration.property.version}</version>
         <classifier>mule-plugin</classifier>
       </dependency>
-      <!-- âœ… Databases -->
+      <!-- ✅ Databases -->
       <dependency>
         <groupId>org.postgresql</groupId>
         <artifactId>postgresql</artifactId>
@@ -121,7 +128,7 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-  <!-- âœ… FIXED: Clean distributionManagement -->
+  <!-- ✅ FIXED: Clean distributionManagement -->
   <distributionManagement>
     <repository>
       <id>anypoint-exchange</id>
@@ -129,7 +136,7 @@
       <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
     </repository>
   </distributionManagement>
-  <!-- âœ… Plugin Management -->
+  <!-- ✅ Plugin Management -->
   <build>
     <pluginManagement>
       <plugins>
@@ -146,25 +153,25 @@
       </plugins>
     </pluginManagement>
     <plugins>
-      <!-- âœ… Mule Maven Plugin for Exchange Publishing -->
+      <!-- ✅ Mule Maven Plugin for Exchange Publishing -->
       <plugin>
         <groupId>org.mule.tools.maven</groupId>
         <artifactId>mule-maven-plugin</artifactId>
         <version>${mule.maven.plugin.version}</version>
         <extensions>true</extensions>
       </plugin>
-      <!-- âœ… Exchange Publish Plugin - 412 ERROR PREVENTION CONFIGURATION -->
+      <!-- ✅ Exchange Publish Plugin - 412 ERROR PREVENTION CONFIGURATION -->
       <plugin>
         <groupId>org.mule.tools.maven</groupId>
         <artifactId>exchange-mule-maven-plugin</artifactId>
         <version>0.0.23</version>
         <configuration>
-          <!-- âœ… Anti-412 Configuration -->
+          <!-- ✅ Anti-412 Configuration -->
           <classifier>pom</classifier>
           <businessGroupId>${anypoint.business.group}</businessGroupId>
           <connectedAppClientId>${connected.app.client.id}</connectedAppClientId>
           <connectedAppClientSecret>${connected.app.client.secret}</connectedAppClientSecret>
-          <!-- âœ… 412 ERROR PREVENTION SETTINGS -->
+          <!-- ✅ 412 ERROR PREVENTION SETTINGS -->
           <skipValidation>true</skipValidation>
           <skipDeployment>false</skipDeployment>
           <skipAssetUpload>false</skipAssetUpload>
@@ -172,12 +179,12 @@
           <skipAssetVerification>true</skipAssetVerification>
           <overwriteAssets>true</overwriteAssets>
           <ignoreVersionConflicts>true</ignoreVersionConflicts>
-          <!-- âœ… TIMEOUT AND RETRY SETTINGS -->
+          <!-- ✅ TIMEOUT AND RETRY SETTINGS -->
           <connectionTimeout>120000</connectionTimeout>
           <readTimeout>300000</readTimeout>
           <maxRetries>5</maxRetries>
           <retryDelay>10000</retryDelay>
-          <!-- âœ… ASSET METADATA -->
+          <!-- ✅ ASSET METADATA -->
           <name>Employee Onboarding MCP Parent</name>
           <description>Enterprise-grade multi-module MCP parent POM for employee onboarding automation</description>
           <type>template</type>
@@ -192,7 +199,7 @@
           </tags>
         </configuration>
         <executions>
-          <!-- âœ… Single Execution to Avoid Conflicts -->
+          <!-- ✅ Single Execution to Avoid Conflicts -->
           <execution>
             <id>exchange-deploy-fresh</id>
             <phase>deploy</phase>
@@ -200,7 +207,7 @@
               <goal>exchange-deploy</goal>
             </goals>
             <configuration>
-              <!-- âœ… Force fresh deployment -->
+              <!-- ✅ Force fresh deployment -->
               <skipIfExists>false</skipIfExists>
               <allowUpdates>true</allowUpdates>
               <forceUpload>true</forceUpload>

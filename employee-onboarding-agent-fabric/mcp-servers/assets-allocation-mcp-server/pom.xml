@@ -5,9 +5,8 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
-		<artifactId>employee-onboarding-mcp-parent</artifactId>
-		<version>3.0.1</version>
-		<relativePath>../../pom.xml</relativePath>
+		<artifactId>employee-onboarding-parent</artifactId>
+		<version>2.5.0</version>
 	</parent>
 	<!-- ✅ FIXED: GroupId matches org -->
 	<groupId>47562e5d-bf49-440a-a0f5-a9cea0a89aa9</groupId>
@@ -27,7 +26,7 @@
 		<exchange.assetId>assets-allocation-mcp-server-server</exchange.assetId>
 		<tags>Asset Management,MCP Server,Employee Resources,IT Assets,Inventory Management</tags>
 		<!-- ✅ CloudHub Properties -->
-		<mule.version>4.9.14</mule.version>
+		<mule.version>4.9.6</mule.version>
 		<mule.runtime.version>4.9-java17</mule.runtime.version>
 		<mule.maven.plugin.version>4.5.0</mule.maven.plugin.version>
 		<application.name>assets-allocation-mcp-server</application.name>
@@ -48,7 +47,7 @@
 	</distributionManagement>
 	<repositories>
 		<repository>
-			<id>anypoint-exchange</id>
+			<id>anypoint-exchange-v3</id>
 			<name>Anypoint Exchange V3</name>
 			<url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
 			<layout>default</layout>

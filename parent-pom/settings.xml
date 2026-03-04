@@ -14,7 +14,12 @@
 		<server>
 			<id>anypoint-exchange-v3</id>
 			<username>~~~Token~~~</username>
-			<password>9857e72e-ea97-4826-8887-a872d2849aab</password>
+			<password>d3e62df6-d15f-4023-a5aa-677976a2ee06</password>
+		</server>
+		<server>
+			<id>anypoint-exchange</id>
+			<username>~~~Token~~~</username>
+			<password>d3e62df6-d15f-4023-a5aa-677976a2ee06</password>
 		</server>
         <server>
             <id>mulesoft-releases</id>
@@ -26,11 +31,7 @@
             <username>~~~Client~~~</username>
             <password>aec0b3117f7d4d4e8433a7d3d23bc80e~?~9bc9D86a77b343b98a148C0313239aDA</password>
         </server>
-        <server>
-            <id>anypoint-exchange-org</id>
-            <username>~~~Client~~~</username>
-            <password>aec0b3117f7d4d4e8433a7d3d23bc80e~?~9bc9D86a77b343b98a148C0313239aDA</password>
-        </server>
+       
     </servers>
     
     <!-- ✅ Repository Profiles -->
@@ -80,22 +81,7 @@
                         <enabled>false</enabled>
                     </snapshots>
                 </repository>
-                
-                <repository>
-                    <id>anypoint-exchange</id>
-                    <name>Anypoint Exchange Repository</name>
-                     <url>https://maven.anypoint.mulesoft.com/api/v3/organizations/47562e5d-bf49-440a-a0f5-a9cea0a89aa9/maven</url>
-
-                    <layout>default</layout>
-                    <releases>
-                        <enabled>true</enabled>
-                        <updatePolicy>never</updatePolicy>
-                    </releases>
-                    <snapshots>
-                        <enabled>true</enabled>
-                        <updatePolicy>always</updatePolicy>
-                    </snapshots>
-                </repository>
+              
                 
                 <!-- ✅ Organization-specific Exchange Repository -->
                 <repository>
@@ -232,8 +218,7 @@
         <pluginGroup>com.mulesoft.munit.tools</pluginGroup>
     </pluginGroups>
     
-    <!-- ✅ Local Repository -->
-    <localRepository>C:\Users\PradeepKumar.N\.m2\repository</localRepository>
+
     
     <!-- ✅ Proxy Configuration (if needed behind corporate firewall) -->
     <proxies>

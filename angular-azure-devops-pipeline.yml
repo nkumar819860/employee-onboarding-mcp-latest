@@ -1,0 +1,842 @@
+# PRODUCTION-GRADE ANGULAR AZURE DEVOPS PIPELINE
+# Features: Build, Test, Security Scan, Cache Optimization, Multi-Environment Deployment
+
+trigger:
+  branches:
+    include:
+    - main
+    - develop
+    - release/*
+  paths:
+    include:
+    - src/*
+    - package.json
+    - angular.json
+    - tsconfig.json
+    exclude:
+    - README.md
+    - docs/*
+    - '**/*.md'
+
+pr:
+  branches:
+    include:
+    - main
+    - develop
+  paths:
+    include:
+    - src/*
+    - package.json
+    - angular.json
+    - tsconfig.json
+
+# Build agent configuration
+pool:
+  vmImage: 'ubuntu-latest'
+
+# Pipeline Variables
+variables:
+  # Node.js and Angular Configuration
+  - name: nodeVersion
+    value: '20.x'
+  - name: angularCliVersion
+    value: '18.x'
+  - name: npmCacheFolder
+    value: '$(Pipeline.Workspace)/.npm'
+  
+  # Application Configuration
+  - name: appName
+    value: 'employee-onboarding-app'
+  - name: appContext
+    value: 'onboarding'
+  - name: buildConfiguration
+    value: 'production'
+  
+  # Testing Configuration
+  - name: enableCodeCoverage
+    value: 'true'
+  - name: coverageThreshold
+    value: 80
+  - name: testTimeout
+    value: 300000
+  
+  # Build Optimization
+  - name: enableAot
+    value: 'true'
+  - name: enableBundleAnalysis
+    value: 'false'
+  - name: maxBundleSize
+    value: '2mb'
+  
+  # Environment-specific variable groups
+  - group: 'angular-build-config'
+  - group: 'security-scanning'
+
+stages:
+
+#############################################################################
+# STAGE 1: BUILD VALIDATION & SETUP
+#############################################################################
+- stage: Build_Setup
+  displayName: '🔧 Build Setup & Validation'
+  jobs:
+  - job: ValidateSetup
+    displayName: 'Validate Build Setup'
+    steps:
+    
+    # Install Node.js
+    - task: NodeTool@0
+      displayName: 'Install Node.js $(nodeVersion)'
+      inputs:
+        versionSpec: $(nodeVersion)
+        checkLatest: false
+
+    # Display environment information
+    - script: |
+        echo "Node.js version: $(node --version)"
+        echo "NPM version: $(npm --version)"
+        echo "Build configuration: $(buildConfiguration)"
+        echo "App name: $(appName)"
+        echo "App context: $(appContext)"
+      displayName: 'Display Environment Info'
+
+    # Validate package.json and dependencies
+    - script: |
+        if [ ! -f "package.json" ]; then
+          echo "❌ package.json not found!"
+          exit 1
+        fi
+        
+        if [ ! -f "angular.json" ]; then
+          echo "❌ angular.json not found!"
+          exit 1
+        fi
+        
+        if [ ! -f "tsconfig.json" ]; then
+          echo "❌ tsconfig.json not found!"
+          exit 1
+        fi
+        
+        echo "✅ All required configuration files found"
+        
+        # Check for required scripts
+        if ! jq -e '.scripts.build' package.json > /dev/null; then
+          echo "❌ Build script not found in package.json"
+          exit 1
+        fi
+        
+        if ! jq -e '.scripts.test' package.json > /dev/null; then
+          echo "❌ Test script not found in package.json"
+          exit 1
+        fi
+        
+        echo "✅ Required scripts found in package.json"
+      displayName: 'Validate Project Structure'
+
+#############################################################################
+# STAGE 2: DEPENDENCY MANAGEMENT & CACHING
+#############################################################################
+- stage: Dependencies
+  displayName: '📦 Dependency Management'
+  dependsOn: Build_Setup
+  jobs:
+  - job: InstallDependencies
+    displayName: 'Install & Cache Dependencies'
+    steps:
+    
+    # Install Node.js
+    - task: NodeTool@0
+      displayName: 'Install Node.js $(nodeVersion)'
+      inputs:
+        versionSpec: $(nodeVersion)
+
+    # Configure npm cache
+    - script: |
+        npm config set cache $(npmCacheFolder) --global
+        npm config set prefer-offline true --global
+        npm config set audit-level moderate --global
+      displayName: 'Configure NPM Cache'
+
+    # Cache node_modules based on package-lock.json
+    - task: Cache@2
+      displayName: 'Cache node_modules'
+      inputs:
+        key: 'npm-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"-$(Agent.JobName)'
+        restoreKeys: |
+          npm-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"
+          npm-$(Agent.OS)-$(Build.SourceBranch)
+          npm-$(Agent.OS)
+        path: 'node_modules'
+        cacheHitVar: 'NODE_MODULES_RESTORED'
+
+    # Cache .angular/cache for faster builds
+    - task: Cache@2
+      displayName: 'Cache Angular Build Cache'
+      inputs:
+        key: 'angular-cache-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"'
+        restoreKeys: |
+          angular-cache-$(Agent.OS)-$(Build.SourceBranch)
+          angular-cache-$(Agent.OS)
+        path: '.angular/cache'
+
+    # Cache NPM global cache
+    - task: Cache@2
+      displayName: 'Cache NPM Global Cache'
+      inputs:
+        key: 'npm-global-$(Agent.OS)-$(nodeVersion)'
+        path: '$(npmCacheFolder)'
+
+    # Install Angular CLI globally
+    - script: |
+        if ! command -v ng &> /dev/null; then
+          echo "Installing Angular CLI $(angularCliVersion)..."
+          npm install -g @angular/cli@$(angularCliVersion)
+        else
+          echo "Angular CLI already installed: $(ng version --json | jq -r '.versions."@angular/cli"')"
+        fi
+      displayName: 'Install Angular CLI'
+
+    # Install dependencies
+    - script: |
+        if [ "$(NODE_MODULES_RESTORED)" != "true" ]; then
+          echo "Cache miss - Installing dependencies..."
+          npm ci --prefer-offline --no-audit
+          echo "✅ Dependencies installed successfully"
+        else
+          echo "✅ Dependencies restored from cache"
+        fi
+      displayName: 'Install Dependencies'
+
+    # Verify dependencies
+    - script: |
+        echo "Verifying installed dependencies..."
+        npm ls --depth=0 --json > dependency-check.json
+        
+        # Check for critical vulnerabilities
+        echo "Running security audit..."
+        npm audit --audit-level high --json > audit-results.json || echo "Audit completed with warnings"
+        
+        # Display dependency information
+        echo "Total packages: $(jq -r '.dependencies | length' dependency-check.json)"
+        echo "✅ Dependency verification completed"
+      displayName: 'Verify Dependencies'
+
+    # Publish dependency information as artifact
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Dependency Information'
+      inputs:
+        pathToPublish: 'dependency-check.json'
+        artifactName: 'dependency-info'
+
+#############################################################################
+# STAGE 3: CODE QUALITY & LINTING
+#############################################################################
+- stage: Code_Quality
+  displayName: '🔍 Code Quality & Linting'
+  dependsOn: Dependencies
+  jobs:
+  - job: LintAndFormat
+    displayName: 'Lint & Format Validation'
+    steps:
+    
+    # Setup Node.js and restore cache
+    - task: NodeTool@0
+      displayName: 'Install Node.js $(nodeVersion)'
+      inputs:
+        versionSpec: $(nodeVersion)
+
+    - task: Cache@2
+      displayName: 'Restore node_modules Cache'
+      inputs:
+        key: 'npm-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"-$(Agent.JobName)'
+        restoreKeys: |
+          npm-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"
+          npm-$(Agent.OS)-$(Build.SourceBranch)
+          npm-$(Agent.OS)
+        path: 'node_modules'
+
+    # Install Angular CLI
+    - script: npm install -g @angular/cli@$(angularCliVersion)
+      displayName: 'Install Angular CLI'
+
+    # Run ESLint
+    - script: |
+        echo "Running ESLint..."
+        if [ -f ".eslintrc.json" ] || [ -f ".eslintrc.js" ]; then
+          npx eslint src/**/*.ts --format junit --output-file eslint-results.xml
+          npx eslint src/**/*.ts --format stylish
+          echo "✅ ESLint completed"
+        else
+          echo "⚠️ ESLint configuration not found, skipping..."
+        fi
+      displayName: 'Run ESLint'
+      continueOnError: true
+
+    # Run Prettier format check
+    - script: |
+        echo "Checking code formatting with Prettier..."
+        if [ -f ".prettierrc" ] || [ -f ".prettierrc.json" ]; then
+          npx prettier --check "src/**/*.{ts,html,css,scss,json}"
+          echo "✅ Code formatting check completed"
+        else
+          echo "⚠️ Prettier configuration not found, skipping..."
+        fi
+      displayName: 'Check Code Formatting'
+      continueOnError: true
+
+    # Run Angular lint
+    - script: |
+        echo "Running Angular lint..."
+        ng lint --format=json --output-file=ng-lint-results.json || true
+        ng lint
+        echo "✅ Angular lint completed"
+      displayName: 'Run Angular Lint'
+      continueOnError: true
+
+    # TypeScript compilation check
+    - script: |
+        echo "Checking TypeScript compilation..."
+        npx tsc --noEmit --skipLibCheck
+        echo "✅ TypeScript compilation check completed"
+      displayName: 'TypeScript Compilation Check'
+
+    # Publish lint results
+    - task: PublishTestResults@2
+      displayName: 'Publish ESLint Results'
+      condition: always()
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: 'eslint-results.xml'
+        searchFolder: '$(System.DefaultWorkingDirectory)'
+        testRunTitle: 'ESLint Results'
+        publishRunAttachments: true
+
+#############################################################################
+# STAGE 4: UNIT TESTING
+#############################################################################
+- stage: Unit_Tests
+  displayName: '🧪 Unit Testing'
+  dependsOn: Code_Quality
+  condition: succeeded()
+  jobs:
+  - job: RunTests
+    displayName: 'Run Unit Tests'
+    steps:
+    
+    # Setup Node.js and restore cache
+    - task: NodeTool@0
+      displayName: 'Install Node.js $(nodeVersion)'
+      inputs:
+        versionSpec: $(nodeVersion)
+
+    - task: Cache@2
+      displayName: 'Restore node_modules Cache'
+      inputs:
+        key: 'npm-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"-$(Agent.JobName)'
+        restoreKeys: |
+          npm-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"
+          npm-$(Agent.OS)-$(Build.SourceBranch)
+          npm-$(Agent.OS)
+        path: 'node_modules'
+
+    # Install Angular CLI
+    - script: npm install -g @angular/cli@$(angularCliVersion)
+      displayName: 'Install Angular CLI'
+
+    # Install Chrome for headless testing
+    - script: |
+        echo "Installing Chrome for headless testing..."
+        wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+        echo "✅ Chrome installed successfully"
+      displayName: 'Install Chrome for Testing'
+
+    # Run unit tests
+    - script: |
+        echo "Running unit tests..."
+        
+        # Configure test environment
+        export CHROME_BIN=/usr/bin/google-chrome
+        export DISPLAY=:99
+        
+        # Start virtual display for headless testing
+        sudo Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        
+        # Run tests with coverage
+        ng test --watch=false --browsers=ChromeHeadless --code-coverage=$(enableCodeCoverage) --source-map=false --progress=false --karma-config=karma-ci.conf.js
+        
+        echo "✅ Unit tests completed"
+      displayName: 'Run Unit Tests'
+      timeoutInMinutes: 10
+
+    # Publish test results
+    - task: PublishTestResults@2
+      displayName: 'Publish Test Results'
+      condition: always()
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: 'test-results/test-results.xml'
+        searchFolder: '$(System.DefaultWorkingDirectory)'
+        testRunTitle: 'Angular Unit Tests'
+        mergeTestResults: true
+        publishRunAttachments: true
+
+    # Publish code coverage
+    - task: PublishCodeCoverageResults@2
+      displayName: 'Publish Code Coverage'
+      condition: and(succeeded(), eq(variables['enableCodeCoverage'], 'true'))
+      inputs:
+        summaryFileLocation: 'coverage/lcov.info'
+        pathToSources: 'src'
+        reportDirectory: 'coverage'
+        codecoverageTool: 'Cobertura'
+
+    # Coverage threshold check
+    - script: |
+        if [ "$(enableCodeCoverage)" = "true" ]; then
+          echo "Checking code coverage threshold..."
+          
+          # Extract coverage percentage
+          COVERAGE=$(cat coverage/coverage-summary.json | jq -r '.total.lines.pct')
+          echo "Current coverage: ${COVERAGE}%"
+          echo "Required threshold: $(coverageThreshold)%"
+          
+          if (( $(echo "${COVERAGE} >= $(coverageThreshold)" | bc -l) )); then
+            echo "✅ Coverage threshold met: ${COVERAGE}% >= $(coverageThreshold)%"
+          else
+            echo "❌ Coverage threshold not met: ${COVERAGE}% < $(coverageThreshold)%"
+            exit 1
+          fi
+        fi
+      displayName: 'Validate Coverage Threshold'
+      condition: eq(variables['enableCodeCoverage'], 'true')
+
+#############################################################################
+# STAGE 5: SECURITY SCANNING
+#############################################################################
+- stage: Security_Scan
+  displayName: '🔒 Security Scanning'
+  dependsOn: Unit_Tests
+  condition: succeeded()
+  jobs:
+  - job: SecurityScanning
+    displayName: 'Security Analysis'
+    steps:
+    
+    # Setup Node.js
+    - task: NodeTool@0
+      displayName: 'Install Node.js $(nodeVersion)'
+      inputs:
+        versionSpec: $(nodeVersion)
+
+    - task: Cache@2
+      displayName: 'Restore node_modules Cache'
+      inputs:
+        key: 'npm-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"-$(Agent.JobName)'
+        restoreKeys: |
+          npm-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"
+          npm-$(Agent.OS)-$(Build.SourceBranch)
+          npm-$(Agent.OS)
+        path: 'node_modules'
+
+    # NPM Security Audit
+    - script: |
+        echo "Running NPM security audit..."
+        npm audit --audit-level moderate --json > npm-audit-results.json || true
+        npm audit --audit-level moderate
+        echo "✅ NPM security audit completed"
+      displayName: 'NPM Security Audit'
+      continueOnError: true
+
+    # OWASP Dependency Check
+    - script: |
+        echo "Installing OWASP Dependency Check..."
+        wget https://github.com/jeremylong/DependencyCheck/releases/download/v8.4.0/dependency-check-8.4.0-release.zip
+        unzip -q dependency-check-8.4.0-release.zip
+        
+        echo "Running OWASP Dependency Check..."
+        ./dependency-check/bin/dependency-check.sh \
+          --project "$(appName)" \
+          --scan . \
+          --format JSON \
+          --format HTML \
+          --out ./owasp-reports \
+          --suppression owasp-suppressions.xml \
+          --enableExperimental
+        
+        echo "✅ OWASP Dependency Check completed"
+      displayName: 'OWASP Dependency Check'
+      continueOnError: true
+
+    # Bundle Analysis (if enabled)
+    - script: |
+        if [ "$(enableBundleAnalysis)" = "true" ]; then
+          echo "Installing webpack-bundle-analyzer..."
+          npm install --no-save webpack-bundle-analyzer
+          
+          echo "Analyzing bundle size..."
+          npx webpack-bundle-analyzer dist/*/stats.json --mode static --report bundle-analysis.html --no-open
+          
+          echo "✅ Bundle analysis completed"
+        else
+          echo "Bundle analysis disabled"
+        fi
+      displayName: 'Bundle Size Analysis'
+      condition: eq(variables['enableBundleAnalysis'], 'true')
+
+    # Publish security reports
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Security Reports'
+      condition: always()
+      inputs:
+        pathToPublish: 'owasp-reports'
+        artifactName: 'security-reports'
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish NPM Audit Results'
+      condition: always()
+      inputs:
+        pathToPublish: 'npm-audit-results.json'
+        artifactName: 'npm-audit'
+
+#############################################################################
+# STAGE 6: BUILD APPLICATION
+#############################################################################
+- stage: Build_Application
+  displayName: '🏗️ Build Application'
+  dependsOn: Security_Scan
+  condition: succeeded()
+  jobs:
+  - job: BuildApp
+    displayName: 'Build Angular Application'
+    steps:
+    
+    # Setup Node.js and restore cache
+    - task: NodeTool@0
+      displayName: 'Install Node.js $(nodeVersion)'
+      inputs:
+        versionSpec: $(nodeVersion)
+
+    - task: Cache@2
+      displayName: 'Restore node_modules Cache'
+      inputs:
+        key: 'npm-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"-$(Agent.JobName)'
+        restoreKeys: |
+          npm-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"
+          npm-$(Agent.OS)-$(Build.SourceBranch)
+          npm-$(Agent.OS)
+        path: 'node_modules'
+
+    - task: Cache@2
+      displayName: 'Restore Angular Cache'
+      inputs:
+        key: 'angular-cache-$(Agent.OS)-$(Build.SourceBranch)-"$(Build.SourceVersion)"'
+        restoreKeys: |
+          angular-cache-$(Agent.OS)-$(Build.SourceBranch)
+          angular-cache-$(Agent.OS)
+        path: '.angular/cache'
+
+    # Install Angular CLI
+    - script: npm install -g @angular/cli@$(angularCliVersion)
+      displayName: 'Install Angular CLI'
+
+    # Build application for production
+    - script: |
+        echo "Building Angular application for $(buildConfiguration)..."
+        echo "App name: $(appName)"
+        echo "App context: $(appContext)"
+        echo "AOT enabled: $(enableAot)"
+        
+        # Set build options
+        BUILD_OPTIONS="--configuration=$(buildConfiguration)"
+        BUILD_OPTIONS="${BUILD_OPTIONS} --base-href=/$(appContext)/"
+        BUILD_OPTIONS="${BUILD_OPTIONS} --output-hashing=all"
+        BUILD_OPTIONS="${BUILD_OPTIONS} --source-map=false"
+        BUILD_OPTIONS="${BUILD_OPTIONS} --extract-licenses"
+        BUILD_OPTIONS="${BUILD_OPTIONS} --vendor-chunk"
+        BUILD_OPTIONS="${BUILD_OPTIONS} --build-optimizer"
+        
+        if [ "$(enableAot)" = "true" ]; then
+          BUILD_OPTIONS="${BUILD_OPTIONS} --aot"
+        fi
+        
+        # Increase Node.js memory for large applications
+        export NODE_OPTIONS="--max-old-space-size=8192"
+        
+        # Build the application
+        ng build ${BUILD_OPTIONS}
+        
+        echo "✅ Build completed successfully"
+        
+        # Display build results
+        echo "Build output directory:"
+        ls -la dist/*/
+        
+        # Calculate bundle sizes
+        echo "Bundle sizes:"
+        find dist/*/ -name "*.js" -exec du -h {} + | sort -hr
+        
+      displayName: 'Build Angular Application'
+
+    # Validate bundle sizes
+    - script: |
+        echo "Validating bundle sizes..."
+        
+        MAIN_BUNDLE=$(find dist/*/ -name "main*.js" -exec du -b {} + | awk '{print $1}')
+        MAX_SIZE_BYTES=$(echo "$(maxBundleSize)" | sed 's/mb//' | awk '{print $1 * 1024 * 1024}')
+        
+        echo "Main bundle size: $(( MAIN_BUNDLE / 1024 / 1024 ))MB"
+        echo "Maximum allowed size: $(maxBundleSize)"
+        
+        if [ ${MAIN_BUNDLE} -gt ${MAX_SIZE_BYTES} ]; then
+          echo "❌ Bundle size exceeds maximum allowed size"
+          exit 1
+        else
+          echo "✅ Bundle size within limits"
+        fi
+      displayName: 'Validate Bundle Size'
+
+    # Create deployment package
+    - task: ArchiveFiles@2
+      displayName: 'Create Deployment Package'
+      inputs:
+        rootFolderOrFile: 'dist/$(appName)'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/$(appName)-$(Build.BuildId).zip'
+        replaceExistingArchive: true
+        verbose: true
+
+    # Generate build metadata
+    - script: |
+        echo "Generating build metadata..."
+        
+        BUILD_METADATA=$(cat <<EOF
+        {
+          "buildId": "$(Build.BuildId)",
+          "buildNumber": "$(Build.BuildNumber)",
+          "sourceVersion": "$(Build.SourceVersion)",
+          "sourceBranch": "$(Build.SourceBranch)",
+          "buildDate": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+          "appName": "$(appName)",
+          "appContext": "$(appContext)",
+          "configuration": "$(buildConfiguration)",
+          "nodeVersion": "$(node --version)",
+          "angularCliVersion": "$(ng version --json | jq -r '.versions."@angular/cli"')",
+          "angularCoreVersion": "$(ng version --json | jq -r '.versions."@angular/core"')"
+        }
+        EOF
+        )
+        
+        echo "${BUILD_METADATA}" > $(Build.ArtifactStagingDirectory)/build-metadata.json
+        echo "${BUILD_METADATA}" | jq .
+        
+        echo "✅ Build metadata generated"
+      displayName: 'Generate Build Metadata'
+
+    # Publish build artifacts
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Build Artifacts'
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)/$(appName)-$(Build.BuildId).zip'
+        artifactName: 'angular-app'
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Build Metadata'
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)/build-metadata.json'
+        artifactName: 'build-metadata'
+
+#############################################################################
+# STAGE 7: DEPLOYMENT PREPARATION
+#############################################################################
+- stage: Deployment_Preparation
+  displayName: '📋 Deployment Preparation'
+  dependsOn: Build_Application
+  condition: and(succeeded(), in(variables['Build.SourceBranch'], 'refs/heads/main', 'refs/heads/develop'))
+  jobs:
+  - job: PrepareDeployment
+    displayName: 'Prepare Deployment'
+    steps:
+    
+    # Download build artifacts
+    - download: current
+      artifact: angular-app
+      displayName: 'Download Build Artifacts'
+
+    - download: current
+      artifact: build-metadata
+      displayName: 'Download Build Metadata'
+
+    # Display deployment information
+    - script: |
+        echo "=== DEPLOYMENT PREPARATION ==="
+        echo "Branch: $(Build.SourceBranch)"
+        echo "Build ID: $(Build.BuildId)"
+        echo "Application: $(appName)"
+        echo "Context: $(appContext)"
+        
+        echo "=== BUILD METADATA ==="
+        cat $(Pipeline.Workspace)/build-metadata/build-metadata.json | jq .
+        
+        echo "=== ARTIFACT INFORMATION ==="
+        ls -la $(Pipeline.Workspace)/angular-app/
+        
+        ARTIFACT_SIZE=$(du -h $(Pipeline.Workspace)/angular-app/*.zip | cut -f1)
+        echo "Artifact size: ${ARTIFACT_SIZE}"
+        
+        echo "✅ Deployment preparation completed"
+      displayName: 'Display Deployment Information'
+
+    # Create deployment script
+    - script: |
+        cat > deploy-angular-app.sh << 'EOF'
+        #!/bin/bash
+        set -e
+        
+        # Configuration
+        APP_NAME="$(appName)"
+        APP_CONTEXT="$(appContext)"
+        BUILD_ID="$(Build.BuildId)"
+        ARTIFACT_FILE="$(appName)-$(Build.BuildId).zip"
+        
+        # Deployment paths (customize based on your server setup)
+        WEBSERVER_ROOT="/var/www/html"
+        APP_PATH="$WEBSERVER_ROOT/$APP_CONTEXT"
+        BACKUP_PATH="$WEBSERVER_ROOT/backups"
+        
+        echo "=== ANGULAR APP DEPLOYMENT SCRIPT ==="
+        echo "App Name: $APP_NAME"
+        echo "Context: $APP_CONTEXT"
+        echo "Build ID: $BUILD_ID"
+        echo "Target Path: $APP_PATH"
+        
+        # Create backup directory
+        mkdir -p "$BACKUP_PATH"
+        
+        # Backup existing deployment (if exists)
+        if [ -d "$APP_PATH" ]; then
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          echo "Backing up existing deployment to $BACKUP_PATH/${APP_CONTEXT}_${TIMESTAMP}"
+          mv "$APP_PATH" "$BACKUP_PATH/${APP_CONTEXT}_${TIMESTAMP}"
+        fi
+        
+        # Create application directory
+        mkdir -p "$APP_PATH"
+        
+        # Extract new version
+        echo "Extracting $ARTIFACT_FILE to $APP_PATH"
+        unzip -q "$ARTIFACT_FILE" -d "$APP_PATH"
+        
+        # Set proper permissions
+        chmod -R 755 "$APP_PATH"
+        
+        # Verify deployment
+        if [ -f "$APP_PATH/index.html" ]; then
+          echo "✅ Deployment successful - index.html found"
+        else
+          echo "❌ Deployment failed - index.html not found"
+          exit 1
+        fi
+        
+        echo "✅ Angular app deployed successfully!"
+        EOF
+        
+        chmod +x deploy-angular-app.sh
+        echo "✅ Deployment script created"
+      displayName: 'Create Deployment Script'
+
+    # Publish deployment artifacts
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Deployment Script'
+      inputs:
+        pathToPublish: 'deploy-angular-app.sh'
+        artifactName: 'deployment-scripts'
+
+#############################################################################
+# STAGE 8: CLEANUP & REPORTING
+#############################################################################
+- stage: Cleanup_Reporting
+  displayName: '🧹 Cleanup & Reporting'
+  dependsOn: 
+  - Build_Application
+  - Deployment_Preparation
+  condition: always()
+  jobs:
+  - job: GenerateReports
+    displayName: 'Generate Pipeline Reports'
+    steps:
+    
+    # Generate pipeline summary report
+    - script: |
+        echo "Generating pipeline summary report..."
+        
+        PIPELINE_REPORT=$(cat <<EOF
+        {
+          "pipelineId": "$(System.DefinitionId)",
+          "buildId": "$(Build.BuildId)",
+          "buildNumber": "$(Build.BuildNumber)",
+          "repository": "$(Build.Repository.Name)",
+          "branch": "$(Build.SourceBranch)",
+          "commit": "$(Build.SourceVersion)",
+          "triggeredBy": "$(Build.RequestedFor)",
+          "startTime": "$(System.JobStartTime)",
+          "appName": "$(appName)",
+          "appContext": "$(appContext)",
+          "configuration": "$(buildConfiguration)",
+          "nodeVersion": "$(nodeVersion)",
+          "angularCliVersion": "$(angularCliVersion)",
+          "cacheOptimization": "enabled",
+          "securityScanning": "enabled",
+          "codeCoverage": "$(enableCodeCoverage)",
+          "bundleAnalysis": "$(enableBundleAnalysis)"
+        }
+        EOF
+        )
+        
+        echo "${PIPELINE_REPORT}" > pipeline-summary.json
+        echo "${PIPELINE_REPORT}" | jq .
+        
+        echo "✅ Pipeline summary report generated"
+      displayName: 'Generate Pipeline Summary'
+
+    # Display final statistics
+    - script: |
+        echo "=== PIPELINE COMPLETION SUMMARY ==="
+        echo "📊 Build Statistics:"
+        echo "   - Application: $(appName)"
+        echo "   - Context: $(appContext)"
+        echo "   - Configuration: $(buildConfiguration)"
+        echo "   - Node Version: $(nodeVersion)"
+        echo "   - Angular CLI: $(angularCliVersion)"
+        echo "   - Build ID: $(Build.BuildId)"
+        echo "   - Branch: $(Build.SourceBranch)"
+        echo ""
+        echo "🔧 Optimizations:"
+        echo "   - Caching: ✅ Enabled (node_modules, Angular cache, NPM global)"
+        echo "   - AOT Compilation: $(enableAot)"
+        echo "   - Bundle Optimization: ✅ Enabled"
+        echo "   - Source Maps: ❌ Disabled (production)"
+        echo ""
+        echo "🔒 Security:"
+        echo "   - NPM Audit: ✅ Completed"
+        echo "   - OWASP Dependency Check: ✅ Completed" 
+        echo "   - Bundle Analysis: $(enableBundleAnalysis)"
+        echo ""
+        echo "🧪 Testing:"
+        echo "   - Unit Tests: ✅ Completed"
+        echo "   - Code Coverage: $(enableCodeCoverage)"
+        echo "   - Linting: ✅ Completed"
+        echo ""
+        echo "📦 Artifacts:"
+        echo "   - Build Package: ✅ Created"
+        echo "   - Deployment Script: ✅ Created"
+        echo "   - Build Metadata: ✅ Generated"
+        echo ""
+        echo "✅ Pipeline completed successfully!"
+      displayName: 'Display Pipeline Summary'
+      condition: succeeded()
+
+    #

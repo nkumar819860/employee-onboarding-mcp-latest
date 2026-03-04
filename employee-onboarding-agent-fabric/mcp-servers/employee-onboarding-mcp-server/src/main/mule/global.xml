@@ -103,10 +103,10 @@ output application/json
 	<!-- PostgreSQL Configuration with Connection Pooling for Docker Environment -->
 	<db:config name="PostgreSQL_Database_Config" doc:name="PostgreSQL Production Config">
 		<db:generic-connection 
-			url="${db.url}" 
-			driverClassName="${db.driverClassName}" 
-			user="${db.username}" 
-			password="${db.password}">
+			url="${db.postgres.url}" 
+			driverClassName="${db.postgres.driverClassName}" 
+			user="${db.postgres.username}" 
+			password="${db.postgres.password}">
 			<db:pooling-profile 
 				maxPoolSize="10" 
 				minPoolSize="2" 

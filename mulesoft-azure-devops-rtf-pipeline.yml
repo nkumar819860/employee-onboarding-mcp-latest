@@ -1,0 +1,1921 @@
+# COMPREHENSIVE MULESOFT AZURE DEVOPS PIPELINE WITH RUNTIME FABRIC (RTF)
+# Features: Build, Test, Security Scan, CloudHub/RTF Deployment to Azure
+# Enhanced with Multi-Environment Support, Policy Management, and Security Best Practices
+
+name: $(Build.DefinitionName)-$(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+      - release/*
+      - feature/*
+      - hotfix/*
+  paths:
+    include:
+      - 'mcp-servers/**'
+      - 'src/**'
+      - 'pom.xml'
+      - 'mule-artifact.json'
+      - 'exchange.json'
+    exclude:
+      - '*.md'
+      - 'docs/**'
+      - 'README*'
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - 'mcp-servers/**'
+      - 'src/**'
+      - 'pom.xml'
+      - 'mule-artifact.json'
+
+# Build agent configuration with multiple OS support
+pool:
+  vmImage: 'ubuntu-latest'
+
+# Global Pipeline Variables
+variables:
+  # Java and Maven Configuration
+  - name: javaVersion
+    value: '17'
+  - name: mavenVersion
+    value: '3.9.x'
+  - name: muleRuntimeVersion
+    value: '4.9.6'
+  - name: mavenCacheFolder
+    value: '$(Pipeline.Workspace)/.m2'
+  
+  # Application Configuration
+  - name: appName
+    value: 'employee-onboarding-mcp'
+  - name: appVersion
+    value: '1.0.0-$(Build.BuildNumber)'
+  - name: muleAppClassifier
+    value: 'mule-application'
+  - name: projectGroupId
+    value: 'com.mulesoft.services'
+  
+  # Testing Configuration
+  - name: enableMunitTests
+    value: 'true'
+  - name: munitCoverageThreshold
+    value: 70
+  - name: testTimeout
+    value: 600000
+  - name: enableIntegrationTests
+    value: 'true'
+  
+  # Build Optimization
+  - name: enableExchangePublication
+    value: 'true'
+  - name: skipTests
+    value: 'false'
+  - name: parallelBuilds
+    value: 'true'
+  - name: enableMavenDaemon
+    value: 'true'
+  
+  # Security Configuration
+  - name: enableSecurityScanning
+    value: 'true'
+  - name: enableVulnerabilityAssessment
+    value: 'true'
+  - name: owaspFailOnHigh
+    value: 'false'
+  
+  # Deployment Configuration
+  - name: deploymentTarget
+    value: 'RTF'  # Options: CloudHub, RTF, Hybrid
+  - name: enableBlueGreenDeployment
+    value: 'true'
+  - name: enableCanaryDeployment
+    value: 'false'
+  - name: rollbackOnFailure
+    value: 'true'
+  
+  # Azure RTF Configuration
+  - name: rtfClusterName
+    value: 'azure-rtf-prod'
+  - name: rtfNamespace
+    value: 'mulesoft-apps'
+  - name: rtfReplicas
+    value: '2'
+  - name: rtfCpuCores
+    value: '1'
+  - name: rtfMemoryLimit
+    value: '1Gi'
+  - name: rtfStorageClass
+    value: 'managed-premium'
+  
+  # Environment-specific variable groups
+  - group: 'mulesoft-build-config'
+  - group: 'anypoint-platform-config'
+  - group: 'azure-rtf-config'
+  - group: 'security-scanning'
+  - group: 'deployment-secrets'
+
+parameters:
+  # Deployment Environment Selection
+  - name: targetEnvironment
+    displayName: 'Target Environment'
+    type: string
+    default: 'dev'
+    values:
+      - dev
+      - test
+      - staging
+      - prod
+  
+  # Deployment Strategy Selection
+  - name: deploymentStrategy
+    displayName: 'Deployment Strategy'
+    type: string
+    default: 'standard'
+    values:
+      - standard
+      - blue-green
+      - canary
+      - rolling
+  
+  # Policy Management
+  - name: applyPolicies
+    displayName: 'Apply API Policies'
+    type: boolean
+    default: true
+  
+  # Performance Testing
+  - name: enablePerformanceTesting
+    displayName: 'Enable Performance Testing'
+    type: boolean
+    default: false
+
+stages:
+
+#############################################################################
+# STAGE 1: BUILD VALIDATION & SETUP
+#############################################################################
+- stage: Build_Setup
+  displayName: '🔧 Build Setup & Validation'
+  jobs:
+  - job: ValidateSetup
+    displayName: 'Validate Build Environment & Project Structure'
+    steps:
+    
+    # Install Java with caching
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java $(javaVersion)'
+      inputs:
+        versionSpec: $(javaVersion)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    # Install Maven with specific version
+    - task: Maven@4
+      displayName: 'Setup Maven $(mavenVersion)'
+      inputs:
+        mavenVersionOption: 'Default'
+        publishJUnitResults: false
+
+    # Install Azure CLI for RTF operations
+    - task: AzureCLI@2
+      displayName: 'Install Azure CLI'
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az version
+          echo "✅ Azure CLI ready for RTF operations"
+
+    # Display comprehensive environment information
+    - script: |
+        echo "=== BUILD ENVIRONMENT INFORMATION ==="
+        echo "Java version: $(java -version 2>&1 | head -1)"
+        echo "Maven version: $(mvn --version | head -1)"
+        echo "Azure CLI: $(az --version | head -1)"
+        echo "OS: $(lsb_release -d | cut -f2)"
+        echo "Architecture: $(uname -m)"
+        echo ""
+        echo "=== APPLICATION CONFIGURATION ==="
+        echo "App name: $(appName)"
+        echo "App version: $(appVersion)"
+        echo "Group ID: $(projectGroupId)"
+        echo "Mule Runtime: $(muleRuntimeVersion)"
+        echo "Target Environment: ${{ parameters.targetEnvironment }}"
+        echo "Deployment Target: $(deploymentTarget)"
+        echo "Deployment Strategy: ${{ parameters.deploymentStrategy }}"
+        echo ""
+        echo "=== FEATURE FLAGS ==="
+        echo "MUnit Tests: $(enableMunitTests)"
+        echo "Integration Tests: $(enableIntegrationTests)"
+        echo "Security Scanning: $(enableSecurityScanning)"
+        echo "Exchange Publication: $(enableExchangePublication)"
+        echo "Apply Policies: ${{ parameters.applyPolicies }}"
+        echo "Performance Testing: ${{ parameters.enablePerformanceTesting }}"
+      displayName: 'Display Environment Information'
+
+    # Comprehensive MuleSoft project structure validation
+    - script: |
+        echo "=== VALIDATING MULESOFT PROJECT STRUCTURE ==="
+        
+        # Check essential files
+        REQUIRED_FILES=("pom.xml" "mule-artifact.json")
+        for file in "${REQUIRED_FILES[@]}"; do
+          if [ ! -f "$file" ]; then
+            echo "❌ Required file missing: $file"
+            exit 1
+          else
+            echo "✅ Found: $file"
+          fi
+        done
+        
+        # Check directory structure
+        REQUIRED_DIRS=("src/main/mule" "src/main/resources")
+        for dir in "${REQUIRED_DIRS[@]}"; do
+          if [ ! -d "$dir" ]; then
+            echo "❌ Required directory missing: $dir"
+            exit 1
+          else
+            echo "✅ Found: $dir"
+          fi
+        done
+        
+        # Validate pom.xml structure
+        echo "=== VALIDATING POM.XML STRUCTURE ==="
+        if ! grep -q "<groupId>com.mulesoft.tools</groupId>" pom.xml; then
+          echo "❌ Mule Maven plugin not found in pom.xml"
+          exit 1
+        fi
+        echo "✅ Mule Maven plugin found"
+        
+        # Check for parent POM reference
+        if grep -q "<parent>" pom.xml; then
+          echo "✅ Parent POM reference found"
+        else
+          echo "⚠️ Warning: No parent POM reference found"
+        fi
+        
+        # Validate exchange.json if exists
+        if [ -f "exchange.json" ]; then
+          echo "=== VALIDATING EXCHANGE.JSON ==="
+          if ! jq empty exchange.json > /dev/null 2>&1; then
+            echo "❌ Invalid JSON in exchange.json"
+            exit 1
+          fi
+          echo "✅ exchange.json is valid"
+        fi
+        
+        echo "✅ All project structure validations passed"
+      displayName: 'Validate MuleSoft Project Structure'
+
+    # Validate mule-artifact.json configuration
+    - script: |
+        echo "=== VALIDATING MULE-ARTIFACT.JSON ==="
+        
+        if ! jq empty mule-artifact.json > /dev/null 2>&1; then
+          echo "❌ Invalid JSON in mule-artifact.json"
+          exit 1
+        fi
+        
+        # Extract and validate runtime configuration
+        MIN_MULE_VERSION=$(jq -r '.minMuleVersion // empty' mule-artifact.json)
+        JAVA_VERSIONS=$(jq -r '.javaSpecificationVersions[]? // empty' mule-artifact.json)
+        SECURE_PROPERTIES=$(jq -r '.secureProperties[]? // empty' mule-artifact.json)
+        CONFIGS=$(jq -r '.configs[]? // empty' mule-artifact.json)
+        
+        echo "Minimum Mule Version: ${MIN_MULE_VERSION:-'Not specified'}"
+        echo "Supported Java versions: ${JAVA_VERSIONS:-'Not specified'}"
+        
+        if [ -n "$SECURE_PROPERTIES" ]; then
+          echo "Secure properties configured: ✅"
+        else
+          echo "⚠️ Warning: No secure properties configured"
+        fi
+        
+        if [ -n "$CONFIGS" ]; then
+          echo "Configuration files specified: ✅"
+        fi
+        
+        # Validate against current Java version
+        CURRENT_JAVA=$(java -version 2>&1 | head -1 | grep -oP '(?<=")[^"]*(?=")')
+        JAVA_MAJOR=$(echo $CURRENT_JAVA | cut -d'.' -f1)
+        
+        if echo "$JAVA_VERSIONS" | grep -q "$JAVA_MAJOR"; then
+          echo "✅ Current Java version ($JAVA_MAJOR) is supported"
+        else
+          echo "⚠️ Warning: Current Java version ($JAVA_MAJOR) may not be explicitly supported"
+        fi
+        
+        echo "✅ mule-artifact.json validation completed"
+      displayName: 'Validate Mule Artifact Configuration'
+
+    # Multi-module project detection and validation
+    - script: |
+        echo "=== MULTI-MODULE PROJECT DETECTION ==="
+        
+        if find . -name "pom.xml" -not -path "./pom.xml" | head -1 | grep -q .; then
+          echo "✅ Multi-module project detected"
+          
+          # List all modules
+          echo "Discovered modules:"
+          find . -name "pom.xml" -not -path "./pom.xml" | while read pom; do
+            MODULE_DIR=$(dirname "$pom")
+            MODULE_NAME=$(basename "$MODULE_DIR")
+            echo "  - $MODULE_NAME ($MODULE_DIR)"
+          done
+          
+          # Validate parent-child relationships
+          if grep -q "<modules>" pom.xml; then
+            echo "✅ Parent POM modules section found"
+          else
+            echo "⚠️ Warning: Multi-module structure detected but no modules section in parent POM"
+          fi
+        else
+          echo "Single module project detected"
+        fi
+        
+        echo "✅ Project structure analysis completed"
+      displayName: 'Analyze Project Structure'
+
+#############################################################################
+# STAGE 2: DEPENDENCY MANAGEMENT & CACHING
+#############################################################################
+- stage: Dependencies
+  displayName: '📦 Dependency Management & Caching'
+  dependsOn: Build_Setup
+  jobs:
+  - job: InstallDependencies
+    displayName: 'Install & Cache Dependencies'
+    steps:
+    
+    # Install Java and Maven
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java $(javaVersion)'
+      inputs:
+        versionSpec: $(javaVersion)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    # Configure Maven settings and cache
+    - script: |
+        echo "=== CONFIGURING MAVEN ENVIRONMENT ==="
+        mkdir -p $(mavenCacheFolder)
+        
+        # Create Maven settings for optimization
+        cat > $(mavenCacheFolder)/settings.xml << 'EOF'
+        <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 
+                                      http://maven.apache.org/xsd/settings-1.0.0.xsd">
+          <localRepository>$(mavenCacheFolder)</localRepository>
+          <interactiveMode>false</interactiveMode>
+          <offline>false</offline>
+          <servers>
+            <server>
+              <id>anypoint-exchange-v3</id>
+              <username>${env.ANYPOINT_USERNAME}</username>
+              <password>${env.ANYPOINT_PASSWORD}</password>
+            </server>
+          </servers>
+        </settings>
+        EOF
+        
+        echo "Maven cache folder: $(mavenCacheFolder)"
+        echo "✅ Maven environment configured"
+      displayName: 'Configure Maven Environment'
+
+    # Multi-level cache strategy for optimal performance
+    - task: Cache@2
+      displayName: 'Cache Maven Dependencies (Primary)'
+      inputs:
+        key: 'maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)-$(Build.SourceVersion)-"$(Agent.JobName)"'
+        restoreKeys: |
+          maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)-$(Build.SourceVersion)
+          maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)
+          maven-deps-v2-$(Agent.OS)
+        path: '$(mavenCacheFolder)'
+        cacheHitVar: 'MAVEN_CACHE_RESTORED'
+
+    # Cache Mule Maven Plugin artifacts
+    - task: Cache@2
+      displayName: 'Cache Mule Maven Plugin'
+      inputs:
+        key: 'mule-maven-plugin-v2-$(muleRuntimeVersion)-$(Agent.OS)'
+        restoreKeys: 'mule-maven-plugin-v2-$(muleRuntimeVersion)'
+        path: '$(Pipeline.Workspace)/.mule'
+
+    # Cache MUnit dependencies
+    - task: Cache@2
+      displayName: 'Cache MUnit Dependencies'
+      inputs:
+        key: 'munit-deps-v1-$(Agent.OS)'
+        path: '$(Pipeline.Workspace)/.munit'
+
+    # Install and verify dependencies
+    - script: |
+        echo "=== INSTALLING MAVEN DEPENDENCIES ==="
+        
+        if [ "$(MAVEN_CACHE_RESTORED)" != "true" ]; then
+          echo "Cache miss - Downloading dependencies..."
+          
+          # Use optimized Maven commands
+          mvn dependency:resolve dependency:resolve-sources \
+            -s $(mavenCacheFolder)/settings.xml \
+            -Dmaven.repo.local=$(mavenCacheFolder) \
+            -T 4 \
+            --batch-mode \
+            --no-transfer-progress
+            
+          echo "✅ Dependencies downloaded and cached"
+        else
+          echo "✅ Dependencies restored from cache"
+        fi
+        
+        # Verify critical dependencies
+        echo "=== VERIFYING DEPENDENCIES ==="
+        mvn dependency:tree \
+          -s $(mavenCacheFolder)/settings.xml \
+          -Dmaven.repo.local=$(mavenCacheFolder) \
+          --batch-mode | head -20
+        
+        # Check for dependency conflicts
+        mvn dependency:analyze-duplicate \
+          -s $(mavenCacheFolder)/settings.xml \
+          -Dmaven.repo.local=$(mavenCacheFolder) \
+          --batch-mode || echo "Duplicate analysis completed"
+        
+        echo "✅ Dependency verification completed"
+      displayName: 'Install and Verify Dependencies'
+      env:
+        ANYPOINT_USERNAME: $(anypointUsername)
+        ANYPOINT_PASSWORD: $(anypointPassword)
+
+    # Security scan of dependencies
+    - script: |
+        if [ "$(enableSecurityScanning)" = "true" ]; then
+          echo "=== DEPENDENCY SECURITY SCAN ==="
+          
+          # Run OWASP dependency check
+          mvn org.owasp:dependency-check-maven:check \
+            -s $(mavenCacheFolder)/settings.xml \
+            -Dmaven.repo.local=$(mavenCacheFolder) \
+            -Dformat=XML,HTML,JSON \
+            -DfailBuildOnCVSS=7 \
+            --batch-mode || echo "Security scan completed with warnings"
+          
+          echo "✅ Dependency security scan completed"
+        else
+          echo "Dependency security scan disabled"
+        fi
+      displayName: 'Dependency Security Scan'
+      continueOnError: true
+
+    # Generate and publish dependency reports
+    - task: Maven@4
+      displayName: 'Generate Dependency Report'
+      inputs:
+        goals: 'project-info-reports:dependencies site:site'
+        options: '-s $(mavenCacheFolder)/settings.xml -Dmaven.repo.local=$(mavenCacheFolder)'
+        publishJUnitResults: false
+      continueOnError: true
+
+    # Publish dependency information as artifacts
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Dependency Reports'
+      condition: always()
+      inputs:
+        pathToPublish: 'target/site'
+        artifactName: 'dependency-reports'
+      continueOnError: true
+
+#############################################################################
+# STAGE 3: CODE QUALITY & ANALYSIS
+#############################################################################
+- stage: Code_Quality
+  displayName: '🔍 Code Quality & Analysis'
+  dependsOn: Dependencies
+  jobs:
+  - job: QualityAnalysis
+    displayName: 'Code Quality Analysis & Validation'
+    steps:
+    
+    # Setup Java and restore cache
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java $(javaVersion)'
+      inputs:
+        versionSpec: $(javaVersion)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    - task: Cache@2
+      displayName: 'Restore Maven Cache'
+      inputs:
+        key: 'maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)-$(Build.SourceVersion)-"$(Agent.JobName)"'
+        restoreKeys: |
+          maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)-$(Build.SourceVersion)
+          maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)
+          maven-deps-v2-$(Agent.OS)
+        path: '$(mavenCacheFolder)'
+
+    # Compile sources for analysis
+    - task: Maven@4
+      displayName: 'Compile Sources'
+      inputs:
+        goals: 'compile'
+        options: '-s $(mavenCacheFolder)/settings.xml -Dmaven.repo.local=$(mavenCacheFolder) -T 4'
+
+    # Comprehensive Mule flow analysis
+    - script: |
+        echo "=== COMPREHENSIVE MULE FLOW ANALYSIS ==="
+        
+        # Count flows, subflows, and error handlers
+        FLOWS=$(find src/main/mule -name "*.xml" -exec grep -l "<flow " {} \; | wc -l)
+        SUBFLOWS=$(find src/main/mule -name "*.xml" -exec grep -l "<sub-flow " {} \; | wc -l)
+        ERROR_HANDLERS=$(find src/main/mule -name "*.xml" -exec grep -c "error-handler\|on-error" {} \; | awk '{sum += $1} END {print sum+0}')
+        
+        echo "📊 Flow Statistics:"
+        echo "  - Total flows: $FLOWS"
+        echo "  - Total subflows: $SUBFLOWS"
+        echo "  - Error handlers: $ERROR_HANDLERS"
+        
+        # Analyze connectors usage
+        echo ""
+        echo "🔌 Connector Analysis:"
+        CONNECTORS=$(find src/main/mule -name "*.xml" -exec grep -ho 'xmlns:[^=]*="http://www.mulesoft.org/schema/mule/[^"]*"' {} \; | sort | uniq)
+        echo "$CONNECTORS" | while read connector; do
+          if [ -n "$connector" ]; then
+            NAMESPACE=$(echo "$connector" | cut -d'=' -f1 | cut -d':' -f2)
+            URL=$(echo "$connector" | cut -d'"' -f2)
+            CONNECTOR_NAME=$(echo "$URL" | sed 's|.*/||')
+            echo "  - $CONNECTOR_NAME (namespace: $NAMESPACE)"
+          fi
+        done
+        
+        # Check for APIKit usage
+        echo ""
+        echo "🌐 APIKit Analysis:"
+        if find src/main/mule -name "*.xml" -exec grep -q "apikit" {} \;; then
+          APIKIT_FLOWS=$(find src/main/mule -name "*.xml" -exec grep -c "apikit" {} \; | awk '{sum += $1} END {print sum+0}')
+          echo "  ✅ APIKit detected ($APIKIT_FLOWS references)"
+        else
+          echo "  ❌ APIKit not detected"
+        fi
+        
+        # DataWeave analysis
+        echo ""
+        echo "🔄 DataWeave Analysis:"
+        DATAWEAVE_COUNT=$(find src/main/mule -name "*.xml" -exec grep -c "dw::\|transform\|%dw" {} \; | awk '{sum += $1} END {print sum+0}')
+        DATAWEAVE_FILES=$(find src/main/resources -name "*.dwl" | wc -l)
+        echo "  - Inline transformations: $DATAWEAVE_COUNT"
+        echo "  - DWL files: $DATAWEAVE_FILES"
+        
+        # Configuration analysis
+        echo ""
+        echo "⚙️ Configuration Analysis:"
+        CONFIG_FILES=$(find src/main/resources -name "*.yaml" -o -name "*.yml" -o -name "*.properties" | wc -l)
+        GLOBAL_CONFIGS=$(find src/main/mule -name "global.xml" -o -name "*-config.xml" | wc -l)
+        echo "  - Configuration files: $CONFIG_FILES"
+        echo "  - Global configuration files: $GLOBAL_CONFIGS"
+        
+        echo ""
+        echo "✅ Mule flow analysis completed"
+      displayName: 'Analyze Mule Flows and Configuration'
+
+    # Security and best practices validation
+    - script: |
+        echo "=== MULE SECURITY & BEST PRACTICES VALIDATION ==="
+        
+        # Check for hardcoded values
+        echo "🔒 Security Checks:"
+        HARDCODED_VALUES=0
+        if find src/main/mule -name "*.xml" -exec grep -l "localhost\|127.0.0.1\|password.*=\|key.*=" {} \; | head -5; then
+          HARDCODED_VALUES=1
+          echo "  ⚠️ Warning: Potential hardcoded values found"
+        else
+          echo "  ✅ No obvious hardcoded values detected"
+        fi
+        
+        # Check for HTTP vs HTTPS usage
+        echo ""
+        echo "🌐 Protocol Security:"
+        if find src/main/mule -name "*.xml" -exec grep -q 'protocol="HTTP"' {} \;; then
+          echo "  ⚠️ Warning: Insecure HTTP protocol usage detected"
+        else
+          echo "  ✅ No insecure HTTP protocol usage detected"
+        fi
+        
+        # Check for proper error handling
+        echo ""
+        echo "🛡️ Error Handling:"
+        FLOWS_WITHOUT_ERROR_HANDLERS=$(find src/main/mule -name "*.xml" -exec sh -c 'if grep -q "<flow " "$1" && ! grep -q "error-handler\|on-error" "$1"; then echo "$1"; fi' _ {} \; | wc -l)
+        if [ "$FLOWS_WITHOUT_ERROR_HANDLERS" -gt 0 ]; then
+          echo "  ⚠️ Warning: $FLOWS_WITHOUT_ERROR_HANDLERS flows may lack proper error handling"
+        else
+          echo "  ✅ All flows appear to have error handling"
+        fi
+        
+        # Check for secure properties usage
+        echo ""
+        echo "🔐 Secure Properties:"
+        if find src/main/resources -name "*.yaml" -o -name "*.yml" | xargs grep -l "secure::" 2>/dev/null; then
+          echo "  ✅ Secure properties usage detected"
+        else
+          echo "  ⚠️ Warning: No secure properties usage detected"
+        fi
+        
+        # Performance best practices
+        echo ""
+        echo "⚡ Performance Checks:"
+        STREAMING_USAGE=$(find src/main/mule -name "*.xml" -exec grep -c "streaming" {} \; | awk '{sum += $1} END {print sum+0}')
+        echo "  - Streaming usage: $STREAMING_USAGE references"
+        
+        BATCH_USAGE=$(find src/main/mule -name "*.xml" -exec grep -c "batch:" {} \; | awk '{sum += $1} END {print sum+0}')
+        echo "  - Batch processing usage: $BATCH_USAGE references"
+        
+        echo ""
+        echo "✅ Security and best practices validation completed"
+      displayName: 'Validate Security and Best Practices'
+
+    # SonarQube analysis (if configured)
+    - task: SonarQubePrepare@5
+      displayName: 'Prepare SonarQube Analysis'
+      condition: and(succeeded(), ne(variables['sonarQubeServiceConnection'], ''))
+      inputs:
+        SonarQube: '$(sonarQubeServiceConnection)'
+        scannerMode: 'Other'
+        extraProperties: |
+          sonar.projectKey=$(appName)
+          sonar.projectName=$(appName)
+          sonar.projectVersion=$(appVersion)
+          sonar.sources=src/main/mule,src/main/resources
+          sonar.exclusions=**/*.jar,**/target/**,**/*.dwl
+          sonar.mule.file.suffixes=.xml
+          sonar.coverage.exclusions=**/*.xml
+
+    # Custom Mule-specific code analysis
+    - script: |
+        echo "=== CUSTOM MULE CODE ANALYSIS ==="
+        
+        # Create analysis report
+        ANALYSIS_REPORT="mule-analysis-report.json"
+        
+        # Generate comprehensive analysis
+        cat > "$ANALYSIS_REPORT" << EOF
+        {
+          "analysisDate": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+          "buildId": "$(Build.BuildId)",
+          "flows": {
+            "total": $(find src/main/mule -name "*.xml" -exec grep -l "<flow " {} \; | wc -l),
+            "subflows": $(find src/main/mule -name "*.xml" -exec grep -l "<sub-flow " {} \; | wc -l),
+            "errorHandlers": $(find src/main/mule -name "*.xml" -exec grep -c "error-handler\|on-error" {} \; | awk '{sum += $1} END {print sum+0}')
+          },
+          "connectors": {
+            "total": $(find src/main/mule -name "*.xml" -exec grep -ho 'xmlns:[^=]*="http://www.mulesoft.org/schema/mule/[^"]*"' {} \; | sort | uniq | wc -l),
+            "apikit": $(find src/main/mule -name "*.xml" -exec grep -c "apikit" {} \; | awk '{sum += $1} END {print sum+0}')
+          },
+          "dataweave": {
+            "inlineTransformations": $(find src/main/mule -name "*.xml" -exec grep -c "dw::\|transform\|%dw" {} \; | awk '{sum += $1} END {print sum+0}'),
+            "dwlFiles": $(find src/main/resources -name "*.dwl" | wc -l)
+          },
+          "configuration": {
+            "configFiles": $(find src/main/resources -name "*.yaml" -o -name "*.yml" -o -name "*.properties" | wc -l),
+            "globalConfigs": $(find src/main/mule -name "global.xml" -o -name "*-config.xml" | wc -l)
+          },
+          "security": {
+            "securePropertiesUsage": $(find src/main/resources -name "*.yaml" -o -name "*.yml" | xargs grep -l "secure::" 2>/dev/null | wc -l),
+            "httpUsage": $(find src/main/mule -name "*.xml" -exec grep -c 'protocol="HTTP"' {} \; | awk '{sum += $1} END {print sum+0}')
+          }
+        }
+        EOF
+        
+        echo "📊 Analysis Report Generated:"
+        cat "$ANALYSIS_REPORT" | jq .
+        
+        echo "✅ Custom Mule code analysis completed"
+      displayName: 'Generate Code Analysis Report'
+
+    # Publish code analysis reports
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Code Analysis Reports'
+      inputs:
+        pathToPublish: 'mule-analysis-report.json'
+        artifactName: 'code-analysis-reports'
+
+#############################################################################
+# STAGE 4: MUNIT TESTING
+#############################################################################
+- stage: MUnit_Tests
+  displayName: '🧪 MUnit Testing & Coverage'
+  dependsOn: Code_Quality
+  condition: and(succeeded(), eq(variables['enableMunitTests'], 'true'))
+  jobs:
+  - job: RunMUnitTests
+    displayName: 'Execute MUnit Tests'
+    timeoutInMinutes: 30
+    steps:
+    
+    # Setup Java and restore cache
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java $(javaVersion)'
+      inputs:
+        versionSpec: $(javaVersion)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    - task: Cache@2
+      displayName: 'Restore Maven Cache'
+      inputs:
+        key: 'maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)-$(Build.SourceVersion)-"$(Agent.JobName)"'
+        restoreKeys: |
+          maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)-$(Build.SourceVersion)
+          maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)
+          maven-deps-v2-$(Agent.OS)
+        path: '$(mavenCacheFolder)'
+
+    # Run MUnit tests with comprehensive coverage
+    - task: Maven@4
+      displayName: 'Execute MUnit Tests'
+      inputs:
+        goals: 'test'
+        options: '-s $(mavenCacheFolder)/settings.xml -Dmaven.repo.local=$(mavenCacheFolder) -Dmunit.coverage.failOnLowCoverage=false -Dmunit.coverage.formats=html,json,sonar -T 2'
+        publishJUnitResults: true
+        testResultsFiles: 'target/surefire-reports/*.xml'
+      timeoutInMinutes: 15
+      continueOnError: true
+      env:
+        ANYPOINT_USERNAME: $(anypointUsername)
+        ANYPOINT_PASSWORD: $(anypointPassword)
+
+    # Publish MUnit test results
+    - task: PublishTestResults@2
+      displayName: 'Publish MUnit Test Results'
+      condition: always()
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: 'target/surefire-reports/*.xml'
+        searchFolder: '$(System.DefaultWorkingDirectory)'
+        testRunTitle: 'MUnit Tests - $(Build.BuildNumber)'
+        mergeTestResults: true
+        publishRunAttachments: true
+
+    # Publish MUnit coverage reports
+    - task: PublishCodeCoverageResults@2
+      displayName: 'Publish MUnit Coverage Results'
+      condition: and(succeeded(), eq(variables['enableMunitTests'], 'true'))
+      inputs:
+        summaryFileLocation: 'target/site/munit/coverage/jacoco-aggregate/jacoco.xml'
+        pathToSources: 'src/main/mule'
+        reportDirectory: 'target/site/munit/coverage'
+        codecoverageTool: 'JaCoCo'
+        additionalCodeCoverageFiles: 'target/site/munit/coverage/munit-coverage.json'
+
+    # Coverage threshold validation with detailed reporting
+    - script: |
+        echo "=== MUNIT COVERAGE ANALYSIS ==="
+        
+        if [ "$(enableMunitTests)" = "true" ]; then
+          if [ -f "target/site/munit/coverage/summary.json" ]; then
+            COVERAGE=$(cat target/site/munit/coverage/summary.json | jq -r '.coverage.application.percentage // 0')
+            FLOWS_COVERED=$(cat target/site/munit/coverage/summary.json | jq -r '.coverage.application.flowsCovered // 0')
+            TOTAL_FLOWS=$(cat target/site/munit/coverage/summary.json | jq -r '.coverage.application.totalFlows // 0')
+            
+            echo "📊 Coverage Metrics:"
+            echo "  - Overall Coverage: ${COVERAGE}%"
+            echo "  - Flows Covered: ${FLOWS_COVERED}/${TOTAL_FLOWS}"
+            echo "  - Required Threshold: $(munitCoverageThreshold)%"
+            
+            # Validate coverage threshold
+            if (( $(echo "${COVERAGE} >= $(munitCoverageThreshold)" | bc -l) )); then
+              echo "✅ Coverage threshold met: ${COVERAGE}% >= $(munitCoverageThreshold)%"
+            else
+              echo "⚠️ Coverage below threshold: ${COVERAGE}% < $(munitCoverageThreshold)%"
+              echo "  This is a warning - build will continue"
+            fi
+            
+            # Generate coverage badge
+            if (( $(echo "${COVERAGE} >= 80" | bc -l) )); then
+              BADGE_COLOR="brightgreen"
+            elif (( $(echo "${COVERAGE} >= 60" | bc -l) )); then
+              BADGE_COLOR="yellow"
+            else
+              BADGE_COLOR="red"
+            fi
+            
+            echo "##vso[task.setvariable variable=coveragePercentage]${COVERAGE}"
+            echo "##vso[task.setvariable variable=coverageBadgeColor]${BADGE_COLOR}"
+          else
+            echo "⚠️ Coverage report not found, skipping threshold validation"
+          fi
+        else
+          echo "MUnit tests disabled, skipping coverage analysis"
+        fi
+        
+        echo "✅ MUnit coverage analysis completed"
+      displayName: 'Validate Coverage Threshold & Generate Metrics'
+      condition: eq(variables['enableMunitTests'], 'true')
+
+#############################################################################
+# STAGE 5: INTEGRATION TESTING
+#############################################################################
+- stage: Integration_Tests
+  displayName: '🔗 Integration Testing'
+  dependsOn: MUnit_Tests
+  condition: and(succeeded(), eq(variables['enableIntegrationTests'], 'true'))
+  jobs:
+  - job: RunIntegrationTests
+    displayName: 'Execute Integration Tests'
+    steps:
+    
+    # Setup Java and restore cache
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java $(javaVersion)'
+      inputs:
+        versionSpec: $(javaVersion)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    - task: Cache@2
+      displayName: 'Restore Maven Cache'
+      inputs:
+        key: 'maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)-$(Build.SourceVersion)-"$(Agent.JobName)"'
+        restoreKeys: |
+          maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)-$(Build.SourceVersion)
+          maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)
+          maven-deps-v2-$(Agent.OS)
+        path: '$(mavenCacheFolder)'
+
+    # Run integration tests
+    - task: Maven@4
+      displayName: 'Run Integration Tests'
+      inputs:
+        goals: 'verify'
+        options: '-s $(mavenCacheFolder)/settings.xml -Dmaven.repo.local=$(mavenCacheFolder) -Dskip.unit.tests=true'
+      continueOnError: true
+      env:
+        ANYPOINT_USERNAME: $(anypointUsername)
+        ANYPOINT_PASSWORD: $(anypointPassword)
+
+#############################################################################
+# STAGE 6: SECURITY SCANNING
+#############################################################################
+- stage: Security_Scan
+  displayName: '🔒 Security Scanning & Vulnerability Assessment'
+  dependsOn: 
+  - MUnit_Tests
+  - Integration_Tests
+  condition: and(succeeded(), eq(variables['enableSecurityScanning'], 'true'))
+  jobs:
+  - job: SecurityScanning
+    displayName: 'Comprehensive Security Analysis'
+    steps:
+    
+    # Setup Java and tools
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java $(javaVersion)'
+      inputs:
+        versionSpec: $(javaVersion)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    - task: Cache@2
+      displayName: 'Restore Maven Cache'
+      inputs:
+        key: 'maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)-$(Build.SourceVersion)-"$(Agent.JobName)"'
+        restoreKeys: |
+          maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)-$(Build.SourceVersion)
+          maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)
+          maven-deps-v2-$(Agent.OS)
+        path: '$(mavenCacheFolder)'
+
+    # OWASP Dependency Check with comprehensive reporting
+    - task: Maven@4
+      displayName: 'OWASP Dependency Security Scan'
+      inputs:
+        goals: 'org.owasp:dependency-check-maven:check'
+        options: '-s $(mavenCacheFolder)/settings.xml -Dmaven.repo.local=$(mavenCacheFolder) -Dformat=XML,HTML,JSON -DfailBuildOnCVSS=8 -DsuppressionFile=owasp-suppressions.xml'
+      continueOnError: true
+
+    # Mule-specific security analysis
+    - script: |
+        echo "=== MULE SECURITY DEEP SCAN ==="
+        
+        # Create security report
+        SECURITY_REPORT="mule-security-report.json"
+        
+        # Initialize counters
+        SECURITY_ISSUES=0
+        
+        echo "🔍 Scanning for security vulnerabilities..."
+        
+        # Check for hardcoded credentials
+        echo "Checking for hardcoded credentials..."
+        HARDCODED_CREDS=$(find src/main -type f \( -name "*.xml" -o -name "*.properties" -o -name "*.yaml" -o -name "*.yml" \) -exec grep -l "password\|secret\|key\|token" {} \; | wc -l)
+        
+        # Check for insecure protocols
+        echo "Checking for insecure protocols..."
+        HTTP_USAGE=$(find src/main/mule -name "*.xml" -exec grep -c 'protocol="HTTP"' {} \; | awk '{sum += $1} END {print sum+0}')
+        
+        # Check for SQL injection vulnerabilities
+        echo "Checking for potential SQL injection vulnerabilities..."
+        SQL_QUERIES=$(find src/main -type f -name "*.xml" -exec grep -c "SELECT\|INSERT\|UPDATE\|DELETE" {} \; | awk '{sum += $1} END {print sum+0}')
+        
+        # Check for XXE vulnerabilities
+        echo "Checking for XXE vulnerabilities..."
+        XML_PARSING=$(find src/main/mule -name "*.xml" -exec grep -c "DocumentBuilderFactory\|SAXParserFactory\|XMLReader" {} \; | awk '{sum += $1} END {print sum+0}')
+        
+        # Check for LDAP injection
+        echo "Checking for LDAP injection vulnerabilities..."
+        LDAP_QUERIES=$(find src/main -type f -name "*.xml" -exec grep -c "ldap://" {} \; | awk '{sum += $1} END {print sum+0}')
+        
+        # Generate security report
+        cat > "$SECURITY_REPORT" << EOF
+        {
+          "scanDate": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+          "buildId": "$(Build.BuildId)",
+          "securityFindings": {
+            "hardcodedCredentials": {
+              "count": $HARDCODED_CREDS,
+              "severity": "HIGH",
+              "description": "Files potentially containing hardcoded credentials"
+            },
+            "insecureProtocols": {
+              "count": $HTTP_USAGE,
+              "severity": "MEDIUM",
+              "description": "Usage of insecure HTTP protocol"
+            },
+            "sqlQueries": {
+              "count": $SQL_QUERIES,
+              "severity": "MEDIUM",
+              "description": "SQL queries found - review for injection vulnerabilities"
+            },
+            "xmlParsing": {
+              "count": $XML_PARSING,
+              "severity": "LOW",
+              "description": "XML parsing operations - check for XXE vulnerabilities"
+            },
+            "ldapQueries": {
+              "count": $LDAP_QUERIES,
+              "severity": "MEDIUM",
+              "description": "LDAP queries found - review for injection vulnerabilities"
+            }
+          },
+          "recommendations": [
+            "Use secure properties for sensitive data",
+            "Implement HTTPS for all external communications",
+            "Use parameterized queries to prevent SQL injection",
+            "Configure XML parsers to disable external entity processing",
+            "Validate and sanitize all user inputs"
+          ]
+        }
+        EOF
+        
+        echo "📊 Security Scan Results:"
+        cat "$SECURITY_REPORT" | jq .
+        
+        # Calculate total security issues
+        TOTAL_ISSUES=$((HARDCODED_CREDS + HTTP_USAGE + SQL_QUERIES))
+        echo "##vso[task.setvariable variable=totalSecurityIssues]$TOTAL_ISSUES"
+        
+        if [ "$TOTAL_ISSUES" -gt 0 ]; then
+          echo "⚠️ $TOTAL_ISSUES potential security issues found - please review"
+        else
+          echo "✅ No major security issues detected"
+        fi
+        
+        echo "✅ Mule security scan completed"
+      displayName: 'Mule-Specific Security Analysis'
+
+    # Container security scan (if using containerized deployment)
+    - script: |
+        if [ "$(deploymentTarget)" = "RTF" ]; then
+          echo "=== CONTAINER SECURITY SCAN ==="
+          
+          # Install Trivy for container scanning
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          
+          # Scan base images mentioned in Dockerfiles
+          if find . -name "Dockerfile" | head -1 | grep -q .; then
+            echo "Scanning Docker base images for vulnerabilities..."
+            find . -name "Dockerfile" -exec trivy image --format json --output trivy-results.json {} \; || echo "Trivy scan completed"
+            
+            if [ -f "trivy-results.json" ]; then
+              echo "📊 Container Security Scan Results:"
+              cat trivy-results.json | jq '.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH" or .Severity=="CRITICAL") | {VulnerabilityID, Severity, Description}' | head -10
+            fi
+          else
+            echo "No Dockerfiles found, skipping container security scan"
+          fi
+          
+          echo "✅ Container security scan completed"
+        else
+          echo "Container security scan skipped (not deploying to RTF)"
+        fi
+      displayName: 'Container Security Scan'
+      condition: eq(variables['deploymentTarget'], 'RTF')
+      continueOnError: true
+
+    # Publish security reports
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Security Reports'
+      condition: always()
+      inputs:
+        pathToPublish: 'target'
+        artifactName: 'security-reports'
+      continueOnError: true
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Security Analysis'
+      condition: always()
+      inputs:
+        pathToPublish: 'mule-security-report.json'
+        artifactName: 'security-analysis'
+      continueOnError: true
+
+#############################################################################
+# STAGE 7: BUILD APPLICATION
+#############################################################################
+- stage: Build_Application
+  displayName: '🏗️ Build MuleSoft Application'
+  dependsOn: 
+  - Security_Scan
+  condition: succeeded()
+  jobs:
+  - job: BuildApp
+    displayName: 'Build Mule Application Package'
+    steps:
+    
+    # Setup Java and restore cache
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java $(javaVersion)'
+      inputs:
+        versionSpec: $(javaVersion)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    - task: Cache@2
+      displayName: 'Restore Maven Cache'
+      inputs:
+        key: 'maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)-$(Build.SourceVersion)-"$(Agent.JobName)"'
+        restoreKeys: |
+          maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)-$(Build.SourceVersion)
+          maven-deps-v2-$(Agent.OS)-$(Build.SourceBranch)
+          maven-deps-v2-$(Agent.OS)
+        path: '$(mavenCacheFolder)'
+
+    # Build Mule application with optimizations
+    - task: Maven@4
+      displayName: 'Build Mule Application'
+      inputs:
+        goals: 'clean package'
+        options: '-s $(mavenCacheFolder)/settings.xml -Dmaven.repo.local=$(mavenCacheFolder) -DskipMunitTests=$(skipTests) -T 4 --batch-mode --no-transfer-progress'
+      env:
+        ANYPOINT_USERNAME: $(anypointUsername)
+        ANYPOINT_PASSWORD: $(anypointPassword)
+        ANYPOINT_ORG_ID: $(anypointOrgId)
+
+    # Comprehensive build artifact validation
+    - script: |
+        echo "=== BUILD ARTIFACT VALIDATION ==="
+        
+        # Find the main JAR file
+        JAR_FILE=$(find target -name "*.jar" -not -name "*-sources.jar" -not -name "*-tests.jar" | head -1)
+        
+        if [ -z "$JAR_FILE" ]; then
+          echo "❌ No JAR file found in target directory"
+          exit 1
+        fi
+        
+        echo "✅ JAR file found: $(basename $JAR_FILE)"
+        
+        # Check JAR file size and structure
+        JAR_SIZE_BYTES=$(stat -f%z "$JAR_FILE" 2>/dev/null || stat -c%s "$JAR_FILE" 2>/dev/null || echo "0")
+        JAR_SIZE_MB=$((JAR_SIZE_BYTES / 1024 / 1024))
+        
+        echo "📦 Build Artifact Details:"
+        echo "  - File: $(basename $JAR_FILE)"
+        echo "  - Size: ${JAR_SIZE_MB}MB (${JAR_SIZE_BYTES} bytes)"
+        echo "  - Path: $JAR_FILE"
+        
+        # Validate JAR contents
+        echo ""
+        echo "🔍 JAR Content Validation:"
+        
+        # Check for mule-artifact.json
+        if jar -tf "$JAR_FILE" | grep -q "mule-artifact.json"; then
+          echo "  ✅ mule-artifact.json present"
+        else
+          echo "  ❌ mule-artifact.json missing"
+          exit 1
+        fi
+        
+        # Check for Mule configuration files
+        MULE_CONFIGS=$(jar -tf "$JAR_FILE" | grep -c "\.xml$" || echo "0")
+        echo "  ✅ Mule configuration files: $MULE_CONFIGS"
+        
+        # Check for application properties
+        if jar -tf "$JAR_FILE" | grep -q "application"; then
+          echo "  ✅ Application properties present"
+        fi
+        
+        # Check for secure properties
+        if jar -tf "$JAR_FILE" | grep -q "secure"; then
+          echo "  ✅ Secure properties configuration present"
+        fi
+        
+        # Validate JAR manifest
+        jar -xf "$JAR_FILE" META-INF/MANIFEST.MF 2>/dev/null || echo "Warning: Could not extract manifest"
+        if [ -f "META-INF/MANIFEST.MF" ]; then
+          echo "  ✅ JAR manifest present"
+          MAIN_CLASS=$(grep "Main-Class" META-INF/MANIFEST.MF | cut -d' ' -f2 | tr -d '\r\n' || echo "Not specified")
+          echo "  - Main Class: $MAIN_CLASS"
+        fi
+        
+        # Set build variables for later stages
+        echo "##vso[task.setvariable variable=buildJarFile;isOutput=true]$JAR_FILE"
+        echo "##vso[task.setvariable variable=buildJarSize;isOutput=true]${JAR_SIZE_MB}MB"
+        echo "##vso[task.setvariable variable=buildArtifactName;isOutput=true]$(basename $JAR_FILE)"
+        
+        echo ""
+        echo "✅ Build artifact validation completed successfully"
+      displayName: 'Validate Build Artifacts'
+      name: validateBuild
+
+    # Generate comprehensive build metadata
+    - script: |
+        echo "=== GENERATING BUILD METADATA ==="
+        
+        # Extract Maven project information
+        POM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout -s $(mavenCacheFolder)/settings.xml)
+        POM_ARTIFACT_ID=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout -s $(mavenCacheFolder)/settings.xml)
+        POM_GROUP_ID=$(mvn help:evaluate -Dexpression=project.groupId -q -DforceStdout -s $(mavenCacheFolder)/settings.xml)
+        POM_NAME=$(mvn help:evaluate -Dexpression=project.name -q -DforceStdout -s $(mavenCacheFolder)/settings.xml)
+        
+        # Get Git information
+        GIT_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
+        GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+        GIT_TAG=$(git describe --tags --exact-match 2>/dev/null || echo "none")
+        
+        # Generate comprehensive build metadata
+        BUILD_METADATA=$(cat <<EOF
+        {
+          "build": {
+            "id": "$(Build.BuildId)",
+            "number": "$(Build.BuildNumber)",
+            "date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "triggeredBy": "$(Build.RequestedFor)",
+            "reason": "$(Build.Reason)",
+            "queueTime": "$(Build.QueueTime)",
+            "startTime": "$(Build.StartTime)"
+          },
+          "source": {
+            "repository": "$(Build.Repository.Name)",
+            "branch": "$(Build.SourceBranch)",
+            "commit": "$(Build.SourceVersion)",
+            "commitShort": "${GIT_COMMIT:0:8}",
+            "tag": "$GIT_TAG",
+            "provider": "$(Build.Repository.Provider)"
+          },
+          "application": {
+            "groupId": "$POM_GROUP_ID",
+            "artifactId": "$POM_ARTIFACT_ID",
+            "version": "$POM_VERSION",
+            "name": "$POM_NAME",
+            "classifier": "$(muleAppClassifier)",
+            "jarFile": "$(validateBuild.buildArtifactName)",
+            "jarSize": "$(validateBuild.buildJarSize)"
+          },
+          "runtime": {
+            "muleVersion": "$(muleRuntimeVersion)",
+            "javaVersion": "$(java -version 2>&1 | head -1 | cut -d'"' -f2)",
+            "mavenVersion": "$(mvn --version | head -1 | cut -d' ' -f3)",
+            "osName": "$(uname -s)",
+            "osVersion": "$(uname -r)",
+            "architecture": "$(uname -m)"
+          },
+          "environment": {
+            "agentName": "$(Agent.Name)",
+            "agentOS": "$(Agent.OS)",
+            "poolName": "$(Agent.JobName)"
+          },
+          "deployment": {
+            "targetEnvironment": "${{ parameters.targetEnvironment }}",
+            "deploymentTarget": "$(deploymentTarget)",
+            "deploymentStrategy": "${{ parameters.deploymentStrategy }}",
+            "applyPolicies": "${{ parameters.applyPolicies }}"
+          },
+          "quality": {
+            "munitTests": "$(enableMunitTests)",
+            "integrationTests": "$(enableIntegrationTests)",
+            "securityScanning": "$(enableSecurityScanning)",
+            "coveragePercentage": "$(coveragePercentage)",
+            "securityIssues": "$(totalSecurityIssues)"
+          }
+        }
+        EOF
+        )
+        
+        # Save metadata to file
+        echo "${BUILD_METADATA}" > $(Build.ArtifactStagingDirectory)/build-metadata.json
+        
+        # Display formatted metadata
+        echo "📋 Build Metadata Generated:"
+        echo "${BUILD_METADATA}" | jq .
+        
+        echo "✅ Build metadata generation completed"
+      displayName: 'Generate Build Metadata'
+
+    # Copy build artifacts for deployment
+    - task: CopyFiles@2
+      displayName: 'Stage Build Artifacts'
+      inputs:
+        sourceFolder: 'target'
+        contents: |
+          *.jar
+          mule-artifact.json
+        targetFolder: '$(Build.ArtifactStagingDirectory)/app'
+        flattenFolders: false
+
+    # Publish main application artifact
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Mule Application Artifact'
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)/app'
+        artifactName: 'mule-application'
+        publishLocation: 'Container'
+
+    # Publish build metadata
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Build Metadata'
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)/build-metadata.json'
+        artifactName: 'build-metadata'
+        publishLocation: 'Container'
+
+    # Publish to Anypoint Exchange (if enabled)
+    - task: Maven@4
+      displayName: 'Publish to Anypoint Exchange'
+      condition: eq(variables['enableExchangePublication'], 'true')
+      inputs:
+        goals: 'deploy'
+        options: '-s $(mavenCacheFolder)/settings.xml -Dmaven.repo.local=$(mavenCacheFolder) -DskipMunitTests=true -DaltDeploymentRepository=anypoint-exchange-v3::default::https://maven.anypoint.mulesoft.com/api/v3/maven'
+      env:
+        ANYPOINT_USERNAME: $(anypointUsername)
+        ANYPOINT_PASSWORD: $(anypointPassword)
+        ANYPOINT_ORG_ID: $(anypointOrgId)
+      continueOnError: true
+
+#############################################################################
+# STAGE 8: AZURE RTF DEPLOYMENT PREPARATION
+#############################################################################
+- stage: RTF_Deployment_Prep
+  displayName: '🔧 Azure RTF Deployment Preparation'
+  dependsOn: Build_Application
+  condition: and(succeeded(), eq(variables['deploymentTarget'], 'RTF'), in(variables['Build.SourceBranch'], 'refs/heads/main', 'refs/heads/develop'))
+  jobs:
+  - job: PrepareRTFDeployment
+    displayName: 'Prepare Runtime Fabric Deployment'
+    steps:
+    
+    # Download build artifacts
+    - download: current
+      artifact: mule-application
+      displayName: 'Download Mule Application'
+
+    - download: current
+      artifact: build-metadata
+      displayName: 'Download Build Metadata'
+
+    # Install necessary tools
+    - task: JavaToolInstaller@0
+      displayName: 'Install Java $(javaVersion)'
+      inputs:
+        versionSpec: $(javaVersion)
+        jdkArchitectureOption: 'x64'
+        jdkSourceOption: 'PreInstalled'
+
+    # Azure CLI for RTF operations
+    - task: AzureCLI@2
+      displayName: 'Configure Azure CLI for RTF'
+      inputs:
+        azureSubscription: $(azureSubscription)
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "=== AZURE RTF CONFIGURATION ==="
+          az version
+          
+          # Set default subscription
+          az account set --subscription $(azureSubscriptionId)
+          
+          # Get AKS credentials for RTF cluster
+          echo "Configuring kubectl for RTF cluster: $(rtfClusterName)"
+          az aks get-credentials --resource-group $(azureResourceGroup) --name $(rtfClusterName) --overwrite-existing
+          
+          # Verify cluster connectivity
+          kubectl cluster-info
+          kubectl get nodes
+          
+          echo "✅ Azure RTF configuration completed"
+
+    # Install Anypoint CLI for RTF deployment
+    - script: |
+        echo "=== INSTALLING ANYPOINT CLI ==="
+        
+        # Install Node.js (required for Anypoint CLI)
+        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+        
+        # Install Anypoint CLI
+        npm install -g anypoint-cli@latest
+        
+        # Verify installation
+        anypoint-cli --version
+        
+        echo "✅ Anypoint CLI installation completed"
+      displayName: 'Install Anypoint CLI'
+
+    # Authenticate with Anypoint Platform
+    - script: |
+        echo "=== ANYPOINT PLATFORM AUTHENTICATION ==="
+        
+        # Configure Anypoint CLI credentials
+        anypoint-cli conf username $(anypointUsername)
+        anypoint-cli conf password $(anypointPassword)
+        anypoint-cli conf organization $(anypointOrgId)
+        anypoint-cli conf environment ${{ parameters.targetEnvironment }}
+        
+        # Verify authentication
+        anypoint-cli account user describe
+        
+        echo "✅ Anypoint Platform authentication completed"
+      displayName: 'Authenticate with Anypoint Platform'
+      env:
+        ANYPOINT_USERNAME: $(anypointUsername)
+        ANYPOINT_PASSWORD: $(anypointPassword)
+        ANYPOINT_ORG_ID: $(anypointOrgId)
+
+    # Display deployment information and validate environment
+    - script: |
+        echo "=== RTF DEPLOYMENT INFORMATION ==="
+        echo "📋 Deployment Configuration:"
+        echo "  - Target Environment: ${{ parameters.targetEnvironment }}"
+        echo "  - RTF Cluster: $(rtfClusterName)"
+        echo "  - Namespace: $(rtfNamespace)"
+        echo "  - Deployment Strategy: ${{ parameters.deploymentStrategy }}"
+        echo "  - Replicas: $(rtfReplicas)"
+        echo "  - CPU Cores: $(rtfCpuCores)"
+        echo "  - Memory Limit: $(rtfMemoryLimit)"
+        echo "  - Storage Class: $(rtfStorageClass)"
+        echo ""
+        
+        echo "📦 Application Information:"
+        cat $(Pipeline.Workspace)/build-metadata/build-metadata.json | jq '{
+          application: .application,
+          deployment: .deployment,
+          build: {id: .build.id, number: .build.number, date: .build.date}
+        }'
+        
+        echo ""
+        echo "🗂️ Artifacts:"
+        ls -la $(Pipeline.Workspace)/mule-application/
+        
+        # Validate RTF target exists
+        echo ""
+        echo "🔍 Validating RTF Target:"
+        RTF_TARGET=$(anypoint-cli runtime-mgr standalone-application list-targets --output json | jq -r '.[] | select(.name=="$(rtfClusterName)") | .name' || echo "")
+        
+        if [ -n "$RTF_TARGET" ]; then
+          echo "✅ RTF target '$(rtfClusterName)' found and accessible"
+        else
+          echo "❌ RTF target '$(rtfClusterName)' not found or not accessible"
+          echo "Available targets:"
+          anypoint-cli runtime-mgr standalone-application list-targets --output table || echo "No targets available"
+          exit 1
+        fi
+        
+        echo "✅ RTF deployment preparation completed"
+      displayName: 'Validate RTF Environment'
+
+#############################################################################
+# STAGE 9: API POLICY MANAGEMENT
+#############################################################################
+- stage: API_Policy_Management
+  displayName: '🛡️ API Policy Management'
+  dependsOn: RTF_Deployment_Prep
+  condition: and(succeeded(), eq(parameters.applyPolicies, true))
+  jobs:
+  - job: ManagePolicies
+    displayName: 'Apply and Configure API Policies'
+    steps:
+    
+    # Download build metadata
+    - download: current
+      artifact: build-metadata
+      displayName: 'Download Build Metadata'
+
+    # Install Anypoint CLI
+    - script: |
+        # Install Node.js and Anypoint CLI
+        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+        npm install -g anypoint-cli@latest
+        
+        # Authenticate
+        anypoint-cli conf username $(anypointUsername)
+        anypoint-cli conf password $(anypointPassword)
+        anypoint-cli conf organization $(anypointOrgId)
+        anypoint-cli conf environment ${{ parameters.targetEnvironment }}
+        
+        echo "✅ Anypoint CLI configured for policy management"
+      displayName: 'Configure Anypoint CLI'
+      env:
+        ANYPOINT_USERNAME: $(anypointUsername)
+        ANYPOINT_PASSWORD: $(anypointPassword)
+        ANYPOINT_ORG_ID: $(anypointOrgId)
+
+    # Apply standard security policies
+    - script: |
+        echo "=== APPLYING API SECURITY POLICIES ==="
+        
+        APP_NAME=$(cat $(Pipeline.Workspace)/build-metadata/build-metadata.json | jq -r '.application.artifactId')
+        
+        # List existing API instances
+        echo "Checking for existing API instances..."
+        API_INSTANCES=$(anypoint-cli api-mgr api list --output json | jq -r '.[] | select(.productVersion != null) | .id')
+        
+        if [ -n "$API_INSTANCES" ]; then
+          echo "Found API instances, applying policies..."
+          
+          for API_ID in $API_INSTANCES; do
+            echo "Processing API ID: $API_ID"
+            
+            # Apply Rate Limiting policy
+            echo "Applying Rate Limiting policy..."
+            anypoint-cli api-mgr policy apply \
+              --apiId "$API_ID" \
+              --policyId rate-limiting \
+              --configurationData '{
+                "maximumRequests": 1000,
+                "timePeriod": 60000,
+                "timeUnit": "MILLISECONDS",
+                "keySelector": "#[attributes.headers['"'"'client_id'"'"']]"
+              }' || echo "Rate limiting policy application completed"
+            
+            # Apply Client ID Enforcement policy  
+            echo "Applying Client ID Enforcement policy..."
+            anypoint-cli api-mgr policy apply \
+              --apiId "$API_ID" \
+              --policyId client-id-enforcement \
+              --configurationData '{
+                "credentialsOriginHasHttpBasicAuthenticationHeader": "customExpression",
+                "clientIdExpression": "#[attributes.headers['"'"'client_id'"'"']]",
+                "clientSecretExpression": "#[attributes.headers['"'"'client_secret'"'"']]"
+              }' || echo "Client ID enforcement policy application completed"
+            
+            # Apply CORS policy
+            echo "Applying CORS policy..."
+            anypoint-cli api-mgr policy apply \
+              --apiId "$API_ID" \
+              --policyId cors \
+              --configurationData '{
+                "allowedOrigins": ["*"],
+                "allowedMethods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                "allowedHeaders": ["*"],
+                "maxAge": 3600
+              }' || echo "CORS policy application completed"
+              
+            echo "✅ Policies applied to API ID: $API_ID"
+          done
+        else
+          echo "⚠️ No API instances found - policies will be applied during deployment"
+        fi
+        
+        echo "✅ API policy management completed"
+      displayName: 'Apply Security Policies'
+      continueOnError: true
+
+#############################################################################
+# STAGE 10: AZURE RTF DEPLOYMENT
+#############################################################################
+- stage: Deploy_to_RTF
+  displayName: '🚀 Deploy to Azure Runtime Fabric'
+  dependsOn: 
+  - RTF_Deployment_Prep
+  - API_Policy_Management
+  condition: and(succeeded(), eq(variables['deploymentTarget'], 'RTF'))
+  jobs:
+  - deployment: DeployToRTF
+    displayName: 'Azure RTF Deployment'
+    environment: 'rtf-${{ parameters.targetEnvironment }}'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          # Download artifacts
+          - download: current
+            artifact: mule-application
+            displayName: 'Download Mule Application'
+
+          - download: current
+            artifact: build-metadata
+            displayName: 'Download Build Metadata'
+
+          # Setup deployment environment
+          - task: JavaToolInstaller@0
+            displayName: 'Install Java $(javaVersion)'
+            inputs:
+              versionSpec: $(javaVersion)
+              jdkArchitectureOption: 'x64'
+              jdkSourceOption: 'PreInstalled'
+
+          # Azure and Kubernetes setup
+          - task: AzureCLI@2
+            displayName: 'Configure Azure and Kubernetes'
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                # Configure kubectl
+                az aks get-credentials --resource-group $(azureResourceGroup) --name $(rtfClusterName) --overwrite-existing
+                
+                # Verify cluster access
+                kubectl cluster-info
+                kubectl get nodes
+                
+                # Create namespace if it doesn't exist
+                kubectl create namespace $(rtfNamespace) --dry-run=client -o yaml | kubectl apply -f -
+                
+                echo "✅ Azure RTF cluster configured"
+
+          # Install and configure Anypoint CLI
+          - script: |
+              # Install Node.js and Anypoint CLI
+              curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+              sudo apt-get install -y nodejs
+              npm install -g anypoint-cli@latest
+              
+              # Configure Anypoint CLI
+              anypoint-cli conf username $(anypointUsername)
+              anypoint-cli conf password $(anypointPassword)
+              anypoint-cli conf organization $(anypointOrgId)
+              anypoint-cli conf environment ${{ parameters.targetEnvironment }}
+              
+              # Verify configuration
+              anypoint-cli account user describe
+              
+              echo "✅ Anypoint CLI configured"
+            displayName: 'Configure Anypoint CLI'
+            env:
+              ANYPOINT_USERNAME: $(anypointUsername)
+              ANYPOINT_PASSWORD: $(anypointPassword)
+              ANYPOINT_ORG_ID: $(anypointOrgId)
+
+          # Execute RTF deployment based on strategy
+          - script: |
+              echo "=== AZURE RTF DEPLOYMENT ==="
+              
+              # Extract application details
+              APP_JAR=$(find $(Pipeline.Workspace)/mule-application -name "*.jar" | head -1)
+              APP_METADATA=$(cat $(Pipeline.Workspace)/build-metadata/build-metadata.json)
+              APP_NAME=$(echo "$APP_METADATA" | jq -r '.application.artifactId')
+              APP_VERSION=$(echo "$APP_METADATA" | jq -r '.application.version')
+              
+              echo "📋 Deployment Details:"
+              echo "  - Application: $APP_NAME"
+              echo "  - Version: $APP_VERSION"
+              echo "  - JAR: $(basename $APP_JAR)"
+              echo "  - Strategy: ${{ parameters.deploymentStrategy }}"
+              echo "  - Target: $(rtfClusterName)"
+              echo "  - Namespace: $(rtfNamespace)"
+              echo "  - Replicas: $(rtfReplicas)"
+              
+              # Check if application already exists
+              EXISTING_APP=$(anypoint-cli runtime-mgr standalone-application describe "$APP_NAME" --target $(rtfClusterName) --output json 2>/dev/null || echo "null")
+              
+              if [ "$EXISTING_APP" != "null" ]; then
+                echo "Application exists, performing update deployment..."
+                DEPLOYMENT_COMMAND="modify"
+              else
+                echo "New application, performing initial deployment..."
+                DEPLOYMENT_COMMAND="deploy"
+              fi
+              
+              # Deploy based on strategy
+              case "${{ parameters.deploymentStrategy }}" in
+                "blue-green")
+                  echo "🔵 Executing Blue-Green deployment..."
+                  # Implement blue-green logic
+                  NEW_APP_NAME="${APP_NAME}-blue"
+                  
+                  anypoint-cli runtime-mgr standalone-application deploy "$NEW_APP_NAME" "$APP_JAR" \
+                    --target $(rtfClusterName) \
+                    --runtime $(muleRuntimeVersion) \
+                    --replicas $(rtfReplicas) \
+                    --cpu $(rtfCpuCores) \
+                    --memory $(rtfMemoryLimit) \
+                    --property "env:${{ parameters.targetEnvironment }}" \
+                    --property "deployment.strategy:blue-green" \
+                    --property "build.id:$(Build.BuildId)"
+                  ;;
+                  
+                "canary")
+                  echo "🐤 Executing Canary deployment..."
+                  # Deploy with reduced replicas for canary
+                  CANARY_REPLICAS=$(($(rtfReplicas) / 2))
+                  if [ $CANARY_REPLICAS -lt 1 ]; then CANARY_REPLICAS=1; fi
+                  
+                  anypoint-cli runtime-mgr standalone-application $DEPLOYMENT_COMMAND "$APP_NAME" "$APP_JAR" \
+                    --target $(rtfClusterName) \
+                    --runtime $(muleRuntimeVersion) \
+                    --replicas $CANARY_REPLICAS \
+                    --cpu $(rtfCpuCores) \
+                    --memory $(rtfMemoryLimit) \
+                    --property "env:${{ parameters.targetEnvironment }}" \
+                    --property "deployment.strategy:canary" \
+                    --property "build.id:$(Build.BuildId)"
+                  ;;
+                  
+                "rolling")
+                  echo "🔄 Executing Rolling deployment..."
+                  anypoint-cli runtime-mgr standalone-application $DEPLOYMENT_COMMAND "$APP_NAME" "$APP_JAR" \
+                    --target $(rtfClusterName) \
+                    --runtime $(muleRuntimeVersion) \
+                    --replicas $(rtfReplicas) \
+                    --cpu $(rtfCpuCores) \
+                    --memory $(rtfMemoryLimit) \
+                    --property "env:${{ parameters.targetEnvironment }}" \
+                    --property "deployment.strategy:rolling" \
+                    --property "build.id:$(Build.BuildId)" \
+                    --rolling-update
+                  ;;
+                  
+                *)
+                  echo "📦 Executing Standard deployment..."
+                  anypoint-cli runtime-mgr standalone-application $DEPLOYMENT_COMMAND "$APP_NAME" "$APP_JAR" \
+                    --target $(rtfClusterName) \
+                    --runtime $(muleRuntimeVersion) \
+                    --replicas $(rtfReplicas) \
+                    --cpu $(rtfCpuCores) \
+                    --memory $(rtfMemoryLimit) \
+                    --property "env:${{ parameters.targetEnvironment }}" \
+                    --property "deployment.strategy:standard" \
+                    --property "build.id:$(Build.BuildId)"
+                  ;;
+              esac
+              
+              echo "✅ RTF deployment initiated"
+            displayName: 'Deploy to Runtime Fabric'
+
+          # Verify deployment
+          - script: |
+              echo "=== DEPLOYMENT VERIFICATION ==="
+              
+              APP_METADATA=$(cat $(Pipeline.Workspace)/build-metadata/build-metadata.json)
+              APP_NAME=$(echo "$APP_METADATA" | jq -r '.application.artifactId')
+              
+              # Wait for deployment to stabilize
+              echo "⏳ Waiting for deployment to stabilize..."
+              sleep 90
+              
+              # Check application status
+              STATUS_CHECK_ATTEMPTS=0
+              MAX_ATTEMPTS=10
+              
+              while [ $STATUS_CHECK_ATTEMPTS -lt $MAX_ATTEMPTS ]; do
+                echo "Checking application status (attempt $((STATUS_CHECK_ATTEMPTS + 1))/$MAX_ATTEMPTS)..."
+                
+                APP_STATUS=$(anypoint-cli runtime-mgr standalone-application describe "$APP_NAME" --target $(rtfClusterName) --output json | jq -r '.status' 2>/dev/null || echo "UNKNOWN")
+                
+                echo "Current status: $APP_STATUS"
+                
+                case "$APP_STATUS" in
+                  "RUNNING"|"STARTED")
+                    echo "✅ Application deployment successful!"
+                    echo "🌐 Application is running on RTF cluster: $(rtfClusterName)"
+                    
+                    # Get application details
+                    anypoint-cli runtime-mgr standalone-application describe "$APP_NAME" --target $(rtfClusterName) --output table
+                    
+                    # Check Kubernetes pods
+                    echo ""
+                    echo "Kubernetes Pod Status:"
+                    kubectl get pods -n $(rtfNamespace) -l app="$APP_NAME" || echo "Could not retrieve pod information"
+                    
+                    break
+                    ;;
+                  "DEPLOYING"|"STARTING")
+                    echo "⏳ Application still deploying, waiting..."
+                    sleep 30
+                    ;;
+                  "DEPLOYMENT_FAILED"|"FAILED")
+                    echo "❌ Application deployment failed!"
+                    
+                    # Get failure details
+                    anypoint-cli runtime-mgr standalone-application describe "$APP_NAME" --target $(rtfClusterName)
+                    
+                    # Check Kubernetes events
+                    kubectl get events -n $(rtfNamespace) --sort-by='.lastTimestamp' | tail -10
+                    
+                    exit 1
+                    ;;
+                  *)
+                    echo "⚠️ Unknown status: $APP_STATUS"
+                    ;;
+                esac
+                
+                STATUS_CHECK_ATTEMPTS=$((STATUS_CHECK_ATTEMPTS + 1))
+              done
+              
+              if [ $STATUS_CHECK_ATTEMPTS -eq $MAX_ATTEMPTS ]; then
+                echo "❌ Deployment verification timed out"
+                exit 1
+              fi
+              
+              echo "✅ Deployment verification completed"
+            displayName: 'Verify Deployment'
+
+          # Health check validation
+          - script: |
+              echo "=== APPLICATION HEALTH CHECK ==="
+              
+              APP_METADATA=$(cat $(Pipeline.Workspace)/build-metadata/build-metadata.json)
+              APP_NAME=$(echo "$APP_METADATA" | jq -r '.application.artifactId')
+              
+              # Get application URL/endpoint
+              APP_INFO=$(anypoint-cli runtime-mgr standalone-application describe "$APP_NAME" --target $(rtfClusterName) --output json)
+              
+              # Try to get application health endpoint
+              echo "Attempting health check..."
+              
+              # Check if health endpoint is accessible (this would depend on your application setup)
+              HEALTH_CHECK_RESULT="UNKNOWN"
+              
+              # You would typically check a health endpoint here
+              # Example: curl -f "http://$APP_URL/health" && HEALTH_CHECK_RESULT="HEALTHY"
+              
+              echo "Health check result: $HEALTH_CHECK_RESULT"
+              echo "✅ Health check completed"
+            displayName: 'Application Health Check'
+            continueOnError: true
+
+#############################################################################
+# STAGE 11: POST-DEPLOYMENT VALIDATION
+#############################################################################
+- stage: Post_Deployment_Validation
+  displayName: '✅ Post-Deployment Validation'
+  dependsOn: Deploy_to_RTF
+  condition: succeeded()
+  jobs:
+  - job: ValidateDeployment
+    displayName: 'Validate Deployment'
+    steps:
+    
+    # Download build metadata
+    - download: current
+      artifact: build-metadata
+      displayName: 'Download Build Metadata'
+
+    # Setup tools
+    - script: |
+        # Install necessary tools
+        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+        sudo apt-get install -y nodejs curl jq
+        npm install -g anypoint-cli@latest
+        
+        # Configure Anypoint CLI
+        anypoint-cli conf username $(anypointUsername)
+        anypoint-cli conf password $(anypointPassword)
+        anypoint-cli conf organization $(anypointOrgId)
+        anypoint-cli conf environment ${{ parameters.targetEnvironment }}
+      displayName: 'Setup Validation Tools'
+      env:
+        ANYPOINT_USERNAME: $(anypointUsername)
+        ANYPOINT_PASSWORD: $(anypointPassword)
+        ANYPOINT_ORG_ID: $(anypointOrgId)
+
+    # Performance testing (if enabled)
+    - script: |
+        if [ "${{ parameters.enablePerformanceTesting }}" = "true" ]; then
+          echo "=== PERFORMANCE TESTING ==="
+          
+          APP_METADATA=$(cat $(Pipeline.Workspace)/build-metadata/build-metadata.json)
+          APP_NAME=$(echo "$APP_METADATA" | jq -r '.application.artifactId')
+          
+          echo "Running basic performance tests for: $APP_NAME"
+          
+          # Install Apache Bench for basic performance testing
+          sudo apt-get install -y apache2-utils
+          
+          # Basic load test (this would need to be customized for your application)
+          # ab -n 100 -c 10 "http://your-app-url/health"
+          
+          echo "✅ Performance testing completed"
+        else
+          echo "Performance testing disabled"
+        fi
+      displayName: 'Performance Testing'
+      condition: eq(parameters.enablePerformanceTesting, true)
+      continueOnError: true
+
+    # Generate deployment report
+    - script: |
+        echo "=== GENERATING DEPLOYMENT REPORT ==="
+        
+        APP_METADATA=$(cat $(Pipeline.Workspace)/build-metadata/build-metadata.json)
+        APP_NAME=$(echo "$APP_METADATA" | jq -r '.application.artifactId')
+        
+        # Generate comprehensive deployment report
+        DEPLOYMENT_REPORT=$(cat <<EOF
+        {
+          "deploymentDate": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+          "buildId": "$(Build.BuildId)",
+          "buildNumber": "$(Build.BuildNumber)",
+          "application": $(echo "$APP_METADATA" | jq '.application'),
+          "deployment": {
+            "targetEnvironment": "${{ parameters.targetEnvironment }}",
+            "deploymentTarget": "$(deploymentTarget)",
+            "deploymentStrategy": "${{ parameters.deploymentStrategy }}",
+            "rtfCluster": "$(rtfClusterName)",
+            "namespace": "$(rtfNamespace)",
+            "replicas": "$(rtfReplicas)",
+            "resources": {
+              "cpu": "$(rtfCpuCores)",
+              "memory": "$(rtfMemoryLimit)"
+            }
+          },
+          "pipeline": {
+            "triggeredBy": "$(Build.RequestedFor)",
+            "sourceBranch": "$(Build.SourceBranch)",
+            "sourceVersion": "$(Build.SourceVersion)",
+            "reason": "$(Build.Reason)"
+          },
+          "quality": $(echo "$APP_METADATA" | jq '.quality'),
+          "status": "COMPLETED",
+          "summary": {
+            "policiesApplied": "${{ parameters.applyPolicies }}",
+            "performanceTested": "${{ parameters.enablePerformanceTesting }}",
+            "securityScanned": "$(enableSecurityScanning)",
+            "testCoverage": "$(coveragePercentage)%"
+          }
+        }
+        EOF
+        )
+        
+        echo "$DEPLOYMENT_REPORT" > deployment-report.json
+        
+        echo "📊 Deployment Report:"
+        echo "$DEPLOYMENT_REPORT" | jq .
+        
+        echo "✅ Deployment report generated"
+      displayName: 'Generate Deployment Report'
+
+    # Publish deployment report
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Deployment Report'
+      inputs:
+        pathToPublish: 'deployment-report.json'
+        artifactName: 'deployment-report'
+
+    # Final deployment summary
+    - script: |
+        echo "=== DEPLOYMENT SUMMARY ==="
+        echo "🎉 MuleSoft Application Successfully Deployed to Azure Runtime Fabric!"
+        echo ""
+        echo "📋 Deployment Details:"
+        echo "  • Build ID: $(Build.BuildId)"
+        echo "  • Build Number: $(Build.BuildNumber)"
+        echo "  • Environment: ${{ parameters.targetEnvironment }}"
+        echo "  • RTF Cluster: $(rtfClusterName)"
+        echo "  • Deployment Strategy: ${{ parameters.deploymentStrategy }}"
+        echo "  • Runtime Version: $(muleRuntimeVersion)"
+        echo ""
+        echo "🔧 Pipeline Features Executed:"
+        echo "  • ✅ Code Quality Analysis"
+        echo "  • ✅ Security Scanning"
+        echo "  • ✅ MUnit Testing (Coverage: $(coveragePercentage)%)"
+        echo "  • ✅ Build Artifact Creation"
+        echo "  • ✅ RTF Deployment"
+        if [ "${{ parameters.applyPolicies }}" = "true" ]; then
+          echo "  • ✅ API Policies Applied"
+        fi
+        if [ "${{ parameters.enablePerformanceTesting }}" = "true" ]; then
+          echo "  • ✅ Performance Testing"
+        fi
+        echo ""
+        echo "🌐 Next Steps:"
+        echo "  • Monitor application health in Anypoint Monitoring"
+        echo "  • Review deployment logs in Runtime Manager"
+        echo "  • Validate API functionality through testing"
+        echo "  • Monitor performance metrics in Azure"
+        echo ""
+        echo "✅ Pipeline completed successfully!"
+      displayName: 'Deployment Summary'

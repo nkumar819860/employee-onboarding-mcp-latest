@@ -23,7 +23,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 
 	<!-- APIKit Router Configuration -->
 	<apikit:config name="agent-broker-config"
-		api="api/agent-broker-mcp-api.yaml"
+		api="api/employee-onboarding-agent-broker.yaml"
 		outboundHeadersMapName="outboundHeaders"
 		httpStatusVarName="httpStatus" />
 

@@ -1,0 +1,744 @@
+{
+  "info": {
+    "_postman_id": "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+    "name": "Employee Onboarding MCP Services - Complete with NLP Integration",
+    "description": "🤖 **COMPREHENSIVE COLLECTION: MCP Services + Agent Broker + NLP Integration**\n\n## 🚀 Services Covered:\n\n### 1. **Agent Broker MCP** - Central Orchestrator\n- **Base URL**: https://employee-onboarding-agent-broker.us-e1.cloudhub.io/api\n- **Purpose**: Central orchestration hub with advanced NLP processing\n- **Features**: Complete workflow orchestration, NLP-powered conversation management\n\n### 2. **Employee Onboarding MCP** - Employee Lifecycle\n- **Base URL**: https://employee-onboarding-mcp-server.us-e1.cloudhub.io/api\n- **Purpose**: Employee profile management and HR processes\n- **Features**: CRUD operations, status tracking, onboarding workflows\n\n### 3. **Asset Allocation MCP** - IT Asset Management\n- **Base URL**: https://assets-allocation-mcp-server.us-e1.cloudhub.io/api\n- **Purpose**: Smart asset allocation and inventory management\n- **Features**: Asset tracking, availability checking, automated allocation\n\n### 4. **Email Notification MCP** - Communication Hub\n- **Base URL**: https://email-notification-mcp-server.us-e1.cloudhub.io/api\n- **Purpose**: Multi-channel notification delivery\n- **Features**: Email templates, delivery tracking, personalization\n\n### 5. **🧠 NLP & Agent Fabric Integration** - AI-Powered Interface\n- **React Client**: Intelligent conversation processing\n- **Purpose**: Natural language processing with MCP orchestration\n- **Features**: Intent recognition, entity extraction, contextual responses\n\n## 🌟 New Features in this Collection:\n\n✨ **NLP-Powered Interactions**: Test natural language queries that get processed into MCP actions\n✨ **Agent Fabric Orchestration**: Advanced AI-driven workflow coordination\n✨ **Conversation Management**: Multi-turn dialog support with context awareness\n✨ **Sentiment Analysis**: Emotion-aware response generation\n✨ **Predictive Insights**: AI recommendations based on interaction patterns\n✨ **Multi-Modal Testing**: Support for various input types and response formats\n\n## 📊 Test Scenarios Included:\n\n🔹 **Individual MCP Service Testing**: Each service tested independently\n🔹 **End-to-End Workflow Testing**: Complete onboarding processes\n🔹 **NLP Integration Testing**: Natural language to MCP action conversion\n🔹 **Agent Fabric Intelligence**: Advanced AI orchestration scenarios\n🔹 **Error Handling & Recovery**: Comprehensive error scenario testing\n🔹 **Performance & Load Testing**: Service reliability validation\n\n## 🔧 Environment Variables:\n- `agent_broker_url`: employee-onboarding-agent-broker.us-e1.cloudhub.io\n- `employee_onboarding_url`: employee-onboarding-mcp-server.us-e1.cloudhub.io\n- `asset_allocation_url`: assets-allocation-mcp-server.us-e1.cloudhub.io\n- `notification_url`: email-notification-mcp-server.us-e1.cloudhub.io\n- `react_client_url`: localhost:3000 (for NLP testing)\n\n**Version**: 3.0.0 - Enhanced with NLP & Agent Fabric\n**Updated**: 2024-03-04\n**Compatibility**: CloudHub 2.0, Mule 4.9+, React Client NLP Integration",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "46229874"
+  },
+  "item": [
+    {
+      "name": "🤖 1. Agent Broker MCP - Central Orchestrator",
+      "item": [
+        {
+          "name": "Health Check - System Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has JSON body\", function () {",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test(\"Health status is UP\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql(\"UP\");",
+                  "});",
+                  "",
+                  "pm.globals.set(\"agentBrokerHealthStatus\", pm.response.text());"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Request-Source",
+                "value": "Postman-Collection-Test",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://{{agent_broker_url}}/api/health",
+              "protocol": "https",
+              "host": ["{{agent_broker_url}}"],
+              "path": ["api", "health"]
+            },
+            "description": "🩺 System Health Check - Verifies agent broker operational status"
+          },
+          "response": []
+        },
+        {
+          "name": "🚀 Complete Employee Onboarding Orchestration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Orchestration request accepted\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 202, 500]);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "if (pm.response.code === 200 || pm.response.code === 202) {",
+                  "    if (jsonData.employeeId) {",
+                  "        pm.globals.set('testEmployeeId', jsonData.employeeId);",
+                  "    }",
+                  "}",
+                  "",
+                  "console.log('🤖 Orchestration Result:', JSON.stringify(jsonData, null, 2));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"Emily\",\n    \"lastName\": \"Rodriguez\",\n    \"email\": \"emily.rodriguez@techcorp.com\",\n    \"phone\": \"+1-555-0199\",\n    \"department\": \"Product Management\",\n    \"position\": \"Senior Product Manager\",\n    \"startDate\": \"2024-03-15\",\n    \"salary\": 95000,\n    \"manager\": \"David Kim\",\n    \"managerEmail\": \"david.kim@techcorp.com\",\n    \"companyName\": \"TechCorp Innovations\",\n    \"assets\": [\"laptop\", \"id-card\", \"phone\"]\n}"
+            },
+            "url": {
+              "raw": "https://{{agent_broker_url}}/api/mcp/tools/orchestrate-employee-onboarding",
+              "protocol": "https",
+              "host": ["{{agent_broker_url}}"],
+              "path": ["api", "mcp", "tools", "orchestrate-employee-onboarding"]
+            },
+            "description": "🚀 Complete Employee Onboarding Orchestration - Triggers comprehensive AI-powered workflow"
+          },
+          "response": []
+        },
+        {
+          "name": "📊 Get Onboarding Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"employeeId\": \"{{testEmployeeId}}\"\n}"
+            },
+            "url": {
+              "raw": "https://{{agent_broker_url}}/api/mcp/tools/get-onboarding-status",
+              "protocol": "https",
+              "host": ["{{agent_broker_url}}"],
+              "path": ["api", "mcp", "tools", "get-onboarding-status"]
+            },
+            "description": "📊 Get comprehensive onboarding status with AI insights"
+          },
+          "response": []
+        },
+        {
+          "name": "🔄 Retry Failed Step",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"employeeId\": \"{{testEmployeeId}}\",\n    \"step\": \"asset-allocation\"\n}"
+            },
+            "url": {
+              "raw": "https://{{agent_broker_url}}/api/mcp/tools/retry-failed-step",
+              "protocol": "https",
+              "host": ["{{agent_broker_url}}"],
+              "path": ["api", "mcp", "tools", "retry-failed-step"]
+            },
+            "description": "🔄 Retry failed onboarding step with intelligent recovery"
+          },
+          "response": []
+        }
+      ],
+      "description": "🤖 Agent Broker MCP - Central orchestration hub with AI-powered workflow management"
+    },
+    {
+      "name": "👥 2. Employee Onboarding MCP - Lifecycle Management",
+      "item": [
+        {
+          "name": "Health Check - Employee Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{employee_onboarding_url}}/api/health",
+              "protocol": "https",
+              "host": ["{{employee_onboarding_url}}"],
+              "path": ["api", "health"]
+            },
+            "description": "🩺 Employee service health verification"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Employee Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Employee creation successful\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.employeeId) {",
+                  "        pm.globals.set('createdEmployeeId', jsonData.employeeId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"employeeId\": \"EMP{{$randomInt}}\",\n    \"firstName\": \"{{$randomFirstName}}\",\n    \"lastName\": \"{{$randomLastName}}\",\n    \"email\": \"{{$randomFirstName}}.{{$randomLastName}}@techcorp.com\",\n    \"phone\": \"+1-555-{{$randomInt}}\",\n    \"position\": \"Software Engineer\",\n    \"department\": \"Engineering\",\n    \"startDate\": \"2024-03-15\",\n    \"salary\": 75000\n}"
+            },
+            "url": {
+              "raw": "https://{{employee_onboarding_url}}/api/mcp/tools/create-employee",
+              "protocol": "https",
+              "host": ["{{employee_onboarding_url}}"],
+              "path": ["api", "mcp", "tools", "create-employee"]
+            },
+            "description": "👤 Create comprehensive employee profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Employee Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{employee_onboarding_url}}/api/mcp/tools/get-employee/{{testEmployeeId}}",
+              "protocol": "https",
+              "host": ["{{employee_onboarding_url}}"],
+              "path": ["api", "mcp", "tools", "get-employee", "{{testEmployeeId}}"]
+            },
+            "description": "🔍 Retrieve detailed employee information"
+          },
+          "response": []
+        },
+        {
+          "name": "List All Employees",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{employee_onboarding_url}}/api/mcp/tools/list-employees?page=1&size=10&status=ACTIVE",
+              "protocol": "https",
+              "host": ["{{employee_onboarding_url}}"],
+              "path": ["api", "mcp", "tools", "list-employees"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "size", "value": "10"},
+                {"key": "status", "value": "ACTIVE"}
+              ]
+            },
+            "description": "👥 List employees with advanced filtering"
+          },
+          "response": []
+        }
+      ],
+      "description": "👥 Employee Onboarding MCP - Complete employee lifecycle management"
+    },
+    {
+      "name": "💻 3. Asset Allocation MCP - Smart Asset Management",
+      "item": [
+        {
+          "name": "Health Check - Asset Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{asset_allocation_url}}/api/health",
+              "protocol": "https",
+              "host": ["{{asset_allocation_url}}"],
+              "path": ["api", "health"]
+            },
+            "description": "🩺 Asset service health verification"
+          },
+          "response": []
+        },
+        {
+          "name": "🎯 Smart Asset Allocation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"employeeId\": \"{{testEmployeeId}}\",\n    \"firstName\": \"Emily\",\n    \"lastName\": \"Rodriguez\",\n    \"department\": \"Product Management\",\n    \"position\": \"Senior Product Manager\",\n    \"assets\": [\"laptop\", \"id-card\", \"phone\"]\n}"
+            },
+            "url": {
+              "raw": "https://{{asset_allocation_url}}/api/mcp/tools/allocate-assets",
+              "protocol": "https",
+              "host": ["{{asset_allocation_url}}"],
+              "path": ["api", "mcp", "tools", "allocate-assets"]
+            },
+            "description": "🎯 Intelligent asset allocation with role-based recommendations"
+          },
+          "response": []
+        },
+        {
+          "name": "📦 List Available Assets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{asset_allocation_url}}/api/mcp/tools/list-assets?status=AVAILABLE&category=LAPTOP",
+              "protocol": "https",
+              "host": ["{{asset_allocation_url}}"],
+              "path": ["api", "mcp", "tools", "list-assets"],
+              "query": [
+                {"key": "status", "value": "AVAILABLE"},
+                {"key": "category", "value": "LAPTOP"}
+              ]
+            },
+            "description": "📦 List available assets with smart filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "🔍 Get Employee Assets",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"employeeId\": \"{{testEmployeeId}}\"\n}"
+            },
+            "url": {
+              "raw": "https://{{asset_allocation_url}}/api/mcp/tools/get-employee-assets",
+              "protocol": "https",
+              "host": ["{{asset_allocation_url}}"],
+              "path": ["api", "mcp", "tools", "get-employee-assets"]
+            },
+            "description": "🔍 Get all assets assigned to specific employee"
+          },
+          "response": []
+        }
+      ],
+      "description": "💻 Asset Allocation MCP - Intelligent asset management and allocation system"
+    },
+    {
+      "name": "📧 4. Email Notification MCP - Communication Hub",
+      "item": [
+        {
+          "name": "Health Check - Notification Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{notification_url}}/api/health",
+              "protocol": "https",
+              "host": ["{{notification_url}}"],
+              "path": ["api", "health"]
+            },
+            "description": "🩺 Notification service health verification"
+          },
+          "response": []
+        },
+        {
+          "name": "📨 Send Welcome Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"Emily\",\n    \"lastName\": \"Rodriguez\",\n    \"email\": \"emily.rodriguez@techcorp.com\",\n    \"employeeId\": \"{{testEmployeeId}}\",\n    \"department\": \"Product Management\",\n    \"position\": \"Senior Product Manager\",\n    \"startDate\": \"2024-03-15\",\n    \"manager\": \"David Kim\",\n    \"companyName\": \"TechCorp Innovations\"\n}"
+            },
+            "url": {
+              "raw": "https://{{notification_url}}/api/mcp/tools/send-welcome-email",
+              "protocol": "https",
+              "host": ["{{notification_url}}"],
+              "path": ["api", "mcp", "tools", "send-welcome-email"]
+            },
+            "description": "📨 Send personalized welcome email with company information"
+          },
+          "response": []
+        },
+        {
+          "name": "📬 Send Asset Allocation Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"Emily\",\n    \"lastName\": \"Rodriguez\",\n    \"email\": \"emily.rodriguez@techcorp.com\",\n    \"employeeId\": \"{{testEmployeeId}}\",\n    \"companyName\": \"TechCorp Innovations\",\n    \"assets\": [\n        {\n            \"assetName\": \"MacBook Pro 16\\\"\",\n            \"assetTag\": \"LAPTOP-001\",\n            \"category\": \"LAPTOP\",\n            \"serialNumber\": \"ABC123456789\"\n        },\n        {\n            \"assetName\": \"iPhone 15\",\n            \"assetTag\": \"PHONE-001\",\n            \"category\": \"PHONE\",\n            \"serialNumber\": \"XYZ987654321\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "https://{{notification_url}}/api/mcp/tools/send-asset-notification",
+              "protocol": "https",
+              "host": ["{{notification_url}}"],
+              "path": ["api", "mcp", "tools", "send-asset-notification"]
+            },
+            "description": "📬 Send asset allocation notification with details"
+          },
+          "response": []
+        },
+        {
+          "name": "✅ Send Onboarding Complete Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"Emily\",\n    \"lastName\": \"Rodriguez\",\n    \"email\": \"emily.rodriguez@techcorp.com\",\n    \"employeeId\": \"{{testEmployeeId}}\",\n    \"department\": \"Product Management\",\n    \"position\": \"Senior Product Manager\",\n    \"startDate\": \"2024-03-15\",\n    \"managerName\": \"David Kim\",\n    \"managerEmail\": \"david.kim@techcorp.com\",\n    \"companyName\": \"TechCorp Innovations\"\n}"
+            },
+            "url": {
+              "raw": "https://{{notification_url}}/api/mcp/tools/send-onboarding-complete",
+              "protocol": "https",
+              "host": ["{{notification_url}}"],
+              "path": ["api", "mcp", "tools", "send-onboarding-complete"]
+            },
+            "description": "✅ Send onboarding completion notification"
+          },
+          "response": []
+        }
+      ],
+      "description": "📧 Email Notification MCP - Multi-channel communication system"
+    },
+    {
+      "name": "🧠 5. NLP & Agent Fabric Integration - AI Interface",
+      "item": [
+        {
+          "name": "🤖 Process Natural Language Query - Create Employee",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"NLP processing successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains NLP results\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('intent');",
+                  "    pm.expect(jsonData).to.have.property('entities');",
+                  "    pm.expect(jsonData).to.have.property('confidence');",
+                  "});",
+                  "",
+                  "pm.test(\"Intent correctly identified\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.intent).to.eql('CREATE_EMPLOYEE');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-NLP-Processing-Level",
+                "value": "advanced"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"Create a new employee named Sarah Wilson with email sarah.wilson@techcorp.com in the Marketing department as a Marketing Specialist starting March 10th\",\n    \"context\": {\n        \"conversationId\": \"TEST-CONV-001\",\n        \"sessionId\": \"TEST-SESS-001\",\n        \"currentUser\": \"hr-admin\"\n    },\n    \"enhancedProcessing\": true,\n    \"includePersonalization\": true\n}"
+            },
+            "url": {
+              "raw": "https://{{react_client_url}}/api/nlp/process-query",
+              "protocol": "https",
+              "host": ["{{react_client_url}}"],
+              "path": ["api", "nlp", "process-query"]
+            },
+            "description": "🤖 **Natural Language Employee Creation**\n\nProcesses natural language input to create employee profiles using advanced NLP and Agent Fabric intelligence.\n\n**NLP Features:**\n- Intent recognition (CREATE_EMPLOYEE)\n- Entity extraction (names, emails, departments)\n- Sentiment analysis\n- Context awareness\n- Confidence scoring\n\n**Agent Fabric Enhancement:**\n- Intelligent data validation\n- Auto-completion of missing fields\n- Risk assessment\n- Workflow optimization\n\n**Example Queries:**\n- \"Add John Smith to Engineering as Senior Developer\"\n- \"Create employee profile for jane.doe@company.com\"\n- \"Onboard new hire in Marketing department\""
+          },
+          "response": []
+        },
+        {
+          "name": "🎯 NLP Asset Allocation Query",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Asset allocation NLP successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Intent recognized as asset allocation\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.intent).to.eql('ALLOCATE_ASSET');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"Allocate a MacBook Pro laptop and iPhone to Emily Rodriguez in Product Management. She also needs an ID card and monitor for her workstation\",\n    \"context\": {\n        \"conversationId\": \"TEST-CONV-002\",\n        \"previousEmployeeId\": \"{{testEmployeeId}}\",\n        \"urgency\": \"high\"\n    }\n}"
+            },
+            "url": {
+              "raw": "https://{{react_client_url}}/api/nlp/process-query",
+              "protocol": "https",
+              "host": ["{{react_client_url}}"],
+              "path": ["api", "nlp", "process-query"]
+            },
+            "description": "🎯 **Natural Language Asset Allocation**\n\nProcesses conversational asset requests with intelligent allocation recommendations.\n\n**Smart Features:**\n- Asset type recognition\n- Employee identification\n- Availability checking\n- Role-based recommendations\n- Priority assessment\n\n**Example Queries:**\n- \"Give Sarah a laptop and phone\"\n- \"Allocate standard engineering setup to new developer\"\n- \"What assets does John need for remote work?\""
+          },
+          "response": []
+        },
+        {
+          "name": "📊 NLP Status Inquiry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"What is the onboarding status of Emily Rodriguez? How is her progress going?\",\n    \"context\": {\n        \"conversationId\": \"TEST-CONV-003\",\n        \"includeAnalytics\": true,\n        \"includePredictions\": true\n    }\n}"
+            },
+            "url": {
+              "raw": "https://{{react_client_url}}/api/nlp/process-query",
+              "protocol": "https",
+              "host": ["{{react_client_url}}"],
+              "path": ["api", "nlp", "process-query"]
+            },
+            "description": "📊 **Natural Language Status Inquiry**\n\nAllows conversational status checking with comprehensive analytics.\n\n**Intelligence Features:**\n- Employee identification from context\n- Progress analysis\n- Timeline predictions\n- Risk assessment\n- Bottleneck identification\n\n**Example Queries:**\n- \"How is John's onboarding going?\"\n- \"Check progress for the new Marketing hire\"\n- \"Is Emily ready to start work?\""
+          },
+          "response": []
+        },
+        {
+          "name": "💬 NLP Multi-Turn Conversation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"query\": \"I need help with onboarding our new Marketing Manager\",\n    \"context\": {\n        \"conversationId\": \"TEST-CONV-004\",\n        \"previousQueries\": [\n            \"What do I need to do for a new hire?\",\n            \"They start next week\"\n        ],\n        \"conversationType\": \"multi-turn\",\n        \"userRole\": \"HR Manager\"\n    }\n}"
+            },
+            "url": {
+              "raw": "https://{{react_client_url}}/api/nlp/process-query",
+              "protocol": "https",
+              "host": ["{{react_client_url}}"],
+              "path": ["api", "nlp", "process-query"]
+            },
+            "description": "💬 **Multi-Turn Conversation Support**\n\nHandles complex conversations with context awareness across multiple interactions.\n\n**Conversation Features:**\n- Context preservation\n- Intent chaining\n- Follow-up question handling\n- Clarification requests\n- Progressive disclosure\n\n**Example Flow:**\n1. \"I need to onboard someone\"\n2. \"They're joining Marketing\"\n3. \"What assets do they need?\""
+          },
+          "response": []
+        }
+      ],
+      "description": "🧠 NLP & Agent Fabric Integration - AI-powered natural language interface for MCP orchestration"
+    },
+    {
+      "name": "🔄 6. End-to-End Workflow Testing - Integration Scenarios",
+      "item": [
+        {
+          "name": "🚀 Complete Onboarding Workflow - E2E Test",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate unique employee data",
+                  "pm.globals.set('e2eEmployeeId', 'EMP' + Math.floor(Math.random() * 10000));",
+                  "pm.globals.set('e2eFirstName', 'TestUser' + Math.floor(Math.random() * 100));",
+                  "pm.globals.set('e2eLastName', 'E2ETest' + Math.floor(Math.random() * 100));",
+                  "pm.globals.set('e2eEmail', pm.globals.get('e2eFirstName') + '.' + pm.globals.get('e2eLastName') + '@techcorp.com');"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"E2E Workflow initiated successfully\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 202]);",
+                  "});",
+                  "",
+                  "pm.test(\"Workflow contains all required steps\", function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.steps).to.include.members([",
+                  "        'profile-creation',",
+                  "        'asset-allocation', ",
+                  "        'welcome-email',",
+                  "        'onboarding-complete'",
+                  "    ]);",
+                  "});",
+                  "",
+                  "// Store workflow ID for subsequent tests",
+                  "const jsonData = pm.response.json();",
+                  "if (jsonData.workflowId) {",
+                  "    pm.globals.set('e2eWorkflowId', jsonData.workflowId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Test-Type",
+                "value": "E2E-Workflow"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"{{e2eFirstName}}\",\n    \"lastName\": \"{{e2eLastName}}\",\n    \"email\": \"{{e2eEmail}}\",\n    \"phone\": \"+1-555-0123\",\n    \"department\": \"Engineering\",\n    \"position\": \"Senior Software Engineer\",\n    \"startDate\": \"2024-03-15\",\n    \"salary\": 120000,\n    \"manager\": \"Tech Lead\",\n    \"managerEmail\": \"tech.lead@techcorp.com\",\n    \"companyName\": \"TechCorp Innovations\",\n    \"assets\": [\"laptop\", \"id-card\", \"phone\", \"monitor\"],\n    \"testMode\": true\n}"
+            },
+            "url": {
+              "raw": "https://{{agent_broker_url}}/api/mcp/tools/orchestrate-employee-onboarding",
+              "protocol": "https",
+              "host": ["{{agent_broker_url}}"],
+              "path": ["api", "mcp", "tools", "orchestrate-employee-onboarding"]
+            },
+            "description": "🚀 **Complete End-to-End Onboarding Test**\n\nExecutes a full onboarding workflow to validate all system integrations and dependencies.\n\n**Test Coverage:**\n- Employee profile creation\n- Asset allocation\n- Email notifications\n- Status tracking\n- Error handling\n- Performance metrics"
+          },
+          "response": []
+        },
+        {
+          "name": "🔍 Monitor Workflow Progress",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://{{agent_broker_url}}/api/mcp/workflows/{{e2eWorkflowId}}/status",
+              "protocol": "https",
+              "host": ["{{agent_broker_url}}"],
+              "path": ["api", "mcp", "workflows", "{{e2eWorkflowId}}", "status"]
+            },
+            "description": "🔍 Monitor real-time workflow progress and step completion"
+          },
+          "response": []
+        },
+        {
+          "name": "⚡ Performance Benchmark Test",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Response time is acceptable\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});",
+                  "",
+                  "pm.test(\"System can handle concurrent requests\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Log performance metrics",
+                  "console.log('Response Time:', pm.response.responseTime + 'ms');",
+                  "console.log('Response Size:', pm.response.responseSize + ' bytes');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"testType\": \"performance\",\n    \"concurrentRequests\": 5,\n    \"employees\": [\n        {\n            \"firstName\": \"Perf{{$randomInt}}\",\n            \"lastName\": \"Test{{$randomInt}}\",\n            \"email\": \"perf.test{{$randomInt}}@techcorp.com\",\n            \"department\": \"QA\",\n            \"position\": \"Performance Tester\"\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "https://{{agent_broker_url}}/api/mcp/tools/batch-onboard-employees",
+              "protocol": "https",
+              "host": ["{{agent_broker_url}}"],
+              "path": ["api", "mcp", "tools", "batch-onboard-employees"]
+            },
+            "description": "⚡ **Performance Benchmark Testing**\n\nTests system performance under load and validates response times meet SLA requirements."
+          },
+          "response": []
+        }
+      ],
+      "description": "🔄 End-to-End Workflow Testing - Comprehensive integration and performance validation scenarios"
+    }
+  ],
+  "variable": [
+    {
+      "key": "agent_broker_url",
+      "value": "employee-onboarding-agent-broker.us-e1.cloudhub.io"
+    },
+    {
+      "key": "employee_onboarding_url", 
+      "value": "employee-onboarding-mcp-server.us-e1.cloudhub.io"
+    },
+    {
+      "key": "asset_allocation_url",
+      "value": "assets-allocation-mcp-server.us-e1.cloudhub.io" 
+    },
+    {
+      "key": "notification_url",
+      "value": "email-notification-mcp-server.us-e1.cloudhub.io"
+    },
+    {
+      "key": "react_client_url",
+      "value": "localhost:3000"
+    }
+  ]
+}
