@@ -27,7 +27,7 @@ services:
     networks:
       - mcp-network
 
-  # Employee Onboarding MCP Server
+  # Employee Onboarding MCP Server - FIXED
   employee-onboarding-mcp-server:
     build:
       context: .
@@ -36,9 +36,9 @@ services:
     ports:
       - "${EMPLOYEE_HTTP_PORT:-8081}:8081"
     environment:
-      - http.host=${HTTP_HOST}
+      - http.host=0.0.0.0
       - http.port=8081
-      - db.url=jdbc:postgresql://${DB_POSTGRES_HOST}:${DB_POSTGRES_PORT}/${EMPLOYEE_DB_NAME}
+      - db.url=jdbc:postgresql://postgres:5432/${EMPLOYEE_DB_NAME}
       - db.username=${EMPLOYEE_DB_USER}
       - db.password=${EMPLOYEE_DB_PASSWORD}
       - db.driverClassName=org.postgresql.Driver
@@ -48,15 +48,18 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/health || curl -f http://localhost:8081/api/health || nc -z localhost 8081"]
       interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+      timeout: 15s
+      retries: 5
+      start_period: 180s
+    restart: unless-stopped
     networks:
       - mcp-network
+    volumes:
+      - mule-logs:/opt/mule/logs
 
-  # Asset Allocation MCP Server
+  # Asset Allocation MCP Server - FIXED
   assets-allocation-mcp-server:
     build:
       context: .
@@ -65,9 +68,9 @@ services:
     ports:
       - "${ASSET_HTTP_PORT:-8082}:8082"
     environment:
-      - http.host=${HTTP_HOST}
+      - http.host=0.0.0.0
       - http.port=8082
-      - db.url=jdbc:postgresql://${DB_POSTGRES_HOST}:${DB_POSTGRES_PORT}/${ASSET_DB_NAME}
+      - db.url=jdbc:postgresql://postgres:5432/${ASSET_DB_NAME}
       - db.username=${ASSET_DB_USER}
       - db.password=${ASSET_DB_PASSWORD}
       - db.driverClassName=org.postgresql.Driver
@@ -77,15 +80,16 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8082/health || curl -f http://localhost:8082/api/health || nc -z localhost 8082"]
       interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+      timeout: 15s
+      retries: 5
+      start_period: 180s
+    restart: unless-stopped
     networks:
       - mcp-network
 
-  # Notification MCP Server
+  # Email Notification MCP Server - FIXED
   email-notification-mcp-server:
     build:
       context: .
@@ -94,50 +98,52 @@ services:
     ports:
       - "${NOTIFICATION_HTTP_PORT:-8083}:8083"
     environment:
-      - http.host=${HTTP_HOST}
+      - http.host=0.0.0.0
       - http.port=8083
-      - db.url=jdbc:postgresql://${DB_POSTGRES_HOST}:${DB_POSTGRES_PORT}/${EMPLOYEE_DB_NAME}
-      - db.username=${EMPLOYEE_DB_USER}
-      - db.password=${EMPLOYEE_DB_PASSWORD}
-      - gmail.smtp.host=${GMAIL_SMTP_HOST}
-      - gmail.smtp.port=${GMAIL_SMTP_PORT}
-      - gmail.username=${GMAIL_USERNAME}
-      - gmail.password=${GMAIL_PASSWORD}
-      - gmail.from.address=${GMAIL_FROM_ADDRESS}
+      - email.smtp.host=${GMAIL_SMTP_HOST}
+      - email.smtp.port=${GMAIL_SMTP_PORT}
+      - email.username=${GMAIL_USERNAME}
+      - email.password=${GMAIL_PASSWORD}
+      - email.from=${GMAIL_FROM_ADDRESS}
     env_file:
       - .env
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8083/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8083/health || curl -f http://localhost:8083/api/health || nc -z localhost 8083"]
       interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+      timeout: 15s
+      retries: 5
+      start_period: 180s
+    restart: unless-stopped
     networks:
       - mcp-network
 
-  # Agent Broker MCP Server (Main Orchestrator)
+  # Agent Broker MCP Server - FIXED (Main Orchestrator)
   employee-onboarding-agent-broker:
     build:
       context: .
       dockerfile: mcp-servers/employee-onboarding-agent-broker/Dockerfile
     container_name: employee-onboarding-agent-broker
     ports:
-      - "8080:8080"
+      - "${AGENT_BROKER_HTTP_PORT:-8080}:8080"
     environment:
       - http.host=0.0.0.0
       - http.port=8080
       - agent.broker.orchestration.enabled=true
+      - employee.service.url=http://employee-onboarding-mcp-server:8081
+      - asset.service.url=http://assets-allocation-mcp-server:8082
+      - notification.service.url=http://email-notification-mcp-server:8083
     depends_on:
       employee-onboarding-mcp-server:
-        condition: service_started
+        condition: service_healthy
       assets-allocation-mcp-server:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || curl -f http://localhost:8080/api/health || nc -z localhost 8080"]
       interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+      timeout: 15s
+      retries: 5
+      start_period: 180s
+    restart: unless-stopped
     networks:
       - mcp-network
 

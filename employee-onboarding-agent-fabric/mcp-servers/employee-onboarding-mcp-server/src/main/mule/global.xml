@@ -100,12 +100,13 @@ output application/json
 	<!-- DATABASE CONFIGURATIONS - PRODUCTION GRADE WITH CONNECTION POOLING -->
 	<!-- ================================================================== -->
 
-	<!-- PostgreSQL Configuration with Connection Pooling (Hardcoded H2 Fallback) -->
+	<!-- PostgreSQL Configuration with Connection Pooling for Docker Environment -->
 	<db:config name="PostgreSQL_Database_Config" doc:name="PostgreSQL Production Config">
 		<db:generic-connection 
-			url="jdbc:h2:mem:employee_onboarding;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL" 
-			driverClassName="org.h2.Driver" 
-			user="sa">
+			url="${db.url}" 
+			driverClassName="${db.driverClassName}" 
+			user="${db.username}" 
+			password="${db.password}">
 			<db:pooling-profile 
 				maxPoolSize="10" 
 				minPoolSize="2" 
@@ -140,13 +141,18 @@ output application/json
 	</db:config>
 
 	<!-- ================================================================== -->
-	<!-- HTTP LISTENER CONFIGURATION WITH PRODUCTION SETTINGS -->
+	<!-- HTTP LISTENER CONFIGURATION - ENVIRONMENT AWARE -->
+	<!-- Docker: HTTP | CloudHub/Production: HTTPS with JKS -->
 	<!-- ================================================================== -->
 
-	<http:listener-config name="HTTP_Listener_config"
-		doc:name="HTTP Listener config">
-		<http:listener-connection host="0.0.0.0"
-			port="${https.port}" protocol="HTTPS">
+	<!-- HTTP Listener for Docker/Development Environment -->
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config">
+		<http:listener-connection host="${http.host}" port="${http.port}" protocol="HTTP"/>
+	</http:listener-config>
+
+	<!-- HTTPS Listener for CloudHub/Production (with JKS) -->
+	<http:listener-config name="HTTPS_Listener_config" doc:name="HTTPS Listener config">
+		<http:listener-connection host="${http.host}" port="${https.port}" protocol="HTTPS">
 			<tls:context name="tls-context">
 				<tls:key-store type="jks" path="server.jks"
 					keyPassword="MULEPASS" password="MULEPASS" alias="mule-server" />

@@ -21,10 +21,14 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 
 
 
-	<http:listener-config name="HTTP_Listener_config"
-		doc:name="HTTP Listener config">
-		<http:listener-connection host="0.0.0.0"
-			port="${https.port}" protocol="HTTPS">
+	<!-- HTTP Listener Configuration for Local/Docker -->
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="2f98c82f-b37d-4ae4-8a52-d6b7ba0ac68f">
+		<http:listener-connection host="0.0.0.0" port="${http.port}" />
+	</http:listener-config>
+	
+	<!-- HTTPS Listener Configuration for CloudHub -->
+	<http:listener-config name="HTTPS_Listener_config" doc:name="HTTPS Listener config" doc:id="3f98c82f-b37d-4ae4-8a52-d6b7ba0ac68g">
+		<http:listener-connection host="0.0.0.0" port="${https.port}" protocol="HTTPS">
 			<tls:context name="tls-context">
 				<tls:key-store type="jks" path="server.jks"
 					keyPassword="MULEPASS" password="MULEPASS" alias="mule-server" />
@@ -41,13 +45,19 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 			user="${db.h2.username}" />
 	</db:config>
 
-	<!-- PostgreSQL Database Configuration (For local Docker environment) -->
+	<!-- PostgreSQL Database Configuration (For Docker environment) -->
 	<db:config doc:name="PostgreSQL Config"
 		name="PostgreSQL_Database_Config">
 		<db:generic-connection
-			driverClassName="${db.postgres.driverClassName}"
-			password="${db.postgres.password}" url="${db.postgres.url}"
-			user="${db.postgres.username}" />
+			driverClassName="${db.driverClassName}"
+			password="${db.password}" url="${db.url}"
+			user="${db.username}">
+			<db:pooling-profile 
+				maxPoolSize="10" 
+				minPoolSize="2" 
+				acquireIncrement="1" 
+				preparedStatementCacheSize="10"/>
+		</db:generic-connection>
 	</db:config>
 
 	<!-- APIKit Configuration -->

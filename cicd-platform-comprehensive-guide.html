@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Onboarding MCP System - CI/CD Platform Comprehensive Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+            margin-bottom: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+            background: white;
+            border-radius: 50px;
+            padding: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            padding: 15px 30px;
+            margin: 0 5px;
+            background: transparent;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #667eea;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .nav-tab:hover {
+            background: #f0f4ff;
+            transform: translateY(-2px);
+        }
+
+        .nav-tab.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .platform-section {
+            margin-bottom: 50px;
+        }
+
+        .platform-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #e1e8ed;
+        }
+
+        .platform-logo {
+            font-size: 3em;
+            margin-right: 20px;
+        }
+
+        .platform-title {
+            flex: 1;
+        }
+
+        .platform-title h2 {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .platform-title .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .feature-card {
+            background: #f8fafc;
+            padding: 30px;
+            border-radius: 12px;
+            border-left: 5px solid #667eea;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+        .feature-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        .feature-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .feature-description {
+            color: #5a6c7d;
+            line-height: 1.6;
+        }
+
+        .code-section {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #404040;
+        }
+
+        .code-title {
+            color: #569cd6;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .copy-btn {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #005a9e;
+        }
+
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .comment { color: #6a9955; }
+        .number { color: #b5cea8; }
+        .variable { color: #9cdcfe; }
+
+        .info-box {
+            background: #e8f4fd;
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .info-box.warning {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+
+        .info-box.success {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        .info-box.error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+
+        .info-icon {
+            font-size: 1.2em;
+            margin-right: 10px;
+        }
+
+        .deployment-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+
+        .flow-step {
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+            margin: 10px;
+        }
+
+        .flow-step-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            margin: 0 auto 15px;
+        }
+
+        .flow-step-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .flow-step-desc {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+
+        .arrow {
+            font-size: 2em;
+            color: #bdc3c7;
+            margin: 0 10px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e1e8ed;
+        }
+
+        .comparison-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .comparison-table tr:hover {
+            background: #e8f4fd;
+        }
+
+        .best-practices {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .best-practices h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .best-practices ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .best-practices li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .best-practices li:before {
+            content: "✅";
+            position: absolute;
+            left: 0;
+            top: 10px;
+        }
+
+        .security-checklist {
+            background: #fff5f5;
+            border: 2px solid #fed7d7;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .security-checklist h4 {
+            color: #c53030;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+        }
+
+        .checklist-item input {
+            margin-right: 12px;
+            transform: scale(1.2);
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 40px 0;
+            margin-top: 60px;
+            border-radius: 10px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: #ecf0f1;
+            text-decoration: none;
+            padding: 10px 20px;
+            border: 1px solid #34495e;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .footer-link:hover {
+            background: #34495e;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .header p {
+                font-size: 1.1em;
+            }
+
+            .nav-tabs {
+                flex-direction: column;
+                border-radius: 15px;
+            }
+
+            .nav-tab {
+                margin: 5px 0;
+                border-radius: 10px;
+            }
+
+            .tab-content {
+                padding: 20px;
+            }
+
+            .platform-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .platform-logo {
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .deployment-flow {
+                flex-direction: column;
+            }
+
+            .arrow {
+                transform: rotate(90deg);
+                margin: 20px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🚀 Employee Onboarding MCP System</h1>
+            <p>Comprehensive CI/CD Platform Implementation Guide</p>
+            <p>Jenkins • GitLab CI/CD • Azure DevOps • GitHub Actions</p>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab(event, 'overview')">🏠 Overview</button>
+            <button class="nav-tab" onclick="showTab(event, 'jenkins')">🔧 Jenkins</button>
+            <button class="nav-tab" onclick="showTab(event, 'gitlab')">🦊 GitLab CI/CD</button>
+            <button class="nav-tab" onclick="showTab(event, 'azure')">☁️ Azure DevOps</button>
+            <button class="nav-tab" onclick="showTab(event, 'github')">🐙 GitHub Actions</button>
+            <button class="nav-tab" onclick="showTab(event, 'comparison')">📊 Comparison</button>
+            <button class="nav-tab" onclick="showTab(event, 'security')">🛡️ Security</button>
+        </nav>
+
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <h2>🎯 CI/CD Platform Overview</h2>
+            <p>This comprehensive guide covers the implementation of CI/CD pipelines for the Employee Onboarding MCP (Model Context Protocol) System across four major platforms. Each platform offers unique advantages and capabilities for different organizational needs.</p>
+
+            <div class="deployment-flow">
+                <div class="flow-step">
+                    <div class="flow-step-icon">💻</div>
+                    <div class="flow-step-title">Code Commit</div>
+                    <div class="flow-step-desc">Developer pushes code to repository</div>
+                </div>
+                <div class="arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-icon">🔨</div>
+                    <div class="flow-step-title">Build & Test</div>
+                    <div class="flow-step-desc">Compile code and run automated tests</div>
+                </div>
+                <div class="arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-icon">🔍</div>
+                    <div class="flow-step-title">Quality Check</div>
+                    <div class="flow-step-desc">Security scan and code quality analysis</div>
+                </div>
+                <div class="arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-icon">📦</div>
+                    <div class="flow-step-title">Package</div>
+                    <div class="flow-step-desc">Create deployment artifacts</div>
+                </div>
+                <div class="arrow">→</div>
+                <div class="flow-step">
+                    <div class="flow-step-icon">🚀</div>
+                    <div class="flow-step-title">Deploy</div>
+                    <div class="flow-step-desc">Deploy to CloudHub environments</div>
+                </div>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔧</div>
+                    <div class="feature-title">Multi-Service Architecture</div>
+                    <div class="feature-description">Supports building and deploying multiple MCP services: Employee Onboarding, Asset Allocation, Notification, and Agent Broker services.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧪</div>
+                    <div class="feature-title">Comprehensive Testing</div>
+                    <div class="feature-description">Unit tests, integration tests, end-to-end tests, and performance testing across all platforms.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🛡️</div>
+                    <div class="feature-title">Security First</div>
+                    <div class="feature-description">OWASP dependency scanning, Snyk security analysis, and automated vulnerability assessment.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">Quality Gates</div>
+                    <div class="feature-description">SonarQube integration for code quality metrics and automated quality gate enforcement.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">☁️</div>
+                    <div class="feature-title">Cloud Deployment</div>
+                    <div class="feature-description">Automated deployment to MuleSoft CloudHub with health checks and rollback capabilities.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📢</div>
+                    <div class="feature-title">Smart Notifications</div>
+                    <div class="feature-description">Integrated notifications via Slack, email, and Teams for build status and deployment updates.</div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <span class="info-icon">💡</span>
+                <strong>Key Benefits:</strong> All platforms provide automated build, test, and deployment workflows with comprehensive monitoring, security scanning, and notification systems tailored for MuleSoft applications.
+            </div>
+        </div>
+
+        <!-- Jenkins Tab -->
+        <div id="jenkins" class="tab-content">
+            <div class="platform-section">
+                <div class="platform-header">
+                    <div class="platform-logo">🔧</div>
+                    <div class="platform-title">
+                        <h2>Jenkins CI/CD Pipeline</h2>
+                        <div class="subtitle">Flexible automation server for MuleSoft deployments</div>
+                    </div>
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">⚙️</div>
+                        <div class="feature-title">Pipeline as Code</div>
+                        <div class="feature-description">Jenkinsfile-based pipeline with parameterized builds and environment-specific configurations.</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎛️</div>
+                        <div class="feature-title">Build Parameters</div>
+                        <div class="feature-description">Configurable deployment environment, service selection, and feature toggles.</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <div class="feature-title">Parallel Execution</div>
+                        <div class="feature-description">Parallel building of MCP services and React client for faster pipeline execution.</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📈</div>
+                        <div class="feature-title">Performance Testing</div>
+                        <div class="feature-description">JMeter integration for load testing with configurable thresholds and reporting.</div>
+                    </div>
+                </div>
+
+                <div class="code-section">
+                    <div class="code-header">
+                        <div class="code-title">Jenkins Pipeline Configuration</div>
+                        <button class="copy-btn" onclick="copyCode('jenkins-code')">Copy</button>
+                    </div>
+                    <pre id="jenkins-code"><span class="keyword">pipeline</span> {
+    <span class="variable">agent</span> <span class="keyword">any</span>
+    
+    <span class="variable">tools</span> {
+        <span class="variable">maven</span> <span class="string">'Maven-3.9.0'</span>
+        <span class="variable">jdk</span> <span class="string">'JDK-17'</span>
+    }
+    
+    <span class="variable">environment</span> {
+        <span class="comment">// Anypoint Platform Credentials</span>
+        <span class="variable">ANYPOINT_CLIENT_ID</span> = <span class="function">credentials</span>(<span class="string">'anypoint-client-id'</span>)
+        <span class="variable">ANYPOINT_CLIENT_SECRET</span> = <span class="function">credentials</span>(<span class="string">'anypoint-client-secret'</span>)
+        <span class="variable">CLOUDHUB_REGION</span> = <span class="string">'us-east-1'</span>
+        <span class="variable">MULE_VERSION</span> = <span class="string">'4.6.0'</span>
+    }
+    
+    <span class="variable">parameters</span> {
+        <span class="function">choice</span>(
+            <span class="variable">name</span>: <span class="string">'DEPLOYMENT_ENVIRONMENT'</span>,
+            <span class="variable">choices</span>: [<span class="string">'dev'</span>, <span class="string">'staging'</span>, <span class="string">'prod'</span>],
+            <span class="variable">description</span>: <span class="string">'Select deployment environment'</span>
+        )
+        <span class="function">choice</span>(
+            <span class="variable">name</span>: <span class="string">'MCP_SERVICE'</span>,
+            <span class="variable">choices</span>: [<span class="string">'all'</span>, <span class="string">'employee-onboarding-mcp'</span>, <span class="string">'asset-allocation-mcp'</span>],
+            <span class="variable">description</span>: <span class="string">'Select MCP service to deploy'</span>
+        )
+    }
+    
+    <span class="variable">stages</span> {
+        <span class="variable">stage</span>(<span class="string">'Build & Test'</span>) {
+            <span class="variable">parallel</span> {
+                <span class="variable">stage</span>(<span class="string">'Build MCP Services'</span>) {
+                    <span class="variable">steps</span> {
+                        <span class="function">script</span> {
+                            <span class="variable">def</span> services = params.MCP_SERVICE == <span class="string">'all'</span> ? 
+                                [<span class="string">'employee-onboarding-mcp'</span>, <span class="string">'asset-allocation-mcp'</span>] : 
+                                [params.MCP_SERVICE]
+                            
+                            services.<span class="function">each</span> { service ->
+                                <span class="function">dir</span>(<span class="string">"mcp-servers/${service}"</span>) {
+                                    <span class="function">sh</span> <span class="string">"mvn clean compile test package -DskipTests=false"</span>
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                <span class="variable">stage</span>(<span class="string">'Build React Client'</span>) {
+                    <span class="variable">steps</span> {
+                        <span class="function">dir</span>(<span class="string">'react-client'</span>) {
+                            <span class="function">sh</span> <span class="string">'npm ci && npm run build'</span>
+                        }
+                    }
+                }
+            }
+        }
+        
+        <span class="variable">stage</span>(<span class="string">'Deploy to CloudHub'</span>) {
+            <span class="variable">steps</span> {
+                <span class="function">script</span> {
+                    <span class="function">sh</span> <span class="string">"""
+                        mvn deploy -DmuleDeploy \\
+                            -Dcloudhub.application.name=\${MCP_SERVICE}-\${DEPLOYMENT_ENVIRONMENT} \\
+                            -Dcloudhub.environment=\${DEPLOYMENT_ENVIRONMENT} \\
+                            -Danypoint.client_id=\${ANYPOINT_CLIENT_ID}
+                    """</span>
+                }
+            }
+        }
+    }
+}</pre>
+                </div>
+
+                <div class="best-practices">
+                    <h3>🎯 Jenkins Best Practices</h3>
+                    <ul>
+                        <li>Use Jenkins Pipeline as Code (Jenkinsfile) stored in your repository</li>
+                        <li>Implement proper credential management with Jenkins Credential Store</li>
+                        <li>Configure proper agent labeling for different build requirements</li>
+                        <li>Use parallel execution for independent build stages</li>
+                        <li>Implement proper artifact archiving and retention policies</li>
+                        <li>Configure build notifications to relevant team channels</li>
+                        <li>Use shared libraries for common pipeline functionality</li>
+                        <li>Implement proper error handling and cleanup steps</li>
+                    </ul>
+                </div>
+
+                <div class="info-box warning">
+                    <span class="info-icon">⚠️</span>
+                    <strong>Prerequisites:</strong> Ensure Jenkins has Maven, JDK 17, Node.js, and Docker configured. Install required plugins: Pipeline, Credentials Binding, Maven Integration, and SonarQube Scanner.
+                </div>
+            </div>
+        </div>
+
+        <!-- GitLab CI/CD Tab -->
+        <div id="gitlab" class="tab-content">
+            <div class="platform-section">
+                <div class="platform-header">
+                    <div class="platform-logo">🦊</div>
+                    <div class="platform-title">
+                        <h2>GitLab CI/CD Pipeline</h2>
+                        <div class="subtitle">Comprehensive DevOps platform with built-in CI/CD</div>
+                    </div>
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🐳</div>
+                        <div class="feature-title">Docker-based Builds</div>
+                        <div class="feature-description">Container-based pipeline execution with customizable Docker images for each stage.</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔧</div>
+                        <div class="feature-title">Matrix Builds</div>
+                        <div class="feature-description">Parallel matrix execution for multiple MCP services and environments.</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📅</div>
+                        <div class="feature-title">Scheduled Jobs</div>
+                        <div class="feature-description">Automated weekly security scans and monthly performance baselines.</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎭</div>
+                        <div class="feature-title">Dynamic Environments</div>
+                        <div class="feature-description">Environment-specific configurations with automated branch-based deployments.</div>
+                    </div>
+                </div>
+
+                <div class="code-section">
+                    <div class="code-header">
+                        <div class="code-title">GitLab CI/CD Configuration (.gitlab-ci.yml)</div>
+                        <button class="copy-btn" onclick="copyCode('gitlab-code')">Copy</button>
+                    </div>
+                    <pre id="gitlab-code"><span class="comment"># Employee Onboarding Agent Fabric - GitLab CI/CD Pipeline</span>
+<span class="variable">image</span>: <span class="string">docker:27.2.0</span>
+
+<span class="variable">variables</span>:
+  <span class="variable">APPLICATION_NAME</span>: <span class="string">"employee-onboarding-agent-fabric"</span>
+  <span class="variable">BUILD_VERSION</span>: <span class="string">"${CI_PIPELINE_ID}-${CI_COMMIT_SHORT_SHA}"</span>
+  <span class="variable">MULE_VERSION</span>: <span class="string">"4.9-java17"</span>
+  <span class="variable">CLOUDHUB_REGION</span>: <span class="string">"us-east-1"</span>
+
+<span class="variable">stages</span>:
+  - <span class="string">🔍 validate</span>
+  - <span class="string">🏗️ build</span>
+  - <span class="string">🧪 test</span>
+  - <span class="string">🔍 analyze</span>
+  - <span class="string">📦 package</span>
+  - <span class="string">🐳 containerize</span>
+  - <span class="string">📤 publish</span>
+  - <span class="string">🚀 deploy</span>
+  - <span class="string">🧪 integration</span>
+  - <span class="string">⚡ performance</span>
+
+<span class="variable">build:mcp-services</span>:
+  <span class="variable">stage</span>: <span class="string">🏗️ build</span>
+  <span class="variable">image</span>: <span class="string">openjdk:17-jdk-alpine</span>
+  <span class="variable">parallel</span>:
+    <span class="variable">matrix</span>:
+      - <span class="variable">SERVICE</span>: [<span class="string">"employee-onboarding-mcp"</span>, <span class="string">"asset-allocation-mcp"</span>, <span class="string">"notification-mcp"</span>]
+  <span class="variable">script</span>:
+    - <span class="string">echo "🏗️ Building MCP Service: ${SERVICE}"</span>
+    - <span class="string">cd mcp-servers/${SERVICE}</span>
+    - <span class="string">mvn clean compile -DskipTests -Dversion=${BUILD_VERSION}</span>
+  <span class="variable">artifacts</span>:
+    <span class="variable">paths</span>:
+      - <span class="string">mcp-servers/${SERVICE}/target/</span>
+
+<span class="variable">test:unit-mcp</span>:
+  <span class="variable">stage</span>: <span class="string">🧪 test</span>
+  <span class="variable">image</span>: <span class="string">openjdk:17-jdk-alpine</span>
+  <span class="variable">script</span>:
+    - <span class="string">echo "🧪 Running Unit Tests for MCP Services"</span>
+    - <span class="string">cd mcp-servers/\${SERVICE}</span>
+    - <span class="string">mvn test -Dmaven.test.failure.ignore=false</span>
+  <span class="variable">artifacts</span>:
+    <span class="variable">reports</span>:
+      <span class="variable">junit</span>: <span class="string">mcp-servers/*/target/surefire-reports/TEST-*.xml</span>
+
+<span class="variable">deploy:cloudhub:prod</span>:
+  <span class="variable">stage</span>: <span class="string">🚀 deploy</span>
+  <span class="variable">image</span>: <span class="string">openjdk:17-jdk-alpine</span>
+  <span class="variable">script</span>:
+    - <span class="string">echo "🚀 Deploying to CloudHub Production"</span>
+    - <span class="string">mvn deploy -DmuleDeploy -Dcloudhub.environment=prod</span>
+  <span class="variable">only</span>:
+    - <span class="string">main</span></pre>
+                </div>
+
+                <div class="best-practices">
+                    <h3>🎯 GitLab CI/CD Best Practices</h3>
+                    <ul>
+                        <li>Use Docker images with specific tags for reproducible builds</li>
+                        <li>Leverage GitLab CI/CD variables for environment-specific configurations</li>
+                        <li>Implement proper caching strategies for dependencies and build artifacts</li>
+                        <li>Use parallel matrix builds for multiple services and environments</li>
+                        <li>Configure proper artifact retention and caching policies</li>
+                        <li>Implement comprehensive test reporting with JUnit integration</li>
+                        <li>Use scheduled pipelines for regular security scans and maintenance</li>
+                        <li>Configure proper environment protection rules for production deployments</li>
+                    </ul>
+                </div>
+
+                <div class="info-box success">
+                    <span class="info-icon">✅</span>
+                    <strong>GitLab Advantages:</strong> Built-in container registry, comprehensive DevOps platform, excellent Docker integration, and powerful CI/CD variables system.
+                </div>
+            </div>
+        </div>
+
+        <!-- Azure DevOps Tab -->
+        <div id="azure" class="tab-content">
+            <div class="platform-section">
+                <div class="platform-header">
+                    <div class="platform-logo">☁️</div>
+                    <div class="platform-title">
+                        <h2>Azure DevOps Pipeline</h2>
+                        <div class="subtitle">Enterprise-grade CI/CD with Azure integration</div>
+                    </div>
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🎛️</div>
+                        <div class="feature-title">Build Parameters</div>
+                        <div class="feature-description">Rich parameter system with service selection, environment targeting, and feature toggles.</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <div class="feature-title">Matrix Strategies</div>
+                        <div class="feature-description">Matrix-based builds for parallel execution across multiple MCP services.</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <div class="feature-title">Advanced Analytics</div>
+                        <div class="feature-description">Built-in test reporting, code coverage analysis, and deployment tracking.</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔐</div>
+                        <div class="feature-title">Enterprise Security</div>
+                        <div class="feature-description">Azure AD integration, service connections, and enterprise-grade security features.</div>
+                    </div>
+                </div>
+
+                <div class="code-section">
+                    <div class="code-header">
+                        <div class="code-title">Azure DevOps Pipeline (azure-pipelines.yml)</div>
+                        <button class="copy-btn" onclick="copyCode('azure-code')">Copy</button>
+                    </div>
+                    <pre id="azure-code"><span class="comment"># Employee Onboarding Agent Fabric - Azure DevOps Pipeline</span>
+<span class="variable">name</span>: <span class="string">Employee-Onboarding-CI-CD-$(Date:yyyyMMdd)$(Rev:.r)</span>
+
+<span class="variable">trigger</span>:
+  <span class="variable">branches</span>:
+    <span class="variable">include</span>:
+    - <span class="string">main</span>
+    - <span class="string">develop</span>
+    - <span class="string">feature/*</span>
+  <span class="variable">paths</span>:
+    <span class="variable">include</span>:
+    - <span class="string">mcp-servers/**</span>
+    - <span class="string">react-client/**</span>
+    - <span class="string">pom.xml</span>
+
+<span class="variable">parameters</span>:
+- <span class="variable">name</span>: <span class="string">serviceSelection</span>
+  <span class="variable">displayName</span>: <span class="string">'Service to Build/Deploy'</span>
+  <span class="variable">type</span>: <span class="string">string</span>
+  <span class="variable">default</span>: <span class="string">'all'</span>
+  <span class="variable">values</span>:
+  - <span class="string">all</span>
+  - <span class="string">employee-onboarding-mcp</span>
+  - <span class="string">asset-allocation-mcp</span>
+  - <span class="string">notification-mcp</span>
+
+<span class="variable">variables</span>:
+  <span class="variable">buildVersion</span>: <span class="string">'$(Build.BuildNumber)-$(Build.SourceVersion)'</span>
+  <span class="variable">muleVersion</span>: <span class="string">'4.9-java17'</span>
+  <span class="variable">cloudhubRegion</span>: <span class="string">'us-east-1'</span>
+
+<span class="variable">stages</span>:
+- <span class="variable">stage</span>: <span class="string">Build</span>
+  <span class="variable">displayName</span>: <span class="string">'🏗️ Build & Compile'</span>
+  <span class="variable">jobs</span>:
+  - <span class="variable">job</span>: <span class="string">BuildServices</span>
+    <span class="variable">displayName</span>: <span class="string">'Build MCP Services'</span>
+    <span class="variable">strategy</span>:
+      <span class="variable">matrix</span>:
+        <span class="variable">employee-onboarding-mcp</span>:
+          <span class="variable">serviceName</span>: <span class="string">'employee-onboarding-mcp'</span>
+        <span class="variable">asset-allocation-mcp</span>:
+          <span class="variable">serviceName</span>: <span class="string">'asset-allocation-mcp'</span>
+    <span class="variable">steps</span>:
+    - <span class="variable">task</span>: <span class="string">JavaToolInstaller@0</span>
+      <span class="variable">displayName</span>: <span class="string">'Install Java 17'</span>
+      <span class="variable">inputs</span>:
+        <span class="variable">versionSpec</span>: <span class="string">'17'</span>
+        <span class="variable">jdkArchitectureOption</span>: <span class="string">'x64'</span>
+    
+    - <span class="variable">task</span>: <span class="string">Maven@3</span>
+      <span class="variable">displayName</span>: <span class="string">'Build $(serviceName)'</span>
+      <span class="variable">inputs</span>:
+        <span class="variable">mavenPomFile</span>: <span class="string">'mcp-servers/$(serviceName)/pom.xml'</span>
+        <span class="variable">goals</span>: <span class="string">'clean compile test package'</span>
+        <span class="variable">options</span>: <span class="string">'-B -Dversion=$(buildVersion)'</span>
+
+- <span class="variable">stage</span>: <span class="string">Deploy</span>
+  <span class="variable">displayName</span>: <span class="string">'🚀 Deploy to CloudHub'</span>
+  <span class="variable">jobs</span>:
+  - <span class="variable">deployment</span>: <span class="string">CloudHubDeployment</span>
+    <span class="variable">environment</span>: <span class="string">production</span>
+    <span class="variable">strategy</span>:
+      <span class="variable">runOnce</span>:
+        <span class="variable">deploy</span>:
+          <span class="variable">steps</span>:
+          - <span class="variable">task</span>: <span class="string">Maven@3</span>
+            <span class="variable">displayName</span>: <span class="string">'Deploy to CloudHub'</span>
+            <span class="variable">inputs</span>:
+              <span class="variable">goals</span>: <span class="string">'deploy -DmuleDeploy'</span>
+              <span class="variable">options</span>: <span class="string">'-Dcloudhub.environment=prod'</span></pre>
+                </div>
+
+                <div class="best-practices">
+                    <h3>🎯 Azure DevOps Best Practices</h3>
+                    <ul>
+                        <li>Use Azure DevOps service connections for secure credential management</li>
+                        <li>Implement proper approval workflows for production deployments</li>
+                        <li>Leverage Azure Test Plans integration for comprehensive test management</li>
+                        <li>Use variable groups for environment-specific configurations</li>
+                        <li>Configure proper retention policies for builds and releases</li>
+                        <li>Implement branch policies and pull request validations</li>
+                        <li>Use Azure Artifacts for package management and caching</li>
+                        <li>Configure comprehensive monitoring and alerting through Azure Monitor</li>
+                    </ul>
+                </div>
+
+                <div class="info-box">
+                    <span class="info-icon">🔧</span>
+                    <strong>Azure Integration:</strong> Seamless integration with Azure services, enterprise security, and comprehensive DevOps toolchain with built-in project management capabilities.
+                </div>
+            </div>
+        </div>
+
+        <!-- GitHub Actions Tab -->
+        <div id="github" class="tab-content">
+            <div class="platform-section">
+                <div class="platform-header">
+                    <div class="platform-logo">🐙</div>
+                    <div class="platform-title">
+                        <h2>GitHub Actions Workflow</h2>
+                        <div class="subtitle">Cloud-native CI/CD with extensive marketplace integration</div>
+                    </div>
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🛒</div>
+                        <div class="feature-title">Action Marketplace</div>
+                        <div class="feature-description">Access to thousands of pre-built actions for MuleSoft, security scanning, and deployment automation.</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <div class="feature-title">Matrix Builds</div>
+                        <div class="feature-description">Parallel execution across multiple operating systems, Java versions, and MCP services.</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <div class="feature-title">Event-Driven</div>
+                        <div class="feature-description">Rich event system with pull requests, issues, releases, and scheduled triggers.</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔐</div>
+                        <div class="feature-title">Secure by Design</div>
+                        <div class="feature-description">Built-in secret management, OIDC integration, and security-first approach.</div>
+                    </div>
+                </div>
+
+                <div class="code-section">
+                    <div class="code-header">
+                        <div class="code-title">GitHub Actions Workflow (.github/workflows/ci-cd.yml)</div>
+                        <button class="copy-btn" onclick="copyCode('github-code')">Copy</button>
+                    </div>
+                    <pre id="github-code"><span class="variable">name</span>: <span class="string">Employee Onboarding MCP CI/CD</span>
+
+<span class="variable">on</span>:
+  <span class="variable">push</span>:
+    <span class="variable">branches</span>: [ <span class="string">main</span>, <span class="string">develop</span> ]
+    <span class="variable">paths</span>:
+      - <span class="string">'mcp-servers/**'</span>
+      - <span class="string">'react-client/**'</span>
+      - <span class="string">'pom.xml'</span>
+  <span class="variable">pull_request</span>:
+    <span class="variable">branches</span>: [ <span class="string">main</span>, <span class="string">develop</span> ]
+  <span class="variable">workflow_dispatch</span>:
+    <span class="variable">inputs</span>:
+      <span class="variable">service</span>:
+        <span class="variable">description</span>: <span class="string">'Service to deploy'</span>
+        <span class="variable">required</span>: <span class="keyword">true</span>
+        <span class="variable">default</span>: <span class="string">'all'</span>
+        <span class="variable">type</span>: <span class="string">choice</span>
+        <span class="variable">options</span>:
+        - <span class="string">all</span>
+        - <span class="string">employee-onboarding-mcp</span>
+        - <span class="string">asset-allocation-mcp</span>
+
+<span class="variable">env</span>:
+  <span class="variable">MULE_VERSION</span>: <span class="string">'4.9-java17'</span>
+  <span class="variable">CLOUDHUB_REGION</span>: <span class="string">'us-east-1'</span>
+  <span class="variable">BUILD_VERSION</span>: <span class="string">'${{ github.run_number }}-${{ github.sha }}'</span>
+
+<span class="variable">jobs</span>:
+  <span class="variable">build</span>:
+    <span class="variable">name</span>: <span class="string">Build MCP Services</span>
+    <span class="variable">runs-on</span>: <span class="string">ubuntu-latest</span>
+    <span class="variable">strategy</span>:
+      <span class="variable">matrix</span>:
+        <span class="variable">service</span>: [<span class="string">employee-onboarding-mcp</span>, <span class="string">asset-allocation-mcp</span>, <span class="string">notification-mcp</span>]
+    
+    <span class="variable">steps</span>:
+    - <span class="variable">name</span>: <span class="string">Checkout Code</span>
+      <span class="variable">uses</span>: <span class="string">actions/checkout@v4</span>
+    
+    - <span class="variable">name</span>: <span class="string">Setup Java 17</span>
+      <span class="variable">uses</span>: <span class="string">actions/setup-java@v4</span>
+      <span class="variable">with</span>:
+        <span class="variable">java-version</span>: <span class="string">'17'</span>
+        <span class="variable">distribution</span>: <span class="string">'temurin'</span>
+    
+    - <span class="variable">name</span>: <span class="string">Cache Maven Dependencies</span>
+      <span class="variable">uses</span>: <span class="string">actions/cache@v3</span>
+      <span class="variable">with</span>:
+        <span class="variable">path</span>: <span class="string">~/.m2</span>
+        <span class="variable">key</span>: <span class="string">${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}</span>
+    
+    - <span class="variable">name</span>: <span class="string">Build ${{ matrix.service }}</span>
+      <span class="variable">working-directory</span>: <span class="string">mcp-servers/${{ matrix.service }}</span>
+      <span class="variable">run</span>: |
+        <span class="string">mvn clean compile test package \
+          -B -Dversion=${{ env.BUILD_VERSION }} \
+          -Dmule.version=${{ env.MULE_VERSION }}</span>
+    
+    - <span class="variable">name</span>: <span class="string">Upload Build Artifacts</span>
+      <span class="variable">uses</span>: <span class="string">actions/upload-artifact@v4</span>
+      <span class="variable">with</span>:
+        <span class="variable">name</span>: <span class="string">${{ matrix.service }}-build</span>
+        <span class="variable">path</span>: <span class="string">mcp-servers/${{ matrix.service }}/target/</span>
+
+  <span class="variable">security-scan</span>:
+    <span class="variable">name</span>: <span class="string">Security Scanning</span>
+    <span class="variable">runs-on</span>: <span class="string">ubuntu-latest</span>
+    <span class="variable">needs</span>: <span class="string">build</span>
+    
+    <span class="variable">steps</span>:
+    - <span class="variable">name</span>: <span class="string">Checkout Code</span>
+      <span class="variable">uses</span>: <span class="string">actions/checkout@v4</span>
+    
+    - <span class="variable">name</span>: <span class="string">Run Snyk Security Scan</span>
+      <span class="variable">uses</span>: <span class="string">snyk/actions/maven@master</span>
+      <span class="variable">env</span>:
+        <span class="variable">SNYK_TOKEN</span>: <span class="string">${{ secrets.SNYK_TOKEN }}</span>
+    
+    - <span class="variable">name</span>: <span class="string">Run OWASP Dependency Check</span>
+      <span class="variable">run</span>: |
+        <span class="string">mvn org.owasp:dependency-check-maven:check \
+          -DfailBuildOnCVSS=8</span>
+
+  <span class="variable">deploy</span>:
+    <span class="variable">name</span>: <span class="string">Deploy to CloudHub</span>
+    <span class="variable">runs-on</span>: <span class="string">ubuntu-latest</span>
+    <span class="variable">needs</span>: [<span class="string">build</span>, <span class="string">security-scan</span>]
+    <span class="variable">if</span>: <span class="string">github.ref == 'refs/heads/main'</span>
+    <span class="variable">environment</span>: <span class="string">production</span>
+    
+    <span class="variable">steps</span>:
+    - <span class="variable">name</span>: <span class="string">Deploy MCP Services</span>
+      <span class="variable">run</span>: |
+        <span class="string">mvn deploy -DmuleDeploy \
+          -Dcloudhub.environment=prod \
+          -Danypoint.client_id=${{ secrets.ANYPOINT_CLIENT_ID }} \
+          -Danypoint.client_secret=${{ secrets.ANYPOINT_CLIENT_SECRET }}</span></pre>
+                </div>
+
+                <div class="info-box success">
+                    <span class="info-icon">✨</span>
+                    <strong>GitHub Actions Created:</strong> Since GitHub Actions configuration wasn't present in the existing CI/CD setup, I've created a comprehensive workflow that integrates with the existing MuleSoft architecture.
+                </div>
+
+                <div class="best-practices">
+                    <h3>🎯 GitHub Actions Best Practices</h3>
+                    <ul>
+                        <li>Use official actions from the GitHub Marketplace for reliability</li>
+                        <li>Implement proper secret management with GitHub Secrets</li>
+                        <li>Use workflow templates for consistent pipeline structures</li>
+                        <li>Leverage matrix strategies for parallel builds across services</li>
+                        <li>Configure proper branch protection rules and status checks</li>
+                        <li>Use environments for deployment approval workflows</li>
+                        <li>Implement comprehensive caching strategies for dependencies</li>
+                        <li>Use workflow dispatch for manual deployment control</li>
+                    </ul>
+                </div>
+
+                <div class="info-box warning">
+                    <span class="info-icon">⚠️</span>
+                    <strong>GitHub Setup Required:</strong> Create the workflow file at `.github/workflows/ci-cd.yml` in your repository and configure the required secrets in your GitHub repository settings.
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Tab -->
+        <div id="comparison" class="tab-content">
+            <h2>📊 Platform Comparison Matrix</h2>
+            <p>Comprehensive comparison of CI/CD platforms for the Employee Onboarding MCP System implementation.</p>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>🔧 Jenkins</th>
+                        <th>🦊 GitLab CI/CD</th>
+                        <th>☁️ Azure DevOps</th>
+                        <th>🐙 GitHub Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Hosting</strong></td>
+                        <td>Self-hosted</td>
+                        <td>Cloud or Self-hosted</td>
+                        <td>Cloud or Server</td>
+                        <td>Cloud</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Configuration</strong></td>
+                        <td>Jenkinsfile (Groovy)</td>
+                        <td>.gitlab-ci.yml (YAML)</td>
+                        <td>azure-pipelines.yml (YAML)</td>
+                        <td>workflow.yml (YAML)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Parallel Execution</strong></td>
+                        <td>✅ Advanced</td>
+                        <td>✅ Matrix builds</td>
+                        <td>✅ Strategy matrix</td>
+                        <td>✅ Matrix strategy</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Docker Support</strong></td>
+                        <td>✅ Plugin required</td>
+                        <td>✅ Native</td>
+                        <td>✅ Native</td>
+                        <td>✅ Native</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Secret Management</strong></td>
+                        <td>✅ Credentials store</td>
+                        <td>✅ CI/CD variables</td>
+                        <td>✅ Service connections</td>
+                        <td>✅ GitHub Secrets</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Marketplace/Plugins</strong></td>
+                        <td>✅ Extensive plugins</td>
+                        <td>⚡ Built-in features</td>
+                        <td>✅ Extensions marketplace</td>
+                        <td>✅ Actions marketplace</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cost</strong></td>
+                        <td>Free (self-hosted)</td>
+                        <td>Free tier + paid</td>
+                        <td>Free tier + paid</td>
+                        <td>Free tier + paid</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Learning Curve</strong></td>
+                        <td>Steep</td>
+                        <td>Moderate</td>
+                        <td>Moderate</td>
+                        <td>Easy</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Enterprise Features</strong></td>
+                        <td>✅ Extensive</td>
+                        <td>✅ Complete DevOps</td>
+                        <td>✅ Enterprise-grade</td>
+                        <td>✅ Growing</td>
+                    </tr>
+                    <tr>
+                        <td><strong>MuleSoft Integration</strong></td>
+                        <td>✅ Plugin available</td>
+                        <td>✅ Maven-based</td>
+                        <td>✅ Native support</td>
+                        <td>✅ Custom actions</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🏆</div>
+                    <div class="feature-title">Best for Flexibility</div>
+                    <div class="feature-description"><strong>Jenkins</strong> - Maximum customization and plugin ecosystem, ideal for complex enterprise environments with specific requirements.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <div class="feature-title">Best for DevOps</div>
+                    <div class="feature-description"><strong>GitLab CI/CD</strong> - Complete DevOps platform with integrated features, perfect for teams wanting everything in one place.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🏢</div>
+                    <div class="feature-title">Best for Enterprise</div>
+                    <div class="feature-description"><strong>Azure DevOps</strong> - Enterprise-grade features with Microsoft ecosystem integration, ideal for large organizations.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-title">Best for Simplicity</div>
+                    <div class="feature-description"><strong>GitHub Actions</strong> - Easy to use with excellent marketplace, perfect for teams already using GitHub for source control.</div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <span class="info-icon">💡</span>
+                <strong>Recommendation:</strong> For the Employee Onboarding MCP System, GitLab CI/CD offers the best balance of features, ease of use, and comprehensive DevOps capabilities. However, choose based on your organization's existing toolchain and requirements.
+            </div>
+        </div>
+
+        <!-- Security Tab -->
+        <div id="security" class="tab-content">
+            <h2>🛡️ Security Best Practices</h2>
+            <p>Comprehensive security guidelines for CI/CD pipelines across all platforms, specifically tailored for MuleSoft applications.</p>
+
+            <div class="security-checklist">
+                <h4>🔐 Credential Management Security Checklist</h4>
+                <div class="checklist-item">
+                    <input type="checkbox" id="cred1">
+                    <label for="cred1">Store Anypoint Platform credentials using platform-specific secret management</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="cred2">
+                    <label for="cred2">Implement credential rotation policies for long-term secrets</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="cred3">
+                    <label for="cred3">Use environment-specific credentials with least privilege access</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="cred4">
+                    <label for="cred4">Never commit credentials or API keys to source control</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="cred5">
+                    <label for="cred5">Implement credential masking in build logs and outputs</label>
+                </div>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <div class="feature-title">Dependency Scanning</div>
+                    <div class="feature-description">
+                        <strong>OWASP Dependency Check:</strong> Automated vulnerability scanning for Maven dependencies with configurable CVSS thresholds and suppression files.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🐍</div>
+                    <div class="feature-title">Snyk Integration</div>
+                    <div class="feature-description">
+                        <strong>Code & Dependencies:</strong> Advanced security scanning for both source code vulnerabilities and dependency issues with detailed remediation guidance.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">SonarQube Security</div>
+                    <div class="feature-description">
+                        <strong>Code Quality Gates:</strong> Automated security hotspot detection, code smell identification, and quality gate enforcement.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🛡️</div>
+                    <div class="feature-title">Container Security</div>
+                    <div class="feature-description">
+                        <strong>Image Scanning:</strong> Automated Docker image vulnerability scanning with base image security analysis and compliance checking.
+                    </div>
+                </div>
+            </div>
+
+                    <button class="copy-btn" onclick="copyCode('security-code')">Copy</button>
+                </div>
+                <pre id="security-code"><span class="comment"># Universal Security Scanning Configuration</span>
+
+<span class="comment"># OWASP Dependency Check (Maven)</span>
+<span class="variable">mvn</span> <span class="string">org.owasp:dependency-check-maven:check</span> \
+  <span class="string">-DfailBuildOnCVSS=8</span> \
+  <span class="string">-DsuppressionsFile=cicd/owasp-suppressions.xml</span> \
+  <span class="string">-DretireJsAnalyzerEnabled=true</span>
+
+<span class="comment"># Snyk Security Scan</span>
+<span class="variable">snyk</span> <span class="string">auth $SNYK_TOKEN</span>
+<span class="variable">snyk</span> <span class="string">test --severity-threshold=medium</span>
+<span class="variable">snyk</span> <span class="string">code test --severity-threshold=medium</span>
+
+<span class="comment"># SonarQube Analysis</span>
+<span class="variable">mvn</span> <span class="string">sonar:sonar</span> \
+  <span class="string">-Dsonar.projectKey=employee-onboarding-mcp</span> \
+  <span class="string">-Dsonar.host.url=$SONAR_HOST_URL</span> \
+  <span class="string">-Dsonar.login=$SONAR_TOKEN</span></pre>
+            </div>
+
+            <div class="security-checklist">
+                <h4>🔐 Pipeline Security Checklist</h4>
+                <div class="checklist-item">
+                    <input type="checkbox" id="pipe1">
+                    <label for="pipe1">Enable branch protection rules for main and develop branches</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="pipe2">
+                    <label for="pipe2">Configure mandatory security scans before deployment</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="pipe3">
+                    <label for="pipe3">Implement approval workflows for production deployments</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="pipe4">
+                    <label for="pipe4">Regular audit of pipeline permissions and access controls</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="pipe5">
+                    <label for="pipe5">Monitor and log all deployment activities for compliance</label>
+                </div>
+            </div>
+
+            <div class="best-practices">
+                <h3>🎯 Security Implementation Guidelines</h3>
+                <ul>
+                    <li>Implement security scanning as early as possible in the CI/CD pipeline</li>
+                    <li>Use fail-fast approach - stop pipeline immediately on critical security issues</li>
+                    <li>Configure automated dependency updates with security patch priorities</li>
+                    <li>Implement container image scanning for Docker-based deployments</li>
+                    <li>Use infrastructure as code (IaC) scanning for deployment configurations</li>
+                    <li>Configure SAST (Static Application Security Testing) for source code analysis</li>
+                    <li>Implement DAST (Dynamic Application Security Testing) for running applications</li>
+                    <li>Maintain security compliance reports and audit trails</li>
+                </ul>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔑</div>
+                    <div class="feature-title">MuleSoft Security</div>
+                    <div class="feature-description">
+                        <strong>Anypoint Platform:</strong> Secure CloudHub deployment with proper VPC configuration, API policies, and OAuth 2.0 authentication.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <div class="feature-title">Network Security</div>
+                    <div class="feature-description">
+                        <strong>VPC & TLS:</strong> Implement private VPC for CloudHub applications with end-to-end TLS encryption and proper firewall rules.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📋</div>
+                    <div class="feature-title">Compliance</div>
+                    <div class="feature-description">
+                        <strong>Standards:</strong> Ensure compliance with SOC 2, GDPR, HIPAA, and other relevant industry standards and regulations.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👁️</div>
+                    <div class="feature-title">Monitoring</div>
+                    <div class="feature-description">
+                        <strong>Security Monitoring:</strong> Implement comprehensive logging, monitoring, and alerting for security events and anomalies.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <h3>🚀 Employee Onboarding MCP System - CI/CD Implementation</h3>
+            <p>Choose the right CI/CD platform for your organization's needs and implement comprehensive automation, security, and monitoring practices.</p>
+            
+            <div class="footer-links">
+                <a href="#" class="footer-link">📚 Documentation</a>
+                <a href="#" class="footer-link">🔧 Implementation Support</a>
+                <a href="#" class="footer-link">🛡️ Security Guidelines</a>
+                <a href="#" class="footer-link">📊 Best Practices</a>
+                <a href="#" class="footer-link">🚀 Advanced Features</a>
+            </div>
+            
+            <p style="margin-top: 30px; opacity: 0.8;">
+                Built with ❤️ for MuleSoft Development Teams • Comprehensive CI/CD Guide • 2024
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        function showTab(evt, tabName) {
+            // Hide all tab content
+            const tabcontent = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.remove("active");
+            }
+            
+            // Remove active class from all tabs
+            const tablinks = document.getElementsByClassName("nav-tab");
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active");
+            }
+            
+            // Show the selected tab and mark button as active
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        function copyCode(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.innerText;
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function() {
+                    showCopySuccess();
+                }, function(err) {
+                    fallbackCopyTextToClipboard(text);
+                });
+            } else {
+                fallbackCopyTextToClipboard(text);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopySuccess();
+                }
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function showCopySuccess() {
+            // Create a temporary notification
+            const notification = document.createElement('div');
+            notification.textContent = '✅ Copied to clipboard!';
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #28a745;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 6px;
+                z-index: 1000;
+                font-weight: 600;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 2000);
+        }
+
+        // Initialize the first tab as active
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstTab = document.querySelector('.nav-tab');
+            const firstTabContent = document.querySelector('.tab-content');
+            
+            if (firstTab && firstTabContent) {
+                firstTab.classList.add('active');
+                firstTabContent.classList.add('active');
+            }
+        });
+
+        // Add smooth scrolling for anchor links
+        document.addEventListener('DOMContentLoaded', function() {
+            const links = document.querySelectorAll('a[href^="#"]');
+            links.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

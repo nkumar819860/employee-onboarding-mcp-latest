@@ -1,12 +1,10 @@
 -- Employee Onboarding MCP Server Database Initialization for H2
 -- H2-Compatible SQL with correct syntax
 
-
 -- Drop tables if they exist (for clean restart)
 DROP TABLE IF EXISTS employee_documents CASCADE;
 DROP TABLE IF EXISTS employees CASCADE;
 DROP TABLE IF EXISTS departments CASCADE;
-
 
 -- Create departments table (H2 compatible)
 CREATE TABLE departments (
@@ -17,7 +15,6 @@ CREATE TABLE departments (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 
 -- Create employees table (H2 compatible)
 CREATE TABLE employees (
@@ -40,7 +37,6 @@ CREATE TABLE employees (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
 -- Create employee_documents table (H2 compatible)
 CREATE TABLE employee_documents (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -54,12 +50,10 @@ CREATE TABLE employee_documents (
     verified_by VARCHAR(100)
 );
 
-
 -- Add foreign key constraints after tables are created
 ALTER TABLE employees ADD CONSTRAINT fk_emp_dept FOREIGN KEY (department_id) REFERENCES departments(id);
 ALTER TABLE employees ADD CONSTRAINT fk_emp_mgr FOREIGN KEY (manager_id) REFERENCES employees(id);
 ALTER TABLE employee_documents ADD CONSTRAINT fk_doc_emp FOREIGN KEY (employee_id) REFERENCES employees(id);
-
 
 -- Insert sample departments
 INSERT INTO departments (name, description, manager_name) VALUES
@@ -69,7 +63,6 @@ INSERT INTO departments (name, description, manager_name) VALUES
 ('Finance', 'Financial planning and accounting', 'David Kim'),
 ('Operations', 'Business operations and logistics', 'Lisa Thompson');
 
-
 -- Insert sample employees
 INSERT INTO employees (employee_id, first_name, last_name, email, phone, department_id, position, hire_date, status, salary, address, emergency_contact_name, emergency_contact_phone) VALUES
 ('EMP001', 'John', 'Smith', 'john.smith@company.com', '+1-555-0101', 2, 'Senior Software Engineer', '2024-01-15', 'ACTIVE', 85000.00, '123 Main St, City, State 12345', 'Jane Smith', '+1-555-0102'),
@@ -77,7 +70,6 @@ INSERT INTO employees (employee_id, first_name, last_name, email, phone, departm
 ('EMP003', 'Robert', 'Wilson', 'robert.wilson@company.com', '+1-555-0301', 1, 'HR Specialist', '2024-01-20', 'ACTIVE', 60000.00, '789 Pine Rd, City, State 12347', 'Nancy Wilson', '+1-555-0302'),
 ('EMP004', 'Jennifer', 'Brown', 'jennifer.brown@company.com', '+1-555-0401', 4, 'Financial Analyst', '2024-02-15', 'PENDING', 65000.00, '321 Elm St, City, State 12348', 'Tom Brown', '+1-555-0402'),
 ('EMP005', 'Alex', 'Davis', 'alex.davis@company.com', '+1-555-0501', 2, 'Junior Developer', '2024-03-01', 'PENDING', 55000.00, '654 Maple Dr, City, State 12349', 'Sam Davis', '+1-555-0502');
-
 
 -- Insert sample employee documents
 INSERT INTO employee_documents (employee_id, document_type, document_name, document_status) VALUES
@@ -92,7 +84,6 @@ INSERT INTO employee_documents (employee_id, document_type, document_name, docum
 (4, 'EDUCATION', 'mba_certificate.pdf', 'PENDING'),
 (5, 'ID_PROOF', 'drivers_license.pdf', 'PENDING');
 
-
 -- Create indexes for better performance
 CREATE INDEX idx_employees_employee_id ON employees(employee_id);
 CREATE INDEX idx_employees_email ON employees(email);
@@ -101,6 +92,3 @@ CREATE INDEX idx_employees_status ON employees(status);
 CREATE INDEX idx_employee_documents_employee_id ON employee_documents(employee_id);
 CREATE INDEX idx_employee_documents_type ON employee_documents(document_type);
 CREATE INDEX idx_employee_documents_status ON employee_documents(document_status);
-
-
---
