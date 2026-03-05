@@ -121,65 +121,481 @@
                 <h2>🏗️ Active-Active EKS RTF Architecture</h2>
                 
                 <h3>🌐 Multi-Region Active-Active Deployment</h3>
-                <div class="code-block">
-┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                         ACTIVE-ACTIVE EKS RTF DR ARCHITECTURE                           │
-├─────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                         │
-│ PRIMARY REGION (us-east-1)                    SECONDARY REGION (us-west-2)             │
-│ ┌─────────────────────────────┐               ┌─────────────────────────────┐           │
-│ │     EKS CLUSTER - EAST      │◄──────────────┤     EKS CLUSTER - WEST      │           │
-│ │ ● Status: ACTIVE            │               │ ● Status: ACTIVE            │           │
-│ │ ● Health: ✅ Healthy        │               │ ● Health: ✅ Healthy        │           │
-│ │                             │               │                             │           │
-│ │ ┌─────────────────────────┐ │               │ ┌─────────────────────────┐ │           │
-│ │ │    RTF NODES (3x)       │ │               │ │    RTF NODES (3x)       │ │           │
-│ │ │ • m5.xlarge x3          │ │               │ │ • m5.xlarge x3          │ │           │
-│ │ │ • Auto-scaling 1-10     │ │               │ │ • Auto-scaling 1-10     │ │           │
-│ │ │ • Health Monitoring     │ │               │ │ • Health Monitoring     │ │           │
-│ │ │ • CPU: 25% | RAM: 45%   │ │               │ │ • CPU: 23% | RAM: 42%   │ │           │
-│ │ └─────────────────────────┘ │               │ └─────────────────────────┘ │           │
-│ │                             │               │                             │           │
-│ │ ┌─────────────────────────┐ │               │ ┌─────────────────────────┐ │           │
-│ │ │   MULE APPLICATIONS     │ │               │ │   MULE APPLICATIONS     │ │           │
-│ │ │ • Employee Onboarding   │ │               │ │ • Employee Onboarding   │ │           │
-│ │ │ • Asset Allocation      │ │               │ │ • Asset Allocation      │ │           │
-│ │ │ • Notification Service  │ │               │ │ • Notification Service  │ │           │
-│ │ │ • Agent Broker          │ │               │ │ • Agent Broker          │ │           │
-│ │ │ • Load: 2.3k req/min    │ │               │ │ • Load: 2.1k req/min    │ │           │
-│ │ └─────────────────────────┘ │               │ └─────────────────────────┘ │           │
-│ └─────────────────────────────┘               └─────────────────────────────┘           │
-│           │                                             │                               │
-│           ▼                                             ▼                               │
-│ ┌─────────────────────────────┐               ┌─────────────────────────────┐           │
-│ │   RDS POSTGRES (PRIMARY)    │◄──────────────┤  RDS POSTGRES (STANDBY)     │           │
-│ │ • Multi-AZ: us-east-1a,1b   │  Sync Repl    │ • Cross-Region Replica      │           │
-│ │ • Automated Backups: ✅     │               │ • Auto Promotion: ✅        │           │
-│ │ • Encryption: AES-256       │               │ • Encryption: AES-256       │           │
-│ │ • RPO: < 5 min             │               │ • RTO: < 30 sec             │           │
-│ │ • Size: 45GB | IOPS: 3000  │               │ • Size: 45GB | IOPS: 3000   │           │
-│ └─────────────────────────────┘               └─────────────────────────────┘           │
-│           │                                             │                               │
-│           ▼                                             ▼                               │
-│ ┌─────────────────────────────┐               ┌─────────────────────────────┐           │
-│ │   APPLICATION LOAD BALANCER │               │   APPLICATION LOAD BALANCER │           │
-│ │ • Health Checks: 30s        │               │ • Health Checks: 30s        │           │
-│ │ • SSL Termination: TLS 1.3  │               │ • SSL Termination: TLS 1.3  │           │
-│ │ • HIPAA Compliant: ✅       │               │ • HIPAA Compliant: ✅       │           │
-│ │ • Throughput: 1.2k req/s    │               │ • Throughput: 1.1k req/s    │           │
-│ └─────────────────────────────┘               └─────────────────────────────┘           │
-│           │                                             │                               │
-│           └─────────────────┬───────────────────────────┘                               │
-│                             ▼                                                           │
-│ ┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│ │                     GLOBAL TRAFFIC MANAGER & DNS FAILOVER                              │
-│ │ • Route 53 Health Checks                                                               │
-│ │ • Weighted Routing Policy (50/50 traffic distribution)                                 │
-│ │ • Automatic Failover < 30 seconds                                                      │
-│ │ • Global Load Balancing                                                                │
-│ └─────────────────────────────────────────────────────────────────────────────────────────┘
-└─────────────────────────────────────────────────────────────────────────────────────────┘
+                <div class="architecture-diagram">
+                    <div class="diagram-title">
+                        <h4>ACTIVE-ACTIVE EKS RTF DR ARCHITECTURE</h4>
+                    </div>
+                    
+                    <div class="regions-container">
+                        <!-- Primary Region -->
+                        <div class="region-column">
+                            <div class="region-header">PRIMARY REGION (us-east-1)</div>
+                            
+                            <!-- EKS Cluster East -->
+                            <div class="cluster-box primary-cluster">
+                                <div class="cluster-title">
+                                    <span class="cluster-icon">🏗️</span>
+                                    EKS CLUSTER - EAST
+                                </div>
+                                <div class="status-indicators">
+                                    <span class="status-item">● Status: <span class="status-active">ACTIVE</span></span>
+                                    <span class="status-item">● Health: <span class="status-healthy">✅ Healthy</span></span>
+                                </div>
+                                
+                                <!-- RTF Nodes -->
+                                <div class="component-box rtf-nodes">
+                                    <div class="component-title">
+                                        <span class="component-icon">⚡</span>
+                                        RTF NODES (3x)
+                                    </div>
+                                    <ul class="feature-list">
+                                        <li>• m5.xlarge x3</li>
+                                        <li>• Auto-scaling 1-10</li>
+                                        <li>• Health Monitoring</li>
+                                        <li>• CPU: <span class="metric-value">25%</span> | RAM: <span class="metric-value">45%</span></li>
+                                    </ul>
+                                </div>
+                                
+                                <!-- Mule Applications -->
+                                <div class="component-box mule-apps">
+                                    <div class="component-title">
+                                        <span class="component-icon">🔧</span>
+                                        MULE APPLICATIONS
+                                    </div>
+                                    <ul class="feature-list">
+                                        <li>• Employee Onboarding</li>
+                                        <li>• Asset Allocation</li>
+                                        <li>• Notification Service</li>
+                                        <li>• Agent Broker</li>
+                                        <li>• Load: <span class="metric-value">2.3k req/min</span></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <!-- Database Primary -->
+                            <div class="connection-line down"></div>
+                            <div class="database-box primary-db">
+                                <div class="db-title">
+                                    <span class="db-icon">🗄️</span>
+                                    RDS POSTGRES (PRIMARY)
+                                </div>
+                                <ul class="feature-list">
+                                    <li>• Multi-AZ: us-east-1a,1b</li>
+                                    <li>• Automated Backups: <span class="status-healthy">✅</span></li>
+                                    <li>• Encryption: AES-256</li>
+                                    <li>• RPO: < 5 min</li>
+                                    <li>• Size: 45GB | IOPS: 3000</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Load Balancer -->
+                            <div class="connection-line down"></div>
+                            <div class="loadbalancer-box">
+                                <div class="lb-title">
+                                    <span class="lb-icon">⚖️</span>
+                                    APPLICATION LOAD BALANCER
+                                </div>
+                                <ul class="feature-list">
+                                    <li>• Health Checks: 30s</li>
+                                    <li>• SSL Termination: TLS 1.3</li>
+                                    <li>• HIPAA Compliant: <span class="status-healthy">✅</span></li>
+                                    <li>• Throughput: <span class="metric-value">1.2k req/s</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <!-- Connection Between Regions -->
+                        <div class="cross-region-connection">
+                            <div class="sync-indicator">
+                                <span class="sync-arrow">↔️</span>
+                                <div class="sync-label">Sync Repl</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Secondary Region -->
+                        <div class="region-column">
+                            <div class="region-header">SECONDARY REGION (us-west-2)</div>
+                            
+                            <!-- EKS Cluster West -->
+                            <div class="cluster-box secondary-cluster">
+                                <div class="cluster-title">
+                                    <span class="cluster-icon">🏗️</span>
+                                    EKS CLUSTER - WEST
+                                </div>
+                                <div class="status-indicators">
+                                    <span class="status-item">● Status: <span class="status-active">ACTIVE</span></span>
+                                    <span class="status-item">● Health: <span class="status-healthy">✅ Healthy</span></span>
+                                </div>
+                                
+                                <!-- RTF Nodes -->
+                                <div class="component-box rtf-nodes">
+                                    <div class="component-title">
+                                        <span class="component-icon">⚡</span>
+                                        RTF NODES (3x)
+                                    </div>
+                                    <ul class="feature-list">
+                                        <li>• m5.xlarge x3</li>
+                                        <li>• Auto-scaling 1-10</li>
+                                        <li>• Health Monitoring</li>
+                                        <li>• CPU: <span class="metric-value">23%</span> | RAM: <span class="metric-value">42%</span></li>
+                                    </ul>
+                                </div>
+                                
+                                <!-- Mule Applications -->
+                                <div class="component-box mule-apps">
+                                    <div class="component-title">
+                                        <span class="component-icon">🔧</span>
+                                        MULE APPLICATIONS
+                                    </div>
+                                    <ul class="feature-list">
+                                        <li>• Employee Onboarding</li>
+                                        <li>• Asset Allocation</li>
+                                        <li>• Notification Service</li>
+                                        <li>• Agent Broker</li>
+                                        <li>• Load: <span class="metric-value">2.1k req/min</span></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <!-- Database Standby -->
+                            <div class="connection-line down"></div>
+                            <div class="database-box secondary-db">
+                                <div class="db-title">
+                                    <span class="db-icon">🗄️</span>
+                                    RDS POSTGRES (STANDBY)
+                                </div>
+                                <ul class="feature-list">
+                                    <li>• Cross-Region Replica</li>
+                                    <li>• Auto Promotion: <span class="status-healthy">✅</span></li>
+                                    <li>• Encryption: AES-256</li>
+                                    <li>• RTO: < 30 sec</li>
+                                    <li>• Size: 45GB | IOPS: 3000</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Load Balancer -->
+                            <div class="connection-line down"></div>
+                            <div class="loadbalancer-box">
+                                <div class="lb-title">
+                                    <span class="lb-icon">⚖️</span>
+                                    APPLICATION LOAD BALANCER
+                                </div>
+                                <ul class="feature-list">
+                                    <li>• Health Checks: 30s</li>
+                                    <li>• SSL Termination: TLS 1.3</li>
+                                    <li>• HIPAA Compliant: <span class="status-healthy">✅</span></li>
+                                    <li>• Throughput: <span class="metric-value">1.1k req/s</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Global Traffic Manager -->
+                    <div class="global-section">
+                        <div class="connection-convergence"></div>
+                        <div class="global-manager">
+                            <div class="global-title">
+                                <span class="global-icon">🌐</span>
+                                GLOBAL TRAFFIC MANAGER & DNS FAILOVER
+                            </div>
+                            <div class="global-features">
+                                <div class="feature-row">
+                                    <span class="feature-bullet">🔍</span>
+                                    <span>Route 53 Health Checks</span>
+                                </div>
+                                <div class="feature-row">
+                                    <span class="feature-bullet">⚖️</span>
+                                    <span>Weighted Routing Policy (50/50 traffic distribution)</span>
+                                </div>
+                                <div class="feature-row">
+                                    <span class="feature-bullet">⚡</span>
+                                    <span>Automatic Failover < 30 seconds</span>
+                                </div>
+                                <div class="feature-row">
+                                    <span class="feature-bullet">🌍</span>
+                                    <span>Global Load Balancing</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+                
+                <style>
+                .architecture-diagram {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    border-radius: 15px;
+                    padding: 30px;
+                    margin: 20px 0;
+                    color: white;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                    font-family: 'Monaco', 'Consolas', monospace;
+                }
+                
+                .diagram-title {
+                    text-align: center;
+                    margin-bottom: 30px;
+                    padding-bottom: 15px;
+                    border-bottom: 2px solid rgba(255,255,255,0.3);
+                }
+                
+                .diagram-title h4 {
+                    font-size: 1.5rem;
+                    font-weight: bold;
+                    color: #fff;
+                    margin: 0;
+                    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                }
+                
+                .regions-container {
+                    display: grid;
+                    grid-template-columns: 1fr auto 1fr;
+                    gap: 30px;
+                    align-items: start;
+                    margin-bottom: 30px;
+                }
+                
+                .region-column {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 20px;
+                }
+                
+                .region-header {
+                    text-align: center;
+                    font-weight: bold;
+                    font-size: 1.2rem;
+                    color: #FFD700;
+                    margin-bottom: 20px;
+                    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+                }
+                
+                .cluster-box, .database-box, .loadbalancer-box {
+                    background: rgba(255,255,255,0.15);
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255,255,255,0.2);
+                    border-radius: 12px;
+                    padding: 20px;
+                    transition: all 0.3s ease;
+                }
+                
+                .cluster-box:hover, .database-box:hover, .loadbalancer-box:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+                }
+                
+                .primary-cluster {
+                    border-left: 4px solid #4CAF50;
+                }
+                
+                .secondary-cluster {
+                    border-left: 4px solid #2196F3;
+                }
+                
+                .cluster-title, .db-title, .lb-title {
+                    font-size: 1.1rem;
+                    font-weight: bold;
+                    color: #FFD700;
+                    margin-bottom: 15px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+                
+                .cluster-icon, .db-icon, .lb-icon {
+                    font-size: 1.3rem;
+                }
+                
+                .status-indicators {
+                    margin-bottom: 15px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 5px;
+                }
+                
+                .status-item {
+                    font-size: 0.95rem;
+                }
+                
+                .status-active {
+                    color: #4CAF50;
+                    font-weight: bold;
+                }
+                
+                .status-healthy {
+                    color: #4CAF50;
+                }
+                
+                .component-box {
+                    background: rgba(255,255,255,0.1);
+                    border-radius: 8px;
+                    padding: 15px;
+                    margin: 10px 0;
+                    border: 1px solid rgba(255,255,255,0.15);
+                }
+                
+                .component-title {
+                    font-weight: bold;
+                    color: #E1F5FE;
+                    margin-bottom: 10px;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+                
+                .component-icon {
+                    font-size: 1.1rem;
+                }
+                
+                .feature-list {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                }
+                
+                .feature-list li {
+                    margin: 5px 0;
+                    font-size: 0.9rem;
+                    line-height: 1.4;
+                }
+                
+                .metric-value {
+                    color: #FFD700;
+                    font-weight: bold;
+                }
+                
+                .connection-line {
+                    height: 30px;
+                    width: 3px;
+                    background: linear-gradient(to bottom, #FFD700, #FFA000);
+                    margin: 10px auto;
+                    border-radius: 2px;
+                }
+                
+                .cross-region-connection {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
+                    min-height: 200px;
+                }
+                
+                .sync-indicator {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 10px;
+                }
+                
+                .sync-arrow {
+                    font-size: 2rem;
+                    animation: pulse 2s infinite;
+                }
+                
+                .sync-label {
+                    background: rgba(255,255,255,0.2);
+                    padding: 8px 15px;
+                    border-radius: 20px;
+                    font-size: 0.9rem;
+                    font-weight: bold;
+                    color: #FFD700;
+                }
+                
+                .global-section {
+                    margin-top: 30px;
+                }
+                
+                .connection-convergence {
+                    height: 3px;
+                    background: linear-gradient(to center, #FFD700, #FFA000, #FFD700);
+                    margin: 20px auto;
+                    border-radius: 2px;
+                }
+                
+                .global-manager {
+                    background: rgba(255,255,255,0.15);
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255,255,255,0.2);
+                    border-radius: 12px;
+                    padding: 25px;
+                    text-align: center;
+                }
+                
+                .global-title {
+                    font-size: 1.2rem;
+                    font-weight: bold;
+                    color: #FFD700;
+                    margin-bottom: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 12px;
+                }
+                
+                .global-icon {
+                    font-size: 1.4rem;
+                }
+                
+                .global-features {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                    gap: 15px;
+                    margin-top: 20px;
+                }
+                
+                .feature-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    background: rgba(255,255,255,0.1);
+                    padding: 12px;
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                }
+                
+                .feature-row:hover {
+                    background: rgba(255,255,255,0.15);
+                    transform: translateX(5px);
+                }
+                
+                .feature-bullet {
+                    font-size: 1.1rem;
+                    min-width: 24px;
+                }
+                
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; transform: scale(1); }
+                    50% { opacity: 0.7; transform: scale(1.1); }
+                }
+                
+                @media (max-width: 768px) {
+                    .regions-container {
+                        grid-template-columns: 1fr;
+                        gap: 20px;
+                    }
+                    
+                    .cross-region-connection {
+                        height: 60px;
+                        min-height: 60px;
+                    }
+                    
+                    .sync-indicator {
+                        flex-direction: row;
+                    }
+                    
+                    .sync-arrow {
+                        transform: rotate(90deg);
+                        font-size: 1.5rem;
+                    }
+                    
+                    .global-features {
+                        grid-template-columns: 1fr;
+                    }
+                    
+                    .architecture-diagram {
+                        padding: 20px;
+                    }
+                }
+                </style>
 
                 <div class="component-grid">
                     <div class="nav-card">
@@ -591,53 +1007,362 @@ spec:
                 <h2>☁️ Cloud-Native Security Architecture</h2>
                 
                 <h3>🏗️ Comprehensive Security Stack</h3>
-                <div class="code-block">
-┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                        CLOUD-NATIVE SECURITY ARCHITECTURE                              │
-├─────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                         │
-│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
-│ │                           APPLICATION LAYER SECURITY                               │ │
-│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
-│ │ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ │ │
-│ │ │  EMPLOYEE ONBO  │ │  ASSET ALLOC    │ │  NOTIFICATION   │ │  AGENT BROKER   │ │ │
-│ │ │  ● OAuth 2.0    │ │  ● JWT Tokens   │ │  ● API Keys     │ │  ● mTLS Auth    │ │ │
-│ │ │  ● RBAC         │ │  ● Field Encrypt│ │  ● Rate Limit   │ │  ● Circuit Break│ │ │
-│ │ │  ● Audit Log    │ │  ● Data Mask    │ │  ● Input Valid  │ │  ● Health Check │ │ │
-│ │ └─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘ │ │
-│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
-│                                           ▼                                             │
-│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
-│ │                          SERVICE MESH SECURITY (ISTIO)                            │ │
-│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
-│ │ • mTLS between services        • Policy Engine (OPA)                              │ │
-│ │ • Service-to-Service Auth      • Traffic Encryption                               │ │
-│ │ • Request Authorization        • Audit & Observability                            │ │
-│ │ • Circuit Breaker Patterns    • Zero Trust Network                               │ │
-│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
-│                                           ▼                                             │
-│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
-│ │                          KUBERNETES SECURITY LAYER                                │ │
-│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
-│ │ • Pod Security Standards      • Network Policies                                  │ │
-│ │ • RBAC & Service Accounts      • Secrets Management                               │ │
-│ │ • Admission Controllers       • Resource Quotas                                   │ │
-│ │ • Security Context            • Runtime Protection                                │ │
-│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
-│                                           ▼                                             │
-│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
-│ │                           INFRASTRUCTURE SECURITY                                 │ │
-│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
-│ │ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ │ │
-│ │ │   VPC/VNET      │ │   EKS/AKS       │ │   RDS/SQL DB    │ │   KMS/KEY VAULT │ │ │
-│ │ │ • Private Sub   │ │ • Node Hardening│ │ • Encryption    │ │ • Key Rotation  │ │ │
-│ │ │ • NACLs        │ │ • Image Scanning│ │ • Access Control│ │ • HSM Backed    │ │ │
-│ │ │ • Security Groups│ │ • Compliance   │ │ • Backup Encrypt│ │ • Audit Trail   │ │ │
-│ │ │ • VPN/Peering   │ │ • Runtime Sec   │ │ • Patch Mgmt    │ │ • Policy Engine │ │ │
-│ │ └─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘ │ │
-│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────────────────┘
+                <div class="security-architecture-diagram">
+                    <div class="diagram-title">
+                        <h4>CLOUD-NATIVE SECURITY ARCHITECTURE</h4>
+                    </div>
+                    
+                    <!-- Application Layer Security -->
+                    <div class="security-layer">
+                        <div class="layer-header">
+                            <span class="layer-icon">🛡️</span>
+                            APPLICATION LAYER SECURITY
+                        </div>
+                        <div class="security-services">
+                            <div class="security-service">
+                                <div class="service-title">
+                                    <span class="service-icon">👥</span>
+                                    EMPLOYEE ONBO
+                                </div>
+                                <ul class="security-features">
+                                    <li>● OAuth 2.0</li>
+                                    <li>● RBAC</li>
+                                    <li>● Audit Log</li>
+                                </ul>
+                            </div>
+                            <div class="security-service">
+                                <div class="service-title">
+                                    <span class="service-icon">📦</span>
+                                    ASSET ALLOC
+                                </div>
+                                <ul class="security-features">
+                                    <li>● JWT Tokens</li>
+                                    <li>● Field Encrypt</li>
+                                    <li>● Data Mask</li>
+                                </ul>
+                            </div>
+                            <div class="security-service">
+                                <div class="service-title">
+                                    <span class="service-icon">📢</span>
+                                    NOTIFICATION
+                                </div>
+                                <ul class="security-features">
+                                    <li>● API Keys</li>
+                                    <li>● Rate Limit</li>
+                                    <li>● Input Valid</li>
+                                </ul>
+                            </div>
+                            <div class="security-service">
+                                <div class="service-title">
+                                    <span class="service-icon">🤖</span>
+                                    AGENT BROKER
+                                </div>
+                                <ul class="security-features">
+                                    <li>● mTLS Auth</li>
+                                    <li>● Circuit Break</li>
+                                    <li>● Health Check</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="layer-connector">
+                        <span class="connector-arrow">⬇️</span>
+                    </div>
+                    
+                    <!-- Service Mesh Security -->
+                    <div class="security-layer">
+                        <div class="layer-header">
+                            <span class="layer-icon">🔗</span>
+                            SERVICE MESH SECURITY (ISTIO)
+                        </div>
+                        <div class="mesh-features">
+                            <div class="feature-pair">
+                                <span>• mTLS between services</span>
+                                <span>• Policy Engine (OPA)</span>
+                            </div>
+                            <div class="feature-pair">
+                                <span>• Service-to-Service Auth</span>
+                                <span>• Traffic Encryption</span>
+                            </div>
+                            <div class="feature-pair">
+                                <span>• Request Authorization</span>
+                                <span>• Audit & Observability</span>
+                            </div>
+                            <div class="feature-pair">
+                                <span>• Circuit Breaker Patterns</span>
+                                <span>• Zero Trust Network</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="layer-connector">
+                        <span class="connector-arrow">⬇️</span>
+                    </div>
+                    
+                    <!-- Kubernetes Security -->
+                    <div class="security-layer">
+                        <div class="layer-header">
+                            <span class="layer-icon">☸️</span>
+                            KUBERNETES SECURITY LAYER
+                        </div>
+                        <div class="k8s-features">
+                            <div class="feature-pair">
+                                <span>• Pod Security Standards</span>
+                                <span>• Network Policies</span>
+                            </div>
+                            <div class="feature-pair">
+                                <span>• RBAC & Service Accounts</span>
+                                <span>• Secrets Management</span>
+                            </div>
+                            <div class="feature-pair">
+                                <span>• Admission Controllers</span>
+                                <span>• Resource Quotas</span>
+                            </div>
+                            <div class="feature-pair">
+                                <span>• Security Context</span>
+                                <span>• Runtime Protection</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="layer-connector">
+                        <span class="connector-arrow">⬇️</span>
+                    </div>
+                    
+                    <!-- Infrastructure Security -->
+                    <div class="security-layer">
+                        <div class="layer-header">
+                            <span class="layer-icon">🏗️</span>
+                            INFRASTRUCTURE SECURITY
+                        </div>
+                        <div class="infra-services">
+                            <div class="infra-service">
+                                <div class="service-title">
+                                    <span class="service-icon">🌐</span>
+                                    VPC/VNET
+                                </div>
+                                <ul class="security-features">
+                                    <li>• Private Sub</li>
+                                    <li>• NACLs</li>
+                                    <li>• Security Groups</li>
+                                    <li>• VPN/Peering</li>
+                                </ul>
+                            </div>
+                            <div class="infra-service">
+                                <div class="service-title">
+                                    <span class="service-icon">⚙️</span>
+                                    EKS/AKS
+                                </div>
+                                <ul class="security-features">
+                                    <li>• Node Hardening</li>
+                                    <li>• Image Scanning</li>
+                                    <li>• Compliance</li>
+                                    <li>• Runtime Sec</li>
+                                </ul>
+                            </div>
+                            <div class="infra-service">
+                                <div class="service-title">
+                                    <span class="service-icon">🗄️</span>
+                                    RDS/SQL DB
+                                </div>
+                                <ul class="security-features">
+                                    <li>• Encryption</li>
+                                    <li>• Access Control</li>
+                                    <li>• Backup Encrypt</li>
+                                    <li>• Patch Mgmt</li>
+                                </ul>
+                            </div>
+                            <div class="infra-service">
+                                <div class="service-title">
+                                    <span class="service-icon">🔐</span>
+                                    KMS/KEY VAULT
+                                </div>
+                                <ul class="security-features">
+                                    <li>• Key Rotation</li>
+                                    <li>• HSM Backed</li>
+                                    <li>• Audit Trail</li>
+                                    <li>• Policy Engine</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+                
+                <style>
+                .security-architecture-diagram {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    border-radius: 15px;
+                    padding: 30px;
+                    margin: 20px 0;
+                    color: white;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                    font-family: 'Monaco', 'Consolas', monospace;
+                }
+                
+                .security-layer {
+                    background: rgba(255,255,255,0.15);
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255,255,255,0.2);
+                    border-radius: 12px;
+                    padding: 25px;
+                    margin-bottom: 20px;
+                    transition: all 0.3s ease;
+                }
+                
+                .security-layer:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+                }
+                
+                .layer-header {
+                    font-size: 1.2rem;
+                    font-weight: bold;
+                    color: #FFD700;
+                    margin-bottom: 20px;
+                    text-align: center;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 12px;
+                    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                    padding-bottom: 15px;
+                    border-bottom: 2px solid rgba(255,255,255,0.2);
+                }
+                
+                .layer-icon {
+                    font-size: 1.4rem;
+                }
+                
+                .security-services {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 20px;
+                }
+                
+                .security-service, .infra-service {
+                    background: rgba(255,255,255,0.1);
+                    border-radius: 10px;
+                    padding: 20px;
+                    border: 1px solid rgba(255,255,255,0.15);
+                    transition: all 0.3s ease;
+                }
+                
+                .security-service:hover, .infra-service:hover {
+                    background: rgba(255,255,255,0.15);
+                    transform: translateY(-2px);
+                }
+                
+                .service-title {
+                    font-weight: bold;
+                    color: #E1F5FE;
+                    margin-bottom: 15px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    text-align: center;
+                    font-size: 1rem;
+                }
+                
+                .service-icon {
+                    font-size: 1.2rem;
+                }
+                
+                .security-features {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                }
+                
+                .security-features li {
+                    margin: 8px 0;
+                    font-size: 0.9rem;
+                    line-height: 1.3;
+                    text-align: center;
+                }
+                
+                .mesh-features, .k8s-features {
+                    display: grid;
+                    gap: 12px;
+                }
+                
+                .feature-pair {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 20px;
+                    font-size: 0.95rem;
+                    line-height: 1.4;
+                }
+                
+                .feature-pair span {
+                    background: rgba(255,255,255,0.1);
+                    padding: 10px;
+                    border-radius: 8px;
+                    border: 1px solid rgba(255,255,255,0.1);
+                }
+                
+                .infra-services {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                    gap: 20px;
+                }
+                
+                .layer-connector {
+                    display: flex;
+                    justify-content: center;
+                    margin: 15px 0;
+                }
+                
+                .connector-arrow {
+                    font-size: 2rem;
+                    animation: bounce 2s infinite;
+                    color: #FFD700;
+                    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                }
+                
+                @keyframes bounce {
+                    0%, 100% { transform: translateY(0); opacity: 1; }
+                    50% { transform: translateY(-10px); opacity: 0.8; }
+                }
+                
+                @media (max-width: 768px) {
+                    .security-services {
+                        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                        gap: 15px;
+                    }
+                    
+                    .infra-services {
+                        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                        gap: 15px;
+                    }
+                    
+                    .feature-pair {
+                        grid-template-columns: 1fr;
+                        gap: 10px;
+                    }
+                    
+                    .security-architecture-diagram {
+                        padding: 20px;
+                    }
+                    
+                    .layer-header {
+                        font-size: 1rem;
+                        flex-direction: column;
+                        gap: 8px;
+                    }
+                }
+                
+                @media (max-width: 480px) {
+                    .security-services {
+                        grid-template-columns: 1fr;
+                    }
+                    
+                    .infra-services {
+                        grid-template-columns: 1fr;
+                    }
+                }
+                </style>
 
                 <h3>🔐 Advanced Security Controls</h3>
                 <div class="component-grid">
@@ -929,4 +1654,359 @@ spec:
 │ │ • CQRS (Command Query Responsibility Segregation)                                 │ │
 │ │ • Event Sourcing for Audit & Replay                                              │ │
 │ └─────────────────────────────────────────────────────────────────────────────────────┘ │
-└─────────
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+                </div>
+
+                <h3>📊 Performance Metrics & SLAs</h3>
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <h4>⚡ Response Time SLAs</h4>
+                        <ul class="nav-card-features">
+                            <li>API Response: < 200ms (95%)</li>
+                            <li>Database Queries: < 50ms</li>
+                            <li>Page Load Time: < 2s</li>
+                            <li>Error Rate: < 0.1%</li>
+                            <li>Uptime: 99.99%</li>
+                            <li>Concurrent Users: 10,000+</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>🔄 Scalability Metrics</h4>
+                        <ul class="nav-card-features">
+                            <li>Horizontal Scaling: 1-100 pods</li>
+                            <li>Auto-scaling Trigger: 70% CPU</li>
+                            <li>Scale-up Time: < 30s</li>
+                            <li>Scale-down Time: 5 min</li>
+                            <li>Load Balancing: Round-robin</li>
+                            <li>Session Affinity: Optional</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>💾 Resource Optimization</h4>
+                        <ul class="nav-card-features">
+                            <li>Memory Usage: < 80%</li>
+                            <li>CPU Utilization: < 75%</li>
+                            <li>Disk I/O: Optimized</li>
+                            <li>Network Latency: < 10ms</li>
+                            <li>Cache Hit Rate: > 90%</li>
+                            <li>Compression: Enabled</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Final Actions and Next Steps -->
+            <section class="card">
+                <h2>🚀 Implementation Roadmap & Next Steps</h2>
+                
+                <div class="alert alert-info">
+                    <h4>📋 Implementation Priority Matrix</h4>
+                    <p>Strategic roadmap for implementing comprehensive HIPAA compliance with Active-Active EKS RTF DR architecture across all business-critical systems.</p>
+                </div>
+
+                <h3>🎯 Phase 1: Foundation (Weeks 1-4)</h3>
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">1️⃣</div>
+                        <h3>Infrastructure Setup</h3>
+                        <p>Deploy Active-Active EKS clusters, configure RTF environments, establish cross-region networking</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">2️⃣</div>
+                        <h3>Security Hardening</h3>
+                        <p>Implement encryption, access controls, network security policies, and compliance frameworks</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">3️⃣</div>
+                        <h3>Data Protection</h3>
+                        <p>Configure backup strategies, implement data loss prevention, establish audit logging</p>
+                    </div>
+                </div>
+
+                <h3>🔄 Phase 2: Integration (Weeks 5-8)</h3>
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">4️⃣</div>
+                        <h3>Application Deployment</h3>
+                        <p>Deploy MuleSoft applications, configure service mesh, implement monitoring and observability</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333;">5️⃣</div>
+                        <h3>DR Testing</h3>
+                        <p>Validate disaster recovery procedures, test automated failover, verify RPO/RTO objectives</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #333;">6️⃣</div>
+                        <h3>Performance Optimization</h3>
+                        <p>Tune application performance, optimize database queries, implement caching strategies</p>
+                    </div>
+                </div>
+
+                <h3>✅ Phase 3: Validation (Weeks 9-12)</h3>
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">7️⃣</div>
+                        <h3>Compliance Audit</h3>
+                        <p>Conduct HIPAA compliance assessment, validate security controls, document audit trails</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">8️⃣</div>
+                        <h3>User Training</h3>
+                        <p>Train operations teams, document procedures, establish incident response protocols</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">9️⃣</div>
+                        <h3>Go-Live Preparation</h3>
+                        <p>Final validation testing, stakeholder approval, production cutover planning</p>
+                    </div>
+                </div>
+
+                <h3>📈 Success Metrics & KPIs</h3>
+                <div class="metrics-grid">
+                    <div class="metric-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <div class="metric-value">99.99%</div>
+                        <div class="metric-label">Target Uptime</div>
+                    </div>
+                    <div class="metric-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                        <div class="metric-value">< 30s</div>
+                        <div class="metric-label">Recovery Time</div>
+                    </div>
+                    <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                        <div class="metric-value">< 5min</div>
+                        <div class="metric-label">Data Loss Window</div>
+                    </div>
+                    <div class="metric-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
+                        <div class="metric-value">100%</div>
+                        <div class="metric-label">HIPAA Compliance</div>
+                    </div>
+                </div>
+
+                <div class="alert alert-success">
+                    <h4>🎉 Project Success Criteria</h4>
+                    <ul>
+                        <li><strong>Technical Excellence:</strong> All systems meet performance and availability SLAs</li>
+                        <li><strong>Security Compliance:</strong> 100% HIPAA compliance with audit trail validation</li>
+                        <li><strong>Operational Readiness:</strong> Teams trained and procedures documented</li>
+                        <li><strong>Business Impact:</strong> Zero downtime employee onboarding with enhanced security</li>
+                        <li><strong>Cost Optimization:</strong> Efficient resource utilization with auto-scaling</li>
+                        <li><strong>Future-Ready:</strong> Scalable architecture supporting business growth</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Additional Resources and References -->
+            <section class="card">
+                <h2>📚 Additional Resources & References</h2>
+                
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📋</div>
+                        <h3>HIPAA Compliance Resources</h3>
+                        <ul class="nav-card-features">
+                            <li><a href="https://www.hhs.gov/hipaa/index.html" target="_blank">HHS HIPAA Guidelines</a></li>
+                            <li><a href="https://www.nist.gov/cybersecurity/privacy-framework" target="_blank">NIST Privacy Framework</a></li>
+                            <li><a href="https://aws.amazon.com/compliance/hipaa-compliance/" target="_blank">AWS HIPAA Compliance</a></li>
+                            <li><a href="https://docs.microsoft.com/en-us/azure/compliance/" target="_blank">Azure Compliance</a></li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔧</div>
+                        <h3>Technical Documentation</h3>
+                        <ul class="nav-card-features">
+                            <li><a href="https://kubernetes.io/docs/concepts/security/" target="_blank">Kubernetes Security</a></li>
+                            <li><a href="https://docs.mulesoft.com/runtime-fabric/" target="_blank">Runtime Fabric Documentation</a></li>
+                            <li><a href="https://istio.io/latest/docs/concepts/security/" target="_blank">Istio Security</a></li>
+                            <li><a href="https://prometheus.io/docs/prometheus/latest/security/" target="_blank">Prometheus Security</a></li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🎯</div>
+                        <h3>Best Practices & Standards</h3>
+                        <ul class="nav-card-features">
+                            <li><a href="https://www.cisa.gov/cybersecurity-best-practices" target="_blank">CISA Cybersecurity Best Practices</a></li>
+                            <li><a href="https://owasp.org/www-project-top-ten/" target="_blank">OWASP Top 10</a></li>
+                            <li><a href="https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final" target="_blank">NIST SP 800-53</a></li>
+                            <li><a href="https://www.iso.org/isoiec-27001-information-security.html" target="_blank">ISO 27001</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>🏥 HIPAA Compliance Center</h4>
+                    <p>Comprehensive healthcare data protection with enterprise-grade security and disaster recovery capabilities.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>📞 Support Contacts</h4>
+                    <ul>
+                        <li>Security Team: security@company.com</li>
+                        <li>Compliance Officer: compliance@company.com</li>
+                        <li>Emergency Hotline: +1-800-SECURITY</li>
+                        <li>24/7 SOC: soc@company.com</li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>🔗 Quick Links</h4>
+                    <ul>
+                        <li><a href="#overview">HIPAA Overview</a></li>
+                        <li><a href="#active-eks-architecture">EKS Architecture</a></li>
+                        <li><a href="#dr-strategy">DR Strategy</a></li>
+                        <li><a href="#compliance-checklist">Compliance Checklist</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>📊 System Status</h4>
+                    <div class="status-indicator">
+                        <span class="status-dot status-operational"></span>
+                        <span>All Systems Operational</span>
+                    </div>
+                    <div class="status-indicator">
+                        <span class="status-dot status-operational"></span>
+                        <span>HIPAA Compliance: 98.5%</span>
+                    </div>
+                    <div class="status-indicator">
+                        <span class="status-dot status-operational"></span>
+                        <span>DR Ready: Active</span>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Employee Onboarding Platform. All rights reserved. | 
+                   <a href="#privacy">Privacy Policy</a> | 
+                   <a href="#terms">Terms of Service</a> | 
+                   <a href="#security">Security Statement</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="common-scripts.js"></script>
+    <script>
+        // HIPAA-specific JavaScript functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize compliance monitoring
+            initializeComplianceMonitoring();
+            
+            // Set up security event handlers
+            setupSecurityEventHandlers();
+            
+            // Initialize performance metrics
+            initializePerformanceMetrics();
+            
+            // Setup DR status monitoring
+            setupDRStatusMonitoring();
+        });
+
+        function initializeComplianceMonitoring() {
+            // Compliance monitoring logic
+            console.log('HIPAA Compliance monitoring initialized');
+            
+            // Simulate real-time compliance metrics
+            setInterval(updateComplianceMetrics, 30000); // Update every 30 seconds
+        }
+
+        function setupSecurityEventHandlers() {
+            // Security event handling
+            document.addEventListener('securityEvent', function(event) {
+                console.log('Security event detected:', event.detail);
+                // Handle security events appropriately
+            });
+        }
+
+        function initializePerformanceMetrics() {
+            // Performance metrics tracking
+            const metricsEndpoint = '/api/metrics/performance';
+            
+            setInterval(async () => {
+                try {
+                    const response = await fetch(metricsEndpoint);
+                    const metrics = await response.json();
+                    updatePerformanceDisplay(metrics);
+                } catch (error) {
+                    console.error('Failed to fetch performance metrics:', error);
+                }
+            }, 60000); // Update every minute
+        }
+
+        function setupDRStatusMonitoring() {
+            // Disaster recovery status monitoring
+            const drStatusEndpoint = '/api/dr/status';
+            
+            setInterval(async () => {
+                try {
+                    const response = await fetch(drStatusEndpoint);
+                    const status = await response.json();
+                    updateDRStatusDisplay(status);
+                } catch (error) {
+                    console.error('Failed to fetch DR status:', error);
+                }
+            }, 15000); // Update every 15 seconds
+        }
+
+        function updateComplianceMetrics() {
+            // Update compliance metrics display
+            const complianceScore = Math.floor(Math.random() * 3) + 97; // 97-99%
+            const complianceElement = document.querySelector('.metric-card .metric-value');
+            if (complianceElement) {
+                complianceElement.textContent = complianceScore + '%';
+            }
+        }
+
+        function updatePerformanceDisplay(metrics) {
+            // Update performance metrics in the UI
+            if (metrics && metrics.responseTime) {
+                const responseTimeElements = document.querySelectorAll('[data-metric="response-time"]');
+                responseTimeElements.forEach(element => {
+                    element.textContent = metrics.responseTime + 'ms';
+                });
+            }
+        }
+
+        function updateDRStatusDisplay(status) {
+            // Update DR status indicators
+            const statusIndicators = document.querySelectorAll('.status-dot');
+            statusIndicators.forEach(indicator => {
+                if (status && status.operational) {
+                    indicator.className = 'status-dot status-operational';
+                } else {
+                    indicator.className = 'status-dot status-warning';
+                }
+            });
+        }
+
+        // Accessibility enhancements
+        function enhanceAccessibility() {
+            // Add keyboard navigation support
+            const navCards = document.querySelectorAll('.nav-card');
+            navCards.forEach((card, index) => {
+                card.setAttribute('tabindex', '0');
+                card.setAttribute('role', 'button');
+                
+                card.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        card.click();
+                    }
+                });
+            });
+
+            // Add ARIA labels for better screen reader support
+            const metricCards = document.querySelectorAll('.metric-card');
+            metricCards.forEach(card => {
+                const value = card.querySelector('.metric-value').textContent;
+                const label = card.querySelector('.metric-label').textContent;
+                card.setAttribute('aria-label', `${label}: ${value}`);
+            });
+        }
+
+        // Initialize accessibility enhancements
+        document.addEventListener('DOMContentLoaded', enhanceAccessibility);
+    </script>
+</body>
+</html>
