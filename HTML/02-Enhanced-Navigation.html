@@ -48,80 +48,81 @@
             </div>
 
             <!-- Tabbed Navigation Interface -->
-            <div style="margin: 3rem 0; border-radius: 15px; box-shadow: var(--shadow-lg); overflow: hidden; background: #fff; border: 1px solid var(--border-color);">
-                <div style="display: flex; background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); padding: 0; border-bottom: none;">
-                    <div class="tab-item active" onclick="openTab(event, 'employee-mgmt')" id="employee-tab" style="flex: 1; padding: 20px 15px; text-align: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-right: 1px solid rgba(255,255,255,0.1); position: relative; background: rgba(255,255,255,0.15); color: white; font-family: 'Poppins', sans-serif; font-weight: 700; box-shadow: inset 0 -4px 0 var(--accent-color);">
+            <div class="card">
+                <div class="policy-tabs">
+                    <div class="tab-btn active" onclick="openTab(event, 'employee-mgmt')" id="employee-tab">
                         <span style="display: block; font-size: 24px; margin-bottom: 8px;">👥</span>
-                        <span style="display: block; font-size: 14px; letter-spacing: 0.5px;">Employee Management</span>
+                        <span>Employee Management</span>
                     </div>
-                    <div class="tab-item" onclick="openTab(event, 'asset-mgmt')" id="asset-tab" style="flex: 1; padding: 20px 15px; text-align: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-right: 1px solid rgba(255,255,255,0.1); position: relative; background: transparent; color: rgba(255,255,255,0.8); font-family: 'Poppins', sans-serif; font-weight: 500;">
+                    <div class="tab-btn" onclick="openTab(event, 'asset-mgmt')" id="asset-tab">
                         <span style="display: block; font-size: 24px; margin-bottom: 8px;">📦</span>
-                        <span style="display: block; font-size: 14px; letter-spacing: 0.5px;">Asset Management</span>
+                        <span>Asset Management</span>
                     </div>
-                    <div class="tab-item" onclick="openTab(event, 'communication')" id="comm-tab" style="flex: 1; padding: 20px 15px; text-align: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-right: 1px solid rgba(255,255,255,0.1); position: relative; background: transparent; color: rgba(255,255,255,0.8); font-family: 'Poppins', sans-serif; font-weight: 500;">
+                    <div class="tab-btn" onclick="openTab(event, 'communication')" id="comm-tab">
                         <span style="display: block; font-size: 24px; margin-bottom: 8px;">💬</span>
-                        <span style="display: block; font-size: 14px; letter-spacing: 0.5px;">Communication Hub</span>
+                        <span>Communication Hub</span>
                     </div>
-                    <div class="tab-item" onclick="openTab(event, 'administration')" id="admin-tab" style="flex: 1; padding: 20px 15px; text-align: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; background: transparent; color: rgba(255,255,255,0.8); font-family: 'Poppins', sans-serif; font-weight: 500;">
+                    <div class="tab-btn" onclick="openTab(event, 'administration')" id="admin-tab">
                         <span style="display: block; font-size: 24px; margin-bottom: 8px;">⚙️</span>
-                        <span style="display: block; font-size: 14px; letter-spacing: 0.5px;">System Administration</span>
+                        <span>System Administration</span>
                     </div>
                 </div>
 
                 <!-- Employee Management Tab Content -->
-                <div id="employee-mgmt" class="tab-content active" style="display: flex; min-height: 400px; background: linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%);">
-                    <div style="width: 300px; padding: 30px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                        <h3 style="font-weight: 700; font-size: 18px; margin-bottom: 25px; color: white; text-align: center; padding-bottom: 15px; border-bottom: 2px solid rgba(255,255,255,0.2);">👥 Employee Management</h3>
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <div class="sub-nav-item active" onclick="showSubContent('emp-dashboard')" style="display: flex; align-items: center; padding: 15px 20px; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; background: rgba(255,255,255,0.25); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); font-weight: 600; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
-                                <span style="font-size: 20px; margin-right: 12px; min-width: 20px;">📊</span>
-                                <span>Dashboard Overview</span>
-                                <div style="margin-left: auto; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; background: #48bb78; color: white;">Live</div>
-                            </div>
-                            <div class="sub-nav-item" onclick="showSubContent('emp-onboarding')" style="display: flex; align-items: center; padding: 15px 20px; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); font-weight: 500;">
-                                <span style="font-size: 20px; margin-right: 12px; min-width: 20px;">👤</span>
-                                <span>Onboarding Process</span>
-                                <div style="margin-left: auto; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; background: #4299e1; color: white;">Active</div>
-                            </div>
-                            <div class="sub-nav-item" onclick="showSubContent('emp-analytics')" style="display: flex; align-items: center; padding: 15px 20px; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); font-weight: 500;">
-                                <span style="font-size: 20px; margin-right: 12px; min-width: 20px;">📈</span>
-                                <span>HR Analytics</span>
-                                <div style="margin-left: auto; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; background: #ed8936; color: white;">Sync</div>
-                            </div>
-                            <div class="sub-nav-item" onclick="showSubContent('emp-compliance')" style="display: flex; align-items: center; padding: 15px 20px; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); font-weight: 500;">
-                                <span style="font-size: 20px; margin-right: 12px; min-width: 20px;">🛡️</span>
-                                <span>HIPAA Compliance</span>
-                                <div style="margin-left: auto; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; background: #48bb78; color: white;">Secured</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div style="flex: 1; padding: 30px; position: relative;">
-                        <div id="emp-dashboard" class="sub-content active" style="display: block; animation: fadeInUp 0.5s ease-out;">
-                            <h4 style="font-weight: 700; font-size: 24px; color: #2D3748; margin-bottom: 20px; background: linear-gradient(135deg, #2E4C6D, var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">📊 Employee Management Dashboard</h4>
-                            <p style="font-size: 16px; line-height: 1.6; color: #4A5568; margin-bottom: 20px;">Real-time overview of employee onboarding status, pending tasks, and system health metrics with HIPAA-compliant data handling.</p>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0;">
-                                <div style="background: linear-gradient(135deg, #38b2ac 0%, #319795 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: var(--shadow-md);">
-                                    <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px;">156</div>
-                                    <div style="font-size: 0.9rem; opacity: 0.9; font-weight: 500;">Active Employees</div>
+                <div id="employee-mgmt" class="policy-content active">
+                    <div style="display: flex; min-height: 400px;">
+                        <div style="width: 300px; padding: 30px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: var(--radius-lg) 0 0 var(--radius-lg);">
+                            <h3 style="color: white; text-align: center; padding-bottom: 15px; border-bottom: 2px solid rgba(255,255,255,0.2); margin-bottom: 25px;">👥 Employee Management</h3>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div class="sub-nav-item active" onclick="showSubContent('emp-dashboard')" style="display: flex; align-items: center; padding: 15px 20px; border-radius: 10px; cursor: pointer; background: rgba(255,255,255,0.25); font-weight: 600;">
+                                    <span style="font-size: 20px; margin-right: 12px;">📊</span>
+                                    <span>Dashboard Overview</span>
+                                    <div style="margin-left: auto; padding: 4px 10px; border-radius: 12px; font-size: 11px; background: #48bb78; color: white;">Live</div>
                                 </div>
-                                <div style="background: linear-gradient(135deg, #38b2ac 0%, #319795 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: var(--shadow-md);">
-                                    <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px;">23</div>
-                                    <div style="font-size: 0.9rem; opacity: 0.9; font-weight: 500;">Pending Onboarding</div>
+                                <div class="sub-nav-item" onclick="showSubContent('emp-onboarding')" style="display: flex; align-items: center; padding: 15px 20px; border-radius: 10px; cursor: pointer; background: rgba(255,255,255,0.1);">
+                                    <span style="font-size: 20px; margin-right: 12px;">👤</span>
+                                    <span>Onboarding Process</span>
+                                    <div style="margin-left: auto; padding: 4px 10px; border-radius: 12px; font-size: 11px; background: #4299e1; color: white;">Active</div>
                                 </div>
-                                <div style="background: linear-gradient(135deg, #38b2ac 0%, #319795 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: var(--shadow-md);">
-                                    <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px;">98.5%</div>
-                                    <div style="font-size: 0.9rem; opacity: 0.9; font-weight: 500;">Completion Rate</div>
+                                <div class="sub-nav-item" onclick="showSubContent('emp-analytics')" style="display: flex; align-items: center; padding: 15px 20px; border-radius: 10px; cursor: pointer; background: rgba(255,255,255,0.1);">
+                                    <span style="font-size: 20px; margin-right: 12px;">📈</span>
+                                    <span>HR Analytics</span>
+                                    <div style="margin-left: auto; padding: 4px 10px; border-radius: 12px; font-size: 11px; background: #ed8936; color: white;">Sync</div>
                                 </div>
-                                <div style="background: linear-gradient(135deg, #38b2ac 0%, #319795 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: var(--shadow-md);">
-                                    <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px;">4.2 days</div>
-                                    <div style="font-size: 0.9rem; opacity: 0.9; font-weight: 500;">Average Process Time</div>
+                                <div class="sub-nav-item" onclick="showSubContent('emp-compliance')" style="display: flex; align-items: center; padding: 15px 20px; border-radius: 10px; cursor: pointer; background: rgba(255,255,255,0.1);">
+                                    <span style="font-size: 20px; margin-right: 12px;">🛡️</span>
+                                    <span>HIPAA Compliance</span>
+                                    <div style="margin-left: auto; padding: 4px 10px; border-radius: 12px; font-size: 11px; background: #48bb78; color: white;">Secured</div>
                                 </div>
                             </div>
                         </div>
-                        <div id="emp-onboarding" class="sub-content" style="display: none; animation: fadeInUp 0.5s ease-out;">
-                            <h4 style="font-weight: 700; font-size: 24px; color: #2D3748; margin-bottom: 20px; background: linear-gradient(135deg, #2E4C6D, var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">👤 Employee Onboarding Workflow</h4>
-                            <p style="font-size: 16px; line-height: 1.6; color: #4A5568; margin-bottom: 20px;">Comprehensive onboarding process management with automated task assignment, document verification, and progress tracking.</p>
-                            <div class="yaml-block">
+                        <div style="flex: 1; padding: 30px;">
+                            <div id="emp-dashboard" class="sub-content active">
+                                <h4>📊 Employee Management Dashboard</h4>
+                                <p>Real-time overview of employee onboarding status, pending tasks, and system health metrics with HIPAA-compliant data handling.</p>
+                                <div class="metrics-grid">
+                                    <div class="metric-card">
+                                        <div class="metric-value">156</div>
+                                        <div class="metric-label">Active Employees</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">23</div>
+                                        <div class="metric-label">Pending Onboarding</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">98.5%</div>
+                                        <div class="metric-label">Completion Rate</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-value">4.2 days</div>
+                                        <div class="metric-label">Average Process Time</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="emp-onboarding" class="sub-content">
+                                <h4>👤 Employee Onboarding Workflow</h4>
+                                <p>Comprehensive onboarding process management with automated task assignment, document verification, and progress tracking.</p>
+                                <div class="yaml-block">
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -154,35 +155,36 @@ data:
       - name: completion-verification
         type: final-review
         approver: hr-manager</div>
-                        </div>
-                        <div id="emp-analytics" class="sub-content" style="display: none;">
-                            <h4 style="font-weight: 700; font-size: 24px; color: #2D3748; margin-bottom: 20px; background: linear-gradient(135deg, #2E4C6D, var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">📈 HR Analytics & Reporting</h4>
-                            <p style="font-size: 16px; line-height: 1.6; color: #4A5568; margin-bottom: 20px;">Advanced analytics dashboard providing insights into onboarding efficiency, employee satisfaction, and process optimization opportunities.</p>
-                        </div>
-                        <div id="emp-compliance" class="sub-content" style="display: none;">
-                            <h4 style="font-weight: 700; font-size: 24px; color: #2D3748; margin-bottom: 20px; background: linear-gradient(135deg, #2E4C6D, var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🛡️ HIPAA Compliance & Security</h4>
-                            <p style="font-size: 16px; line-height: 1.6; color: #4A5568; margin-bottom: 20px;">Comprehensive security measures ensuring HIPAA compliance for employee PII data handling, access controls, and audit logging.</p>
+                            </div>
+                            <div id="emp-analytics" class="sub-content">
+                                <h4>📈 HR Analytics & Reporting</h4>
+                                <p>Advanced analytics dashboard providing insights into onboarding efficiency, employee satisfaction, and process optimization opportunities.</p>
+                            </div>
+                            <div id="emp-compliance" class="sub-content">
+                                <h4>🛡️ HIPAA Compliance & Security</h4>
+                                <p>Comprehensive security measures ensuring HIPAA compliance for employee PII data handling, access controls, and audit logging.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Other tab contents would go here with similar structure -->
-                <div id="asset-mgmt" class="tab-content" style="display: none;">
-                    <div style="padding: 30px;">
+                <div id="asset-mgmt" class="policy-content">
+                    <div class="card">
                         <h4>📦 Asset Management System</h4>
                         <p>Comprehensive asset management with automated allocation, inventory tracking, and lifecycle management.</p>
                     </div>
                 </div>
 
-                <div id="communication" class="tab-content" style="display: none;">
-                    <div style="padding: 30px;">
+                <div id="communication" class="policy-content">
+                    <div class="card">
                         <h4>💬 Communication Hub</h4>
                         <p>AI-powered communication center with NLP chat, notifications, and support systems.</p>
                     </div>
                 </div>
 
-                <div id="administration" class="tab-content" style="display: none;">
-                    <div style="padding: 30px;">
+                <div id="administration" class="policy-content">
+                    <div class="card">
                         <h4>⚙️ System Administration</h4>
                         <p>Centralized administration panel for user management, system settings, and monitoring.</p>
                     </div>

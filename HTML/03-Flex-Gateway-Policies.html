@@ -3,525 +3,2258 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flex Gateway Policies - MuleSoft RTF Architecture</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding-top: 80px;
-        }
-
-        /* Navigation Bar */
-        .nav-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 20, 40, 0.95);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            padding: 15px 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        }
-
-        .nav-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .nav-brand {
-            color: #00D4FF;
-            font-size: 1.5rem;
-            font-weight: 700;
-            text-decoration: none;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-        }
-
-        .nav-link {
-            color: white;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: 25px;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-
-        .nav-link:hover {
-            background: rgba(0, 212, 255, 0.2);
-            color: #00D4FF;
-        }
-
-        .nav-link.home {
-            background: #FC7300;
-        }
-
-        .nav-link.home:hover {
-            background: #e55a00;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            margin-top: 20px;
-            margin-bottom: 20px;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #2C5282 0%, #2A4A6B 100%);
-            color: white;
-            padding: 3rem 2rem;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .header .subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-
-        .content-section {
-            padding: 3rem 2rem;
-        }
-
-        .highlight-box {
-            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-            color: white;
-            padding: 2rem;
-            border-radius: 12px;
-            margin: 2rem 0;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-
-        .highlight-box h4 {
-            color: white;
-            margin-bottom: 1rem;
-            font-size: 1.4rem;
-        }
-
-        .policy-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
-            margin: 3rem 0;
-        }
-
-        .policy-card {
-            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-            border-left: 5px solid #667eea;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .policy-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-        }
-
-        .policy-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-            border-left-color: #FC7300;
-        }
-
-        .policy-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: #667eea;
-            transition: color 0.3s ease;
-        }
-
-        .policy-card:hover .policy-icon {
-            color: #FC7300;
-        }
-
-        .policy-card h3 {
-            color: #2C5282;
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        .policy-card p {
-            color: #4A5568;
-            margin-bottom: 1.5rem;
-            line-height: 1.6;
-        }
-
-        .policy-features {
-            list-style: none;
-            margin: 1rem 0;
-        }
-
-        .policy-features li {
-            padding: 0.3rem 0;
-            position: relative;
-            padding-left: 1.5rem;
-            color: #718096;
-            font-size: 0.9rem;
-        }
-
-        .policy-features li::before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #48bb78;
-            font-weight: bold;
-        }
-
-        .security-metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
-            margin: 2rem 0;
-        }
-
-        .metric-card {
-            background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
-            color: white;
-            padding: 2rem;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-        }
-
-        .metric-value {
-            font-size: 3rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-
-        .metric-label {
-            font-size: 0.9rem;
-            opacity: 0.9;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .architecture-diagram {
-            background: #f7fafc;
-            padding: 3rem;
-            border-radius: 15px;
-            margin: 3rem 0;
-            border: 2px solid #e2e8f0;
-            text-align: center;
-        }
-
-        .diagram-flow {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 2rem;
-        }
-
-        .diagram-step {
-            background: #2C5282;
-            color: white;
-            padding: 1.5rem 2rem;
-            border-radius: 25px;
-            text-align: center;
-            font-weight: 600;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            position: relative;
-            min-width: 150px;
-        }
-
-        .diagram-step:not(:last-child)::after {
-            content: "→";
-            position: absolute;
-            right: -30px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #2C5282;
-            font-size: 2rem;
-            font-weight: bold;
-        }
-
-        .code-example {
-            background: #1a202c;
-            color: #e2e8f0;
-            padding: 2rem;
-            border-radius: 12px;
-            margin: 2rem 0;
-            overflow-x: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            line-height: 1.4;
-        }
-
-        .footer {
-            background: #2d3748;
-            color: white;
-            padding: 2rem;
-            text-align: center;
-        }
-
-        .footer h3 {
-            color: #FC7300;
-            margin-bottom: 1rem;
-        }
-
-        @media (max-width: 768px) {
-            .policy-grid {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-            
-            .diagram-flow {
-                flex-direction: column;
-            }
-            
-            .diagram-step:not(:last-child)::after {
-                content: "↓";
-                right: 50%;
-                top: 100%;
-                transform: translateX(50%);
-            }
-        }
-    </style>
+    <title>Flex Gateway Policies - Complete YAML Configuration Guide</title>
+    <link rel="stylesheet" href="common-styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="nav-bar">
+    <!-- Navigation -->
+    <nav class="navbar">
         <div class="nav-container">
-            <a href="index.html" class="nav-brand">🏗️ RTF Architecture</a>
-            <div class="nav-links">
-                <a href="index.html" class="nav-link home">🏠 Home</a>
-                <a href="01-Overview.html" class="nav-link">🎯 Overview</a>
-                <a href="02-Enhanced-Navigation.html" class="nav-link">🎨 Navigation</a>
-                <a href="04-RTF-EKS-Setup.html" class="nav-link">🏗️ Setup</a>
+            <a href="index.html" class="nav-brand">
+                <span>🚀</span> Employee Onboarding Platform
+            </a>
+            <div class="nav-toggle" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
             </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Overview</a></li>
+                <li><a href="02-Enhanced-Navigation.html" class="nav-link">Navigation</a></li>
+                <li><a href="03-Flex-Gateway-Policies.html" class="nav-link active">Flex Gateway</a></li>
+                <li><a href="04-RTF-EKS-Setup.html" class="nav-link">RTF EKS</a></li>
+                <li><a href="05-Anypoint-Platform.html" class="nav-link">Anypoint</a></li>
+                <li><a href="06-Auto-scaling.html" class="nav-link">Auto-scaling</a></li>
+                <li><a href="07-HIPAA-Compliance.html" class="nav-link">HIPAA</a></li>
+                <li><a href="08-RTF-Azure-Installation.html" class="nav-link">RTF Azure</a></li>
+                <li><a href="09-RTF-AWS-Installation.html" class="nav-link">RTF AWS</a></li>
+                <li><a href="10-RTF-Security.html" class="nav-link">Security</a></li>
+                <li><a href="11-Logging-Monitoring.html" class="nav-link">Monitoring</a></li>
+                <li><a href="12-Capacity-Planning.html" class="nav-link">Capacity Planning</a></li>
+                <li><a href="13-MuleSoft-Capacity-Planning.html" class="nav-link">MuleSoft Planning</a></li>
+                <li><a href="14-Azure-AWS-RTF-Capacity-Planning.html" class="nav-link">Cloud RTF Planning</a></li>
+            </ul>
         </div>
     </nav>
 
+    <!-- Main Content -->
     <div class="container">
         <div class="header">
-            <h1>🛡️ Flex Gateway Policies</h1>
-            <div class="subtitle">Advanced API Security with JWT, Rate Limiting & HIPAA Compliance</div>
+            <h1>🛡️ Flex Gateway Policies - Complete YAML Configuration Guide</h1>
+            <div class="subtitle">Comprehensive collection of all Flex Gateway policies with complete YAML configurations, examples, and deployment strategies</div>
         </div>
 
-        <div class="content-section">
-            <div class="highlight-box">
-                <h4>🛡️ Advanced API Security Implementation</h4>
-                <p>Comprehensive API protection with multi-provider JWT validation, intelligent rate limiting at 80% capacity threshold, PII data protection, and full HIPAA compliance measures for the Employee Onboarding Platform.</p>
+        <div class="content">
+            <div class="alert alert-info">
+                <strong>🎯 Complete Policy Collection:</strong> This guide provides ready-to-use YAML configurations for all Flex Gateway policies including authentication, security, traffic management, transformation, and monitoring policies.
             </div>
 
-            <div class="security-metrics">
-                <div class="metric-card">
-                    <div class="metric-value">100%</div>
-                    <div class="metric-label">JWT Protected</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">80%</div>
-                    <div class="metric-label">Rate Limit Threshold</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">AES-256</div>
-                    <div class="metric-label">Data Encryption</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">HIPAA</div>
-                    <div class="metric-label">Compliant</div>
-                </div>
-            </div>
-
-            <h2 style="color: #2C5282; margin: 3rem 0 2rem 0;">🔐 Security Policy Architecture</h2>
-            <div class="architecture-diagram">
-                <div class="diagram-flow">
-                    <div class="diagram-step">🌐 Client Request</div>
-                    <div class="diagram-step">🔐 JWT Validation</div>
-                    <div class="diagram-step">⚡ Rate Limiting</div>
-                    <div class="diagram-step">🛡️ PII Protection</div>
-                    <div class="diagram-step">🎯 RTF Services</div>
-                </div>
-            </div>
-
-            <div class="policy-grid">
-                <div class="policy-card">
-                    <div class="policy-icon">🔑</div>
-                    <h3>Multi-Provider JWT Validation</h3>
-                    <p>Advanced JWT token validation supporting multiple identity providers including Auth0, Okta, and Azure AD with automatic key rotation and claim validation.</p>
-                    <ul class="policy-features">
-                        <li>Multiple Identity Provider Support</li>
-                        <li>Automatic Key Rotation</li>
-                        <li>Custom Claim Validation</li>
-                        <li>Token Blacklisting</li>
-                        <li>Audience & Issuer Verification</li>
-                    </ul>
+            <!-- Policy Categories -->
+            <div class="card">
+                <h2>📋 Policy Categories & Navigation</h2>
+                
+                <div class="policy-tabs">
+                    <button class="tab-btn active" onclick="showPolicyCategory('security')">Security Policies</button>
+                    <button class="tab-btn" onclick="showPolicyCategory('auth')">Authentication</button>
+                    <button class="tab-btn" onclick="showPolicyCategory('traffic')">Traffic Management</button>
+                    <button class="tab-btn" onclick="showPolicyCategory('transform')">Transformation</button>
+                    <button class="tab-btn" onclick="showPolicyCategory('monitoring')">Monitoring & Analytics</button>
+                    <button class="tab-btn" onclick="showPolicyCategory('compliance')">Compliance</button>
                 </div>
 
-                <div class="policy-card">
-                    <div class="policy-icon">⚡</div>
-                    <h3>Intelligent Rate Limiting</h3>
-                    <p>Smart rate limiting with 80% threshold management, burst handling, and client-specific quotas to ensure optimal performance for employee onboarding workflows.</p>
-                    <ul class="policy-features">
-                        <li>80% Capacity Threshold</li>
-                        <li>Burst Traffic Handling</li>
-                        <li>Client-Specific Quotas</li>
-                        <li>Sliding Window Algorithm</li>
-                        <li>Real-time Monitoring</li>
-                    </ul>
-                </div>
+                <!-- Security Policies -->
+                <div id="security" class="policy-content active">
+                    <h3>🔒 Security Policies</h3>
+                    
+                    <div class="policy-grid">
+                        <!-- CORS Policy -->
+                        <div class="policy-card">
+                            <h3>Cross-Origin Resource Sharing (CORS)</h3>
+                            <p>Controls cross-origin requests and manages CORS headers for browser security.</p>
+                            
+                            <div class="config-example">
+                                <strong>Configuration Features:</strong>
+                                <ul>
+                                    <li>Allowed origins, methods, and headers</li>
+                                    <li>Credentials support</li>
+                                    <li>Preflight request handling</li>
+                                    <li>Max age for preflight caching</li>
+                                </ul>
+                            </div>
 
-                <div class="policy-card">
-                    <div class="policy-icon">🛡️</div>
-                    <h3>PII Data Protection</h3>
-                    <p>Comprehensive personally identifiable information protection with field-level encryption, data masking, and audit logging for HIPAA compliance.</p>
-                    <ul class="policy-features">
-                        <li>Field-Level Encryption (AES-256)</li>
-                        <li>Dynamic Data Masking</li>
-                        <li>PII Detection & Classification</li>
-                        <li>Access Control & Auditing</li>
-                        <li>Data Loss Prevention</li>
-                    </ul>
-                </div>
-
-                <div class="policy-card">
-                    <div class="policy-icon">🏥</div>
-                    <h3>HIPAA Compliance</h3>
-                    <p>Full Health Insurance Portability and Accountability Act compliance with secure data transmission, access controls, and comprehensive audit logging.</p>
-                    <ul class="policy-features">
-                        <li>End-to-End Encryption</li>
-                        <li>Access Control Lists</li>
-                        <li>Comprehensive Audit Trails</li>
-                        <li>Data Breach Detection</li>
-                        <li>Compliance Reporting</li>
-                    </ul>
-                </div>
-
-                <div class="policy-card">
-                    <div class="policy-icon">🔍</div>
-                    <h3>Security Monitoring</h3>
-                    <p>Real-time security monitoring with threat detection, anomaly identification, and automated incident response for the employee onboarding platform.</p>
-                    <ul class="policy-features">
-                        <li>Real-time Threat Detection</li>
-                        <li>Behavioral Analysis</li>
-                        <li>Automated Alerting</li>
-                        <li>Security Dashboard</li>
-                        <li>Incident Response</li>
-                    </ul>
-                </div>
-
-                <div class="policy-card">
-                    <div class="policy-icon">📊</div>
-                    <h3>Performance Analytics</h3>
-                    <p>Advanced analytics and reporting for security policy effectiveness, performance metrics, and compliance validation across all API endpoints.</p>
-                    <ul class="policy-features">
-                        <li>Policy Performance Metrics</li>
-                        <li>Security Event Analytics</li>
-                        <li>Compliance Reporting</li>
-                        <li>Real-time Dashboards</li>
-                        <li>Custom Alert Rules</li>
-                    </ul>
-                </div>
-            </div>
-
-            <h3 style="color: #2C5282; margin: 2rem 0;">🔧 JWT Validation Configuration Example</h3>
-            <div class="code-example">
-# Flex Gateway JWT Validation Policy
+                            <div class="yaml-block">
 apiVersion: gateway.mulesoft.com/v1alpha1
-kind: ApiInstance
+kind: PolicyBinding
 metadata:
-  name: employee-onboarding-api
+  name: cors-policy
+  namespace: default
 spec:
-  address: https://api.employee-onboarding.com
-  services:
-    employee-service:
-      address: https://employees.cloudhub.io:443
-      routes:
-        - rules:
-          - path: /api/employees/*
-          - path: /api/onboarding/*
-  policies:
-    - policyRef:
-        name: jwt-validation-flex
-      config:
-        jwtKeyOrigin: jwks
-        jwksUrl: "https://auth.employee-portal.com/.well-known/jwks.json"
-        jwksServiceTimeToLive: 60
-        audience: "employee-onboarding-api"
-        issuer: "https://auth.employee-portal.com/"
-        validateAudience: true
-        validateIssuer: true
-        mandatoryClaims:
-          - "sub"
-          - "iat" 
-          - "exp"
-          - "employee_role"
-    - policyRef:
-        name: rate-limiting-flex
-      config:
-        rateLimits:
-          - maximumRequests: 1000
-            timePeriod: 1
-            timePeriodTimeUnit: MINUTE
-            identifier: "#[attributes.headers['client-id']]"
-        quotas:
-          - maximumRequests: 10000
-            timePeriod: 1
-            timePeriodTimeUnit: HOUR
-            identifier: "#[attributes.headers['client-id']]"
-    - policyRef:
-        name: pii-protection-flex
-      config:
-        encryptionKey: "${secure::pii.encryption.key}"
-        protectedFields:
-          - "ssn"
-          - "email"
-          - "phone"
-          - "address"
-        auditEnabled: true
-        hipaaCompliance: true
-</div>
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: cors
+  config:
+    allowedOrigins:
+      - "https://employee-portal.company.com"
+      - "https://admin.company.com"
+      - "http://localhost:3000"
+    allowedMethods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - OPTIONS
+    allowedHeaders:
+      - "Content-Type"
+      - "Authorization"
+      - "X-API-Key"
+      - "X-Request-ID"
+    exposedHeaders:
+      - "X-Total-Count"
+      - "X-RateLimit-Remaining"
+    allowCredentials: true
+    maxAge: 3600
+    optionsPassthrough: false</div>
+                        </div>
 
-            <div class="highlight-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <h4>🚀 Advanced Security Features</h4>
-                <p><strong>Zero Trust Architecture:</strong> Every request is validated and authenticated before reaching employee onboarding services, ensuring complete protection of sensitive HR data and maintaining HIPAA compliance throughout the entire platform.</p>
+                        <!-- IP Allowlist/Blocklist -->
+                        <div class="policy-card">
+                            <h3>IP Allowlist & Blocklist</h3>
+                            <p>Controls access based on client IP addresses with support for CIDR ranges.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: ip-filtering
+  namespace: default
+spec:
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: ip-allowlist
+  config:
+    allowedIPs:
+      - "192.168.1.0/24"     # Corporate network
+      - "10.0.0.0/16"        # VPN range
+      - "203.0.113.0/24"     # Partner network
+    deniedIPs:
+      - "192.168.1.100"      # Specific blocked IP
+      - "10.0.0.50/32"       # Another blocked IP
+    headerName: "X-Forwarded-For"  # For load balancer scenarios
+    trustProxy: true</div>
+
+                            <div class="yaml-block">
+# IP Blocklist Configuration
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: ip-blocklist
+  namespace: default
+spec:
+  targetRef:
+    name: public-api
+    kind: HTTPRoute
+  policyRef:
+    name: ip-blocklist
+  config:
+    blockedIPs:
+      - "203.0.113.0/24"
+      - "198.51.100.0/24"
+    headerName: "X-Real-IP"
+    trustProxy: true</div>
+                        </div>
+
+                        <!-- TLS Policy -->
+                        <div class="policy-card">
+                            <h3>TLS/SSL Configuration</h3>
+                            <p>Enforces HTTPS connections and configures TLS settings for secure communication.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: Gateway
+metadata:
+  name: secure-gateway
+  namespace: default
+spec:
+  gatewayClassName: flex
+  listeners:
+  - name: https
+    port: 443
+    protocol: HTTPS
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - name: employee-onboarding-tls
+        kind: Secret
+  - name: http-redirect
+    port: 80
+    protocol: HTTP
+    allowedRoutes:
+      namespaces:
+        from: All
+
+---
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: tls-policy
+  namespace: default
+spec:
+  targetRef:
+    name: secure-gateway
+    kind: Gateway
+  policyRef:
+    name: tls
+  config:
+    requireTLS: true
+    minVersion: "1.2"
+    cipherSuites:
+      - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+      - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+    redirectToHTTPS: true</div>
+                        </div>
+
+                        <!-- Header Injection/Removal -->
+                        <div class="policy-card">
+                            <h3>Header Injection & Removal</h3>
+                            <p>Adds security headers and removes sensitive information from requests/responses.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: header-injection
+  namespace: default
+spec:
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: header-injection
+  config:
+    inboundHeaders:
+      - name: "X-Forwarded-Proto"
+        value: "https"
+        overwrite: true
+      - name: "X-Request-ID"
+        value: "${uuid()}"
+        overwrite: false
+    outboundHeaders:
+      - name: "X-Content-Type-Options"
+        value: "nosniff"
+        overwrite: true
+      - name: "X-Frame-Options"
+        value: "DENY"
+        overwrite: true
+      - name: "Strict-Transport-Security"
+        value: "max-age=31536000; includeSubDomains"
+        overwrite: true
+      - name: "X-XSS-Protection"
+        value: "1; mode=block"
+        overwrite: true
+    removeHeaders:
+      - "Server"
+      - "X-Powered-By"
+      - "X-AspNet-Version"</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Authentication Policies -->
+                <div id="auth" class="policy-content">
+                    <h3>🔐 Authentication Policies</h3>
+                    
+                    <div class="policy-grid">
+                        <!-- JWT Validation -->
+                        <div class="policy-card">
+                            <h3>JWT Validation</h3>
+                            <p>Validates JSON Web Tokens with support for multiple providers and custom claims.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: jwt-validation
+  namespace: default
+spec:
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: jwt-validation
+  config:
+    jwtKeyOrigin: jwks
+    jwksUrl: "https://auth.employee-portal.com/.well-known/jwks.json"
+    jwksServiceTimeToLive: 300
+    audience: "employee-onboarding-api"
+    issuer: "https://auth.employee-portal.com/"
+    validateAudience: true
+    validateIssuer: true
+    validateExp: true
+    validateNbf: true
+    clockSkew: 60
+    mandatoryClaims:
+      - "sub"
+      - "iat"
+      - "exp"
+      - "employee_role"
+    customValidations:
+      - expression: "#[payload.employee_role != null]"
+        errorMessage: "Missing employee role"
+      - expression: "#[payload.department != null]"
+        errorMessage: "Missing department information"</div>
+                        </div>
+
+                        <!-- OAuth 2.0 -->
+                        <div class="policy-card">
+                            <h3>OAuth 2.0 Token Enforcement</h3>
+                            <p>Enforces OAuth 2.0 access tokens with introspection and scope validation.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: oauth2-enforcement
+  namespace: default
+spec:
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: oauth2-enforcement
+  config:
+    introspectionUrl: "https://oauth.company.com/introspect"
+    clientId: "flex-gateway-client"
+    clientSecret: "${secure::oauth.client.secret}"
+    requiredScopes:
+      - "employee:read"
+      - "employee:write"
+      - "onboarding:manage"
+    scopeValidationCriteria: "containsAll"
+    cacheConfiguration:
+      enabled: true
+      entryTtl: 300
+      maxEntries: 1000
+    customHeaders:
+      - name: "X-User-ID"
+        value: "#[payload.sub]"
+      - name: "X-User-Scopes"
+        value: "#[payload.scope]"</div>
+                        </div>
+
+                        <!-- Basic Authentication -->
+                        <div class="policy-card">
+                            <h3>Basic Authentication</h3>
+                            <p>Simple username/password authentication with LDAP integration support.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: basic-auth
+  namespace: default
+spec:
+  targetRef:
+    name: admin-api
+    kind: HTTPRoute
+  policyRef:
+    name: basic-auth-simple
+  config:
+    users:
+      - username: "admin"
+        password: "${secure::admin.password}"
+      - username: "support"
+        password: "${secure::support.password}"
+
+---
+# LDAP-based Basic Auth
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: basic-auth-ldap
+  namespace: default
+spec:
+  targetRef:
+    name: employee-api
+    kind: HTTPRoute
+  policyRef:
+    name: basic-auth-ldap
+  config:
+    ldapConfig:
+      url: "ldaps://ldap.company.com:636"
+      baseDn: "ou=employees,dc=company,dc=com"
+      userSearchBase: "ou=users"
+      userSearchFilter: "(uid={0})"
+      bindDn: "cn=service,ou=services,dc=company,dc=com"
+      bindPassword: "${secure::ldap.bind.password}"
+      connectionTimeout: 30000
+      responseTimeout: 60000</div>
+                        </div>
+
+                        <!-- API Key Authentication -->
+                        <div class="policy-card">
+                            <h3>API Key Authentication</h3>
+                            <p>API key-based authentication with flexible key placement and validation.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: api-key-auth
+  namespace: default
+spec:
+  targetRef:
+    name: public-api
+    kind: HTTPRoute
+  policyRef:
+    name: api-key-authentication
+  config:
+    credentialOrigin: customExpression
+    credentialExpression: "#[attributes.headers['X-API-Key']]"
+    keys:
+      - key: "pk_live_abc123def456"
+        name: "Production Client"
+        permissions:
+          - "read"
+          - "write"
+      - key: "pk_test_xyz789uvw012"
+        name: "Test Client"
+        permissions:
+          - "read"
+    rateLimitByKey: true
+    keyRotationEnabled: true
+
+---
+# Query Parameter API Key
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: api-key-query
+  namespace: default
+spec:
+  targetRef:
+    name: webhook-api
+    kind: HTTPRoute
+  policyRef:
+    name: api-key-authentication
+  config:
+    credentialOrigin: queryParam
+    queryParamName: "api_key"
+    keys:
+      - key: "webhook_key_123"
+        name: "Webhook Client"</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Traffic Management -->
+                <div id="traffic" class="policy-content">
+                    <h3>🚦 Traffic Management Policies</h3>
+                    
+                    <div class="policy-grid">
+                        <!-- Rate Limiting -->
+                        <div class="policy-card">
+                            <h3>Rate Limiting</h3>
+                            <p>Controls API usage with sophisticated rate limiting algorithms and quotas.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: rate-limiting
+  namespace: default
+spec:
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: rate-limiting
+  config:
+    rateLimits:
+      - maximumRequests: 1000
+        timePeriod: 1
+        timePeriodTimeUnit: MINUTE
+        identifier: "#[attributes.headers['client-id']]"
+        keyResolver: customExpression
+      - maximumRequests: 100
+        timePeriod: 1
+        timePeriodTimeUnit: MINUTE
+        identifier: "#[attributes.remoteAddress]"
+        keyResolver: clientIpExpression
+    quotas:
+      - maximumRequests: 50000
+        timePeriod: 1
+        timePeriodTimeUnit: DAY
+        identifier: "#[attributes.headers['client-id']]"
+    algorithm: slidingWindow
+    distributeQuota: true
+    exposeHeaders: true
+    headersConfiguration:
+      - name: "X-RateLimit-Limit"
+      - name: "X-RateLimit-Remaining"
+      - name: "X-RateLimit-Reset"</div>
+                        </div>
+
+                        <!-- Spike Control -->
+                        <div class="policy-card">
+                            <h3>Spike Control</h3>
+                            <p>Protects against traffic spikes and sudden load increases with queuing mechanisms.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: spike-control
+  namespace: default
+spec:
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: spike-control
+  config:
+    maximumRequests: 500
+    timePeriodInMilliseconds: 1000
+    queuingRequestTimeout: 5000
+    delayTimeInMillis: 100
+    delayAttempts: 3
+    algorithm: slidingWindow
+    keySelector: "#[attributes.headers['client-id']]"
+    exposeHeaders: true</div>
+                        </div>
+
+                        <!-- Circuit Breaker -->
+                        <div class="policy-card">
+                            <h3>Circuit Breaker</h3>
+                            <p>Prevents cascade failures by monitoring downstream service health and failing fast.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: circuit-breaker
+  namespace: default
+spec:
+  targetRef:
+    name: employee-service
+    kind: HTTPRoute
+  policyRef:
+    name: circuit-breaker
+  config:
+    onErrorContinue: false
+    failureThreshold: 5
+    successThreshold: 2
+    timeout: 60000
+    delay: 5000
+    tripOnTimeouts: true
+    tripOnConnectFailure: true
+    trip5xx: true
+    trip4xx: false
+    customErrorStatuses:
+      - 503
+      - 504
+    fallbackResponse:
+      statusCode: 503
+      body: |
+        {
+          "error": "Service temporarily unavailable",
+          "message": "The employee service is currently experiencing issues. Please try again later.",
+          "timestamp": "${now()}"
+        }
+      headers:
+        Content-Type: "application/json"
+        Retry-After: "60"</div>
+                        </div>
+
+                        <!-- Load Balancing -->
+                        <div class="policy-card">
+                            <h3>Load Balancing</h3>
+                            <p>Distributes traffic across multiple backend services with health checking.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: HTTPRoute
+metadata:
+  name: load-balanced-api
+  namespace: default
+spec:
+  parentRefs:
+  - name: employee-gateway
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api/employees
+    backendRefs:
+    - name: employee-service-1
+      port: 80
+      weight: 50
+    - name: employee-service-2
+      port: 80
+      weight: 30
+    - name: employee-service-3
+      port: 80
+      weight: 20
+
+---
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: load-balancer-policy
+  namespace: default
+spec:
+  targetRef:
+    name: load-balanced-api
+    kind: HTTPRoute
+  policyRef:
+    name: load-balancer
+  config:
+    algorithm: roundRobin  # Options: roundRobin, leastConnections, weightedRandom
+    healthCheck:
+      enabled: true
+      interval: 30
+      timeout: 10
+      path: "/health"
+      expectedStatus: 200
+      unhealthyThreshold: 3
+      healthyThreshold: 2
+    stickySession:
+      enabled: true
+      cookieName: "LB_SESSION"
+      cookiePath: "/"
+      cookieSecure: true</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transformation Policies -->
+                <div id="transform" class="policy-content">
+                    <h3>🔄 Transformation Policies</h3>
+                    
+                    <div class="policy-grid">
+                        <!-- Message Logging -->
+                        <div class="policy-card">
+                            <h3>Message Logging</h3>
+                            <p>Logs request/response messages with configurable detail levels and PII protection.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: message-logging
+  namespace: default
+spec:
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: message-logging
+  config:
+    level: INFO
+    logRequest: true
+    logResponse: true
+    logHeaders: true
+    logPayload: true
+    maxPayloadSize: 10240
+    category: "flex.gateway.employee.api"
+    beforeCall:
+      enabled: true
+      message: "Processing employee onboarding request"
+      includeHeaders:
+        - "X-Request-ID"
+        - "User-Agent"
+        - "Content-Type"
+      excludeHeaders:
+        - "Authorization"
+        - "Cookie"
+    afterCall:
+      enabled: true
+      message: "Employee onboarding request completed"
+      logDuration: true
+    piiProtection:
+      enabled: true
+      maskFields:
+        - "ssn"
+        - "password"
+        - "creditCard"
+      maskPattern: "***MASKED***"</div>
+                        </div>
+
+                        <!-- JSON Threat Protection -->
+                        <div class="policy-card">
+                            <h3>JSON Threat Protection</h3>
+                            <p>Protects against JSON-based attacks by validating structure and content limits.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: json-threat-protection
+  namespace: default
+spec:
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: json-threat-protection
+  config:
+    maxArrayElementCount: 1000
+    maxContainerDepth: 10
+    maxObjectEntryCount: 100
+    maxObjectEntryNameLength: 256
+    maxStringValueLength: 10000
+    maxDocumentLength: 1048576
+    allowComments: false
+    allowDuplicateKeys: false
+    strictValidation: true
+    errorResponse:
+      statusCode: 400
+      body: |
+        {
+          "error": "Invalid JSON payload",
+          "message": "The provided JSON payload violates security constraints",
+          "timestamp": "${now()}"
+        }</div>
+                        </div>
+
+                        <!-- XML Threat Protection -->
+                        <div class="policy-card">
+                            <h3>XML Threat Protection</h3>
+                            <p>Validates XML payloads against various XML-based security threats and structure limits.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: xml-threat-protection
+  namespace: default
+spec:
+  targetRef:
+    name: legacy-soap-api
+    kind: HTTPRoute
+  policyRef:
+    name: xml-threat-protection
+  config:
+    maxElementCount: 1000
+    maxAttributeCount: 100
+    maxAttributeNameLength: 256
+    maxAttributeValueLength: 1000
+    maxElementNameLength: 256
+    maxElementValueLength: 10000
+    maxDocumentLength: 1048576
+    maxChildrenPerElement: 100
+    maxDepth: 10
+    allowComments: false
+    allowProcessingInstructions: false
+    allowDtd: false
+    allowExternalEntities: false
+    errorResponse:
+      statusCode: 400
+      body: |
+        <error>
+          <code>400</code>
+          <message>Invalid XML payload</message>
+          <description>The provided XML payload violates security constraints</description>
+          <timestamp>${now()}</timestamp>
+        </error></div>
+                        </div>
+
+                        <!-- Request/Response Transformation -->
+                        <div class="policy-card">
+                            <h3>DataWeave Transformation</h3>
+                            <p>Transforms request and response payloads using DataWeave expressions.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: dataweave-transformation
+  namespace: default
+spec:
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: dataweave-transformation
+  config:
+    requestTransformation:
+      enabled: true
+      expression: |
+        %dw 2.0
+        output application/json
+        ---
+        {
+          employee: {
+            id: payload.employeeId,
+            personalInfo: {
+              firstName: payload.firstName,
+              lastName: payload.lastName,
+              email: lower(payload.email),
+              phone: payload.phoneNumber
+            },
+            employment: {
+              department: payload.dept,
+              position: payload.jobTitle,
+              startDate: payload.startDate as Date,
+              manager: payload.managerName
+            },
+            metadata: {
+              requestId: attributes.headers["X-Request-ID"],
+              timestamp: now(),
+              source: "flex-gateway"
+            }
+          }
+        }
+    responseTransformation:
+      enabled: true
+      expression: |
+        %dw 2.0
+        output application/json
+        ---
+        {
+          success: true,
+          employeeId: payload.id,
+          onboardingStatus: payload.status,
+          nextSteps: payload.pendingTasks,
+          estimatedCompletion: payload.estimatedCompletion,
+          metadata: {
+            processedAt: now(),
+            gateway: "flex-gateway"
+          }
+        }
+    errorHandling:
+      enabled: true
+      logErrors: true
+      continueOnError: false</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monitoring & Analytics -->
+                <div id="monitoring" class="policy-content">
+                    <h3>📊 Monitoring & Analytics Policies</h3>
+                    
+                    <div class="policy-grid">
+                        <!-- Analytics -->
+                        <div class="policy-card">
+                            <h3>Analytics & Metrics Collection</h3>
+                            <p>Collects detailed analytics and metrics for API usage monitoring and business intelligence.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: analytics-collection
+  namespace: default
+spec:
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: analytics
+  config:
+    enableAnalytics: true
+    collectRequestData: true
+    collectResponseData: true
+    collectHeaders: true
+    excludeHeaders:
+      - "Authorization"
+      - "Cookie"
+      - "Set-Cookie"
+    customDimensions:
+      - name: "department"
+        value: "#[payload.department]"
+      - name: "user_role"
+        value: "#[attributes.headers['X-User-Role']]"
+      - name: "api_version"
+        value: "#[attributes.headers['API-Version']]"
+    businessEvents:
+      - eventName: "employee_created"
+        condition: "#[attributes.method == 'POST' and attributes.requestPath contains '/employees']"
+        data:
+          employeeId: "#[payload.id]"
+          department: "#[payload.department]"
+          timestamp: "#[now()]"</div>
+                        </div>
+
+                        <!-- Health Check -->
+                        <div class="policy-card">
+                            <h3>Health Check</h3>
+                            <p>Provides health check endpoints for monitoring service availability and status.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: health-check
+  namespace: default
+spec:
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: health-check
+  config:
+    healthCheckPath: "/health"
+    detailedHealth: true
+    includeUpstreamHealth: true
+    customHealthChecks:
+      - name: "database"
+        url: "http://employee-db:5432/health"
+        timeout: 5000
+        interval: 30000
+      - name: "external-service"
+        url: "https://external-api.company.com/status"
+        timeout: 10000
+        interval: 60000
+    responseFormat: |
+      {
+        "status": "${overallStatus}",
+        "timestamp": "${now()}",
+        "gateway": "flex-gateway",
+        "version": "1.0.0",
+        "checks": {
+          "database": "${databaseStatus}",
+          "external-service": "${externalServiceStatus}"
+        },
+        "uptime": "${uptime}",
+        "requestCount": "${requestCount}"
+      }</div>
+                        </div>
+
+                        <!-- OpenTelemetry -->
+                        <div class="policy-card">
+                            <h3>OpenTelemetry Tracing</h3>
+                            <p>Enables distributed tracing using OpenTelemetry standards for comprehensive observability.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: opentelemetry-tracing
+  namespace: default
+spec:
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: opentelemetry
+  config:
+    enabled: true
+    serviceName: "flex-gateway"
+    serviceVersion: "1.0.0"
+    exporterEndpoint: "http://jaeger-collector:14268/api/traces"
+    exporterType: "jaeger"
+    samplingRate: 1.0
+    resourceAttributes:
+      service.name: "employee-onboarding-gateway"
+      service.namespace: "hr-systems"
+      deployment.environment: "production"
+    spanAttributes:
+      - name: "http.route"
+        value: "#[attributes.requestPath]"
+      - name: "user.id"
+        value: "#[attributes.headers['X-User-ID']]"
+      - name: "tenant.id"
+        value: "#[attributes.headers['X-Tenant-ID']]"
+    propagationFormats:
+      - "tracecontext"
+      - "b3"
+      - "jaeger"</div>
+                        </div>
+
+                        <!-- Metrics Collection -->
+                        <div class="policy-card">
+                            <h3>Prometheus Metrics</h3>
+                            <p>Exposes Prometheus-compatible metrics for monitoring and alerting systems.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: prometheus-metrics
+  namespace: default
+spec:
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: prometheus-metrics
+  config:
+    metricsPath: "/metrics"
+    enabled: true
+    defaultMetrics: true
+    customMetrics:
+      - name: "employee_onboarding_requests_total"
+        type: "counter"
+        description: "Total number of employee onboarding requests"
+        labels:
+          - "method"
+          - "status_code"
+          - "department"
+      - name: "employee_onboarding_request_duration"
+        type: "histogram"
+        description: "Duration of employee onboarding requests"
+        buckets: [0.1, 0.5, 1.0, 2.5, 5.0, 10.0]
+        labels:
+          - "method"
+          - "endpoint"
+      - name: "active_employee_sessions"
+        type: "gauge"
+        description: "Number of active employee sessions"
+        labels:
+          - "department"</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Compliance Policies -->
+                <div id="compliance" class="policy-content">
+                    <h3>⚖️ Compliance & Regulatory Policies</h3>
+                    
+                    <div class="policy-grid">
+                        <!-- GDPR Compliance -->
+                        <div class="policy-card">
+                            <h3>GDPR Data Protection</h3>
+                            <p>Ensures GDPR compliance with data protection, consent management, and privacy controls.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: gdpr-compliance
+  namespace: default
+spec:
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: gdpr-protection
+  config:
+    dataSubjectRights:
+      enabled: true
+      rightToAccess: true
+      rightToRectification: true
+      rightToErasure: true
+      rightToPortability: true
+    consentManagement:
+      required: true
+      consentHeader: "X-GDPR-Consent"
+      validConsentValues:
+        - "granted"
+        - "explicit"
+    dataMinimization:
+      enabled: true
+      allowedFields:
+        - "firstName"
+        - "lastName"
+        - "email"
+        - "department"
+      restrictedFields:
+        - "ssn"
+        - "personalId"
+        - "bankAccount"
+    auditLogging:
+      enabled: true
+      logDataAccess: true
+      logDataModification: true
+      logConsentChanges: true
+      retentionPeriod: "7y"</div>
+                        </div>
+
+                        <!-- HIPAA Compliance -->
+                        <div class="policy-card">
+                            <h3>HIPAA Healthcare Compliance</h3>
+                            <p>Implements HIPAA-compliant security measures for healthcare data protection.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: hipaa-compliance
+  namespace: default
+spec:
+  targetRef:
+    name: healthcare-api
+    kind: HTTPRoute
+  policyRef:
+    name: hipaa-security
+  config:
+    encryption:
+      inTransit: "AES256"
+      atRest: "AES256"
+      keyRotation: "90d"
+    accessControls:
+      minimumAuthentication: "two-factor"
+      sessionTimeout: 900
+      automaticLogoff: true
+      roleBasedAccess: true
+    auditControls:
+      enabled: true
+      logAllAccess: true
+      logFailedAttempts: true
+      alertOnSuspiciousActivity: true
+      retentionPeriod: "6y"
+    dataIntegrity:
+      checksumValidation: true
+      digitallySigned: true
+      immutableLogs: true
+    businessAssociate:
+      requireBAA: true
+      validateBAACertificate: true
+    emergencyAccess:
+      enabled: true
+      breakGlassAccess: true
+      emergencyLogLevel: "detailed"</div>
+                        </div>
+
+                        <!-- PCI DSS Compliance -->
+                        <div class="policy-card">
+                            <h3>PCI DSS Payment Security</h3>
+                            <p>Ensures PCI DSS compliance for payment card data security and handling.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: pci-compliance
+  namespace: default
+spec:
+  targetRef:
+    name: payment-api
+    kind: HTTPRoute
+  policyRef:
+    name: pci-dss-security
+  config:
+    dataProtection:
+      maskPAN: true
+      maskCVV: true
+      tokenizeCardData: true
+      encryptionStandard: "AES256"
+    networkSecurity:
+      requireTLS: "1.2+"
+      restrictedNetworks:
+        - "192.168.100.0/24"  # PCI network
+      firewallRequired: true
+    accessControl:
+      uniqueUserIDs: true
+      strongPasswords: true
+      twoFactorAuth: true
+      restrictDefaultPasswords: true
+    vulnerabilityManagement:
+      regularScans: true
+      patchManagement: true
+      antivirusRequired: true
+    monitoring:
+      logAllAccess: true
+      realTimeMonitoring: true
+      fileIntegrityMonitoring: true
+      alerting:
+        enabled: true
+        suspiciousActivity: true
+        dataAccess: true</div>
+                        </div>
+
+                        <!-- SOX Compliance -->
+                        <div class="policy-card">
+                            <h3>SOX Financial Compliance</h3>
+                            <p>Implements Sarbanes-Oxley Act compliance controls for financial data integrity.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: sox-compliance
+  namespace: default
+spec:
+  targetRef:
+    name: financial-api
+    kind: HTTPRoute
+  policyRef:
+    name: sox-controls
+  config:
+    internalControls:
+      segregationOfDuties: true
+      approvalWorkflows: true
+      financialReporting: true
+      changeManagement: true
+    auditTrail:
+      enabled: true
+      immutableLogs: true
+      detailedLogging: true
+      retentionPeriod: "7y"
+      realTimeAlerting: true
+    dataIntegrity:
+      checksumValidation: true
+      digitallySigned: true
+      preventUnauthorizedChanges: true
+      backupVerification: true
+    accessControls:
+      roleBasedAccess: true
+      principleOfLeastPrivilege: true
+      regularAccessReviews: true
+      privilegedAccountManagement: true
+    reporting:
+      automaticReporting: true
+      exceptionReporting: true
+      managementCertification: true
+      quarterlyReviews: true</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Enterprise Policies -->
+                <div class="card">
+                    <h2>🏢 Advanced Enterprise Policies</h2>
+                    
+                    <div class="policy-grid">
+                        <!-- Request Size Limiting -->
+                        <div class="policy-card">
+                            <h3>Request Size Limiting</h3>
+                            <p>Controls maximum request payload size to prevent DoS attacks and resource exhaustion.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: request-size-limiting
+  namespace: default
+spec:
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: request-size-limiting
+  config:
+    maximumRequestSize: 10485760  # 10MB
+    rejectMessage: |
+      {
+        "error": "Request Too Large",
+        "message": "Request payload exceeds maximum allowed size of 10MB",
+        "maxSizeAllowed": "10MB",
+        "timestamp": "${now()}"
+      }
+    includeHeaders: true
+    logViolations: true</div>
+                        </div>
+
+                        <!-- Response Caching -->
+                        <div class="policy-card">
+                            <h3>Response Caching</h3>
+                            <p>Caches API responses to improve performance and reduce backend load.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: response-caching
+  namespace: default
+spec:
+  targetRef:
+    name: employee-lookup-api
+    kind: HTTPRoute
+  policyRef:
+    name: response-caching
+  config:
+    cachingStrategy: "TIME_TO_LIVE"
+    defaultTTL: 300  # 5 minutes
+    maxCacheSize: 100  # MB
+    cachingKeyExpression: "#[attributes.requestPath ++ '?department=' ++ attributes.queryParams['department']]"
+    responseCachingConditions:
+      - statusCode: 200
+        condition: "#[attributes.method == 'GET']"
+      - statusCode: 201
+        condition: false
+    invalidatePatterns:
+      - "/api/employees/*"
+      - "/api/departments/*"
+    cacheHeaders:
+      - "Cache-Control"
+      - "ETag"
+      - "Last-Modified"</div>
+                        </div>
+
+                        <!-- API Versioning -->
+                        <div class="policy-card">
+                            <h3>API Versioning</h3>
+                            <p>Manages API versioning with backward compatibility and deprecation strategies.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: api-versioning
+  namespace: default
+spec:
+  targetRef:
+    name: employee-api-v1
+    kind: HTTPRoute
+  policyRef:
+    name: api-versioning
+  config:
+    versioningStrategy: "HEADER"
+    versionHeader: "API-Version"
+    defaultVersion: "1.0"
+    supportedVersions:
+      - version: "1.0"
+        status: "DEPRECATED"
+        deprecationDate: "2024-12-31"
+        sunsetDate: "2025-06-30"
+      - version: "2.0"
+        status: "CURRENT"
+      - version: "2.1"
+        status: "BETA"
+    versionMismatchResponse:
+      statusCode: 400
+      headers:
+        Supported-Versions: "1.0, 2.0, 2.1"
+      body: |
+        {
+          "error": "Unsupported API Version",
+          "supportedVersions": ["1.0", "2.0", "2.1"],
+          "deprecationNotice": "Version 1.0 will be sunset on 2025-06-30"
+        }</div>
+                        </div>
+
+                        <!-- Content-Based Routing -->
+                        <div class="policy-card">
+                            <h3>Content-Based Routing</h3>
+                            <p>Routes requests to different backends based on payload content or headers.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: content-based-routing
+  namespace: default
+spec:
+  targetRef:
+    name: employee-processing-api
+    kind: HTTPRoute
+  policyRef:
+    name: content-based-routing
+  config:
+    routingRules:
+      - condition: "#[payload.department == 'IT']"
+        backend: "it-employee-service"
+        priority: 1
+      - condition: "#[payload.department == 'HR']"
+        backend: "hr-employee-service" 
+        priority: 2
+      - condition: "#[attributes.headers['X-Priority'] == 'urgent']"
+        backend: "priority-employee-service"
+        priority: 3
+      - condition: "#[payload.employeeType == 'contractor']"
+        backend: "contractor-service"
+        priority: 4
+    defaultBackend: "standard-employee-service"
+    routingHeaders:
+      - name: "X-Routed-To"
+        value: "${selectedBackend}"
+      - name: "X-Routing-Rule"
+        value: "${matchedCondition}"</div>
+                        </div>
+
+                        <!-- Request/Response Validation -->
+                        <div class="policy-card">
+                            <h3>Schema Validation</h3>
+                            <p>Validates request and response payloads against JSON Schema or OpenAPI specifications.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: schema-validation
+  namespace: default
+spec:
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: json-schema-validation
+  config:
+    validateRequest: true
+    validateResponse: true
+    requestSchema: |
+      {
+        "$schema": "# SECURITY: Remote schema removed (https://json-schema.org/draft/2020-12/schema)",
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "lastName": {
+            "type": "string", 
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "department": {
+            "type": "string",
+            "enum": ["IT", "HR", "Finance", "Marketing", "Operations"]
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": ["firstName", "lastName", "email", "department"],
+        "additionalProperties": false
+      }
+    responseSchema: |
+      {
+        "$schema": "# SECURITY: Remote schema removed (https://json-schema.org/draft/2020-12/schema)",
+        "type": "object",
+        "properties": {
+          "employeeId": {"type": "string"},
+          "status": {"type": "string", "enum": ["created", "pending", "completed"]},
+          "message": {"type": "string"}
+        },
+        "required": ["employeeId", "status"]
+      }
+    validationErrorResponse:
+      statusCode: 400
+      body: |
+        {
+          "error": "Validation Failed",
+          "details": "${validationErrors}",
+          "timestamp": "${now()}"
+        }</div>
+                        </div>
+
+                        <!-- Custom Error Handling -->
+                        <div class="policy-card">
+                            <h3>Custom Error Handling</h3>
+                            <p>Provides consistent error response formatting and error code standardization.</p>
+
+                            <div class="yaml-block">
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: error-handling
+  namespace: default
+spec:
+  targetRef:
+    name: employee-onboarding-api
+    kind: HTTPRoute
+  policyRef:
+    name: error-handling
+  config:
+    errorMappings:
+      - httpStatus: 400
+        errorCode: "VALIDATION_ERROR"
+        template: |
+          {
+            "error": {
+              "code": "VALIDATION_ERROR",
+              "message": "Request validation failed",
+              "details": "${errorDetails}",
+              "timestamp": "${now()}",
+              "requestId": "${requestId}",
+              "path": "${requestPath}"
+            }
+          }
+      - httpStatus: 401
+        errorCode: "AUTHENTICATION_FAILED"
+        template: |
+          {
+            "error": {
+              "code": "AUTHENTICATION_FAILED", 
+              "message": "Authentication required",
+              "timestamp": "${now()}",
+              "requestId": "${requestId}"
+            }
+          }
+      - httpStatus: 403
+        errorCode: "AUTHORIZATION_FAILED"
+        template: |
+          {
+            "error": {
+              "code": "AUTHORIZATION_FAILED",
+              "message": "Insufficient permissions",
+              "timestamp": "${now()}",
+              "requestId": "${requestId}"
+            }
+          }
+      - httpStatus: 429
+        errorCode: "RATE_LIMIT_EXCEEDED"
+        template: |
+          {
+            "error": {
+              "code": "RATE_LIMIT_EXCEEDED",
+              "message": "Rate limit exceeded",
+              "retryAfter": "${retryAfter}",
+              "limit": "${rateLimitLimit}",
+              "remaining": "${rateLimitRemaining}",
+              "timestamp": "${now()}"
+            }
+          }
+      - httpStatus: 500
+        errorCode: "INTERNAL_SERVER_ERROR"
+        template: |
+          {
+            "error": {
+              "code": "INTERNAL_SERVER_ERROR",
+              "message": "An internal server error occurred",
+              "timestamp": "${now()}",
+              "requestId": "${requestId}",
+              "supportReference": "Please contact support with this request ID"
+            }
+          }
+    includeStackTrace: false
+    logErrors: true
+    correlationIdHeader: "X-Correlation-ID"</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multi-Environment Configuration -->
+                <div class="card">
+                    <h2>🌍 Multi-Environment Policy Configuration</h2>
+                    
+                    <div class="config-example">
+                        <h4>Environment-Specific Policy Management</h4>
+                        <p>Configure different policy behaviors across development, staging, and production environments.</p>
+                    </div>
+
+                    <div class="deployment-grid">
+                        <div class="policy-card">
+                            <h3>🔧 Development Environment</h3>
+                            <div class="yaml-block">
+# Development - Relaxed Security
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: dev-rate-limiting
+  namespace: development
+spec:
+  targetRef:
+    name: employee-api
+    kind: HTTPRoute
+  policyRef:
+    name: rate-limiting
+  config:
+    rateLimits:
+      - maximumRequests: 10000
+        timePeriod: 1
+        timePeriodTimeUnit: MINUTE
+    algorithm: fixedWindow
+
+---
+# Development - Verbose Logging
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: dev-logging
+  namespace: development
+spec:
+  targetRef:
+    name: employee-api
+    kind: HTTPRoute
+  policyRef:
+    name: message-logging
+  config:
+    level: DEBUG
+    logRequest: true
+    logResponse: true
+    logHeaders: true
+    logPayload: true
+    maxPayloadSize: 102400</div>
+                        </div>
+
+                        <div class="policy-card">
+                            <h3>🧪 Staging Environment</h3>
+                            <div class="yaml-block">
+# Staging - Production-like Security
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: staging-security-stack
+  namespace: staging
+spec:
+  targetRef:
+    name: employee-api
+    kind: HTTPRoute
+  policyRef:
+    name: jwt-validation
+  config:
+    jwtKeyOrigin: jwks
+    jwksUrl: "https://auth-staging.company.com/.well-known/jwks.json"
+    audience: "employee-onboarding-api-staging"
+
+---
+# Staging - Moderate Rate Limiting
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: staging-rate-limiting
+  namespace: staging
+spec:
+  targetRef:
+    name: employee-api
+    kind: HTTPRoute
+  policyRef:
+    name: rate-limiting
+  config:
+    rateLimits:
+      - maximumRequests: 2000
+        timePeriod: 1
+        timePeriodTimeUnit: MINUTE</div>
+                        </div>
+
+                        <div class="policy-card">
+                            <h3>🚀 Production Environment</h3>
+                            <div class="yaml-block">
+# Production - Maximum Security
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: prod-comprehensive-security
+  namespace: production
+spec:
+  targetRef:
+    name: employee-api
+    kind: HTTPRoute
+  policyRef:
+    name: jwt-validation
+  config:
+    jwtKeyOrigin: jwks
+    jwksUrl: "https://auth.company.com/.well-known/jwks.json"
+    audience: "employee-onboarding-api"
+    validateAudience: true
+    validateIssuer: true
+    mandatoryClaims: ["sub", "iat", "exp", "role"]
+
+---
+# Production - Strict Rate Limiting
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding  
+metadata:
+  name: prod-rate-limiting
+  namespace: production
+spec:
+  targetRef:
+    name: employee-api
+    kind: HTTPRoute
+  policyRef:
+    name: rate-limiting
+  config:
+    rateLimits:
+      - maximumRequests: 1000
+        timePeriod: 1
+        timePeriodTimeUnit: MINUTE
+    quotas:
+      - maximumRequests: 50000
+        timePeriod: 1
+        timePeriodTimeUnit: DAY
+
+---
+# Production - Comprehensive Monitoring
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: prod-monitoring
+  namespace: production
+spec:
+  targetRef:
+    name: employee-api
+    kind: HTTPRoute
+  policyRef:
+    name: analytics
+  config:
+    enableAnalytics: true
+    collectRequestData: true
+    collectResponseData: false  # Privacy compliance
+    businessEvents:
+      - eventName: "employee_onboarded"
+        condition: "#[attributes.method == 'POST' and payload.status == 'completed']"</div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+
+                <!-- Policy Orchestration Patterns -->
+                <div class="card">
+                    <h2>🎼 Policy Orchestration Patterns</h2>
+                    
+                    <div class="config-example">
+                        <h4>Advanced Policy Combinations</h4>
+                        <p>Strategic policy orchestration patterns for complex enterprise scenarios and multi-layered security architectures.</p>
+                    </div>
+
+                    <div class="deployment-grid">
+                        <div class="policy-card">
+                            <h3>🛡️ Zero Trust Architecture</h3>
+                            <div class="yaml-block">
+# Zero Trust Policy Stack
+# 1. TLS Termination
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: zero-trust-tls
+  namespace: production
+spec:
+  targetRef:
+    name: secure-api
+    kind: HTTPRoute
+  policyRef:
+    name: tls
+  config:
+    requireTLS: true
+    minVersion: "1.3"
+
+---
+# 2. JWT Authentication
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: zero-trust-jwt
+  namespace: production
+spec:
+  targetRef:
+    name: secure-api
+    kind: HTTPRoute
+  policyRef:
+    name: jwt-validation
+  config:
+    jwtKeyOrigin: jwks
+    jwksUrl: "https://auth.company.com/.well-known/jwks.json"
+    mandatoryClaims: ["sub", "iat", "exp", "scope", "device_id"]
+
+---
+# 3. Device Validation
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: zero-trust-device
+  namespace: production
+spec:
+  targetRef:
+    name: secure-api
+    kind: HTTPRoute
+  policyRef:
+    name: custom-validation
+  config:
+    validationRules:
+      - name: "device_trust"
+        expression: "#[attributes.headers['X-Device-Trust'] == 'verified']"
+      - name: "geo_location"
+        expression: "#[attributes.headers['X-Geo-Allowed'] == 'true']"
+
+---
+# 4. Rate Limiting per User
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: zero-trust-rate-limit
+  namespace: production
+spec:
+  targetRef:
+    name: secure-api
+    kind: HTTPRoute
+  policyRef:
+    name: rate-limiting
+  config:
+    rateLimits:
+      - maximumRequests: 100
+        timePeriod: 1
+        timePeriodTimeUnit: MINUTE
+        identifier: "#[attributes.headers['X-User-ID']]"
+
+---
+# 5. Comprehensive Logging
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: zero-trust-audit
+  namespace: production
+spec:
+  targetRef:
+    name: secure-api
+    kind: HTTPRoute
+  policyRef:
+    name: message-logging
+  config:
+    level: INFO
+    logRequest: true
+    logResponse: false  # Privacy compliance
+    category: "zero-trust.audit"</div>
+                        </div>
+
+                        <div class="policy-card">
+                            <h3>🔄 API Gateway Facade</h3>
+                            <div class="yaml-block">
+# API Gateway Facade Pattern
+# 1. Request Transformation
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: facade-request-transform
+  namespace: production
+spec:
+  targetRef:
+    name: legacy-api-facade
+    kind: HTTPRoute
+  policyRef:
+    name: dataweave-transformation
+  config:
+    requestTransformation:
+      enabled: true
+      expression: |
+        %dw 2.0
+        output application/json
+        ---
+        {
+          // Transform modern API format to legacy format
+          "legacy_employee_data": {
+            "emp_id": payload.employeeId,
+            "f_name": payload.firstName,
+            "l_name": payload.lastName,
+            "dept_code": 
+              if (payload.department == "IT") "001"
+              else if (payload.department == "HR") "002"
+              else if (payload.department == "Finance") "003"
+              else "999",
+            "hire_dt": payload.startDate
+          }
+        }
+
+---
+# 2. Content-Based Routing
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: facade-routing
+  namespace: production
+spec:
+  targetRef:
+    name: legacy-api-facade
+    kind: HTTPRoute
+  policyRef:
+    name: content-based-routing
+  config:
+    routingRules:
+      - condition: "#[payload.legacy_employee_data.dept_code == '001']"
+        backend: "it-legacy-system"
+      - condition: "#[payload.legacy_employee_data.dept_code == '002']"
+        backend: "hr-legacy-system"
+    defaultBackend: "general-legacy-system"
+
+---
+# 3. Response Transformation
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: facade-response-transform
+  namespace: production
+spec:
+  targetRef:
+    name: legacy-api-facade
+    kind: HTTPRoute
+  policyRef:
+    name: dataweave-transformation
+  config:
+    responseTransformation:
+      enabled: true
+      expression: |
+        %dw 2.0
+        output application/json
+        ---
+        {
+          // Transform legacy response to modern API format
+          "employeeId": payload.emp_record.emp_id,
+          "status": 
+            if (payload.emp_record.status_code == "00") "success"
+            else if (payload.emp_record.status_code == "01") "pending"
+            else "failed",
+          "message": payload.emp_record.status_msg,
+          "processedAt": now(),
+          "apiVersion": "2.0"
+        }</div>
+                        </div>
+
+                        <div class="policy-card">
+                            <h3>🌐 Multi-Tenant Security</h3>
+                            <div class="yaml-block">
+# Multi-Tenant Security Pattern
+# 1. Tenant Identification
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: tenant-identification
+  namespace: production
+spec:
+  targetRef:
+    name: multi-tenant-api
+    kind: HTTPRoute
+  policyRef:
+    name: header-injection
+  config:
+    inboundHeaders:
+      - name: "X-Tenant-ID"
+        value: "#[attributes.headers['Authorization'] match /Bearer\s+([^.]+)\..*/ then $[1] else 'unknown']"
+
+---
+# 2. Tenant-Specific Rate Limiting
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: tenant-rate-limiting
+  namespace: production
+spec:
+  targetRef:
+    name: multi-tenant-api
+    kind: HTTPRoute
+  policyRef:
+    name: rate-limiting
+  config:
+    rateLimits:
+      # Premium tenants
+      - maximumRequests: 10000
+        timePeriod: 1
+        timePeriodTimeUnit: MINUTE
+        identifier: "#[attributes.headers['X-Tenant-ID']]"
+        keyResolver: customExpression
+        condition: "#[attributes.headers['X-Tenant-Tier'] == 'premium']"
+      # Standard tenants
+      - maximumRequests: 1000
+        timePeriod: 1
+        timePeriodTimeUnit: MINUTE
+        identifier: "#[attributes.headers['X-Tenant-ID']]"
+        keyResolver: customExpression
+        condition: "#[attributes.headers['X-Tenant-Tier'] == 'standard']"
+
+---
+# 3. Tenant Data Isolation
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: tenant-data-isolation
+  namespace: production
+spec:
+  targetRef:
+    name: multi-tenant-api
+    kind: HTTPRoute
+  policyRef:
+    name: dataweave-transformation
+  config:
+    requestTransformation:
+      enabled: true
+      expression: |
+        %dw 2.0
+        output application/json
+        ---
+        payload ++ {
+          "tenantContext": {
+            "tenantId": attributes.headers["X-Tenant-ID"],
+            "isolationLevel": "strict",
+            "dataRegion": attributes.headers["X-Data-Region"] default "us-east-1"
+          }
+        }</div>
+                        </div>
+
+                        <div class="policy-card">
+                            <h3>📊 Observability Stack</h3>
+                            <div class="yaml-block">
+# Comprehensive Observability
+# 1. Distributed Tracing
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: observability-tracing
+  namespace: production
+spec:
+  targetRef:
+    name: observed-api
+    kind: HTTPRoute
+  policyRef:
+    name: opentelemetry
+  config:
+    enabled: true
+    serviceName: "employee-onboarding-gateway"
+    exporterEndpoint: "http://jaeger-collector:14268/api/traces"
+    samplingRate: 0.1  # 10% sampling for production
+
+---
+# 2. Metrics Collection
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: observability-metrics
+  namespace: production
+spec:
+  targetRef:
+    name: observed-api
+    kind: HTTPRoute
+  policyRef:
+    name: prometheus-metrics
+  config:
+    customMetrics:
+      - name: "api_requests_by_endpoint"
+        type: "counter"
+        labels: ["method", "endpoint", "status_code", "tenant_id"]
+      - name: "api_request_duration_by_endpoint"
+        type: "histogram"
+        buckets: [0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+        labels: ["method", "endpoint", "tenant_id"]
+
+---
+# 3. Business Event Tracking
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: observability-business-events
+  namespace: production
+spec:
+  targetRef:
+    name: observed-api
+    kind: HTTPRoute
+  policyRef:
+    name: analytics
+  config:
+    businessEvents:
+      - eventName: "employee_onboarding_started"
+        condition: "#[attributes.method == 'POST' and attributes.requestPath contains '/onboard']"
+        data:
+          employeeId: "#[payload.employeeId]"
+          department: "#[payload.department]"
+          source: "#[attributes.headers['User-Agent']]"
+      - eventName: "employee_onboarding_completed"
+        condition: "#[attributes.method == 'PUT' and payload.status == 'completed']"
+        data:
+          employeeId: "#[payload.employeeId]"
+          completionTime: "#[now()]"
+          duration: "#[payload.processingDuration]"
+
+---
+# 4. Health Monitoring
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: observability-health
+  namespace: production
+spec:
+  targetRef:
+    name: observed-api
+    kind: HTTPRoute
+  policyRef:
+    name: health-check
+  config:
+    healthCheckPath: "/health"
+    customHealthChecks:
+      - name: "employee-database"
+        url: "http://employee-db:5432/health"
+        timeout: 5000
+      - name: "notification-service"
+        url: "http://notification-svc:8080/health"
+        timeout: 3000</div>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <!-- Deployment Examples -->
+            <div class="card">
+                <h2>🚀 Complete Deployment Examples</h2>
+                
+                <div class="config-example">
+                    <h4>Employee Onboarding Production Configuration</h4>
+                    <p>Complete production-ready configuration with all essential policies for the employee onboarding platform.</p>
+                </div>
+
+                <div class="yaml-block">
+# Complete Employee Onboarding Gateway Configuration
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: Gateway
+metadata:
+  name: employee-onboarding-gateway
+  namespace: production
+spec:
+  gatewayClassName: flex
+  listeners:
+  - name: https
+    port: 443
+    protocol: HTTPS
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - name: employee-onboarding-tls
+        kind: Secret
+
+---
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: HTTPRoute
+metadata:
+  name: employee-onboarding-routes
+  namespace: production
+spec:
+  parentRefs:
+  - name: employee-onboarding-gateway
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api/employees
+    backendRefs:
+    - name: employee-service
+      port: 80
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api/onboarding
+    backendRefs:
+    - name: onboarding-service
+      port: 80
+
+---
+# Security Policies
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: security-stack
+  namespace: production
+spec:
+  targetRef:
+    name: employee-onboarding-routes
+    kind: HTTPRoute
+  policyRef:
+    name: jwt-validation
+  config:
+    jwtKeyOrigin: jwks
+    jwksUrl: "https://auth.company.com/.well-known/jwks.json"
+    audience: "employee-onboarding-api"
+    issuer: "https://auth.company.com/"
+
+---
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: rate-limiting-production
+  namespace: production
+spec:
+  targetRef:
+    name: employee-onboarding-routes
+    kind: HTTPRoute
+  policyRef:
+    name: rate-limiting
+  config:
+    rateLimits:
+      - maximumRequests: 1000
+        timePeriod: 1
+        timePeriodTimeUnit: MINUTE
+    quotas:
+      - maximumRequests: 100000
+        timePeriod: 1
+        timePeriodTimeUnit: DAY
+
+---
+# Monitoring and Analytics
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: PolicyBinding
+metadata:
+  name: monitoring-stack
+  namespace: production
+spec:
+  targetRef:
+    name: employee-onboarding-routes
+    kind: HTTPRoute
+  policyRef:
+    name: analytics
+  config:
+    enableAnalytics: true
+    collectRequestData: true
+    collectResponseData: true</div>
+
+                <div class="deployment-grid">
+                    <div class="policy-card">
+                        <h3>🔧 Policy Management Best Practices</h3>
+                        <ul>
+                            <li><strong>Layered Security:</strong> Apply multiple complementary security policies</li>
+                            <li><strong>Environment Specific:</strong> Use different configurations per environment</li>
+                            <li><strong>Performance Impact:</strong> Monitor policy performance overhead</li>
+                            <li><strong>Testing Strategy:</strong> Test policies in staging before production</li>
+                            <li><strong>Version Control:</strong> Maintain policy configurations in Git</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="policy-card">
+                        <h3>📊 Policy Ordering Guidelines</h3>
+                        <ol>
+                            <li><strong>Authentication</strong> - JWT, OAuth, API Key validation</li>
+                            <li><strong>Authorization</strong> - Role-based access controls</li>
+                            <li><strong>Rate Limiting</strong> - Traffic control and quotas</li>
+                            <li><strong>Security</strong> - Threat protection, input validation</li>
+                            <li><strong>Transformation</strong> - Request/response modifications</li>
+                            <li><strong>Monitoring</strong> - Analytics, logging, tracing</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="policy-card">
+                        <h3>🎯 Performance Optimization</h3>
+                        <ul>
+                            <li><strong>Cache Configurations:</strong> Optimize JWT and OAuth caching</li>
+                            <li><strong>Batch Processing:</strong> Use batch APIs for analytics</li>
+                            <li><strong>Async Operations:</strong> Non-blocking policy execution</li>
+                            <li><strong>Resource Limits:</strong> Set appropriate timeouts and limits</li>
+                            <li><strong>Health Monitoring:</strong> Track policy performance metrics</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <div class="footer">
-            <h3>🛡️ Advanced API Security</h3>
-            <p>Comprehensive Flex Gateway security policies provide enterprise-grade protection for the Employee Onboarding Platform, ensuring HIPAA compliance, optimal performance, and robust threat protection across all API endpoints.</p>
-            <br>
-            <p><strong>Security Standards:</strong> OWASP Top 10, HIPAA, SOC 2, ISO 27001 compliance with advanced threat detection and automated incident response.</p>
+            <h3>🛡️ Flex Gateway Policy Excellence</h3>
+            <p>This comprehensive guide provides production-ready YAML configurations for all Flex Gateway policies. These configurations ensure enterprise-grade security, compliance, performance, and observability for your API infrastructure. All examples are tested and optimized for the Employee Onboarding Platform and can be adapted for various use cases.</p>
         </div>
     </div>
+
+    <script>
+        function showPolicyCategory(categoryId) {
+            // Hide all policy content sections
+            document.querySelectorAll('.policy-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected category content
+            document.getElementById(categoryId).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // Copy code functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.yaml-block').forEach(block => {
+                block.addEventListener('dblclick', function() {
+                    const text = this.textContent;
+                    navigator.clipboard.writeText(text).then(function() {
+                        // Visual feedback
+                        const originalBg = block.style.backgroundColor;
+                        block.style.backgroundColor = '#2d5a3d';
+                        setTimeout(() => {
+                            block.style.backgroundColor = originalBg;
+                        }, 200);
+                    });
+                });
+            });
+        });
+    </script>
+    <script src="common-scripts.js"></script>
 </body>
 </html>

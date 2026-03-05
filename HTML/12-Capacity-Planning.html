@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MuleSoft RTF Capacity Planning Guide - Employee Onboarding Platform</title>
+    <link rel="stylesheet" href="common-styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <span>🚀</span> Employee Onboarding Platform
+            </a>
+            <div class="nav-toggle" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Overview</a></li>
+                <li><a href="02-Enhanced-Navigation.html" class="nav-link">Navigation</a></li>
+                <li><a href="03-Flex-Gateway-Policies.html" class="nav-link">Flex Gateway</a></li>
+                <li><a href="04-RTF-EKS-Setup.html" class="nav-link">RTF EKS</a></li>
+                <li><a href="05-Anypoint-Platform.html" class="nav-link">Anypoint</a></li>
+                <li><a href="06-Auto-scaling.html" class="nav-link">Auto-scaling</a></li>
+                <li><a href="07-HIPAA-Compliance.html" class="nav-link">HIPAA</a></li>
+                <li><a href="08-RTF-Azure-Installation.html" class="nav-link">RTF Azure</a></li>
+                <li><a href="09-RTF-AWS-Installation.html" class="nav-link">RTF AWS</a></li>
+                <li><a href="10-RTF-Security.html" class="nav-link">Security</a></li>
+                <li><a href="11-Logging-Monitoring.html" class="nav-link">Monitoring</a></li>
+                <li><a href="12-Capacity-Planning.html" class="nav-link active">Capacity Planning</a></li>
+                <li><a href="13-Cost-Estimation.html" class="nav-link">Cost Estimation</a></li>
+                <li><a href="14-Action-Plans.html" class="nav-link">Action Plans</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="header">
+            <h1>📊 MuleSoft RTF Capacity Planning Guide</h1>
+            <div class="subtitle">Comprehensive capacity planning for Azure and AWS Runtime Fabric deployments</div>
+        </div>
+
+        <div class="content">
+            <div class="alert alert-info">
+                <strong>📊 Capacity Planning Overview:</strong> Strategic resource planning for MuleSoft Runtime Fabric on Azure AKS and AWS EKS to ensure optimal performance, scalability, and cost-effectiveness for the Employee Onboarding Platform.
+            </div>
+
+            <!-- Capacity Planning Overview -->
+            <div class="card">
+                <h2>🎯 Capacity Planning Framework</h2>
+                <p>Comprehensive approach to determining optimal resource allocation for MuleSoft Runtime Fabric across cloud providers.</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin: 2rem 0;">
+                    <div class="alert alert-success">
+                        <h4>📈 Growth Planning</h4>
+                        <ul>
+                            <li>Employee onboarding volume projections</li>
+                            <li>Peak processing requirements</li>
+                            <li>Seasonal scaling patterns</li>
+                            <li>Long-term expansion forecasting</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h4>🏗️ Resource Allocation</h4>
+                        <ul>
+                            <li>CPU and memory requirements</li>
+                            <li>Storage capacity planning</li>
+                            <li>Network bandwidth estimation</li>
+                            <li>High availability considerations</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <h4>⚖️ Performance Metrics</h4>
+                        <ul>
+                            <li>Response time targets (< 2s)</li>
+                            <li>Throughput requirements (80% threshold)</li>
+                            <li>Concurrent user capacity</li>
+                            <li>Data processing volumes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Azure Capacity Planning -->
+            <div class="card">
+                <h2>🌐 Azure AKS Capacity Planning</h2>
+                <p>Detailed capacity planning for MuleSoft RTF on Microsoft Azure Kubernetes Service.</p>
+                
+                <div class="yaml-block">
+# Azure AKS Capacity Planning Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: azure-capacity-planning
+  namespace: mulesoft-rtf
+data:
+  capacity-config.yaml: |
+    azure:
+      subscription_id: "your-subscription-id"
+      resource_group: "mulesoft-rtf-rg"
+      region: "East US 2"
+      
+      node_pools:
+        - name: rtf-system-pool
+          vm_size: "Standard_D4s_v3"
+          min_count: 3
+          max_count: 10
+          os_disk_size_gb: 128
+          node_taints: ["rtf-system=true:NoSchedule"]
+          
+        - name: rtf-app-pool
+          vm_size: "Standard_D8s_v3"
+          min_count: 2
+          max_count: 20
+          os_disk_size_gb: 256
+          enable_auto_scaling: true
+          
+      storage:
+        class: "managed-premium"
+        size: "1Ti"
+        replication: "LRS"
+        
+      networking:
+        vnet_address_space: "10.0.0.0/16"
+        subnet_address_prefix: "10.0.1.0/24"
+        service_cidr: "10.0.2.0/24"
+        dns_service_ip: "10.0.2.10"
+        
+      monitoring:
+        log_analytics_workspace: "mulesoft-logs-workspace"
+        retention_days: 30
+        alerts_enabled: true</div>
+
+                <h3>💰 Azure Cost Estimates</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">$2,400</div>
+                        <div class="stat-label">Monthly Base Cost</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$4,800</div>
+                        <div class="stat-label">Peak Scale Cost</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$28,800</div>
+                        <div class="stat-label">Annual Budget</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">15-30</div>
+                        <div class="stat-label">Node Range</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AWS Capacity Planning -->
+            <div class="card">
+                <h2>☁️ AWS EKS Capacity Planning</h2>
+                <p>Comprehensive capacity planning for MuleSoft RTF on Amazon Elastic Kubernetes Service.</p>
+                
+                <div class="yaml-block">
+# AWS EKS Capacity Planning Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-capacity-planning
+  namespace: mulesoft-rtf
+data:
+  capacity-config.yaml: |
+    aws:
+      region: "us-east-1"
+      availability_zones: ["us-east-1a", "us-east-1b", "us-east-1c"]
+      
+      node_groups:
+        - name: rtf-system-nodes
+          instance_types: ["m5.xlarge", "m5a.xlarge"]
+          min_size: 3
+          max_size: 10
+          desired_size: 6
+          disk_size: 100
+          ami_type: "AL2_x86_64"
+          capacity_type: "ON_DEMAND"
+          
+        - name: rtf-app-nodes
+          instance_types: ["m5.2xlarge", "m5a.2xlarge", "c5.2xlarge"]
+          min_size: 2
+          max_size: 25
+          desired_size: 8
+          disk_size: 200
+          ami_type: "AL2_x86_64"
+          capacity_type: "SPOT"
+          spot_allocation_strategy: "diversified"
+          
+      storage:
+        ebs_csi_driver: true
+        storage_classes:
+          - name: "gp3-fast"
+            type: "gp3"
+            iops: 3000
+            throughput: 125
+            
+      networking:
+        vpc_cidr: "10.0.0.0/16"
+        private_subnets: ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+        public_subnets: ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+        enable_nat_gateway: true
+        single_nat_gateway: false
+        
+      monitoring:
+        cloudwatch_logs: true
+        container_insights: true
+        prometheus: true
+        grafana: true</div>
+
+                <h3>💵 AWS Cost Estimates</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">$1,800</div>
+                        <div class="stat-label">Monthly Base Cost</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$3,600</div>
+                        <div class="stat-label">Peak Scale Cost</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$21,600</div>
+                        <div class="stat-label">Annual Budget</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">5-35</div>
+                        <div class="stat-label">Node Range</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resource Planning Matrix -->
+            <div class="card">
+                <h2>📋 Resource Planning Matrix</h2>
+                <p>Detailed resource allocation planning for different deployment scenarios.</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Deployment Type</th>
+                            <th>CPU Cores</th>
+                            <th>Memory (GB)</th>
+                            <th>Storage (GB)</th>
+                            <th>Network (Gbps)</th>
+                            <th>Estimated Users</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Development</strong></td>
+                            <td>4-8</td>
+                            <td>16-32</td>
+                            <td>500</td>
+                            <td>1</td>
+                            <td>10-50</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Staging</strong></td>
+                            <td>8-16</td>
+                            <td>32-64</td>
+                            <td>1,000</td>
+                            <td>2</td>
+                            <td>50-200</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Production</strong></td>
+                            <td>16-64</td>
+                            <td>64-256</td>
+                            <td>2,000</td>
+                            <td>5</td>
+                            <td>200-1,000</td>
+                        </tr>
+                        <tr>
+                            <td><strong>High-Availability</strong></td>
+                            <td>32-128</td>
+                            <td>128-512</td>
+                            <td>5,000</td>
+                            <td>10</td>
+                            <td>1,000-5,000</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Scaling Strategies -->
+            <div class="card">
+                <h2>⚡ Auto-Scaling Strategies</h2>
+                <p>Advanced auto-scaling configurations for optimal resource utilization.</p>
+                
+                <div class="config-block">
+# Horizontal Pod Autoscaler Configuration
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: employee-onboarding-hpa
+  namespace: mulesoft-rtf
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: employee-onboarding-app
+  minReplicas: 3
+  maxReplicas: 12
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60</div>
+            </div>
+
+            <!-- Performance Benchmarks -->
+            <div class="card">
+                <h2>🎯 Performance Benchmarks</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
+                    <div class="alert alert-success">
+                        <h4>📊 Throughput Targets</h4>
+                        <ul>
+                            <li><strong>API Requests:</strong> 1,000 req/min</li>
+                            <li><strong>Employee Processing:</strong> 50 employees/hour</li>
+                            <li><strong>Asset Allocation:</strong> 200 assets/hour</li>
+                            <li><strong>Notification Delivery:</strong> 5,000 notifications/hour</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h4>⏱️ Response Time SLAs</h4>
+                        <ul>
+                            <li><strong>API Response:</strong> < 2 seconds</li>
+                            <li><strong>Database Queries:</strong> < 500ms</li>
+                            <li><strong>File Processing:</strong> < 30 seconds</li>
+                            <li><strong>Email Delivery:</strong> < 5 minutes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <h3>📊 Capacity Planning Excellence</h3>
+            <p>This comprehensive capacity planning guide ensures optimal resource allocation for MuleSoft Runtime Fabric deployments, supporting scalable and cost-effective employee onboarding operations across Azure and AWS cloud platforms.</p>
+        </div>
+    </div>
+
+    <script src="common-scripts.js"></script>
+</body>
+</html>

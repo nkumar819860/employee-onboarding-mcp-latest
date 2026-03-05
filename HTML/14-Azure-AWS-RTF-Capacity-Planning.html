@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure/AWS RTF Capacity Planning & Cost Guide</title>
+    <link rel="stylesheet" href="common-styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌩️</text></svg>">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <span>🚀</span> Employee Onboarding Platform
+            </a>
+            <div class="nav-toggle" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Overview</a></li>
+                <li><a href="02-Enhanced-Navigation.html" class="nav-link">Navigation</a></li>
+                <li><a href="03-Flex-Gateway-Policies.html" class="nav-link">Flex Gateway</a></li>
+                <li><a href="04-RTF-EKS-Setup.html" class="nav-link">RTF EKS</a></li>
+                <li><a href="05-Anypoint-Platform.html" class="nav-link">Anypoint</a></li>
+                <li><a href="06-Auto-scaling.html" class="nav-link">Auto-scaling</a></li>
+                <li><a href="07-HIPAA-Compliance.html" class="nav-link">HIPAA</a></li>
+                <li><a href="08-RTF-Azure-Installation.html" class="nav-link">RTF Azure</a></li>
+                <li><a href="09-RTF-AWS-Installation.html" class="nav-link">RTF AWS</a></li>
+                <li><a href="10-RTF-Security.html" class="nav-link">Security</a></li>
+                <li><a href="11-Logging-Monitoring.html" class="nav-link">Monitoring</a></li>
+                <li><a href="12-Capacity-Planning.html" class="nav-link">Capacity Planning</a></li>
+                <li><a href="13-MuleSoft-Capacity-Planning.html" class="nav-link">MuleSoft Planning</a></li>
+                <li><a href="14-Azure-AWS-RTF-Capacity-Planning.html" class="nav-link active">Cloud RTF Planning</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="header">
+            <h1>🌩️ Azure/AWS RTF Capacity Planning & Cost Estimation</h1>
+            <div class="subtitle">Comprehensive capacity planning for MuleSoft Runtime Fabric on Azure AKS and AWS EKS with detailed cost analysis and optimization strategies</div>
+        </div>
+
+        <div class="content">
+            <div class="alert alert-info">
+                <strong>☁️ Cloud RTF Planning Overview:</strong> Strategic capacity planning for Runtime Fabric deployments on Azure AKS and AWS EKS, including infrastructure sizing, cost optimization, and actionable recommendations for the Employee Onboarding Platform.
+            </div>
+
+            <!-- Azure AKS RTF Planning -->
+            <div class="card">
+                <h2>🌐 Azure AKS Runtime Fabric Planning</h2>
+                <p>Comprehensive capacity planning and cost estimation for MuleSoft RTF on Microsoft Azure Kubernetes Service.</p>
+                
+                <h3>🏗️ Infrastructure Sizing Matrix</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Environment</th>
+                            <th>Node Pool</th>
+                            <th>VM Size</th>
+                            <th>Node Count</th>
+                            <th>vCPU/Memory</th>
+                            <th>Monthly Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Development</strong></td>
+                            <td>System + App</td>
+                            <td>Standard_D2s_v3</td>
+                            <td>3-5</td>
+                            <td>6-10 vCPU / 12-20 GB</td>
+                            <td>$350-580</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Staging</strong></td>
+                            <td>System + App</td>
+                            <td>Standard_D4s_v3</td>
+                            <td>5-8</td>
+                            <td>20-32 vCPU / 40-64 GB</td>
+                            <td>$720-1,150</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Production</strong></td>
+                            <td>System + App</td>
+                            <td>Standard_D8s_v3</td>
+                            <td>8-15</td>
+                            <td>64-120 vCPU / 128-240 GB</td>
+                            <td>$1,440-2,700</td>
+                        </tr>
+                        <tr>
+                            <td><strong>HA Production</strong></td>
+                            <td>Multi-Zone</td>
+                            <td>Standard_D8s_v3</td>
+                            <td>12-20</td>
+                            <td>96-160 vCPU / 192-320 GB</td>
+                            <td>$2,160-3,600</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="yaml-block">
+# Azure AKS RTF Capacity Planning Configuration
+azure_rtf_configuration:
+  subscription_details:
+    region: "East US 2"
+    availability_zones: ["1", "2", "3"]
+    resource_group: "rtf-employee-onboarding-rg"
+    
+  aks_cluster:
+    kubernetes_version: "1.28.5"
+    network_policy: "azure"
+    load_balancer_sku: "standard"
+    
+  node_pools:
+    system_pool:
+      name: "rtfsystem"
+      vm_size: "Standard_D4s_v3"
+      min_count: 3
+      max_count: 6
+      os_disk_size_gb: 128
+      os_disk_type: "Premium_LRS"
+      node_taints: ["rtf=system:NoSchedule"]
+      
+    application_pool:
+      name: "rtfapps"
+      vm_size: "Standard_D8s_v3"
+      min_count: 3
+      max_count: 15
+      os_disk_size_gb: 256
+      os_disk_type: "Premium_LRS"
+      enable_auto_scaling: true
+      
+  networking:
+    vnet_address_space: "10.240.0.0/16"
+    subnet_address_prefix: "10.240.0.0/24"
+    service_cidr: "10.241.0.0/16"
+    dns_service_ip: "10.241.0.10"
+    
+  storage:
+    storage_class: "managed-premium"
+    backup_retention_days: 30
+    
+  estimated_costs:
+    compute: "$1,800/month"
+    storage: "$300/month"
+    networking: "$150/month"
+    load_balancer: "$80/month"
+    total: "$2,330/month"</div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">$2,330</div>
+                        <div class="stat-label">Monthly Cost (Prod)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">3-15</div>
+                        <div class="stat-label">Node Scaling Range</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">99.9%</div>
+                        <div class="stat-label">SLA Availability</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">3 AZ</div>
+                        <div class="stat-label">High Availability</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AWS EKS RTF Planning -->
+            <div class="card">
+                <h2>☁️ AWS EKS Runtime Fabric Planning</h2>
+                <p>Detailed capacity planning and cost analysis for MuleSoft RTF on Amazon Elastic Kubernetes Service.</p>
+                
+                <h3>📊 EC2 Instance Sizing Strategy</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Environment</th>
+                            <th>Instance Type</th>
+                            <th>Instance Count</th>
+                            <th>vCPU/Memory</th>
+                            <th>Storage</th>
+                            <th>Monthly Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Development</strong></td>
+                            <td>t3.large</td>
+                            <td>3-4</td>
+                            <td>6-8 vCPU / 16-32 GB</td>
+                            <td>100 GB gp3</td>
+                            <td>$200-270</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Staging</strong></td>
+                            <td>m5.xlarge</td>
+                            <td>4-6</td>
+                            <td>16-24 vCPU / 64-96 GB</td>
+                            <td>200 GB gp3</td>
+                            <td>$460-690</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Production</strong></td>
+                            <td>m5.2xlarge</td>
+                            <td>6-12</td>
+                            <td>48-96 vCPU / 192-384 GB</td>
+                            <td>500 GB gp3</td>
+                            <td>$920-1,840</td>
+                        </tr>
+                        <tr>
+                            <td><strong>HA Production</strong></td>
+                            <td>m5.2xlarge + c5.2xlarge</td>
+                            <td>9-18</td>
+                            <td>72-144 vCPU / 288-576 GB</td>
+                            <td>1 TB gp3</td>
+                            <td>$1,380-2,760</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="config-block">
+# AWS EKS RTF Infrastructure Configuration
+aws_rtf_configuration:
+  region: "us-east-1"
+  availability_zones: ["us-east-1a", "us-east-1b", "us-east-1c"]
+  
+  eks_cluster:
+    version: "1.28"
+    endpoint_private_access: true
+    endpoint_public_access: true
+    cluster_log_types: ["api", "audit", "authenticator"]
+    
+  managed_node_groups:
+    rtf_system_nodes:
+      instance_types: ["m5.large", "m5.xlarge"]
+      capacity_type: "ON_DEMAND"
+      min_size: 2
+      max_size: 5
+      desired_size: 3
+      disk_size: 100
+      
+    rtf_application_nodes:
+      instance_types: ["m5.2xlarge", "c5.2xlarge", "r5.2xlarge"]
+      capacity_type: "SPOT"
+      min_size: 3
+      max_size: 15
+      desired_size: 6
+      disk_size: 200
+      
+  networking:
+    vpc_cidr: "10.0.0.0/16"
+    private_subnets: ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+    public_subnets: ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+    
+  cost_breakdown:
+    eks_control_plane: "$73/month"
+    ec2_instances: "$920-1,840/month"
+    ebs_storage: "$50-200/month"
+    data_transfer: "$100-300/month"
+    load_balancer: "$22/month"
+    total_range: "$1,165-2,435/month"</div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">$1,165</div>
+                        <div class="stat-label">Min Monthly Cost</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$2,435</div>
+                        <div class="stat-label">Max Monthly Cost</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">60%</div>
+                        <div class="stat-label">Spot Instance Savings</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">99.95%</div>
+                        <div class="stat-label">EKS SLA</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cost Comparison Analysis -->
+            <div class="card">
+                <h2>💰 Comprehensive Cost Analysis</h2>
+                <p>Detailed comparison of Azure AKS vs AWS EKS for Runtime Fabric deployments with TCO analysis.</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+                    <div class="alert alert-info">
+                        <h4>🌐 Azure AKS Advantages</h4>
+                        <ul>
+                            <li><strong>Enterprise Integration:</strong> Active Directory, Azure DevOps</li>
+                            <li><strong>Hybrid Cloud:</strong> Azure Arc, Azure Stack</li>
+                            <li><strong>Reserved Instances:</strong> Up to 72% savings</li>
+                            <li><strong>Azure Credits:</strong> Enterprise agreements</li>
+                            <li><strong>Managed Identity:</strong> Seamless authentication</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-success">
+                        <h4>☁️ AWS EKS Advantages</h4>
+                        <ul>
+                            <li><strong>Spot Instances:</strong> Up to 90% cost reduction</li>
+                            <li><strong>Fargate:</strong> Serverless container option</li>
+                            <li><strong>Global Infrastructure:</strong> More regions/AZs</li>
+                            <li><strong>Mature Ecosystem:</strong> Extensive tooling</li>
+                            <li><strong>Cost Optimization:</strong> Advanced tools</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>📈 Total Cost of Ownership (3-Year Analysis)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cost Component</th>
+                            <th>Azure AKS</th>
+                            <th>AWS EKS</th>
+                            <th>Cost Difference</th>
+                            <th>Winner</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Infrastructure (3 years)</strong></td>
+                            <td>$83,880</td>
+                            <td>$62,100</td>
+                            <td>-$21,780</td>
+                            <td>🏆 AWS</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Setup & Migration</strong></td>
+                            <td>$15,000</td>
+                            <td>$12,000</td>
+                            <td>-$3,000</td>
+                            <td>🏆 AWS</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Operations & Support</strong></td>
+                            <td>$36,000</td>
+                            <td>$42,000</td>
+                            <td>+$6,000</td>
+                            <td>🏆 Azure</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Monitoring & Tools</strong></td>
+                            <td>$18,000</td>
+                            <td>$15,000</td>
+                            <td>-$3,000</td>
+                            <td>🏆 AWS</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total 3-Year TCO</strong></td>
+                            <td>$152,880</td>
+                            <td>$131,100</td>
+                            <td>-$21,780</td>
+                            <td>🏆 AWS</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Performance Optimization Strategies -->
+            <div class="card">
+                <h2>🚀 Performance & Cost Optimization</h2>
+                <p>Advanced strategies to optimize both performance and costs for cloud RTF deployments.</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin: 2rem 0;">
+                    <div class="alert alert-warning">
+                        <h4>⚡ Azure Optimization</h4>
+                        <ul>
+                            <li>Use Azure Reserved Instances (3-year)</li>
+                            <li>Implement Azure Spot VMs for dev/test</li>
+                            <li>Enable cluster autoscaler</li>
+                            <li>Optimize storage tier selection</li>
+                            <li>Use Azure Policy for governance</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h4>⚡ AWS Optimization</h4>
+                        <ul>
+                            <li>Maximize Spot Instance usage (60-90%)</li>
+                            <li>Use Savings Plans for predictable workloads</li>
+                            <li>Implement Cluster Autoscaler + HPA</li>
+                            <li>Optimize EBS volume types (gp3)</li>
+                            <li>Use AWS Cost Explorer for insights</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-success">
+                        <h4>🔧 Common Optimizations</h4>
+                        <ul>
+                            <li>Right-size node pools regularly</li>
+                            <li>Implement pod resource requests/limits</li>
+                            <li>Use horizontal pod autoscaling</li>
+                            <li>Optimize container images</li>
+                            <li>Monitor and alert on resource usage</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auto-scaling Configuration -->
+            <div class="card">
+                <h2>📈 Auto-scaling Strategy & Configuration</h2>
+                <p>Detailed auto-scaling configurations for optimal resource utilization and cost management.</p>
+                
+                <div class="yaml-block">
+# Horizontal Pod Autoscaler Configuration for Employee Onboarding
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: employee-onboarding-hpa
+  namespace: rtf
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: employee-onboarding-app
+  minReplicas: 2
+  maxReplicas: 12
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 25
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+        
+---
+# Cluster Autoscaler Configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cluster-autoscaler
+  namespace: kube-system
+spec:
+  template:
+    spec:
+      containers:
+      - image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.28.0
+        name: cluster-autoscaler
+        command:
+        - ./cluster-autoscaler
+        - --v=4
+        - --stderrthreshold=info
+        - --cloud-provider=aws # or azure
+        - --skip-nodes-with-local-storage=false
+        - --expander=least-waste
+        - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/rtf-cluster
+        - --scale-down-delay-after-add=10m
+        - --scale-down-unneeded-time=10m</div>
+
+                <h3>🎯 Scaling Thresholds & Targets</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Scale Up Threshold</th>
+                            <th>Scale Down Threshold</th>
+                            <th>Target Range</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>CPU Utilization</strong></td>
+                            <td>> 80%</td>
+                            <td>< 50%</td>
+                            <td>60-80%</td>
+                            <td>HPA + CA</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Memory Utilization</strong></td>
+                            <td>> 85%</td>
+                            <td>< 40%</td>
+                            <td>60-85%</td>
+                            <td>HPA + CA</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Request Queue</strong></td>
+                            <td>> 100 requests</td>
+                            <td>< 10 requests</td>
+                            <td>10-50 requests</td>
+                            <td>Custom HPA</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Response Time</strong></td>
+                            <td>> 3 seconds</td>
+                            <td>< 1 second</td>
+                            <td>1-2 seconds</td>
+                            <td>Alert + Scale</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Action Plan & Recommendations -->
+            <div class="card">
+                <h2>✅ Implementation Action Plan</h2>
+                <p>Step-by-step action plan for implementing optimal RTF capacity planning on Azure/AWS.</p>
+                
+                <div class="config-block">
+# Azure/AWS RTF Implementation Action Plan
+
+phase_1_assessment:
+  timeline: "2-4 weeks"
+  activities:
+    - current_workload_analysis
+    - performance_baseline_establishment
+    - cost_optimization_assessment
+    - cloud_provider_selection_finalization
+    
+phase_2_infrastructure_setup:
+  timeline: "4-6 weeks"
+  activities:
+    - kubernetes_cluster_provisioning
+    - networking_security_configuration
+    - monitoring_logging_implementation
+    - rtf_installation_configuration
+    
+phase_3_application_migration:
+  timeline: "6-8 weeks"
+  activities:
+    - application_containerization
+    - deployment_pipeline_setup
+    - performance_testing_validation
+    - cutover_rollback_planning
+    
+phase_4_optimization:
+  timeline: "2-4 weeks"
+  activities:
+    - autoscaling_fine_tuning
+    - cost_monitoring_implementation
+    - performance_optimization
+    - documentation_training
+    
+success_metrics:
+  cost_reduction: "30-40%"
+  performance_improvement: "25-50%"
+  availability_target: "99.9%"
+  scaling_efficiency: ">80%"</div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">16 weeks</div>
+                        <div class="stat-label">Total Implementation</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">40%</div>
+                        <div class="stat-label">Potential Savings</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">50%</div>
+                        <div class="stat-label">Performance Gain</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">6 months</div>
+                        <div class="stat-label">ROI Timeline</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Migration Strategy -->
+            <div class="card">
+                <h2>🔄 Migration Strategy & Risk Mitigation</h2>
+                <p>Comprehensive migration strategy with risk assessment and mitigation plans.</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
+                    <div class="alert alert-info">
+                        <h4>🎯 Migration Approaches</h4>
+                        <ul>
+                            <li><strong>Lift & Shift:</strong> Quick migration, minimal changes</li>
+                            <li><strong>Replatforming:</strong> Cloud-native optimizations</li>
+                            <li><strong>Blue-Green:</strong> Zero-downtime deployment</li>
+                            <li><strong>Canary:</strong> Gradual traffic migration</li>
+                            <li><strong>A/B Testing:</strong> Performance validation</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <h4>⚠️ Risk Assessment</h4>
+                        <ul>
+                            <li><strong>High Risk:</strong> Data consistency, performance</li>
+                            <li><strong>Medium Risk:</strong> Security, compliance</li>
+                            <li><strong>Low Risk:</strong> Monitoring, logging</li>
+                            <li><strong>Mitigation:</strong> Rollback procedures</li>
+                            <li><strong>Testing:</strong> Load testing, DR drills</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>📋 Migration Checklist</h3>
+                <div class="config-block">
+pre_migration:
+  ✅ Performance baseline established
+  ✅ Infrastructure provisioned and tested
+  ✅ Security policies implemented
+  ✅ Monitoring and alerting configured
+  ✅ Backup and disaster recovery tested
+  ✅ Team training completed
+  
+during_migration:
+  ✅ Application containerization
+  ✅ Configuration management
+  ✅ Data migration validation
+  ✅ Performance monitoring
+  ✅ Rollback procedures ready
+  ✅ Communication plan active
+  
+post_migration:
+  ✅ Performance validation
+  ✅ Cost optimization review
+  ✅ Security audit completion
+  ✅ Documentation updates
+  ✅ Team feedback collection
+  ✅ Continuous improvement plan</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <h3>🌩️ Cloud RTF Planning Excellence</h3>
+            <p>This comprehensive guide provides detailed capacity planning and cost estimation for MuleSoft Runtime Fabric on Azure AKS and AWS EKS, enabling organizations to make informed decisions about their cloud infrastructure investments while optimizing performance, costs, and operational efficiency for the Employee Onboarding Platform.</p>
+        </div>
+    </div>
+
+    <script src="common-scripts.js"></script>
+</body>
+</html>

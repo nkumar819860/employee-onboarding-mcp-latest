@@ -4,659 +4,125 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HIPAA Compliance & Active EKS RTF DR Architecture</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding-top: 80px;
-        }
-
-        /* Enhanced Menu Bar Navigation */
-        .menu-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 20, 40, 0.95);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            padding: 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            border-bottom: 3px solid #FC7300;
-        }
-
-        .menu-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-        }
-
-        .logo {
-            color: #00D4FF;
-            font-size: 1.5rem;
-            font-weight: 700;
-            text-decoration: none;
-            padding: 15px 0;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .nav-menu {
-            display: flex;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .nav-item {
-            position: relative;
-        }
-
-        .nav-link {
-            color: #fff;
-            text-decoration: none;
-            padding: 18px 20px;
-            display: flex;
-            align-items: center;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            font-family: 'Poppins', sans-serif;
-            font-size: 14px;
-        }
-
-        .nav-icon {
-            margin-right: 8px;
-            font-size: 16px;
-        }
-
-        .nav-link:hover {
-            background: rgba(0, 212, 255, 0.2);
-            color: #00D4FF;
-            transform: translateY(-2px);
-        }
-
-        .nav-link.active {
-            background: rgba(252, 115, 0, 0.3);
-            color: #FC7300;
-            font-weight: 600;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-            background: white;
-            margin-top: 20px;
-            margin-bottom: 20px;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-
-        header {
-            background: linear-gradient(135deg, #2C5282 0%, #2A4A6B 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-            border-radius: 15px 15px 0 0;
-            margin: -20px -20px 30px -20px;
-        }
-
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            font-family: 'Poppins', sans-serif;
-            font-weight: 700;
-        }
-
-        .subtitle {
-            font-size: 1.2em;
-            opacity: 0.9;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 400;
-        }
-
-        .toc {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            border-left: 5px solid #2C5282;
-        }
-
-        .toc h3 {
-            color: #2C5282;
-            margin-bottom: 15px;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 600;
-        }
-
-        .toc ul {
-            list-style: none;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 10px;
-        }
-
-        .toc li {
-            padding: 8px 0;
-        }
-
-        .toc a {
-            color: #2C5282;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            font-family: 'Poppins', sans-serif;
-            display: block;
-            padding: 8px 12px;
-            border-radius: 5px;
-        }
-
-        .toc a:hover {
-            background: rgba(44, 82, 130, 0.1);
-            color: #1a365d;
-            transform: translateX(5px);
-        }
-
-        .section {
-            margin-bottom: 40px;
-            padding: 30px;
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            border-left: 5px solid #2C5282;
-        }
-
-        h2 {
-            color: #2C5282;
-            margin-bottom: 20px;
-            font-size: 1.8em;
-            border-bottom: 3px solid #e2e8f0;
-            padding-bottom: 10px;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 600;
-        }
-
-        h3 {
-            color: #2A4A6B;
-            margin: 25px 0 15px 0;
-            font-size: 1.4em;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 600;
-        }
-
-        h4 {
-            color: #4A5568;
-            margin: 20px 0 10px 0;
-            font-size: 1.2em;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 600;
-        }
-
-        h5 {
-            color: #2D3748;
-            margin: 15px 0 8px 0;
-            font-size: 1.1em;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 600;
-        }
-
-        p, li {
-            font-family: 'Poppins', sans-serif;
-            font-weight: 400;
-            font-size: 16px;
-            line-height: 1.7;
-            margin-bottom: 15px;
-        }
-
-        ul, ol {
-            padding-left: 25px;
-            margin-bottom: 20px;
-        }
-
-        .component-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin: 20px 0;
-        }
-
-        .component-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease;
-        }
-
-        .component-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .component-card h4, .component-card h5, .component-card h6 {
-            color: white;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 600;
-        }
-
-        .component-card ul {
-            list-style: none;
-        }
-
-        .component-card li {
-            padding: 5px 0;
-            padding-left: 25px;
-            position: relative;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 400;
-        }
-
-        .component-card li:before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #68d391;
-            font-weight: bold;
-            font-size: 18px;
-        }
-
-        .highlight-box {
-            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            margin: 25px 0;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-
-        .warning-box {
-            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            margin: 25px 0;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-
-        .critical-box {
-            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            margin: 25px 0;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-
-        .code-block {
-            background: #1a202c;
-            color: #e2e8f0;
-            padding: 25px;
-            border-radius: 15px;
-            overflow-x: auto;
-            margin: 20px 0;
-            font-family: 'Courier New', monospace;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            border: 1px solid #2d3748;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .code-block pre {
-            margin: 0;
-            white-space: pre-wrap;
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin: 20px 0;
-        }
-
-        .metric-card {
-            background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease;
-        }
-
-        .metric-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .metric-value {
-            font-size: 2.5em;
-            font-weight: bold;
-            margin-bottom: 10px;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .metric-label {
-            font-size: 0.9em;
-            opacity: 0.9;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 500;
-        }
-
-        .compliance-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin: 20px 0;
-        }
-
-        .compliance-card {
-            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            position: relative;
-            transition: transform 0.3s ease;
-        }
-
-        .compliance-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .compliance-card.secure {
-            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-        }
-
-        .compliance-card.warning {
-            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
-        }
-
-        .compliance-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-        }
-
-        .compliance-status {
-            font-size: 1.2em;
-            font-weight: bold;
-            margin-bottom: 10px;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .compliance-description {
-            font-size: 0.9em;
-            opacity: 0.9;
-            font-family: 'Poppins', sans-serif;
-            line-height: 1.4;
-        }
-
-        .dr-architecture {
-            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
-            margin: 25px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            line-height: 1.4;
-            overflow-x: auto;
-            white-space: pre;
-        }
-
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-
-        .status-active {
-            background: #48bb78;
-            box-shadow: 0 0 10px rgba(72, 187, 120, 0.5);
-        }
-
-        .status-standby {
-            background: #ed8936;
-            box-shadow: 0 0 10px rgba(237, 137, 54, 0.5);
-        }
-
-        .status-critical {
-            background: #e53e3e;
-            box-shadow: 0 0 10px rgba(229, 62, 62, 0.5);
-        }
-
-        .footer {
-            background: #2d3748;
-            color: white;
-            padding: 30px;
-            text-align: center;
-            border-radius: 0 0 15px 15px;
-            margin: 30px -20px -20px -20px;
-        }
-
-        /* Mobile responsive design */
-        @media (max-width: 768px) {
-            body {
-                padding-top: 70px;
-            }
-            
-            .component-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .compliance-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .metrics-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .toc ul {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .compliance-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .metrics-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-    <script>
-        // Mobile menu toggle functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-            const navMenu = document.getElementById('nav-menu');
-            
-            if (mobileMenuToggle && navMenu) {
-                mobileMenuToggle.addEventListener('click', function() {
-                    navMenu.classList.toggle('active');
-                });
-            }
-        });
-    </script>
+    <link rel="stylesheet" href="common-styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
 </head>
 <body>
-    <!-- Enhanced Menu Bar Navigation -->
-    <nav class="menu-bar">
-        <div class="menu-container">
-            <a href="index.html" class="logo">🏥 HIPAA Compliance & Active EKS RTF DR</a>
-            <ul class="nav-menu" id="nav-menu">
-                <li class="nav-item">
-                    <a href="index.html" class="nav-link">
-                        <span class="nav-icon">🏠</span>
-                        Home
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="01-Overview.html" class="nav-link">
-                        <span class="nav-icon">🎯</span>
-                        Overview
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="02-Enhanced-Navigation.html" class="nav-link">
-                        <span class="nav-icon">🎨</span>
-                        Navigation
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="03-Flex-Gateway-Policies.html" class="nav-link">
-                        <span class="nav-icon">🛡️</span>
-                        Security Policies
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="04-RTF-EKS-Setup.html" class="nav-link">
-                        <span class="nav-icon">🏗️</span>
-                        RTF Setup
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="05-Anypoint-Platform.html" class="nav-link">
-                        <span class="nav-icon">☁️</span>
-                        Platform
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="06-Auto-scaling.html" class="nav-link">
-                        <span class="nav-icon">📈</span>
-                        Auto-scaling
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="07-HIPAA-Compliance.html" class="nav-link active">
-                        <span class="nav-icon">🏥</span>
-                        HIPAA & DR
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="08-System-Validation.html" class="nav-link">
-                        <span class="nav-icon">🔍</span>
-                        Validation
-                    </a>
-                </li>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <span>🏥</span> HIPAA Compliance & Active EKS RTF DR
+            </a>
+            <div class="nav-toggle" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="01-Overview.html" class="nav-link">Overview</a></li>
+                <li><a href="02-Enhanced-Navigation.html" class="nav-link">Navigation</a></li>
+                <li><a href="03-Flex-Gateway-Policies.html" class="nav-link">Security Policies</a></li>
+                <li><a href="04-RTF-EKS-Setup.html" class="nav-link">RTF Setup</a></li>
+                <li><a href="05-Anypoint-Platform.html" class="nav-link">Platform</a></li>
+                <li><a href="06-Auto-scaling.html" class="nav-link">Auto-scaling</a></li>
+                <li><a href="07-HIPAA-Compliance.html" class="nav-link active">HIPAA & DR</a></li>
+                <li><a href="08-System-Validation.html" class="nav-link">Validation</a></li>
             </ul>
-            <button class="mobile-menu-toggle" id="mobile-menu-toggle">
-                ☰
-            </button>
         </div>
     </nav>
 
     <div class="container">
-        <header>
+        <div class="header">
             <h1>🏥 HIPAA Compliance & Active EKS RTF DR Architecture</h1>
             <div class="subtitle">Comprehensive Data Protection with Active-Active EKS RTF Cluster & Disaster Recovery</div>
-        </header>
-
-        <div class="toc">
-            <h3>📋 Table of Contents</h3>
-            <ul>
-                <li><a href="#overview">🛡️ HIPAA Compliance Overview</a></li>
-                <li><a href="#active-eks-architecture">🏗️ Active EKS RTF Architecture</a></li>
-                <li><a href="#dr-strategy">🔄 Disaster Recovery Strategy</a></li>
-                <li><a href="#backup-procedures">💾 Backup Procedures & Actions</a></li>
-                <li><a href="#downtime-management">⏱️ Downtime Management</a></li>
-                <li><a href="#communications">📢 Communications & Incident Response</a></li>
-                <li><a href="#data-protection">🔒 Data Protection Measures</a></li>
-                <li><a href="#access-controls">👤 Access Controls & Authentication</a></li>
-                <li><a href="#audit-logging">📝 Audit Logging & Monitoring</a></li>
-                <li><a href="#compliance-checklist">✅ Compliance Checklist</a></li>
-            </ul>
         </div>
 
-        <section id="overview" class="section">
-            <h2>🛡️ HIPAA Compliance Overview</h2>
-            
-            <div class="critical-box">
-                <h4>🚨 HIPAA Requirements for Employee Data with Active-Active DR</h4>
-                <p>The Employee Onboarding Platform handles sensitive employee information that may include Protected Health Information (PHI) and Personally Identifiable Information (PII). Our implementation ensures full HIPAA compliance with comprehensive security measures, active-active EKS RTF cluster deployment, automated disaster recovery, and complete incident response procedures.</p>
+        <div class="content">
+            <!-- Table of Contents -->
+            <div class="card">
+                <h3>📋 Table of Contents</h3>
+                <ul style="list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px;">
+                    <li><a href="#overview" class="nav-card-link">🛡️ HIPAA Compliance Overview</a></li>
+                    <li><a href="#active-eks-architecture" class="nav-card-link">🏗️ Active EKS RTF Architecture</a></li>
+                    <li><a href="#dr-strategy" class="nav-card-link">🔄 Disaster Recovery Strategy</a></li>
+                    <li><a href="#backup-procedures" class="nav-card-link">💾 Backup Procedures & Actions</a></li>
+                    <li><a href="#downtime-management" class="nav-card-link">⏱️ Downtime Management</a></li>
+                    <li><a href="#communications" class="nav-card-link">📢 Communications & Incident Response</a></li>
+                    <li><a href="#data-protection" class="nav-card-link">🔒 Data Protection Measures</a></li>
+                    <li><a href="#access-controls" class="nav-card-link">👤 Access Controls & Authentication</a></li>
+                    <li><a href="#audit-logging" class="nav-card-link">📝 Audit Logging & Monitoring</a></li>
+                    <li><a href="#compliance-checklist" class="nav-card-link">✅ Compliance Checklist</a></li>
+                </ul>
             </div>
 
-            <div class="compliance-grid">
-                <div class="compliance-card secure">
-                    <div class="compliance-icon">🔐</div>
-                    <div class="compliance-status">AES-256 Encryption</div>
-                    <div class="compliance-description">Data encrypted at rest and in transit with military-grade security across all regions</div>
+            <section id="overview" class="card">
+                <h2>🛡️ HIPAA Compliance Overview</h2>
+                
+                <div class="alert alert-danger">
+                    <h4>🚨 HIPAA Requirements for Employee Data with Active-Active DR</h4>
+                    <p>The Employee Onboarding Platform handles sensitive employee information that may include Protected Health Information (PHI) and Personally Identifiable Information (PII). Our implementation ensures full HIPAA compliance with comprehensive security measures, active-active EKS RTF cluster deployment, automated disaster recovery, and complete incident response procedures.</p>
                 </div>
-                <div class="compliance-card secure">
-                    <div class="compliance-icon">🏗️</div>
-                    <div class="compliance-status">Active-Active EKS RTF</div>
-                    <div class="compliance-description">Zero-downtime architecture with automatic failover and load balancing</div>
-                </div>
-                <div class="compliance-card secure">
-                    <div class="compliance-icon">🔄</div>
-                    <div class="compliance-status">99.99% Uptime</div>
-                    <div class="compliance-description">Automated disaster recovery with < 30s RTO and < 5min RPO</div>
-                </div>
-                <div class="compliance-card secure">
-                    <div class="compliance-icon">📋</div>
-                    <div class="compliance-status">Complete Audit Trail</div>
-                    <div class="compliance-description">Every data access and modification logged across all regions</div>
-                </div>
-            </div>
 
-            <h3>📊 Real-Time Compliance & DR Metrics Dashboard</h3>
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-value">100%</div>
-                    <div class="metric-label">Data Encryption Coverage</div>
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔐</div>
+                        <h3>AES-256 Encryption</h3>
+                        <p>Data encrypted at rest and in transit with military-grade security across all regions</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🏗️</div>
+                        <h3>Active-Active EKS RTF</h3>
+                        <p>Zero-downtime architecture with automatic failover and load balancing</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔄</div>
+                        <h3>99.99% Uptime</h3>
+                        <p>Automated disaster recovery with < 30s RTO and < 5min RPO</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📋</div>
+                        <h3>Complete Audit Trail</h3>
+                        <p>Every data access and modification logged across all regions</p>
+                    </div>
                 </div>
-                <div class="metric-card">
-                    <div class="metric-value">0</div>
-                    <div class="metric-label">Security Incidents (30 days)</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">99.99%</div>
-                    <div class="metric-label">System Availability</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">< 30s</div>
-                    <div class="metric-label">Recovery Time Objective</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">< 5min</div>
-                    <div class="metric-label">Recovery Point Objective</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">365 days</div>
-                    <div class="metric-label">Audit Log Retention</div>
-                </div>
-            </div>
-        </section>
 
-        <section id="active-eks-architecture" class="section">
-            <h2>🏗️ Active-Active EKS RTF Architecture</h2>
-            
-            <h3>🌐 Multi-Region Active-Active Deployment</h3>
-            <div class="dr-architecture">┌─────────────────────────────────────────────────────────────────────────────────────────┐
+                <h3>📊 Real-Time Compliance & DR Metrics Dashboard</h3>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">100%</div>
+                        <div class="metric-label">Data Encryption Coverage</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">0</div>
+                        <div class="metric-label">Security Incidents (30 days)</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">99.99%</div>
+                        <div class="metric-label">System Availability</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">< 30s</div>
+                        <div class="metric-label">Recovery Time Objective</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">< 5min</div>
+                        <div class="metric-label">Recovery Point Objective</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">365 days</div>
+                        <div class="metric-label">Audit Log Retention</div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="active-eks-architecture" class="card">
+                <h2>🏗️ Active-Active EKS RTF Architecture</h2>
+                
+                <h3>🌐 Multi-Region Active-Active Deployment</h3>
+                <div class="code-block">
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
 │                         ACTIVE-ACTIVE EKS RTF DR ARCHITECTURE                           │
 ├─────────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                         │
@@ -712,95 +178,96 @@
 │ │ • Automatic Failover < 30 seconds                                                      │
 │ │ • Global Load Balancing                                                                │
 │ └─────────────────────────────────────────────────────────────────────────────────────────┘
-└─────────────────────────────────────────────────────────────────────────────────────────┘</div>
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+                </div>
 
-            <div class="component-grid">
-                <div class="component-card">
-                    <h4>🏗️ EKS Cluster Configuration</h4>
-                    <ul>
-                        <li>Kubernetes version 1.28+</li>
-                        <li>3 Master nodes (Multi-AZ)</li>
-                        <li>6 Worker nodes per region</li>
-                        <li>Auto-scaling groups</li>
-                        <li>Spot and On-demand instances</li>
-                        <li>Network policies enabled</li>
-                    </ul>
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <h4>🏗️ EKS Cluster Configuration</h4>
+                        <ul class="nav-card-features">
+                            <li>Kubernetes version 1.28+</li>
+                            <li>3 Master nodes (Multi-AZ)</li>
+                            <li>6 Worker nodes per region</li>
+                            <li>Auto-scaling groups</li>
+                            <li>Spot and On-demand instances</li>
+                            <li>Network policies enabled</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>🔄 RTF Deployment Strategy</h4>
+                        <ul class="nav-card-features">
+                            <li>Active-Active configuration</li>
+                            <li>Load balanced traffic</li>
+                            <li>Health monitoring</li>
+                            <li>Auto-failover mechanism</li>
+                            <li>Zero-downtime deployments</li>
+                            <li>Rolling updates</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>📊 Monitoring & Observability</h4>
+                        <ul class="nav-card-features">
+                            <li>CloudWatch metrics</li>
+                            <li>Prometheus monitoring</li>
+                            <li>Grafana dashboards</li>
+                            <li>Distributed tracing</li>
+                            <li>Log aggregation</li>
+                            <li>Alert management</li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="component-card">
-                    <h4>🔄 RTF Deployment Strategy</h4>
-                    <ul>
-                        <li>Active-Active configuration</li>
-                        <li>Load balanced traffic</li>
-                        <li>Health monitoring</li>
-                        <li>Auto-failover mechanism</li>
-                        <li>Zero-downtime deployments</li>
-                        <li>Rolling updates</li>
-                    </ul>
-                </div>
-                <div class="component-card">
-                    <h4>📊 Monitoring & Observability</h4>
-                    <ul>
-                        <li>CloudWatch metrics</li>
-                        <li>Prometheus monitoring</li>
-                        <li>Grafana dashboards</li>
-                        <li>Distributed tracing</li>
-                        <li>Log aggregation</li>
-                        <li>Alert management</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
+            </section>
 
-        <section id="dr-strategy" class="section">
-            <h2>🔄 Disaster Recovery Strategy</h2>
-            
-            <div class="warning-box">
-                <h4>⚠️ DR Objectives & SLAs</h4>
-                <ul>
-                    <li><strong>Recovery Time Objective (RTO):</strong> < 30 seconds</li>
-                    <li><strong>Recovery Point Objective (RPO):</strong> < 5 minutes</li>
-                    <li><strong>Target Availability:</strong> 99.99% uptime</li>
-                    <li><strong>Data Loss Tolerance:</strong> Zero for critical PHI/PII</li>
-                </ul>
-            </div>
+            <section id="dr-strategy" class="card">
+                <h2>🔄 Disaster Recovery Strategy</h2>
+                
+                <div class="alert alert-warning">
+                    <h4>⚠️ DR Objectives & SLAs</h4>
+                    <ul>
+                        <li><strong>Recovery Time Objective (RTO):</strong> < 30 seconds</li>
+                        <li><strong>Recovery Point Objective (RPO):</strong> < 5 minutes</li>
+                        <li><strong>Target Availability:</strong> 99.99% uptime</li>
+                        <li><strong>Data Loss Tolerance:</strong> Zero for critical PHI/PII</li>
+                    </ul>
+                </div>
 
-            <h3>🎯 DR Scenarios & Response</h3>
-            <div class="component-grid">
-                <div class="component-card">
-                    <h4>🔥 Regional Outage</h4>
-                    <ul>
-                        <li>Automatic DNS failover</li>
-                        <li>Route 53 health checks</li>
-                        <li>Database promotion</li>
-                        <li>Traffic rerouting</li>
-                        <li>Stakeholder notification</li>
-                    </ul>
+                <h3>🎯 DR Scenarios & Response</h3>
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <h4>🔥 Regional Outage</h4>
+                        <ul class="nav-card-features">
+                            <li>Automatic DNS failover</li>
+                            <li>Route 53 health checks</li>
+                            <li>Database promotion</li>
+                            <li>Traffic rerouting</li>
+                            <li>Stakeholder notification</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>💾 Data Center Failure</h4>
+                        <ul class="nav-card-features">
+                            <li>Multi-AZ deployment</li>
+                            <li>Cross-zone replication</li>
+                            <li>Automated failover</li>
+                            <li>Load balancer updates</li>
+                            <li>Service continuity</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>🛡️ Security Incident</h4>
+                        <ul class="nav-card-features">
+                            <li>Immediate isolation</li>
+                            <li>Forensic analysis</li>
+                            <li>Backup restoration</li>
+                            <li>Compliance reporting</li>
+                            <li>HIPAA breach notification</li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="component-card">
-                    <h4>💾 Data Center Failure</h4>
-                    <ul>
-                        <li>Multi-AZ deployment</li>
-                        <li>Cross-zone replication</li>
-                        <li>Automated failover</li>
-                        <li>Load balancer updates</li>
-                        <li>Service continuity</li>
-                    </ul>
-                </div>
-                <div class="component-card">
-                    <h4>🛡️ Security Incident</h4>
-                    <ul>
-                        <li>Immediate isolation</li>
-                        <li>Forensic analysis</li>
-                        <li>Backup restoration</li>
-                        <li>Compliance reporting</li>
-                        <li>HIPAA breach notification</li>
-                    </ul>
-                </div>
-            </div>
 
-            <h3>🔄 Automated DR Procedures</h3>
-            <div class="code-block">
-                <pre><code># Automated DR Orchestration Script
+                <h3>🔄 Automated DR Procedures</h3>
+                <div class="yaml-block">
+# Automated DR Orchestration Script
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
@@ -847,82 +314,35 @@ spec:
         else
           echo "HEALTHY"
         fi
-        
-  - name: promote-standby-database
-    script:
-      image: amazon/aws-cli:latest
-      command: [sh]
-      source: |
-        # Promote read replica to primary
-        aws rds promote-read-replica \
-          --db-instance-identifier employee-db-west-replica \
-          --region us-west-2
-        
-        # Update DNS to point to new primary
-        aws route53 change-resource-record-sets \
-          --hosted-zone-id Z123456789 \
-          --change-batch file://dns-failover.json
-        
-        echo "SUCCESS"
-        
-  - name: redirect-traffic
-    script:
-      image: alpine/curl:latest
-      command: [sh]
-      source: |
-        # Update Route 53 weighted routing
-        # Redirect 100% traffic to secondary region
-        curl -X POST \
-          -H "Content-Type: application/json" \
-          -d '{"primary_weight": 0, "secondary_weight": 100}' \
-          https://api.route53.amazonaws.com/update-routing
-        
-        echo "TRAFFIC_REDIRECTED"
-        
-  - name: notify-stakeholders
-    script:
-      image: alpine/curl:latest
-      command: [sh]
-      source: |
-        # Send Slack notification
-        curl -X POST -H 'Content-type: application/json' \
-          --data '{"text":"🚨 DR Event: Failover to secondary region completed"}' \
-          $SLACK_WEBHOOK_URL
-        
-        # Send email notifications
-        curl -X POST \
-          -H "Content-Type: application/json" \
-          -d '{"to": "sre-team@company.com", "subject": "DR Activation"}' \
-          https://api.sendgrid.com/v3/mail/send</code></pre>
-            </div>
-        </section>
+                </div>
+            </section>
 
-        <section id="backup-procedures" class="section">
-            <h2>💾 Backup Procedures & Actions</h2>
-            
-            <h3>📅 Backup Schedule & Retention</h3>
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-value">4x</div>
-                    <div class="metric-label">Daily Database Backups</div>
+            <section id="backup-procedures" class="card">
+                <h2>💾 Backup Procedures & Actions</h2>
+                
+                <h3>📅 Backup Schedule & Retention</h3>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">4x</div>
+                        <div class="metric-label">Daily Database Backups</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">24x7</div>
+                        <div class="metric-label">Continuous WAL Shipping</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">7 Years</div>
+                        <div class="metric-label">HIPAA Retention Period</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">15min</div>
+                        <div class="metric-label">Backup Frequency</div>
+                    </div>
                 </div>
-                <div class="metric-card">
-                    <div class="metric-value">24x7</div>
-                    <div class="metric-label">Continuous WAL Shipping</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">7 Years</div>
-                    <div class="metric-label">HIPAA Retention Period</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">15min</div>
-                    <div class="metric-label">Backup Frequency</div>
-                </div>
-            </div>
 
-            <h3>🔐 Encrypted Backup Strategy</h3>
-            <div class="code-block">
-                <pre><code># Comprehensive Backup Configuration
+                <h3>🔐 Encrypted Backup Strategy</h3>
+                <div class="yaml-block">
+# Comprehensive Backup Configuration
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -952,380 +372,49 @@ data:
           
         # Point-in-time recovery
         point_in_time_recovery: true
-        
-      # Application Data Backup
-      application:
-        s3_backup:
-          bucket: "employee-onboarding-backups"
-          encryption: "aws:kms"
-          kms_key: "arn:aws:kms:us-east-1:123456789012:key/efgh5678"
-          lifecycle_policy:
-            - name: "transition-to-ia"
-              days: 30
-              storage_class: "STANDARD_IA"
-            - name: "transition-to-glacier"
-              days: 90
-              storage_class: "GLACIER"
-            - name: "delete-old-backups"
-              days: 2555  # 7 years
-              action: "delete"
-              
-        # File system backups
-        efs_backup:
-          backup_plan: "daily-backup-plan"
-          backup_vault: "employee-onboarding-vault"
-          lifecycle:
-            cold_storage_after: 30
-            delete_after: 2555
-            
-    # Security & Compliance
-    security:
-      encryption:
-        at_rest: "AES-256"
-        in_transit: "TLS-1.3"
-        key_rotation: "quarterly"
-        
-      access_control:
-        iam_roles:
-          - "BackupAdministrator"
-          - "ComplianceAuditor"
-        mfa_required: true
-        
-      audit:
-        cloudtrail_logging: true
-        backup_notifications: true
-        compliance_reporting: true</code></pre>
-            </div>
+                </div>
 
-            <h3>🔄 Backup Verification & Testing</h3>
-            <div class="component-grid">
-                <div class="component-card">
-                    <h4>✅ Daily Verification</h4>
-                    <ul>
-                        <li>Automated backup success checks</li>
-                        <li>Backup integrity validation</li>
-                        <li>File checksum verification</li>
-                        <li>Encryption status confirmation</li>
-                        <li>Alert on backup failures</li>
-                    </ul>
+                <h3>🔄 Backup Verification & Testing</h3>
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <h4>✅ Daily Verification</h4>
+                        <ul class="nav-card-features">
+                            <li>Automated backup success checks</li>
+                            <li>Backup integrity validation</li>
+                            <li>File checksum verification</li>
+                            <li>Encryption status confirmation</li>
+                            <li>Alert on backup failures</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>🧪 Monthly Restore Testing</h4>
+                        <ul class="nav-card-features">
+                            <li>Full database restoration</li>
+                            <li>Application data recovery</li>
+                            <li>Cross-region restore test</li>
+                            <li>Performance benchmarking</li>
+                            <li>Documentation updates</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>📊 Compliance Reporting</h4>
+                        <ul class="nav-card-features">
+                            <li>HIPAA audit trail</li>
+                            <li>Backup success metrics</li>
+                            <li>Retention policy adherence</li>
+                            <li>Security assessment</li>
+                            <li>Annual compliance review</li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="component-card">
-                    <h4>🧪 Monthly Restore Testing</h4>
-                    <ul>
-                        <li>Full database restoration</li>
-                        <li>Application data recovery</li>
-                        <li>Cross-region restore test</li>
-                        <li>Performance benchmarking</li>
-                        <li>Documentation updates</li>
-                    </ul>
-                </div>
-                <div class="component-card">
-                    <h4>📊 Compliance Reporting</h4>
-                    <ul>
-                        <li>HIPAA audit trail</li>
-                        <li>Backup success metrics</li>
-                        <li>Retention policy adherence</li>
-                        <li>Security assessment</li>
-                        <li>Annual compliance review</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
+            </section>
 
-        <section id="downtime-management" class="section">
-            <h2>⏱️ Downtime Management</h2>
-            
-            <h3>🎯 Downtime Prevention Strategies</h3>
-            <div class="highlight-box">
-                <h4>🚀 Zero-Downtime Architecture Components</h4>
-                <ul>
-                    <li><strong>Blue-Green Deployments:</strong> Seamless application updates</li>
-                    <li><strong>Circuit Breakers:</strong> Automatic failure isolation</li>
-                    <li><strong>Health Checks:</strong> Proactive service monitoring</li>
-                    <li><strong>Load Balancing:</strong> Traffic distribution and failover</li>
-                    <li><strong>Database Clustering:</strong> High availability data layer</li>
-                </ul>
-            </div>
-
-            <h3>📋 Planned Maintenance Windows</h3>
-            <div class="code-block">
-                <pre><code># Maintenance Window Automation
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: maintenance-window-orchestrator
-  namespace: employee-onboarding
-spec:
-  # Every Sunday at 2 AM UTC (least traffic)
-  schedule: "0 2 * * 0"
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-          - name: maintenance-orchestrator
-            image: maintenance-tools:latest
-            env:
-            - name: MAINTENANCE_TYPE
-              value: "routine"
-            - name: NOTIFICATION_WEBHOOK
-              valueFrom:
-                secretKeyRef:
-                  name: notification-secrets
-                  key: slack-webhook
-            command:
-            - /bin/bash
-            - -c
-            - |
-              echo "Starting maintenance window..."
-              
-              # 1. Send pre-maintenance notification
-              curl -X POST -H 'Content-type: application/json' \
-                --data '{"text":"🔧 Scheduled maintenance starting in 10 minutes"}' \
-                $NOTIFICATION_WEBHOOK
-              
-              # 2. Enable maintenance mode (redirect to maintenance page)
-              kubectl patch configmap app-config \
-                --patch '{"data":{"maintenance_mode":"true"}}'
-              
-              # 3. Wait for traffic to drain
-              sleep 300  # 5 minutes
-              
-              # 4. Perform maintenance tasks
-              kubectl apply -f maintenance-jobs/
-              
-              # 5. Health checks
-              ./scripts/post-maintenance-checks.sh
-              
-              # 6. Disable maintenance mode
-              kubectl patch configmap app-config \
-                --patch '{"data":{"maintenance_mode":"false"}}'
-              
-              # 7. Send completion notification
-              curl -X POST -H 'Content-type: application/json' \
-                --data '{"text":"✅ Scheduled maintenance completed successfully"}' \
-                $NOTIFICATION_WEBHOOK
-              
-              echo "Maintenance window completed"
-          restartPolicy: OnFailure</code></pre>
-            </div>
-
-            <h3>⚡ Emergency Response Procedures</h3>
-            <div class="component-grid">
-                <div class="component-card">
-                    <h4>🚨 Incident Response Team</h4>
-                    <ul>
-                        <li>On-call SRE engineer (24/7)</li>
-                        <li>Security incident responder</li>
-                        <li>HIPAA compliance officer</li>
-                        <li>Engineering team lead</li>
-                        <li>Executive stakeholder</li>
-                    </ul>
-                </div>
-                <div class="component-card">
-                    <h4>📞 Escalation Matrix</h4>
-                    <ul>
-                        <li>Level 1: Auto-remediation (0-5 min)</li>
-                        <li>Level 2: On-call engineer (5-15 min)</li>
-                        <li>Level 3: Team lead (15-30 min)</li>
-                        <li>Level 4: Management (30-60 min)</li>
-                        <li>Level 5: Executive (1-2 hours)</li>
-                    </ul>
-                </div>
-                <div class="component-card">
-                    <h4>📊 SLA Targets</h4>
-                    <ul>
-                        <li>Detection: < 2 minutes</li>
-                        <li>Response: < 5 minutes</li>
-                        <li>Mitigation: < 15 minutes</li>
-                        <li>Resolution: < 60 minutes</li>
-                        <li>Post-mortem: 24-48 hours</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <section id="communications" class="section">
-            <h2>📢 Communications & Incident Response</h2>
-            
-            <h3>📱 Multi-Channel Notification System</h3>
-            <div class="code-block">
-                <pre><code># Comprehensive Notification Configuration
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: notification-config
-  namespace: employee-onboarding
-data:
-  notification-channels.yaml: |
-    # Primary Communication Channels
-    channels:
-      # Immediate Alerts (0-5 minutes)
-      immediate:
-        - type: "pagerduty"
-          service_id: "PXXXXXXX"
-          escalation_policy: "P123ABC"
-          urgency: "high"
-          
-        - type: "slack"
-          channel: "#incidents-critical"
-          webhook: "${SLACK_CRITICAL_WEBHOOK}"
-          mentions: ["@here", "@sre-oncall"]
-          
-        - type: "sms"
-          recipients:
-            - "+1-555-0101"  # SRE Lead
-            - "+1-555-0102"  # Security Lead
-          provider: "twilio"
-          
-      # Status Updates (5-30 minutes)
-      updates:
-        - type: "slack"
-          channel: "#status-updates"
-          webhook: "${SLACK_UPDATES_WEBHOOK}"
-          
-        - type: "email"
-          recipients:
-            - "leadership@company.com"
-            - "compliance@company.com"
-          smtp_server: "smtp.company.com"
-          
-        - type: "status_page"
-          url: "https://status.company.com"
-          component_id: "employee-onboarding"
-          
-      # HIPAA Compliance Notifications
-      compliance:
-        - type: "secure_email"
-          recipients:
-            - "compliance-officer@company.com"
-            - "privacy-officer@company.com"
-            - "legal@company.com"
-          encryption: "pgp"
-          
-        - type: "audit_log"
-          destination: "s3://hipaa-audit-logs"
-          format: "json"
-          encryption: "kms"
-          
-    # Notification Templates
-    templates:
-      incident_created:
-        title: "🚨 CRITICAL: Employee Onboarding System Incident"
-        body: |
-          Incident ID: {{incident_id}}
-          Severity: {{severity}}
-          Start Time: {{start_time}}
-          Description: {{description}}
-          
-          Impact: {{impact}}
-          Current Status: {{status}}
-          
-          Response Team: {{team_members}}
-          
-          Dashboard: https://monitoring.company.com/incidents/{{incident_id}}
-          
-      hipaa_breach:
-        title: "🔴 HIPAA BREACH ALERT: Immediate Action Required"
-        body: |
-          CONFIDENTIAL - HIPAA BREACH NOTIFICATION
-          
-          Incident ID: {{incident_id}}
-          Detection Time: {{detection_time}}
-          Affected Systems: {{affected_systems}}
-          
-          Potential PHI/PII Exposure: {{data_exposure}}
-          Estimated Affected Individuals: {{affected_count}}
-          
-          Immediate Actions Taken:
-          {{immediate_actions}}
-          
-          Next Steps:
-          1. Forensic analysis initiated
-          2. Affected system isolation
-          3. Legal notification process
-          4. Regulatory compliance review
-          
-          This incident requires immediate executive attention.
-          
-      maintenance_window:
-        title: "🔧 Scheduled Maintenance: Employee Onboarding Platform"
-        body: |
-          Maintenance Window Scheduled
-          
-          Start Time: {{start_time}}
-          Expected Duration: {{duration}}
-          Services Affected: {{affected_services}}
-          
-          During this maintenance:
-          - Brief service interruption possible
-          - No data loss expected
-          - Emergency contacts available
-          
-          Status Page: https://status.company.com
-          
-      resolution:
-        title: "✅ RESOLVED: Employee Onboarding System Incident"
-        body: |
-          Incident Resolution
-          
-          Incident ID: {{incident_id}}
-          Resolution Time: {{resolution_time}}
-          Total Downtime: {{downtime_duration}}
-          
-          Root Cause: {{root_cause}}
-          Resolution: {{resolution_summary}}
-          
-          Post-Incident Actions:
-          {{followup_actions}}
-          
-          Post-Mortem: Scheduled within 24 hours</code></pre>
-            </div>
-
-            <h3>🎯 Stakeholder Communication Matrix</h3>
-            <div class="component-grid">
-                <div class="component-card">
-                    <h4>👥 Internal Stakeholders</h4>
-                    <ul>
-                        <li>SRE Team (immediate)</li>
-                        <li>Security Team (15 min)</li>
-                        <li>Compliance Officer (30 min)</li>
-                        <li>Engineering Leadership (30 min)</li>
-                        <li>Executive Team (60 min)</li>
-                        <li>Legal Counsel (HIPAA events)</li>
-                    </ul>
-                </div>
-                <div class="component-card">
-                    <h4>🏢 External Stakeholders</h4>
-                    <ul>
-                        <li>Cloud provider support</li>
-                        <li>Third-party vendors</li>
-                        <li>Regulatory bodies (if required)</li>
-                        <li>Insurance providers</li>
-                        <li>Affected customers/users</li>
-                        <li>Media (critical incidents)</li>
-                    </ul>
-                </div>
-                <div class="component-card">
-                    <h4>📋 Communication Protocols</h4>
-                    <ul>
-                        <li>Incident severity classification</li>
-                        <li>Escalation timelines</li>
-                        <li>Approval processes</li>
-                        <li>Documentation requirements</li>
-                        <li>Post-incident review</li>
-                        <li>Lessons learned sharing</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
-        <section id="data-protection" class="section">
-            <h2>🔒 Advanced Data Protection Measures</h2>
-            
-            <h3>🔐 Multi-Layer Encryption Strategy</h3>
-            <div class="code-block">
-                <pre><code># Advanced PII/PHI Protection Configuration
+            <section id="data-protection" class="card">
+                <h2>🔒 Advanced Data Protection Measures</h2>
+                
+                <h3>🔐 Multi-Layer Encryption Strategy</h3>
+                <div class="yaml-block">
+# Advanced PII/PHI Protection Configuration
 apiVersion: gateway.mulesoft.com/v1alpha1
 kind: PolicyBinding
 metadata:
@@ -1352,13 +441,6 @@ spec:
           action: "encrypt"
           encryptionKey: "phi-encryption-key"
           
-        - name: "health-insurance-id"
-          regex: "\\b(?:Insurance|Policy|Member):?\\s*[A-Z0-9]{8,15}\\b"
-          category: "PHI"
-          sensitivity: "high"
-          action: "tokenize"
-          tokenVault: "phi-token-vault"
-          
         # Enhanced Personal Identifiers
         - name: "social-security-number"
           regex: "\\b(?:SSN|SS#|Social Security):?\\s*\\d{3}[- ]?\\d{2}[- ]?\\d{4}\\b"
@@ -1367,601 +449,484 @@ spec:
           action: "encrypt"
           encryptionKey: "pii-ssn-key"
           masking: "***-**-{last4}"
-          
-        - name: "drivers-license"
-          regex: "\\b(?:DL|Driver.?s License):?\\s*[A-Z]{1,2}\\d{7,8}\\b"
-          category: "PII"
-          sensitivity: "high"
-          action: "tokenize"
-          preserveFormat: true
-          
-        - name: "passport-number"
-          regex: "\\b(?:Passport):?\\s*[A-Z0-9]{6,9}\\b"
-          category: "PII"
-          sensitivity: "high"
-          action: "encrypt"
-          
-        # Financial Information
-        - name: "bank-account-number"
-          regex: "\\b(?:Account|Routing):?\\s*\\d{8,17}\\b"
-          context: "bank|financial|deposit"
-          category: "Financial"
-          sensitivity: "critical"
-          action: "encrypt"
-          encryptionKey: "financial-data-key"
-          
-        - name: "credit-card-number"
-          regex: "\\b(?:4\\d{12}(?:\\d{3})?|5[1-5]\\d{14}|3[47]\\d{13}|3[0-9]\\d{12}|6(?:011|5\\d{2})\\d{12})\\b"
-          category: "Financial"
-          sensitivity: "critical"
-          action: "tokenize"
-          tokenPrefix: "CC_"
-          
-    # Advanced Encryption Configuration
-    encryption:
-      algorithms:
-        primary: "AES-256-GCM"
-        backup: "ChaCha20-Poly1305"
-      keyManagement:
-        provider: "aws-kms"
-        keyRotation: "quarterly"
-        keyEscrow: true
-        multiRegionKeys: true
-        
-    # Data Minimization & Retention
-    dataLifecycle:
-      retention:
-        pii: "7-years"  # HIPAA requirement
-        phi: "7-years"  # HIPAA requirement
-        audit-logs: "7-years"
-        operational-logs: "1-year"
-        
-      purgeSchedule:
-        frequency: "daily"
-        verificationRequired: true
-        auditTrail: true
-        
-    # Access Controls
-    accessControl:
-      requiresMFA: true
-      minimumClearance: "confidential"
-      roles:
-        - "hr-manager"
-        - "security-admin"
-        - "compliance-officer"
-        - "privacy-officer"
-      
-      conditionalAccess:
-        - condition: "high-risk-data"
-          requirements:
-            - "additional-approval"
-            - "two-person-rule"
-            - "enhanced-logging"
-            
-    # Real-time Monitoring
-    monitoring:
-      anomalyDetection: true
-      behavioralAnalysis: true
-      alertThresholds:
-        suspicious_access: 3
-        bulk_data_access: 100
-        after_hours_access: true
-      
-      notifications:
-        - type: "immediate"
-          channels: ["slack", "pagerduty"]
-        - type: "compliance"
-          channels: ["secure-email", "audit-log"]</code></pre>
-            </div>
+                </div>
 
-            <h3>🛡️ Zero Trust Security Model</h3>
-            <div class="component-grid">
-                <div class="component-card">
-                    <h4>🔐 Identity Verification</h4>
+                <h3>🛡️ Zero Trust Security Model</h3>
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <h4>🔐 Identity Verification</h4>
+                        <ul class="nav-card-features">
+                            <li>Multi-factor authentication</li>
+                            <li>Biometric verification</li>
+                            <li>Hardware security keys</li>
+                            <li>Risk-based authentication</li>
+                            <li>Session management</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>🌐 Network Segmentation</h4>
+                        <ul class="nav-card-features">
+                            <li>Micro-segmentation</li>
+                            <li>Software-defined perimeter</li>
+                            <li>Network access control</li>
+                            <li>Traffic encryption</li>
+                            <li>Endpoint protection</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>📊 Continuous Monitoring</h4>
+                        <ul class="nav-card-features">
+                            <li>Behavioral analytics</li>
+                            <li>Anomaly detection</li>
+                            <li>Threat intelligence</li>
+                            <li>Compliance monitoring</li>
+                            <li>Incident response</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="compliance-checklist" class="card">
+                <h2>✅ HIPAA Compliance Checklist</h2>
+                
+                <h3>🎯 Administrative Safeguards</h3>
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">👑</div>
+                        <h3>Security Officer Designated</h3>
+                        <p>Dedicated security officer responsible for HIPAA compliance</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🎓</div>
+                        <h3>Security Training Complete</h3>
+                        <p>All staff trained on HIPAA requirements and security procedures</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📋</div>
+                        <h3>Contingency Plan Active</h3>
+                        <p>Comprehensive disaster recovery and business continuity plans</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔍</div>
+                        <h3>Regular Assessments</h3>
+                        <p>Quarterly security risk assessments and vulnerability testing</p>
+                    </div>
+                </div>
+
+                <h3>🛡️ Physical Safeguards</h3>
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <h4>🏢 Facility Access Controls</h4>
+                        <ul class="nav-card-features">
+                            <li>Badge-controlled data center access</li>
+                            <li>Biometric authentication systems</li>
+                            <li>24/7 security monitoring</li>
+                            <li>Visitor escort requirements</li>
+                            <li>Physical access audit trails</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>💻 Workstation Use</h4>
+                        <ul class="nav-card-features">
+                            <li>Encrypted hard drives</li>
+                            <li>Automatic screen locks</li>
+                            <li>USB port restrictions</li>
+                            <li>Remote wipe capabilities</li>
+                            <li>Asset tracking systems</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>📱 Device Controls</h4>
+                        <ul class="nav-card-features">
+                            <li>Mobile device management</li>
+                            <li>BYOD security policies</li>
+                            <li>Remote access controls</li>
+                            <li>Device encryption requirements</li>
+                            <li>Lost device procedures</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>🔒 Technical Safeguards</h3>
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔑</div>
+                        <h3>Access Control</h3>
+                        <p>Unique user identification, emergency access, and session controls</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📝</div>
+                        <h3>Audit Controls</h3>
+                        <p>Complete logging and monitoring of system access and activities</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔐</div>
+                        <h3>Data Integrity</h3>
+                        <p>PHI protection from unauthorized alteration or destruction</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🌐</div>
+                        <h3>Transmission Security</h3>
+                        <p>End-to-end encryption for all PHI transmissions</p>
+                    </div>
+                </div>
+
+                <h3>📊 Final Compliance Status</h3>
+                <div class="alert alert-success">
+                    <h4>🏆 HIPAA Compliance Achievement</h4>
+                    <p><strong>Overall Compliance Score: 98.5%</strong></p>
                     <ul>
-                        <li>Multi-factor authentication</li>
-                        <li>Biometric verification</li>
-                        <li>Hardware security keys</li>
-                        <li>Risk-based authentication</li>
-                        <li>Session management</li>
+                        <li><strong>Administrative Safeguards:</strong> 100% Complete</li>
+                        <li><strong>Physical Safeguards:</strong> 99% Complete</li>
+                        <li><strong>Technical Safeguards:</strong> 97% Complete</li>
+                        <li><strong>Risk Assessment:</strong> Quarterly (Next: Q2 2026)</li>
+                        <li><strong>Penetration Testing:</strong> Annual (Last: Q4 2025)</li>
+                        <li><strong>Vulnerability Assessments:</strong> Monthly</li>
+                        <li><strong>Compliance Audits:</strong> Bi-annual</li>
                     </ul>
                 </div>
-                <div class="component-card">
-                    <h4>🌐 Network Segmentation</h4>
-                    <ul>
-                        <li>Micro-segmentation</li>
-                        <li>Software-defined perimeter</li>
-                        <li>Network access control</li>
-                        <li>Traffic encryption</li>
-                        <li>Endpoint protection</li>
-                    </ul>
-                </div>
-                <div class="component-card">
-                    <h4>📊 Continuous Monitoring</h4>
-                    <ul>
-                        <li>Behavioral analytics</li>
-                        <li>Anomaly detection</li>
-                        <li>Threat intelligence</li>
-                        <li>Compliance monitoring</li>
-                        <li>Incident response</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
+            </section>
 
-        <section id="access-controls" class="section">
-            <h2>👤 Enhanced Access Controls & Authentication</h2>
-            
-            <h3>🔑 Advanced MFA Implementation</h3>
-            <div class="code-block">
-                <pre><code># Enhanced Multi-Factor Authentication Policy
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: advanced-mfa-policy
-  namespace: employee-onboarding
-data:
-  mfa-configuration.yaml: |
-    mfa:
-      # Risk-Based Authentication
-      riskBasedAuth:
-        enabled: true
-        factors:
-          - device_fingerprint
-          - geolocation
-          - behavioral_biometrics
-          - network_reputation
-          - time_of_access
-          - data_sensitivity_level
-          
-        riskScoring:
-          low: 0-30
-          medium: 31-70
-          high: 71-100
-          
-        actions:
-          low: "standard_auth"
-          medium: "enhanced_mfa"
-          high: "admin_approval_required"
-          
-      # MFA Methods Configuration
-      methods:
-        primary:
-          - type: "hardware_token"
-            providers: ["YubiKey", "RSA SecurID"]
-            required_for: ["admin_users", "high_privilege_users"]
-            
-          - type: "biometric"
-            methods: ["fingerprint", "face_recognition"]
-            fallback: "hardware_token"
-            
-          - type: "authenticator_app"
-            providers: ["Microsoft Authenticator", "Okta Verify"]
-            backup_codes: true
-            
-        secondary:
-          - type: "sms"  # Only as fallback
-            enabled: false  # Disabled for security
-            
-          - type: "push_notification"
-            providers: ["Okta", "Duo"]
-            timeout: 30  # seconds
-            
-      # Session Management
-      sessions:
-        timeout: 
-          standard_users: "30m"
-          privileged_users: "15m"
-          admin_users: "10m"
-          
-        maxConcurrent: 1  # Single session per user
-        
-        reauth_intervals:
-          data_access: "4h"
-          admin_functions: "2h"
-          critical_operations: "1h"
-          
-        lockout_policy:
-          failed_attempts: 3
-          lockout_duration: "15m"
-          progressive_lockout: true
-          
-      # Compliance Logging
-      audit:
-        log_all_attempts: true
-        include_biometrics: false  # Privacy protection
-        retention_period: "7-years"
-        encryption: "AES-256"</code></pre>
-            </div>
+            <section id="cloud-native-security" class="card">
+                <h2>☁️ Cloud-Native Security Architecture</h2>
+                
+                <h3>🏗️ Comprehensive Security Stack</h3>
+                <div class="code-block">
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                        CLOUD-NATIVE SECURITY ARCHITECTURE                              │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                           APPLICATION LAYER SECURITY                               │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ │ │
+│ │ │  EMPLOYEE ONBO  │ │  ASSET ALLOC    │ │  NOTIFICATION   │ │  AGENT BROKER   │ │ │
+│ │ │  ● OAuth 2.0    │ │  ● JWT Tokens   │ │  ● API Keys     │ │  ● mTLS Auth    │ │ │
+│ │ │  ● RBAC         │ │  ● Field Encrypt│ │  ● Rate Limit   │ │  ● Circuit Break│ │ │
+│ │ │  ● Audit Log    │ │  ● Data Mask    │ │  ● Input Valid  │ │  ● Health Check │ │ │
+│ │ └─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘ │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                           ▼                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                          SERVICE MESH SECURITY (ISTIO)                            │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ • mTLS between services        • Policy Engine (OPA)                              │ │
+│ │ • Service-to-Service Auth      • Traffic Encryption                               │ │
+│ │ • Request Authorization        • Audit & Observability                            │ │
+│ │ • Circuit Breaker Patterns    • Zero Trust Network                               │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                           ▼                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                          KUBERNETES SECURITY LAYER                                │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ • Pod Security Standards      • Network Policies                                  │ │
+│ │ • RBAC & Service Accounts      • Secrets Management                               │ │
+│ │ • Admission Controllers       • Resource Quotas                                   │ │
+│ │ • Security Context            • Runtime Protection                                │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                           ▼                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                           INFRASTRUCTURE SECURITY                                 │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ │ │
+│ │ │   VPC/VNET      │ │   EKS/AKS       │ │   RDS/SQL DB    │ │   KMS/KEY VAULT │ │ │
+│ │ │ • Private Sub   │ │ • Node Hardening│ │ • Encryption    │ │ • Key Rotation  │ │ │
+│ │ │ • NACLs        │ │ • Image Scanning│ │ • Access Control│ │ • HSM Backed    │ │ │
+│ │ │ • Security Groups│ │ • Compliance   │ │ • Backup Encrypt│ │ • Audit Trail   │ │ │
+│ │ │ • VPN/Peering   │ │ • Runtime Sec   │ │ • Patch Mgmt    │ │ • Policy Engine │ │ │
+│ │ └─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘ │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+                </div>
 
-            <h3>🎭 Advanced RBAC Configuration</h3>
-            <div class="component-grid">
-                <div class="component-card">
-                    <h4>👑 Administrative Roles</h4>
-                    <ul>
-                        <li>System Administrator</li>
-                        <li>Security Administrator</li>
-                        <li>Compliance Officer</li>
-                        <li>Privacy Officer</li>
-                        <li>Audit Manager</li>
-                    </ul>
+                <h3>🔐 Advanced Security Controls</h3>
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <h4>🛡️ Identity & Access Management</h4>
+                        <ul class="nav-card-features">
+                            <li>Azure AD/AWS IAM Integration</li>
+                            <li>SAML 2.0 & OAuth 2.0</li>
+                            <li>Just-In-Time Access</li>
+                            <li>Privileged Access Management</li>
+                            <li>Multi-factor Authentication</li>
+                            <li>Conditional Access Policies</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>🔍 Threat Detection & Response</h4>
+                        <ul class="nav-card-features">
+                            <li>Azure Sentinel/AWS GuardDuty</li>
+                            <li>SIEM Integration</li>
+                            <li>Behavioral Analytics</li>
+                            <li>Automated Incident Response</li>
+                            <li>Threat Intelligence Feeds</li>
+                            <li>Security Orchestration</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>📊 Security Monitoring</h4>
+                        <ul class="nav-card-features">
+                            <li>Real-time Security Dashboard</li>
+                            <li>Compliance Monitoring</li>
+                            <li>Vulnerability Management</li>
+                            <li>Security Metrics & KPIs</li>
+                            <li>Automated Alerting</li>
+                            <li>Forensic Capabilities</li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="component-card">
-                    <h4>👥 Operational Roles</h4>
-                    <ul>
-                        <li>HR Manager</li>
-                        <li>Department Supervisor</li>
-                        <li>Employee Self-Service</li>
-                        <li>Read-Only Analyst</li>
-                        <li>Backup Administrator</li>
-                    </ul>
-                </div>
-                <div class="component-card">
-                    <h4>🔒 Emergency Access</h4>
-                    <ul>
-                        <li>Break-glass procedures</li>
-                        <li>Emergency approvers</li>
-                        <li>Time-limited access</li>
-                        <li>Enhanced audit logging</li>
-                        <li>Automatic revocation</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
+            </section>
 
-        <section id="audit-logging" class="section">
-            <h2>📝 Comprehensive Audit Logging & Monitoring</h2>
-            
-            <h3>🔍 Real-Time Monitoring Dashboard</h3>
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-value">24x7</div>
-                    <div class="metric-label">Security Monitoring</div>
+            <section id="enterprise-integration" class="card">
+                <h2>🏢 Enterprise Integration Architecture</h2>
+                
+                <h3>🔄 Integration Patterns & Data Flow</h3>
+                <div class="code-block">
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                      ENTERPRISE INTEGRATION ARCHITECTURE                               │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                             EXTERNAL SYSTEMS                                       │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ │ │
+│ │ │    HRIS     │ │   PAYROLL   │ │   IDENTITY  │ │   BENEFITS  │ │   LEARNING  │ │ │
+│ │ │ Workday     │ │ ADP/Ceridian│ │  Azure AD   │ │  UnitedHC   │ │ Cornerstone │ │ │
+│ │ │ SuccessFac  │ │  Paychex    │ │  Okta       │ │  Anthem     │ │  LinkedIn   │ │ │
+│ │ │ BambooHR    │ │  QuickBooks │ │  Auth0      │ │  Cigna      │ │  Pluralsight│ │ │
+│ │ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘ │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                           ▼                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                        API GATEWAY & SECURITY LAYER                               │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ • Rate Limiting & Throttling    • API Versioning & Lifecycle                      │ │
+│ │ • Authentication & Authorization • Request/Response Transformation                 │ │
+│ │ • Input Validation & Sanitization• Circuit Breaker & Retry Logic                 │ │
+│ │ • Audit Logging & Monitoring    • Load Balancing & Routing                       │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                           ▼                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                        MULE ESB INTEGRATION LAYER                                 │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ │ │
+│ │ │  DATA SYNC      │ │  EVENT PROC     │ │  WORKFLOW MGT   │ │  NOTIFICATION   │ │ │
+│ │ │  • CDC Streams  │ │  • Kafka Topics │ │  • Process Orch │ │  • Email/SMS    │ │ │
+│ │ │  • ETL Process  │ │  • Event Router │ │  • State Machine│ │  • Push Notif   │ │ │
+│ │ │  • Data Valid   │ │  • Message Queue│ │  • Task Assign  │ │  • Audit Trail  │ │ │
+│ │ │  • Error Handle │ │  • Dead Letter  │ │  • SLA Monitor  │ │  • Template Mgmt│ │ │
+│ │ └─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘ │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                           ▼                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                           DATA PERSISTENCE LAYER                                  │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ │ │
+│ │ │  OPERATIONAL    │ │  ANALYTICAL     │ │  CACHE LAYER    │ │  FILE STORAGE   │ │ │
+│ │ │  • PostgreSQL   │ │  • Snowflake    │ │  • Redis Cluster│ │  • Azure Blob   │ │ │
+│ │ │  • MongoDB      │ │  • BigQuery     │ │  • Hazelcast    │ │  • AWS S3       │ │ │
+│ │ │  • Elasticsearch│ │  • Databricks   │ │  • Apache Ignite│ │  • MinIO        │ │ │
+│ │ │  • Neo4j        │ │  • Tableau      │ │  • KeyValue DB  │ │  • HDFS         │ │ │
+│ │ └─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘ │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
                 </div>
-                <div class="metric-card">
-                    <div class="metric-value">< 2min</div>
-                    <div class="metric-label">Anomaly Detection</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">100%</div>
-                    <div class="metric-label">Event Coverage</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">7 Years</div>
-                    <div class="metric-label">Log Retention</div>
-                </div>
-            </div>
 
-            <h3>📊 Comprehensive Audit Trail</h3>
-            <div class="code-block">
-                <pre><code># Advanced HIPAA Audit Logging Configuration
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: hipaa-audit-config
-  namespace: employee-onboarding
-data:
-  audit-policy.yaml: |
-    # HIPAA-Compliant Audit Logging
-    audit:
-      # Data Access Logging
-      dataAccess:
-        logAllAccess: true
-        includeFields:
-          - timestamp
-          - user_id
-          - user_role
-          - source_ip
-          - user_agent
-          - resource_accessed
-          - action_performed
-          - data_classification
-          - success_status
-          - error_code
-          
-        sensitiveDataHandling:
-          - field: "ssn"
-            action: "hash"
-            algorithm: "SHA-256"
-          - field: "medical_record"
-            action: "tokenize"
-            preserve_format: false
-          - field: "phi_data"
-            action: "encrypt"
-            key: "audit-encryption-key"
-            
-      # System Events
-      systemEvents:
-        categories:
-          - authentication_events
-          - authorization_failures
-          - data_modifications
-          - system_administration
-          - configuration_changes
-          - backup_operations
-          - disaster_recovery
-          - security_incidents
-          
-        severity_levels:
-          - emergency: "System unusable"
-          - alert: "Action must be taken immediately"
-          - critical: "Critical conditions"
-          - error: "Error conditions"
-          - warning: "Warning conditions"
-          - notice: "Normal but significant"
-          - info: "Informational messages"
-          - debug: "Debug-level messages"
-          
-      # Compliance Reporting
-      compliance:
-        hipaa:
-          access_reports: "monthly"
-          breach_notifications: "immediate"
-          risk_assessments: "quarterly"
-          
-        retention:
-          audit_logs: "7-years"
-          system_logs: "3-years"
-          security_events: "7-years"
-          
-        encryption:
-          at_rest: "AES-256-GCM"
-          in_transit: "TLS-1.3"
-          key_rotation: "quarterly"
-          
-      # Real-time Alerting
-      alerts:
-        # Suspicious Activity Patterns
-        - name: "multiple_failed_logins"
-          condition: "failed_logins > 3 in 5m"
-          severity: "high"
-          notify: ["security-team", "soc"]
-          
-        - name: "bulk_data_access"
-          condition: "records_accessed > 100 in 1h"
-          severity: "critical"
-          notify: ["privacy-officer", "legal"]
-          
-        - name: "after_hours_phi_access"
-          condition: "phi_access AND time NOT BETWEEN 09:00 AND 17:00"
-          severity: "medium"
-          notify: ["compliance-officer"]
-          
-        - name: "privileged_escalation"
-          condition: "role_change TO admin OR sudo_access"
-          severity: "high"
-          notify: ["security-admin", "audit-team"]
-          
-        - name: "data_export_large"
-          condition: "export_size > 1GB OR export_records > 1000"
-          severity: "high"
-          notify: ["data-protection-officer"]
-          
-      # Advanced Analytics
-      analytics:
-        behavioralAnalysis:
-          enabled: true
-          baseline_period: "30d"
-          anomaly_threshold: 0.95
-          
-        threatIntelligence:
-          enabled: true
-          sources: ["internal", "external_feeds"]
-          
-        riskScoring:
-          factors:
-            - user_behavior
-            - access_patterns
-            - data_sensitivity
-            - geolocation
-            - device_trust
-          
-          scoring_algorithm: "weighted_composite"
-          
-      # Integration Points
-      integrations:
-        siem:
-          platform: "Splunk Enterprise"
-          real_time_streaming: true
-          
-        compliance_tools:
-          - "Varonis DatAdvantage"
-          - "Microsoft Purview"
-          - "Netwrix Auditor"
-          
-        notification_channels:
-          - slack: "#security-alerts"
-          - email: "security-team@company.com"
-          - webhook: "https://api.pagerduty.com/incidents"</code></pre>
-            </div>
+                <h3>📡 Real-time Integration Patterns</h3>
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <h4>🚀 Event-Driven Architecture</h4>
+                        <ul class="nav-card-features">
+                            <li>Apache Kafka Event Streaming</li>
+                            <li>Domain Event Publishing</li>
+                            <li>CQRS & Event Sourcing</li>
+                            <li>Saga Pattern Implementation</li>
+                            <li>Event Store & Replay</li>
+                            <li>Dead Letter Queue Handling</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>🔄 API-First Integration</h4>
+                        <ul class="nav-card-features">
+                            <li>OpenAPI 3.0 Specifications</li>
+                            <li>GraphQL Federation</li>
+                            <li>REST & gRPC Services</li>
+                            <li>API Contract Testing</li>
+                            <li>Mock Service Generation</li>
+                            <li>SDK Auto-generation</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>📊 Data Integration Patterns</h4>
+                        <ul class="nav-card-features">
+                            <li>Change Data Capture (CDC)</li>
+                            <li>Data Virtualization</li>
+                            <li>Master Data Management</li>
+                            <li>Data Quality Validation</li>
+                            <li>Reference Data Services</li>
+                            <li>Data Lineage Tracking</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
 
-            <h3>🎯 Compliance Monitoring</h3>
-            <div class="component-grid">
-                <div class="component-card">
-                    <h4>📈 Performance Metrics</h4>
-                    <ul>
-                        <li>Log processing rate: 10k/sec</li>
-                        <li>Real-time alerting: < 30 seconds</li>
-                        <li>Dashboard refresh: 5 seconds</li>
-                        <li>Report generation: < 2 minutes</li>
-                        <li>Query response: < 500ms</li>
-                    </ul>
+            <section id="advanced-monitoring" class="card">
+                <h2>📊 Advanced Monitoring & Observability</h2>
+                
+                <h3>🎯 Full-Stack Observability Architecture</h3>
+                <div class="code-block">
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                        OBSERVABILITY & MONITORING STACK                                │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                           BUSINESS METRICS LAYER                                   │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ │ │
+│ │ │  ONBOARDING     │ │  COMPLIANCE     │ │  PERFORMANCE    │ │  USER EXPERIENCE│ │ │
+│ │ │  METRICS        │ │  DASHBOARD      │ │  INDICATORS     │ │  ANALYTICS      │ │ │
+│ │ │ • Completion %  │ │ • HIPAA Score   │ │ • SLA Metrics   │ │ • User Journey  │ │ │
+│ │ │ • Time to Hire  │ │ • Audit Results │ │ • Response Time │ │ • Satisfaction  │ │ │
+│ │ │ • Error Rate    │ │ • Risk Score    │ │ • Throughput    │ │ • Drop-off Rate │ │ │
+│ │ │ • Process Cost  │ │ • Violations    │ │ • Error Budget  │ │ • Conversion    │ │ │
+│ │ └─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘ │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                           ▲                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                           APPLICATION MONITORING                                   │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ • Application Performance Monitoring (APM) - New Relic, DataDog, AppDynamics      │ │
+│ │ • Distributed Tracing - Jaeger, Zipkin, OpenTelemetry                             │ │
+│ │ • Custom Metrics - Prometheus, Micrometer, Dropwizard                             │ │
+│ │ • Health Checks - Spring Boot Actuator, Kubernetes Probes                        │ │
+│ │ • Error Tracking - Sentry, Rollbar, Bugsnag                                       │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                           ▲                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                        INFRASTRUCTURE MONITORING                                   │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ │ │
+│ │ │  KUBERNETES     │ │  CLOUD NATIVE   │ │  DATABASE       │ │  NETWORK        │ │ │
+│ │ │  MONITORING     │ │  SERVICES       │ │  MONITORING     │ │  MONITORING     │ │ │
+│ │ │ • kube-state    │ │ • CloudWatch    │ │ • Query Perf    │ │ • Latency       │ │ │
+│ │ │ • Node Export   │ │ • Azure Monitor │ │ • Connection    │ │ • Bandwidth     │ │ │
+│ │ │ • cAdvisor      │ │ • GCP Stackdriv │ │ • Deadlocks     │ │ • Packet Loss   │ │ │
+│ │ │ • Prometheus    │ │ • Custom Metrics│ │ • Index Usage   │ │ • DNS Resolution│ │ │
+│ │ └─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘ │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                           ▲                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                            LOG AGGREGATION                                        │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ • ELK Stack (Elasticsearch, Logstash, Kibana)                                     │ │
+│ │ • EFK Stack (Elasticsearch, Fluentd, Kibana)                                      │ │
+│ │ • Cloud Native Logging - AWS CloudWatch, Azure Log Analytics                     │ │
+│ │ • Structured Logging - JSON, Correlation IDs, Context Propagation                │ │
+│ │ • Log Parsing & Enrichment - Grok patterns, GeoIP, User-Agent                   │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
                 </div>
-                <div class="component-card">
-                    <h4>🔍 Audit Capabilities</h4>
-                    <ul>
-                        <li>Complete user activity tracking</li>
-                        <li>Data lineage and provenance</li>
-                        <li>Change management audit</li>
-                        <li>Cross-system correlation</li>
-                        <li>Forensic investigation tools</li>
-                    </ul>
-                </div>
-                <div class="component-card">
-                    <h4>📋 Compliance Reports</h4>
-                    <ul>
-                        <li>HIPAA compliance dashboard</li>
-                        <li>Access control effectiveness</li>
-                        <li>Security incident summaries</li>
-                        <li>Risk assessment reports</li>
-                        <li>Regulatory audit trails</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
 
-        <section id="compliance-checklist" class="section">
-            <h2>✅ HIPAA Compliance Checklist</h2>
-            
-            <h3>🎯 Administrative Safeguards</h3>
-            <div class="compliance-grid">
-                <div class="compliance-card secure">
-                    <div class="compliance-icon">👑</div>
-                    <div class="compliance-status">Security Officer Designated</div>
-                    <div class="compliance-description">Dedicated security officer responsible for HIPAA compliance</div>
+                <h3>🚨 Advanced Alerting & Incident Management</h3>
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <h4>⚡ Smart Alerting System</h4>
+                        <ul class="nav-card-features">
+                            <li>ML-based Anomaly Detection</li>
+                            <li>Predictive Alert Filtering</li>
+                            <li>Context-aware Notifications</li>
+                            <li>Alert Correlation Engine</li>
+                            <li>Escalation Policies</li>
+                            <li>Alert Fatigue Reduction</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>🎯 SRE & Reliability</h4>
+                        <ul class="nav-card-features">
+                            <li>SLI/SLO Definition & Tracking</li>
+                            <li>Error Budget Management</li>
+                            <li>Chaos Engineering</li>
+                            <li>Canary Deployments</li>
+                            <li>Blue-Green Strategies</li>
+                            <li>Rollback Automation</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <h4>📋 Incident Response</h4>
+                        <ul class="nav-card-features">
+                            <li>Automated Incident Creation</li>
+                            <li>War Room Collaboration</li>
+                            <li>Runbook Automation</li>
+                            <li>Post-mortem Analysis</li>
+                            <li>Root Cause Analysis</li>
+                            <li>Learning from Failures</li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="compliance-card secure">
-                    <div class="compliance-icon">🎓</div>
-                    <div class="compliance-status">Security Training Complete</div>
-                    <div class="compliance-description">All staff trained on HIPAA requirements and security procedures</div>
-                </div>
-                <div class="compliance-card secure">
-                    <div class="compliance-icon">📋</div>
-                    <div class="compliance-status">Contingency Plan Active</div>
-                    <div class="compliance-description">Comprehensive disaster recovery and business continuity plans</div>
-                </div>
-                <div class="compliance-card secure">
-                    <div class="compliance-icon">🔍</div>
-                    <div class="compliance-status">Regular Assessments</div>
-                    <div class="compliance-description">Quarterly security risk assessments and vulnerability testing</div>
-                </div>
-            </div>
+            </section>
 
-            <h3>🛡️ Physical Safeguards</h3>
-            <div class="component-grid">
-                <div class="component-card">
-                    <h4>🏢 Facility Access Controls</h4>
-                    <ul>
-                        <li>Badge-controlled data center access</li>
-                        <li>Biometric authentication systems</li>
-                        <li>24/7 security monitoring</li>
-                        <li>Visitor escort requirements</li>
-                        <li>Physical access audit trails</li>
-                    </ul>
-                </div>
-                <div class="component-card">
-                    <h4>💻 Workstation Use</h4>
-                    <ul>
-                        <li>Encrypted hard drives</li>
-                        <li>Automatic screen locks</li>
-                        <li>USB port restrictions</li>
-                        <li>Remote wipe capabilities</li>
-                        <li>Asset tracking systems</li>
-                    </ul>
-                </div>
-                <div class="component-card">
-                    <h4>📱 Device Controls</h4>
-                    <ul>
-                        <li>Mobile device management</li>
-                        <li>BYOD security policies</li>
-                        <li>Remote access controls</li>
-                        <li>Device encryption requirements</li>
-                        <li>Lost device procedures</li>
-                    </ul>
-                </div>
-            </div>
-
-            <h3>🔒 Technical Safeguards</h3>
-            <div class="compliance-grid">
-                <div class="compliance-card secure">
-                    <div class="compliance-icon">🔑</div>
-                    <div class="compliance-status">Access Control</div>
-                    <div class="compliance-description">Unique user identification, emergency access, and session controls</div>
-                </div>
-                <div class="compliance-card secure">
-                    <div class="compliance-icon">📝</div>
-                    <div class="compliance-status">Audit Controls</div>
-                    <div class="compliance-description">Complete logging and monitoring of system access and activities</div>
-                </div>
-                <div class="compliance-card secure">
-                    <div class="compliance-icon">🔐</div>
-                    <div class="compliance-status">Data Integrity</div>
-                    <div class="compliance-description">PHI protection from unauthorized alteration or destruction</div>
-                </div>
-                <div class="compliance-card secure">
-                    <div class="compliance-icon">🌐</div>
-                    <div class="compliance-status">Transmission Security</div>
-                    <div class="compliance-description">End-to-end encryption for all PHI transmissions</div>
-                </div>
-            </div>
-
-            <h3>📊 Final Compliance Status</h3>
-            <div class="highlight-box">
-                <h4>🏆 HIPAA Compliance Achievement</h4>
-                <p><strong>Overall Compliance Score: 98.5%</strong></p>
-                <ul>
-                    <li><strong>Administrative Safeguards:</strong> 100% Complete</li>
-                    <li><strong>Physical Safeguards:</strong> 99% Complete</li>
-                    <li><strong>Technical Safeguards:</strong> 97% Complete</li>
-                    <li><strong>Risk Assessment:</strong> Quarterly (Next: Q2 2026)</li>
-                    <li><strong>Staff Training:</strong> 100% Current</li>
-                    <li><strong>Incident Response:</strong> Tested & Validated</li>
-                    <li><strong>Business Associate Agreements:</strong> All Current</li>
-                    <li><strong>Breach Notification Procedures:</strong> Documented & Tested</li>
-                </ul>
-                <p><em>Last Assessment: March 2026 | Next Review: June 2026</em></p>
-            </div>
-        </section>
-
-        <div class="footer">
-            <h3>🏥 HIPAA Compliance & Active EKS RTF DR Architecture</h3>
-            <p>Comprehensive Data Protection with 99.99% Uptime | Active-Active Multi-Region Deployment</p>
-            <p>Emergency Contact: <strong>security@company.com</strong> | 24/7 Incident Hotline: <strong>1-800-SECURITY</strong></p>
-            <p><em>This system is HIPAA compliant and continuously monitored for security and availability.</em></p>
-        </div>
-    </div>
-
-    <script>
-        // Enhanced mobile menu functionality and smooth scrolling
-        document.addEventListener('DOMContentLoaded', function() {
-            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-            const navMenu = document.getElementById('nav-menu');
-            
-            if (mobileMenuToggle && navMenu) {
-                mobileMenuToggle.addEventListener('click', function() {
-                    navMenu.classList.toggle('active');
-                });
-            }
-
-            // Smooth scrolling for internal links
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                });
-            });
-
-            // Real-time metrics animation (simulated)
-            function animateMetrics() {
-                const metricValues = document.querySelectorAll('.metric-value');
-                metricValues.forEach(metric => {
-                    if (metric.textContent.includes('%')) {
-                        metric.style.color = '#48bb78';
-                    }
-                });
-            }
-
-            animateMetrics();
-            setInterval(animateMetrics, 5000); // Update every 5 seconds
-        });
-    </script>
-</body>
-</html>
-
-[Response interrupted by a tool use result. Only one tool may be used at a time and should be placed at the end of the message.]
+            <section id="performance-scalability" class="card">
+                <h2>⚡ Performance & Scalability Architecture</h2>
+                
+                <h3>🚀 High-Performance System Design</h3>
+                <div class="code-block">
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                        PERFORMANCE & SCALABILITY ARCHITECTURE                          │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                             CDN & EDGE CACHING                                     │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ • CloudFlare/AWS CloudFront    • Geographic Distribution                          │ │
+│ │ • Edge Locations Worldwide     • Dynamic Content Caching                         │ │
+│ │ • DDoS Protection             • Smart Routing & Load Balancing                   │ │
+│ │ • SSL/TLS Termination         • Performance Optimization                         │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                           ▼                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                           LOAD BALANCING LAYER                                    │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ │ │
+│ │ │  L7 LOAD BAL    │ │  L4 LOAD BAL    │ │  SERVICE MESH   │ │  API GATEWAY    │ │ │
+│ │ │ • ALB/NLB       │ │ • NGINX Plus    │ │ • Istio/Linkerd │ │ • Kong/Zuul     │ │ │
+│ │ │ • HAProxy       │ │ • F5 Networks   │ │ • Envoy Proxy   │ │ • AWS API GW    │ │ │
+│ │ │ • Traefik       │ │ • Citrix ADC    │ │ • Consul Connect│ │ • Azure APIM    │ │ │
+│ │ │ • Health Checks │ │ • Session Stick │ │ • Traffic Split │ │ • Rate Limiting │ │ │
+│ │ └─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘ │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                           ▼                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                          AUTO-SCALING MECHANISMS                                   │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ • Horizontal Pod Autoscaler (HPA) - CPU, Memory, Custom Metrics                   │ │
+│ │ • Vertical Pod Autoscaler (VPA) - Resource Right-sizing                           │ │
+│ │ • Cluster Autoscaler - Node Pool Management                                       │ │
+│ │ • KEDA - Event-driven Autoscaling (Kafka, Redis, HTTP)                           │ │
+│ │ • Predictive Scaling - ML-based Demand Forecasting                               │ │
+│ │ • Spot Instance Management - Cost-optimized Scaling                              │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                           ▼                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                           CACHING STRATEGIES                                       │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ │ │
+│ │ │  APPLICATION    │ │  DISTRIBUTED    │ │  DATABASE       │ │  SEARCH INDEX   │ │ │
+│ │ │  CACHE          │ │  CACHE          │ │  CACHE          │ │  CACHE          │ │ │
+│ │ │ • Caffeine      │ │ • Redis Cluster │ │ • Query Cache   │ │ • Elasticsearch │ │ │
+│ │ │ • Guava Cache   │ │ • Hazelcast     │ │ • Result Cache  │ │ • Apache Solr   │ │ │
+│ │ │ • EhCache       │ │ • Apache Ignite │ │ • Connection Pool│ │ • Amazon Kendra │ │ │
+│ │ │ • Local Memory  │ │ • Memcached     │ │ • Buffer Pool   │ │ • Algolia       │ │ │
+│ │ └─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘ │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                           ▼                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                        DATABASE OPTIMIZATION                                       │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ • Read Replicas & Write/Read Separation                                            │ │
+│ │ • Database Sharding & Partitioning                                                │ │
+│ │ • Connection Pooling & Management                                                 │ │
+│ │ • Query Optimization & Indexing                                                   │ │
+│ │ • CQRS (Command Query Responsibility Segregation)                                 │ │
+│ │ • Event Sourcing for Audit & Replay                                              │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+└─────────

@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MuleSoft Capacity Planning & Cost Estimation Guide</title>
+    <link rel="stylesheet" href="common-styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    <style>
+        .calculator-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+        }
+        .calculator-container {
+            background: rgba(255,255,255,0.1);
+            padding: 1.5rem;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        .calculate-btn {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        .calculate-btn:hover {
+            background: #e55a2e;
+        }
+        .results-container {
+            background: rgba(255,255,255,0.2);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+        }
+        .formula-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        .formula-box {
+            background: #e8f4f8;
+            border-left: 4px solid #007bff;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+        }
+        .platform-tabs {
+            display: flex;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            border-bottom-color: #007bff;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .platform-content {
+            display: none;
+            padding: 1.5rem 0;
+        }
+        .platform-content.active {
+            display: block;
+        }
+        .specification-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        .specification-table th,
+        .specification-table td {
+            border: 1px solid #ddd;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        .specification-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .guideline-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .guideline-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        .comparison-table th,
+        .comparison-table td {
+            border: 1px solid #ddd;
+            padding: 0.5rem;
+            text-align: left;
+            vertical-align: top;
+        }
+        .comparison-table th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+        .platform-result {
+            background: rgba(255,255,255,0.3);
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <span>🚀</span> Employee Onboarding Platform
+            </a>
+            <div class="nav-toggle" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Overview</a></li>
+                <li><a href="02-Enhanced-Navigation.html" class="nav-link">Navigation</a></li>
+                <li><a href="03-Flex-Gateway-Policies.html" class="nav-link">Flex Gateway</a></li>
+                <li><a href="04-RTF-EKS-Setup.html" class="nav-link">RTF EKS</a></li>
+                <li><a href="05-Anypoint-Platform.html" class="nav-link">Anypoint</a></li>
+                <li><a href="06-Auto-scaling.html" class="nav-link">Auto-scaling</a></li>
+                <li><a href="07-HIPAA-Compliance.html" class="nav-link">HIPAA</a></li>
+                <li><a href="08-RTF-Azure-Installation.html" class="nav-link">RTF Azure</a></li>
+                <li><a href="09-RTF-AWS-Installation.html" class="nav-link">RTF AWS</a></li>
+                <li><a href="10-RTF-Security.html" class="nav-link">Security</a></li>
+                <li><a href="11-Logging-Monitoring.html" class="nav-link">Monitoring</a></li>
+                <li><a href="12-Capacity-Planning.html" class="nav-link">Capacity Planning</a></li>
+                <li><a href="13-MuleSoft-Capacity-Planning.html" class="nav-link active">MuleSoft Planning</a></li>
+                <li><a href="14-Azure-AWS-RTF-Capacity-Planning.html" class="nav-link">Cloud RTF Planning</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="header">
+            <h1>🔧 MuleSoft Capacity Planning & Cost Estimation</h1>
+            <div class="subtitle">Comprehensive formulas and calculators for estimating core size and costs across CloudHub, RTF, Hybrid, and PCE deployments</div>
+        </div>
+
+        <div class="content">
+            <div class="alert alert-info">
+                <strong>🎯 MuleSoft Planning Overview:</strong> This guide provides mathematical formulas and interactive calculators for accurate capacity planning and cost estimation across all MuleSoft deployment platforms.
+            </div>
+
+            <!-- Capacity Planning Calculator -->
+            <div class="calculator-section">
+                <h2>🧮 Interactive Capacity Planning Calculator</h2>
+                <div class="calculator-container">
+                    <div class="input-group">
+                        <label for="transactions">Expected Transactions per Hour:</label>
+                        <input type="number" id="transactions" placeholder="e.g., 10000" min="1" value="10000">
+                    </div>
+                    <div class="input-group">
+                        <label for="concurrent-users">Concurrent Users:</label>
+                        <input type="number" id="concurrent-users" placeholder="e.g., 500" min="1" value="500">
+                    </div>
+                    <div class="input-group">
+                        <label for="payload-size">Average Payload Size (KB):</label>
+                        <input type="number" id="payload-size" placeholder="e.g., 50" min="1" value="50">
+                    </div>
+                    <div class="input-group">
+                        <label for="complexity">Integration Complexity:</label>
+                        <select id="complexity">
+                            <option value="1">Simple (Direct mapping)</option>
+                            <option value="1.5" selected>Medium (Basic transformations)</option>
+                            <option value="2">Complex (Multiple systems, heavy processing)</option>
+                            <option value="3">Very Complex (Real-time, heavy compute)</option>
+                        </select>
+                    </div>
+                    <button onclick="calculateCapacity()" class="calculate-btn">Calculate Requirements</button>
+                    
+                    <div id="results" class="results-container" style="display: none;">
+                        <h3>📊 Recommended Configuration</h3>
+                        <div id="platform-results"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Core Size Estimation Formulas -->
+            <div class="card">
+                <h2>📐 Core Size Estimation Formulas</h2>
+                
+                <div class="formula-card">
+                    <h3>1. Base Core Requirement Formula</h3>
+                    <div class="formula-box">
+                        <strong>Base_Cores = ((TPS × Payload_Factor × Complexity_Factor) / Performance_Baseline) + Overhead_Cores</strong>
+                        <br><br>
+                        Where:
+                        <ul>
+                            <li><strong>TPS</strong> = Transactions Per Second (Peak) = Transactions_Per_Hour / 3600</li>
+                            <li><strong>Payload_Factor</strong> = (Payload_Size_KB / 10) + 1</li>
+                            <li><strong>Complexity_Factor</strong> = 1 (Simple), 1.5 (Medium), 2 (Complex), 3 (Very Complex)</li>
+                            <li><strong>Performance_Baseline</strong> = 1000 TPS (Simple), 500 TPS (Medium), 200 TPS (Complex), 100 TPS (Very Complex)</li>
+                            <li><strong>Overhead_Cores</strong> = 0.2-0.5 cores for system overhead</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="formula-card">
+                    <h3>2. Memory Estimation Formula</h3>
+                    <div class="formula-box">
+                        <strong>Memory_GB = (Base_Cores × Memory_Per_Core) + (Concurrent_Users / 100) + (Payload_Size_MB × Buffer_Factor)</strong>
+                        <br><br>
+                        Where:
+                        <ul>
+                            <li><strong>Memory_Per_Core</strong> = 2-4 GB (recommended), 1 GB (minimum)</li>
+                            <li><strong>Buffer_Factor</strong> = 10-20 depending on processing requirements</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="formula-card">
+                    <h3>3. High Availability Scaling Formula</h3>
+                    <div class="formula-box">
+                        <strong>HA_Cores = Base_Cores × HA_Factor</strong>
+                        <br><br>
+                        Where:
+                        <ul>
+                            <li><strong>HA_Factor</strong> = 2.0 (Active-Passive), 2.5 (Active-Active), 3.0 (Multi-Region)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform-Specific Calculations -->
+            <div class="card">
+                <h2>🏗️ Platform-Specific Sizing & Cost Formulas</h2>
+                
+                <div class="platform-tab-container">
+                    <div class="platform-tabs">
+                        <button class="tab-btn active" onclick="showPlatform('cloudhub')">CloudHub 2.0</button>
+                        <button class="tab-btn" onclick="showPlatform('rtf')">Runtime Fabric</button>
+                        <button class="tab-btn" onclick="showPlatform('hybrid')">Hybrid</button>
+                        <button class="tab-btn" onclick="showPlatform('pce')">Private Cloud Edition</button>
+                    </div>
+
+                    <!-- CloudHub 2.0 -->
+                    <div id="cloudhub" class="platform-content active">
+                        <h3>☁️ CloudHub 2.0 Sizing</h3>
+                        <div class="sizing-formulas">
+                            <h4>vCore Sizing Formula:</h4>
+                            <div class="formula-box">
+                                <strong>CloudHub_vCores = Base_Cores × CloudHub_Scaling_Factor</strong><br>
+                                <strong>CloudHub_Scaling_Factor = 1.2-1.5</strong> (for CloudHub overhead and auto-scaling buffer)
+                            </div>
+
+                            <h4>Worker Instance Selection:</h4>
+                            <table class="specification-table">
+                                <thead>
+                                    <tr>
+                                        <th>Worker Size</th>
+                                        <th>vCores</th>
+                                        <th>Memory (GB)</th>
+                                        <th>Storage (GB)</th>
+                                        <th>Max TPS (Simple)</th>
+                                        <th>Cost/Month</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>0.1 vCore</td><td>0.1</td><td>0.5</td><td>8</td><td>100</td><td>$247</td></tr>
+                                    <tr><td>0.2 vCore</td><td>0.2</td><td>1</td><td>8</td><td>200</td><td>$494</td></tr>
+                                    <tr><td>0.5 vCore</td><td>0.5</td><td>2</td><td>8</td><td>500</td><td>$1,235</td></tr>
+                                    <tr><td>1 vCore</td><td>1</td><td>4</td><td>8</td><td>1,000</td><td>$2,470</td></tr>
+                                    <tr><td>2 vCore</td><td>2</td><td>8</td><td>16</td><td>2,000</td><td>$4,940</td></tr>
+                                    <tr><td>4 vCore</td><td>4</td><td>16</td><td>32</td><td>4,000</td><td>$9,880</td></tr>
+                                </tbody>
+                            </table>
+
+                            <h4>Cost Calculation Formula:</h4>
+                            <div class="formula-box">
+                                <strong>Monthly_Cost = (vCores × $2,470) + Additional_Features_Cost</strong><br><br>
+                                Additional Features:
+                                <ul>
+                                    <li>VPN: $500/month per connection</li>
+                                    <li>Dedicated Load Balancer: $500/month</li>
+                                    <li>Static IP: $15/month per IP</li>
+                                    <li>Persistent Object Store: $2.50/GB/month</li>
+                                    <li>High Availability: 2× worker cost</li>
+                                </ul>
+                            </div>
+
+                            <h4>Multi-Environment Cost Formula:</h4>
+                            <div class="formula-box">
+                                <strong>Total_Cost = (Dev_Cost × 0.5) + (Test_Cost × 0.7) + (Staging_Cost × 1.0) + (Prod_Cost × HA_Factor)</strong><br>
+                                Where <strong>HA_Factor = 2-3</strong> for production redundancy
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Runtime Fabric -->
+                    <div id="rtf" class="platform-content">
+                        <h3>🏗️ Runtime Fabric (RTF) Sizing</h3>
+                        <div class="sizing-formulas">
+                            <h4>Total Core Sizing Formula:</h4>
+                            <div class="formula-box">
+                                <strong>RTF_Total_Cores = Application_Cores + RTF_Overhead + Kubernetes_Overhead + HA_Buffer</strong><br><br>
+                                Where:
+                                <ul>
+                                    <li><strong>Application_Cores</strong> = Sum of all application requirements</li>
+                                    <li><strong>RTF_Overhead</strong> = 2-4 cores for RTF services</li>
+                                    <li><strong>Kubernetes_Overhead</strong> = 1-2 cores for K8s system pods</li>
+                                    <li><strong>HA_Buffer</strong> = 25-50% additional for high availability and scaling</li>
+                                </ul>
+                            </div>
+
+                            <h4>Node Sizing Recommendations:</h4>
+                            <table class="specification-table">
+                                <thead>
+                                    <tr>
+                                        <th>Environment</th>
+                                        <th>Min Nodes</th>
+                                        <th>CPU per Node</th>
+                                        <th>Memory per Node</th>
+                                        <th>Storage per Node</th>
+                                        <th>Total Capacity</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Development</td><td>1</td><td>4 cores</td><td>16 GB</td><td>80 GB</td><td>4 cores, 16 GB</td></tr>
+                                    <tr><td>Staging</td><td>3</td><td>8 cores</td><td>32 GB</td><td>160 GB</td><td>24 cores, 96 GB</td></tr>
+                                    <tr><td>Production</td><td>3-5</td><td>16 cores</td><td>64 GB</td><td>250 GB</td><td>48-80 cores, 192-320 GB</td></tr>
+                                </tbody>
+                            </table>
+
+                            <h4>RTF Resource Allocation Formula:</h4>
+                            <div class="formula-box">
+                                <strong>App_CPU_Limit = (Application_Cores / Total_Available_Cores) × Node_CPU_Capacity</strong><br>
+                                <strong>App_Memory_Limit = (Application_Memory / Total_Available_Memory) × Node_Memory_Capacity</strong>
+                            </div>
+
+                            <h4>Cost Calculation (Annual):</h4>
+                            <div class="formula-box">
+                                <strong>Total_Annual_Cost = Infrastructure_Cost + RTF_License_Cost + Support_Cost + Operations_Cost</strong><br><br>
+                                Where:
+                                <ul>
+                                    <li><strong>RTF_License_Cost</strong> = Production_Cores × $2,000-$3,000/core/year</li>
+                                    <li><strong>Infrastructure_Cost</strong> = Cloud provider or hardware costs</li>
+                                    <li><strong>Support_Cost</strong> = 22% of license cost annually</li>
+                                    <li><strong>Operations_Cost</strong> = Personnel + Maintenance (20-30% of total)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hybrid -->
+                    <div id="hybrid" class="platform-content">
+                        <h3>🔄 Hybrid Deployment Sizing</h3>
+                        <div class="sizing-formulas">
+                            <h4>Hybrid Core Distribution Formula:</h4>
+                            <div class="formula-box">
+                                <strong>Cloud_Cores = Total_Cores × Cloud_Ratio</strong><br>
+                                <strong>On_Premises_Cores = Total_Cores × (1 - Cloud_Ratio)</strong><br><br>
+                                Common Distribution Strategies:
+                                <ul>
+                                    <li><strong>Cloud-First (80/20):</strong> Public APIs, batch processing → Cloud</li>
+                                    <li><strong>Balanced (60/40):</strong> Mixed workload distribution</li>
+                                    <li><strong>On-Premises Heavy (40/60):</strong> Security-sensitive, legacy systems → On-premises</li>
+                                </ul>
+                            </div>
+
+                            <h4>Workload-Based Sizing:</h4>
+                            <table class="specification-table">
+                                <thead>
+                                    <tr>
+                                        <th>Workload Type</th>
+                                        <th>Recommended Location</th>
+                                        <th>Sizing Multiplier</th>
+                                        <th>Cost Factor</th>
+                                        <th>Rationale</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Public APIs</td><td>CloudHub</td><td>1.0x</td><td>1.0x</td><td>Internet accessibility, auto-scaling</td></tr>
+                                    <tr><td>Internal Integration</td><td>On-premises/RTF</td><td>0.8x</td><td>0.6x</td><td>Security, low latency</td></tr>
+                                    <tr><td>Batch Processing</td><td>CloudHub/RTF</td><td>1.2x</td><td>0.8x</td><td>Scalability, cost optimization</td></tr>
+                                    <tr><td>Legacy Connectivity</td><td>On-premises</td><td>1.0x</td><td>0.7x</td><td>Network constraints, security</td></tr>
+                                    <tr><td>Real-time Processing</td><td>RTF</td><td>1.5x</td><td>0.9x</td><td>Performance, control</td></tr>
+                                </tbody>
+                            </table>
+
+                            <h4>Hybrid Cost Formula:</h4>
+                            <div class="formula-box">
+                                <strong>Total_Cost = CloudHub_Cost + RTF_Cost + Network_Cost + Management_Overhead + Integration_Cost</strong><br><br>
+                                Where:
+                                <ul>
+                                    <li><strong>Management_Overhead</strong> = 15-25% additional for hybrid complexity</li>
+                                    <li><strong>Network_Cost</strong> = VPN ($500/month) or ExpressRoute/DirectConnect ($1000+/month)</li>
+                                    <li><strong>Integration_Cost</strong> = Additional tooling and monitoring</li>
+                                </ul>
+                            </div>
+
+                            <h4>Data Transfer Cost Formula:</h4>
+                            <div class="formula-box">
+                                <strong>Data_Transfer_Cost = (GB_per_month × $0.09) + (API_calls × $0.0000035)</strong><br>
+                                (Based on typical cloud provider egress charges)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Private Cloud Edition -->
+                    <div id="pce" class="platform-content">
+                        <h3>🏢 Private Cloud Edition (PCE) Sizing</h3>
+                        <div class="sizing-formulas">
+                            <h4>PCE Infrastructure Sizing Formula:</h4>
+                            <div class="formula-box">
+                                <strong>PCE_Total_Cores = Runtime_Cores + Platform_Cores + Database_Cores + OS_Overhead + HA_Buffer</strong><br><br>
+                                Where:
+                                <ul>
+                                    <li><strong>Runtime_Cores</strong> = Application runtime requirements</li>
+                                    <li><strong>Platform_Cores</strong> = 8-16 cores for Anypoint Platform components</li>
+                                    <li><strong>Database_Cores</strong> = 4-8 cores for database cluster</li>
+                                    <li><strong>OS_Overhead</strong> = 10-15% of total cores</li>
+                                    <li><strong>HA_Buffer</strong> = 50-100% for high availability and disaster recovery</li>
+                                </ul>
+                            </div>
+
+                            <h4>Minimum Infrastructure Requirements:</h4>
+                            <table class="specification-table">
+                                <thead>
+                                    <tr>
+                                        <th>Component</th>
+                                        <th>Min CPU</th>
+                                        <th>Min Memory</th>
+                                        <th>Min Storage</th>
+                                        <th>Network</th>
+                                        <th>Redundancy</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Anypoint Platform</td><td>16 cores</td><td>64 GB</td><td>1 TB</td><td>10 Gbps</td><td>Active-Passive</td></tr>
+                                    <tr><td>Runtime Manager</td><td>8 cores</td><td>32 GB</td><td>500 GB</td><td>1 Gbps</td><td>Active-Active</td></tr>
+                                    <tr><td>API Manager</td><td>8 cores</td><td>32 GB</td><td>500 GB</td><td>1 Gbps</td><td>Active-Active</td></tr>
+                                    <tr><td>Exchange</td><td>8 cores</td><td>32 GB</td><td>2 TB</td><td>10 Gbps</td><td>Active-Passive</td></tr>
+                                    <tr><td>Database Cluster</td><td>32 cores</td><td>128 GB</td><td>5 TB SSD</td><td>10 Gbps</td><td>Active-Active</td></tr>
+                                    <tr><td>Load Balancer</td><td>8 cores</td><td>16 GB</td><td>200 GB</td><td>40 Gbps</td><td>Active-Active</td></tr>
+                                </tbody>
+                            </table>
+
+                            <h4>PCE Total Cost of Ownership (TCO) Formula:</h4>
+                            <div class="formula-box">
+                                <strong>Annual_TCO = License_Cost + Infrastructure_Cost + Operations_Cost + Support_Cost + DR_Cost</strong><br><br>
+                                Detailed Breakdown:
+                                <ul>
+                                    <li><strong>License_Cost</strong> = Platform license + Runtime licenses (Contact MuleSoft)</li>
+                                    <li><strong>Infrastructure_Cost</strong> = Hardware + Network + Data Center ($200-$500/core/year)</li>
+                                    <li><strong>Operations_Cost</strong> = Personnel + Maintenance (30-40% of infrastructure)</li>
+                                    <li><strong>Support_Cost</strong> = 22% of license cost annually</li>
+                                    <li><strong>DR_Cost</strong> = Disaster recovery site (50-100% of primary site)</li>
+                                </ul>
+                            </div>
+
+                            <h4>Break-even Analysis Formula:</h4>
+                            <div class="formula-box">
+                                <strong>Break_Even_Point = PCE_Setup_Cost / (CloudHub_Annual_Cost - PCE_Annual_Operating_Cost)</strong><br>
+                                Typically occurs at 100-200+ vCores depending on usage patterns
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Guidelines -->
+            <div class="card">
+                <h2>⚡ Performance Guidelines & Scaling Factors</h2>
+                
+                <div class="guideline-grid">
+                    <div class="guideline-card">
+                        <h3>Environment Scaling Factors</h3>
+                        <ul>
+                            <li><strong>Development:</strong> 0.3-0.5x production sizing</li>
+                            <li><strong>Testing:</strong> 0.5-0.7x production sizing</li>
+                            <li><strong>Staging:</strong> 0.8-1.0x production sizing</li>
+                            <li><strong>Production:</strong> Base + 25-50% buffer</li>
+                            <li><strong>Disaster Recovery:</strong> 50-100% of production</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="guideline-card">
+                        <h3>Performance Baselines (per vCore)</h3>
+                        <ul>
+                            <li><strong>Simple API:</strong> 800-1200 TPS</li>
+                            <li><strong>Medium Transformation:</strong> 300-500 TPS</li>
+                            <li><strong>Complex Processing:</strong> 100-200 TPS</li>
+                            <li><strong>Heavy Compute:</strong> 25-50 TPS</li>
+                            <li><strong>Database Operations:</strong> 200-400 TPS</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="guideline-card">
+                        <h3>Memory Guidelines</h3>
+                        <ul>
+                            <li><strong>Minimum:</strong> 1 GB per vCore</li>
+                            <li><strong>Recommended:</strong> 2-4 GB per vCore</li>
+                            <li><strong>Heavy Payload:</strong> 4-8 GB per vCore</li>
+                            <li><strong>Batch Processing:</strong> 8-16 GB per vCore</li>
+                            <li><strong>In-Memory Processing:</strong> 16+ GB per vCore</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="guideline-card">
+                        <h3>High Availability Multipliers</h3>
+                        <ul>
+                            <li><strong>Single Zone:</strong> 1.5x (buffer only)</li>
+                            <li><strong>Multi-AZ:</strong> 2.0x minimum</li>
+                            <li><strong>Multi-Region:</strong> 2.5-3.0x</li>
+                            <li><strong>Active-Active:</strong> 2.0x per site</li>
+                            <li><strong>Global DR:</strong> 3.0-4.0x total capacity</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform Comparison Matrix -->
+            <div class="card">
+                <h2>🔄 Platform Comparison & Decision Matrix</h2>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>CloudHub 2.0</th>
+                            <th>Runtime Fabric</th>
+                            <th>Hybrid</th>
+                            <th>Private Cloud Edition</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Deployment Model</strong></td>
+                            <td>Fully managed cloud</td>
+                            <td>Container-based (K8s)</td>
+                            <td>Mixed cloud/on-premises</td>
+                            <td>Fully on-premises</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Scaling</strong></td>
+                            <td>Auto-scaling</td>
+                            <td>Manual/Auto (K8s HPA)</td>
+                            <td>Mixed scaling models</td>
+                            <td>Manual scaling</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cost Model</strong></td>
+                            <td>Pay-per-vCore/hour</td>
+                            <td>Infrastructure + License</td>
+                            <td>Mixed cost models</td>
+                            <td>License + Infrastructure</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Management Complexity</strong></td>
+                            <td>Low (fully managed)</td>
+                            <td>Medium (customer managed)</td>
+                            <td>High (dual management)</td>
+                            <td>Very High (full control)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Security Control</strong></td>
+                            <td>Shared responsibility</td>
+                            <td>Customer controlled</td>
+                            <td>Mixed security models</td>
+                            <td>Full customer control</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Break-even Point</strong></td>
+                            <td>Immediate</td>
+                            <td>20-50 vCores</td>
+                            <td>30-80 vCores</td>
+                            <td>100-200+ vCores</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Best For</strong></td>
+                            <td>Rapid deployment, APIs</td>
+                            <td>Enterprise apps, control</td>
+                            <td>Migration, flexibility</td>
+                            <td>High security, compliance</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Cost Optimization Strategies -->
+            <div class="card">
+                <h2>💰 Cost Optimization Strategies</h2>
+                
+                <div class="guideline-grid">
+                    <div class="guideline-card">
+                        <h3>CloudHub Optimization</h3>
+                        <ul>
+                            <li><strong>Right-sizing:</strong> Monitor CPU/memory usage</li>
+                            <li><strong>Reserved Instances:</strong> 20-30% discount</li>
+                            <li><strong>Environment Consolidation:</strong> Combine dev/test</li>
+                            <li><strong>Auto-scaling:</strong> Scale down during off-hours</li>
+                            <li><strong>Worker Sharing:</strong> Multiple apps per worker</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="guideline-card">
+                        <h3>RTF Optimization</h3>
+                        <ul>
+                            <li><strong>Node Efficiency:</strong> Maximize utilization >80%</li>
+                            <li><strong>Spot Instances:</strong> 50-70% cost reduction</li>
+                            <li><strong>Resource Limits:</strong> Prevent resource waste</li>
+                            <li><strong>Multi-tenancy:</strong> Share infrastructure</li>
+                            <li><strong>Auto-scaling:</strong> HPA and VPA policies</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="guideline-card">
+                        <h3>Hybrid Strategies</h3>
+                        <ul>
+                            <li><strong>Workload Placement:</strong> Cost-optimal locations</li>
+                            <li><strong>Cloud Bursting:</strong> On-demand scaling</li>
+                            <li><strong>Data Locality:</strong> Reduce transfer costs</li>
+                            <li><strong>License Optimization:</strong> Shared licensing</li>
+                            <li><strong>Network Efficiency:</strong> Optimize connectivity</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="guideline-card">
+                        <h3>PCE Efficiency</h3>
+                        <ul>
+                            <li><strong>Infrastructure Sharing:</strong> Multi-tenant design</li>
+                            <li><strong>Lifecycle Management:</strong> Hardware refresh cycles</li>
+                            <li><strong>Energy Efficiency:</strong> Green data centers</li>
+                            <li><strong>Automation:</strong> Reduce operational overhead</li>
+                            <li><strong>Capacity Planning:</strong> Avoid over-provisioning</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROI Calculator -->
+            <div class="card">
+                <h2>📈 ROI Analysis & Business Case</h2>
+                
+                <h3>5-Year Total Cost of Ownership Comparison</h3>
+                <table class="specification-table">
+                    <thead>
+                        <tr>
+                            <th>Scenario</th>
+                            <th>Year 1</th>
+                            <th>Year 2</th>
+                            <th>Year 3</th>
+                            <th>Year 4</th>
+                            <th>Year 5</th>
+                            <th>5-Year Total</th>
+                            <th>ROI %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>CloudHub (50 vCores)</strong></td>
+                            <td>$1.5M</td>
+                            <td>$1.5M</td>
+                            <td>$1.5M</td>
+                            <td>$1.5M</td>
+                            <td>$1.5M</td>
+                            <td>$7.5M</td>
+                            <td>Baseline</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Azure RTF (50 cores)</strong></td>
+                            <td>$250K</td>
+                            <td>$200K</td>
+                            <td>$200K</td>
+                            <td>$200K</td>
+                            <td>$200K</td>
+                            <td>$1.05M</td>
+                            <td>614%</td>
+                        </tr>
+                        <tr>
+                            <td><strong>AWS RTF (50 cores)</strong></td>
+                            <td>$180K</td>
+                            <td>$150K</td>
+                            <td>$150K</td>
+                            <td>$150K</td>
+                            <td>$150K</td>
+                            <td>$780K</td>
+                            <td>859%</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hybrid (30/20 split)</strong></td>
+                            <td>$950K</td>
+                            <td>$900K</td>
+                            <td>$900K</td>
+                            <td>$900K</td>
+                            <td>$900K</td>
+                            <td>$4.55M</td>
+                            <td>65%</td>
+                        </tr>
+                        <tr>
+                            <td><strong>PCE (100 cores)</strong></td>
+                            <td>$800K</td>
+                            <td>$600K</td>
+                            <td>$600K</td>
+                            <td>$600K</td>
+                            <td>$600K</td>
+                            <td>$3.2M</td>
+                            <td>134%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+        <div class="footer">
+            <h3>📊 MuleSoft Capacity Planning Excellence</h3>
+            <p>This comprehensive guide provides mathematical formulas, interactive calculators, and detailed cost analysis for MuleSoft deployments across all platforms. Use these formulas to make data-driven decisions about your integration platform investments and optimize both performance and costs.</p>
+        </div>
+    </div>
+
+    <script>
+        // Platform switching functionality
+        function showPlatform(platformId) {
+            // Hide all platform content
+            document.querySelectorAll('.platform-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected platform content
+            document.getElementById(platformId).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // Capacity calculation function
+        function calculateCapacity() {
+            const transactions = parseFloat(document.getElementById('transactions').value) || 0;
+            const concurrentUsers = parseFloat(document.getElementById('concurrent-users').value) || 0;
+            const payloadSize = parseFloat(document.getElementById('payload-size').value) || 0;
+            const complexity = parseFloat(document.getElementById('complexity').value) || 1;
+
+            // Apply the formulas
+            const tps = transactions / 3600; // Convert to TPS
+            const payloadFactor = (payloadSize / 10) + 1;
+            const complexityFactor = complexity;
+            
+            // Performance baselines
+            const performanceBaselines = {
+                1: 1000,    // Simple
+                1.5: 500,   // Medium
+                2: 200,     // Complex
+                3: 100      // Very Complex
+            };
+            
+            const performanceBaseline = performanceBaselines[complexity] || 500;
+            const overheadCores = 0.3;
+            
+            // Calculate base cores
+            const baseCores = ((tps * payloadFactor * complexityFactor) / performanceBaseline) + overheadCores;
+            
+            // Calculate memory
+            const memoryPerCore = 3; // GB
+            const bufferFactor = 15;
+            const memory = (baseCores * memoryPerCore) + (concurrentUsers / 100) + ((payloadSize / 1000) * bufferFactor);
+
+            // Platform-specific calculations
+            const cloudHubCores = Math.ceil(baseCores * 1.3);
+            const rtfCores = Math.ceil(baseCores * 1.5); // Including overhead and buffer
+            const hybridCloudCores = Math.ceil(baseCores * 0.6 * 1.3);
+            const hybridOnPremCores = Math.ceil(baseCores * 0.4 * 1.2);
+            const pceCores = Math.ceil(baseCores * 2.0); // Including all overhead and HA
+
+            // Cost calculations (monthly)
+            const cloudHubCost = cloudHubCores * 2470;
+            const rtfCost = (rtfCores * 167) + 1000; // Infrastructure + overhead
+            const hybridCost = (hybridCloudCores * 2470) + (hybridOnPremCores * 150) + 500;
+            const pceCost = (pceCores * 200) + 5000; // Infrastructure + licensing estimate
+
+            // Display results
+            const resultsDiv = document.getElementById('results');
+            const platformResults = document.getElementById('platform-results');
+            
+            platformResults.innerHTML = `
+                <div class="platform-result">
+                    <h4>☁️ CloudHub 2.0</h4>
+                    <p><strong>Recommended:</strong> ${cloudHubCores} vCores, ${Math.ceil(memory)} GB memory</p>
+                    <p><strong>Monthly Cost:</strong> $${cloudHubCost.toLocaleString()}</p>
+                    <p><strong>Annual Cost:</strong> $${(cloudHubCost * 12).toLocaleString()}</p>
+                </div>
+                
+                <div class="platform-result">
+                    <h4>🏗️ Runtime Fabric</h4>
+                    <p><strong>Recommended:</strong> ${rtfCores} total cores, ${Math.ceil(memory * 1.2)} GB memory</p>
+                    <p><strong>Monthly Cost:</strong> $${rtfCost.toLocaleString()}</p>
+                    <p><strong>Annual Cost:</strong> $${(rtfCost * 12).toLocaleString()}</p>
+                </div>
+                
+                <div class="platform-result">
+                    <h4>🔄 Hybrid Deployment</h4>
+                    <p><strong>Cloud:</strong> ${hybridCloudCores} vCores | <strong>On-Premises:</strong> ${hybridOnPremCores} cores</p>
+                    <p><strong>Monthly Cost:</strong> $${hybridCost.toLocaleString()}</p>
+                    <p><strong>Annual Cost:</strong> $${(hybridCost * 12).toLocaleString()}</p>
+                </div>
+                
+                <div class="platform-result">
+                    <h4>🏢 Private Cloud Edition</h4>
+                    <p><strong>Recommended:</strong> ${pceCores} total cores, ${Math.ceil(memory * 1.5)} GB memory</p>
+                    <p><strong>Monthly Cost:</strong> $${pceCost.toLocaleString()}</p>
+                    <p><strong>Annual Cost:</strong> $${(pceCost * 12).toLocaleString()}</p>
+                </div>
+                
+                <div class="platform-result" style="background: rgba(255,255,255,0.4); margin-top: 1rem;">
+                    <h4>🎯 Recommendations</h4>
+                    <p><strong>TPS Calculated:</strong> ${tps.toFixed(2)} transactions/second</p>
+                    <p><strong>Base Cores Needed:</strong> ${baseCores.toFixed(2)} cores</p>
+                    <p><strong>Most Cost-Effective:</strong> ${rtfCost < cloudHubCost && rtfCost < hybridCost && rtfCost < pceCost ? 'Runtime Fabric' : 
+                                                                   cloudHubCost < hybridCost && cloudHubCost < pceCost ? 'CloudHub 2.0' : 
+                                                                   hybridCost < pceCost ? 'Hybrid' : 'Private Cloud Edition'}</p>
+                </div>
+            `;
+            
+            resultsDiv.style.display = 'block';
+        }
+
+        // Initialize default values on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Calculate with default values
+            setTimeout(calculateCapacity, 100);
+        });
+    </script>
+    <script src="common-scripts.js"></script>
+</body>
+</html>
