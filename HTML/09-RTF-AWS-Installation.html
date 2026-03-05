@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Runtime Fabric Installation on AWS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #ff9a56 0%, #ffad56 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #FF9900 0%, #FF6600 100%);
+            color: white;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="a" cx="50%" cy="40%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0.1"/><stop offset="100%" stop-color="%23ffffff" stop-opacity="0.05"/></radialGradient></defs><rect width="100" height="20" fill="url(%23a)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+        }
+
+        .nav {
+            margin: 30px 0;
+            text-align: center;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .nav a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #FF9900 0%, #FF6600 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(255, 153, 0, 0.3);
+        }
+
+        .nav a:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .section {
+            margin: 40px 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-left: 5px solid #FF9900;
+            border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            position: relative;
+        }
+
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #FF9900, #FF6600);
+            border-radius: 10px 10px 0 0;
+        }
+
+        .section h2 {
+            color: #FF6600;
+            margin-bottom: 20px;
+            font-size: 2.2rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section h3 {
+            color: #E55100;
+            margin: 25px 0 15px 0;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .code-block {
+            background: linear-gradient(135deg, #232f3e 0%, #131a22 100%);
+            color: #ff9900;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            position: relative;
+            border-left: 4px solid #FF9900;
+        }
+
+        .code-block::before {
+            content: 'AWS CLI';
+            position: absolute;
+            top: 8px;
+            right: 15px;
+            font-size: 0.8rem;
+            color: #ff9900;
+            font-family: 'Poppins', sans-serif;
+            opacity: 0.7;
+        }
+
+        .warning {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #f39c12;
+            position: relative;
+        }
+
+        .warning::before {
+            content: '⚠️';
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+
+        .info {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #17a2b8;
+            position: relative;
+        }
+
+        .info::before {
+            content: 'ℹ️';
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+
+        .step-list {
+            counter-reset: step-counter;
+            list-style: none;
+        }
+
+        .step-list li {
+            counter-increment: step-counter;
+            margin: 25px 0;
+            padding: 25px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-left: 5px solid #FF9900;
+            position: relative;
+        }
+
+        .step-list li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: -15px;
+            top: 20px;
+            background: linear-gradient(135deg, #FF9900 0%, #FF6600 100%);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .step-list li strong {
+            color: #FF6600;
+            font-size: 1.2rem;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            border-top: 4px solid #FF9900;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+            border-top-color: #667eea;
+        }
+
+        .feature-card h4 {
+            color: #FF6600;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: linear-gradient(135deg, #FF9900 0%, #FF6600 100%);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        tr:hover {
+            background: #fff3e0;
+            transition: background 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .nav {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>☁️ Runtime Fabric Installation on Amazon Web Services</h1>
+            <p>Complete step-by-step guide for deploying MuleSoft Runtime Fabric on Amazon Elastic Kubernetes Service (EKS)</p>
+        </div>
+
+        <div class="nav">
+            <a href="index.html">🏠 Home</a>
+            <a href="08-RTF-Azure-Installation.html">🌐 Azure Setup</a>
+            <a href="10-RTF-Security.html">🔐 Security</a>
+            <a href="11-Logging-Monitoring.html">📊 Monitoring</a>
+        </div>
+
+        <div class="section">
+            <h2>📋 Prerequisites & Requirements</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>☁️ AWS Requirements</h4>
+                    <ul>
+                        <li>AWS Account with appropriate permissions</li>
+                        <li>IAM User with EKS, EC2, and VPC permissions</li>
+                        <li>AWS CLI v2.0+ installed and configured</li>
+                        <li>Service quota for EKS clusters and EC2 instances</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🛠️ Tools & Software</h4>
+                    <ul>
+                        <li>kubectl 1.24+ command-line tool</li>
+                        <li>eksctl for EKS cluster management</li>
+                        <li>Helm 3.8+ for package management</li>
+                        <li>Docker Desktop (for testing)</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🎯 MuleSoft Requirements</h4>
+                    <ul>
+                        <li>Anypoint Platform organization access</li>
+                        <li>Runtime Fabric license from MuleSoft</li>
+                        <li>Environment administrator permissions</li>
+                        <li>Connected App for secure API access</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔧 AWS CLI and Tools Setup</h2>
+            
+            <h3>🚀 Step 1: Install and Configure AWS CLI</h3>
+            <div class="code-block">
+# Install AWS CLI v2 (Linux/macOS)
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+
+# For Windows (PowerShell)
+# Download and install from: https://aws.amazon.com/cli/
+
+# Configure AWS CLI with your credentials
+aws configure
+
+# Set the following when prompted:
+# AWS Access Key ID: [Your Access Key]
+# AWS Secret Access Key: [Your Secret Key]
+# Default region name: us-east-1
+# Default output format: json
+
+# Verify configuration
+aws sts get-caller-identity
+            </div>
+
+            <h3>⚙️ Step 2: Install eksctl and kubectl</h3>
+            <div class="code-block">
+# Install eksctl (Linux/macOS)
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+sudo mv /tmp/eksctl /usr/local/bin
+
+# Install kubectl
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+# Verify installations
+eksctl version
+kubectl version --client
+
+# Install Helm
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+helm version
+            </div>
+
+            <div class="info">
+                <strong>💡 AWS Regions:</strong> Choose a region that supports EKS and has the required instance types. Popular choices are us-east-1, us-west-2, or eu-west-1.
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🏗️ AWS Infrastructure Setup</h2>
+            
+            <h3>🌐 Step 1: Create VPC and Networking</h3>
+            <div class="code-block">
+# Set environment variables
+export AWS_REGION="us-east-1"
+export CLUSTER_NAME="rtf-eks-cluster"
+export VPC_CIDR="10.0.0.0/16"
+
+# Create VPC using CloudFormation template
+aws cloudformation create-stack \
+  --stack-name rtf-vpc-stack \
+  --template-url https://amazon-eks.s3.us-west-2.amazonaws.com/cloudformation/2020-10-29/amazon-eks-vpc-private-subnets.yaml \
+  --parameters ParameterKey=VpcBlock,ParameterValue=$VPC_CIDR \
+  --region $AWS_REGION
+
+# Wait for VPC stack to complete
+aws cloudformation wait stack-create-complete \
+  --stack-name rtf-vpc-stack \
+  --region $AWS_REGION
+
+# Get VPC and subnet IDs
+VPC_ID=$(aws cloudformation describe-stacks \
+  --stack-name rtf-vpc-stack \
+  --query 'Stacks[0].Outputs[?OutputKey==`VpcId`].OutputValue' \
+  --output text --region $AWS_REGION)
+
+echo "VPC ID: $VPC_ID"
+            </div>
+
+            <h3>🔐 Step 2: IAM Roles and Policies</h3>
+            <div class="code-block">
+# Create EKS cluster service role
+cat > eks-cluster-role-trust-policy.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "eks.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+
+# Create the cluster service role
+aws iam create-role \
+  --role-name rtf-eks-cluster-role \
+  --assume-role-policy-document file://eks-cluster-role-trust-policy.json
+
+# Attach required policies
+aws iam attach-role-policy \
+  --role-name rtf-eks-cluster-role \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+
+# Create node group role
+cat > eks-nodegroup-role-trust-policy.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+
+aws iam create-role \
+  --role-name rtf-eks-nodegroup-role \
+  --assume-role-policy-document file://eks-nodegroup-role-trust-policy.json
+
+# Attach policies to node group role
+aws iam attach-role-policy \
+  --role-name rtf-eks-nodegroup-role \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+
+aws iam attach-role-policy \
+  --role-name rtf-eks-nodegroup-role \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+
+aws iam attach-role-policy \
+  --role-name rtf-eks-nodegroup-role \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>☸️ Amazon EKS Cluster Creation</h2>
+            
+            <h3>🚀 Step 1: Create EKS Cluster using eksctl</h3>
+            <div class="info">
+                <strong>💡 Production Configuration:</strong> This setup creates a production-ready EKS cluster with auto-scaling, managed node groups, and proper security configurations.
+            </div>
+            
+            <div class="code-block">
+# Create cluster configuration file
+cat > rtf-eks-cluster.yaml << EOF
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: $CLUSTER_NAME
+  region: $AWS_REGION
+  version: "1.28"
+
+# VPC Configuration
+vpc:
+  cidr: "$VPC_CIDR"
+  nat:
+    gateway: Single
+  clusterEndpoints:
+    publicAccess: true
+    privateAccess: true
+
+# IAM Configuration
+iam:
+  serviceRoleARN: "arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):role/rtf-eks-cluster-role"
+
+# Managed Node Groups
+managedNodeGroups:
+  - name: rtf-workers
+    instanceType: m5.xlarge
+    amiFamily: AmazonLinux2
+    minSize: 3
+    maxSize: 10
+    desiredCapacity: 3
+    volumeSize: 100
+    volumeType: gp3
+    privateNetworking: true
+    ssh:
+      enableSsm: true
+    iam:
+      instanceRoleARN: "arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):role/rtf-eks-nodegroup-role"
+    tags:
+      Environment: production
+      Project: runtime-fabric
+    labels:
+      role: rtf-worker
+      
+# Addons
+addons:
+  - name: vpc-cni
+    version: latest
+  - name: coredns
+    version: latest
+  - name: kube-proxy
+    version: latest
+  - name: aws-ebs-csi-driver
+    version: latest
+
+# CloudWatch Logging
+cloudWatch:
+  clusterLogging:
+    enable: ["all"]
+    logRetentionInDays: 30
+EOF
+
+# Create the cluster (this takes 15-20 minutes)
+eksctl create cluster -f rtf-eks-cluster.yaml
+
+echo "EKS cluster creation initiated. This will take 15-20 minutes..."
+            </div>
+
+            <h3>⚙️ Step 2: Verify Cluster and Configure Access</h3>
+            <div class="code-block">
+# Update kubeconfig
+aws eks update-kubeconfig \
+  --region $AWS_REGION \
+  --name $CLUSTER_NAME
+
+# Verify cluster access
+kubectl get nodes -o wide
+kubectl get pods --all-namespaces
+kubectl cluster-info
+
+# Check cluster status
+eksctl get cluster --region $AWS_REGION
+
+# Verify node group
+kubectl get nodes --show-labels
+kubectl describe nodes | grep -A 3 "Instance.*:"
+            </div>
+
+            <h3>💾 Step 3: Storage Classes Configuration</h3>
+            <div class="code-block">
+# Create high-performance storage class for RTF
+cat << EOF | kubectl apply -f -
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rtf-gp3-storage
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+  iops: "3000"
+  throughput: "125"
+  fsType: ext4
+  encrypted: "true"
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+EOF
+
+# Create standard storage class
+cat << EOF | kubectl apply -f -
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rtf-gp2-storage
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp2
+  fsType: ext4
+  encrypted: "true"
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+EOF
+
+# Verify storage classes
+kubectl get storageclass
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔧 Runtime Fabric Installation</h2>
+            
+            <ol class="step-list">
+                <li>
+                    <strong>📥 Download RTF Installation Package</strong>
+                    <div class="info">Download the RTF installer from Anypoint Platform or use the MuleSoft CLI method.</div>
+                    <div class="code-block">
+# Create installation directory
+mkdir -p ~/rtf-aws-installation && cd ~/rtf-aws-installation
+
+# Method 1: Download via Anypoint Platform UI
+# Navigate to Runtime Manager > Runtime Fabrics > Add Runtime Fabric
+# Download the installer package
+
+# Method 2: Use MuleSoft CLI (if available)
+# npm install -g @mulesoft/anypoint-cli
+# anypoint-cli runtime-fabric download --organizationId YOUR_ORG_ID
+
+# Extract the package (replace with actual filename)
+tar -xzf rtf-install-package-*.tar.gz
+cd rtf-install-package
+
+# Make scripts executable
+chmod +x *.sh
+ls -la
+                    </div>
+                </li>
+
+                <li>
+                    <strong>📝 Create Runtime Fabric Configuration</strong>
+                    <div class="code-block">
+# Create RTF namespace
+kubectl create namespace rtf-system
+
+# Create configuration file for AWS EKS
+cat << EOF > rtf-aws-config.yaml
+apiVersion: install.runtime-fabric.mulesoft.com/v1beta1
+kind: RuntimeFabric
+metadata:
+  name: aws-rtf-cluster
+  namespace: rtf-system
+  labels:
+    environment: production
+    provider: aws
+spec:
+  # Anypoint Platform connection
+  anypoint:
+    organizationId: "YOUR_ORG_ID"
+    environment: "production"
+    region: "us-east-1"
+    
+  # AWS-specific cluster configuration
+  cluster:
+    name: "aws-rtf-production"
+    region: "$AWS_REGION"
+    provider: "aws"
+    version: "1.28"
+    
+  # Storage configuration for AWS
+  storage:
+    storageClass: "rtf-gp3-storage"
+    capacity: "100Gi"
+    
+  # Load balancer and ingress
+  ingress:
+    class: "alb"  # AWS Application Load Balancer
+    annotations:
+      kubernetes.io/ingress.class: alb
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/ssl-redirect: '443'
+    tls:
+      enabled: true
+      
+  # Resource allocation optimized for m5.xlarge instances
+  resources:
+    replicas: 3
+    requests:
+      cpu: "1500m"
+      memory: "3Gi"
+    limits:
+      cpu: "3000m"
+      memory: "6Gi"
+      
+  # Auto-scaling configuration
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+    scaleUpStabilizationWindowSeconds: 300
+    scaleDownStabilizationWindowSeconds: 600
+
+  # AWS-specific security settings
+  security:
+    podSecurityPolicy:
+      enabled: true
+    networkPolicy:
+      enabled: true
+    rbac:
+      enabled: true
+    serviceAccount:
+      create: true
+      annotations:
+        eks.amazonaws.com/role-arn: "arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):role/rtf-service-role"
+      
+  # Monitoring and observability
+  monitoring:
+    prometheus:
+      enabled: true
+      storageClass: "rtf-gp3-storage"
+    grafana:
+      enabled: true
+      persistence:
+        enabled: true
+        storageClass: "rtf-gp2-storage"
+    logging:
+      level: "INFO"
+      cloudwatchLogs:
+        enabled: true
+        region: "$AWS_REGION"
+        logGroup: "/eks/$CLUSTER_NAME/rtf"
+EOF
+                    </div>
+                </li>
+
+                <li>
+                    <strong>🎯 Install Runtime Fabric Components</strong>
+                    <div class="code-block">
+# Install RTF using the installer
+./install-rtf-aws.sh \
+  --config rtf-aws-config.yaml \
+  --namespace rtf-system \
+  --provider aws \
+  --region $AWS_REGION
+
+# Alternative: Helm installation with AWS-specific values
+helm repo add mulesoft https://repository.mulesoft.org/nexus/content/repositories/public-helm/
+helm repo update
+
+# Create Helm values file for AWS
+cat << EOF > rtf-aws-values.yaml
+global:
+  provider: aws
+  region: $AWS_REGION
+  storageClass: rtf-gp3-storage
+
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+  grafana:
+    enabled: true
+
+logging:
+  cloudwatch:
+    enabled: true
+    region: $AWS_REGION
+EOF
+
+# Install RTF with Helm
+helm install rtf-aws mulesoft/runtime-fabric \
+  --namespace rtf-system \
+  --values rtf-aws-values.yaml \
+  --wait \
+  --timeout 30m
+
+# Monitor installation progress
+kubectl get pods -n rtf-system -w
+                    </div>
+                </li>
+
+                <li>
+                    <strong>✅ Verify RTF Installation</strong>
+                    <div class="code-block">
+# Check RTF pod status
+kubectl get pods -n rtf-system -o wide
+
+# Verify services and endpoints
+kubectl get services -n rtf-system
+kubectl get endpoints -n rtf-system
+
+# Check RTF custom resources
+kubectl get rtf -n rtf-system -o yaml
+
+# Verify persistent volume claims
+kubectl get pvc -n rtf-system
+
+# Check RTF agent connectivity
+kubectl logs -n rtf-system -l app=rtf-agent --tail=100
+
+# Verify load balancer
+kubectl get ingress -n rtf-system
+
+# Check node resources
+kubectl top nodes
+kubectl describe nodes | grep -A 5 "Allocated resources"
+
+# Verify cluster autoscaler
+kubectl get deployment cluster-autoscaler -n kube-system
+kubectl logs -n kube-system -l app=cluster-autoscaler
+                    </div>
+                </li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h2>🌐 AWS Load Balancer Controller Setup</h2>
+            
+            <h3>🔧 Step 1: Install AWS Load Balancer Controller</h3>
+            <div class="code-block">
+# Create IAM service account for AWS Load Balancer Controller
+eksctl create iamserviceaccount \
+  --cluster=$CLUSTER_NAME \
+  --namespace=kube-system \
+  --name=aws-load-balancer-controller \
+  --role-name AmazonEKSLoadBalancerControllerRole \
+  --attach-policy-arn=arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess \
+  --override-existing-serviceaccounts \
+  --approve
+
+# Add EKS Helm repository
+helm repo add eks https://aws.github.io/eks-charts
+helm repo update
+
+# Install AWS Load Balancer Controller
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  -n kube-system \
+  --set clusterName=$CLUSTER_NAME \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=aws-load-balancer-controller \
+  --set region=$AWS_REGION \
+  --set vpcId=$VPC_ID
+
+#

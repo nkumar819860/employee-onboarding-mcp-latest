@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Runtime Fabric Installation on Azure</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #2C5282 0%, #2A4A6B 100%);
+            color: white;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="a" cx="50%" cy="40%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0.1"/><stop offset="100%" stop-color="%23ffffff" stop-opacity="0.05"/></radialGradient></defs><rect width="100" height="20" fill="url(%23a)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+        }
+
+        .nav {
+            margin: 30px 0;
+            text-align: center;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .nav a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .nav a:hover {
+            background: linear-gradient(135deg, #FC7300 0%, #FF8C42 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(252, 115, 0, 0.4);
+        }
+
+        .section {
+            margin: 40px 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-left: 5px solid #667eea;
+            border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            position: relative;
+        }
+
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 10px 10px 0 0;
+        }
+
+        .section h2 {
+            color: #2C5282;
+            margin-bottom: 20px;
+            font-size: 2.2rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section h3 {
+            color: #0056b3;
+            margin: 25px 0 15px 0;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .code-block {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            position: relative;
+            border-left: 4px solid #FC7300;
+        }
+
+        .code-block::before {
+            content: 'Terminal';
+            position: absolute;
+            top: 8px;
+            right: 15px;
+            font-size: 0.8rem;
+            color: #718096;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .warning {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #f39c12;
+            position: relative;
+        }
+
+        .warning::before {
+            content: '⚠️';
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+
+        .info {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #17a2b8;
+            position: relative;
+        }
+
+        .info::before {
+            content: 'ℹ️';
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+
+        .step-list {
+            counter-reset: step-counter;
+            list-style: none;
+        }
+
+        .step-list li {
+            counter-increment: step-counter;
+            margin: 25px 0;
+            padding: 25px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-left: 5px solid #667eea;
+            position: relative;
+        }
+
+        .step-list li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: -15px;
+            top: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .step-list li strong {
+            color: #2C5282;
+            font-size: 1.2rem;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .architecture-diagram {
+            text-align: center;
+            margin: 30px 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 10px;
+            border: 2px dashed #667eea;
+            position: relative;
+        }
+
+        .architecture-diagram::before {
+            content: '🏗️ Architecture Overview';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0 15px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: linear-gradient(135deg, #2C5282 0%, #2A4A6B 100%);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        tr:hover {
+            background: #e8f4fd;
+            transition: background 0.3s ease;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            border-top: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+            border-top-color: #FC7300;
+        }
+
+        .feature-card h4 {
+            color: #2C5282;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .nav {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 Runtime Fabric Installation on Microsoft Azure</h1>
+            <p>Complete step-by-step guide for deploying MuleSoft Runtime Fabric on Azure Kubernetes Service (AKS)</p>
+        </div>
+
+        <div class="nav">
+            <a href="index.html">🏠 Home</a>
+            <a href="09-RTF-AWS-Installation.html">☁️ AWS Setup</a>
+            <a href="10-RTF-Security.html">🔐 Security</a>
+            <a href="11-Logging-Monitoring.html">📊 Monitoring</a>
+        </div>
+
+        <div class="section">
+            <h2>📋 Prerequisites & Requirements</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🔑 Azure Requirements</h4>
+                    <ul>
+                        <li>Azure Subscription with sufficient credits</li>
+                        <li>Contributor or Owner role permissions</li>
+                        <li>Resource quota for AKS cluster</li>
+                        <li>Azure CLI 2.30+ installed</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🛠️ Tools & Software</h4>
+                    <ul>
+                        <li>kubectl 1.24+ command-line tool</li>
+                        <li>Helm 3.8+ for package management</li>
+                        <li>Docker Desktop (for local testing)</li>
+                        <li>Git for version control</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🎯 MuleSoft Requirements</h4>
+                    <ul>
+                        <li>Anypoint Platform organization access</li>
+                        <li>Runtime Fabric license from MuleSoft</li>
+                        <li>Environment administrator permissions</li>
+                        <li>Connected App for API access</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🏗️ Azure Infrastructure Setup</h2>
+            
+            <h3>🌐 Step 1: Resource Group Creation</h3>
+            <div class="code-block">
+# Set variables for consistent naming
+export RESOURCE_GROUP="rtf-production-rg"
+export LOCATION="eastus2"
+export CLUSTER_NAME="rtf-aks-cluster"
+
+# Create resource group
+az group create \
+  --name $RESOURCE_GROUP \
+  --location $LOCATION \
+  --tags environment=production project=runtime-fabric
+
+# Verify creation
+az group show --name $RESOURCE_GROUP --output table
+            </div>
+
+            <h3>🔗 Step 2: Virtual Network Configuration</h3>
+            <div class="code-block">
+# Create virtual network with proper CIDR blocks
+az network vnet create \
+  --resource-group $RESOURCE_GROUP \
+  --name rtf-vnet \
+  --address-prefix 10.0.0.0/16 \
+  --subnet-name rtf-subnet \
+  --subnet-prefix 10.0.1.0/24 \
+  --location $LOCATION
+
+# Create additional subnets for different services
+az network vnet subnet create \
+  --resource-group $RESOURCE_GROUP \
+  --vnet-name rtf-vnet \
+  --name services-subnet \
+  --address-prefix 10.0.2.0/24
+
+az network vnet subnet create \
+  --resource-group $RESOURCE_GROUP \
+  --vnet-name rtf-vnet \
+  --name monitoring-subnet \
+  --address-prefix 10.0.3.0/24
+
+# Get subnet ID for AKS creation
+SUBNET_ID=$(az network vnet subnet show \
+  --resource-group $RESOURCE_GROUP \
+  --vnet-name rtf-vnet \
+  --name rtf-subnet \
+  --query id -o tsv)
+
+echo "Subnet ID: $SUBNET_ID"
+            </div>
+
+            <h3>🛡️ Step 3: Network Security Configuration</h3>
+            <div class="code-block">
+# Create Network Security Group
+az network nsg create \
+  --resource-group $RESOURCE_GROUP \
+  --name rtf-nsg \
+  --location $LOCATION
+
+# Add security rules for RTF
+az network nsg rule create \
+  --resource-group $RESOURCE_GROUP \
+  --nsg-name rtf-nsg \
+  --name AllowHTTPS \
+  --protocol tcp \
+  --priority 1001 \
+  --destination-port-range 443 \
+  --source-address-prefix '*' \
+  --destination-address-prefix '*' \
+  --access allow \
+  --direction inbound
+
+az network nsg rule create \
+  --resource-group $RESOURCE_GROUP \
+  --nsg-name rtf-nsg \
+  --name AllowRTFManagement \
+  --protocol tcp \
+  --priority 1002 \
+  --destination-port-range 32009 \
+  --source-address-prefix VirtualNetwork \
+  --destination-address-prefix '*' \
+  --access allow \
+  --direction inbound
+
+# Associate NSG with subnet
+az network vnet subnet update \
+  --resource-group $RESOURCE_GROUP \
+  --vnet-name rtf-vnet \
+  --name rtf-subnet \
+  --network-security-group rtf-nsg
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>☸️ Azure Kubernetes Service (AKS) Setup</h2>
+            
+            <h3>🚀 Step 1: Create AKS Cluster</h3>
+            <div class="info">
+                <strong>💡 Recommended Configuration:</strong> This setup creates a production-ready AKS cluster with auto-scaling, monitoring, and proper networking configuration.
+            </div>
+            
+            <div class="code-block">
+# Create AKS cluster with production settings
+az aks create \
+  --resource-group $RESOURCE_GROUP \
+  --name $CLUSTER_NAME \
+  --node-count 3 \
+  --min-count 3 \
+  --max-count 10 \
+  --node-vm-size Standard_D4s_v3 \
+  --kubernetes-version 1.28.5 \
+  --enable-addons monitoring \
+  --vnet-subnet-id $SUBNET_ID \
+  --enable-cluster-autoscaler \
+  --enable-node-public-ip false \
+  --network-plugin azure \
+  --network-policy azure \
+  --generate-ssh-keys \
+  --enable-managed-identity \
+  --assign-identity \
+  --tags environment=production
+
+# This will take 10-15 minutes to complete
+echo "AKS cluster creation in progress..."
+            </div>
+
+            <h3>⚙️ Step 2: Configure kubectl Access</h3>
+            <div class="code-block">
+# Get AKS credentials and merge with local kubeconfig
+az aks get-credentials \
+  --resource-group $RESOURCE_GROUP \
+  --name $CLUSTER_NAME \
+  --overwrite-existing
+
+# Verify connection and cluster info
+kubectl get nodes -o wide
+kubectl cluster-info
+kubectl get namespaces
+
+# Check node resource capacity
+kubectl describe nodes | grep -A 5 "Capacity:\|Allocatable:"
+            </div>
+
+            <h3>💾 Step 3: Storage Configuration</h3>
+            <div class="code-block">
+# Create high-performance storage class for RTF
+cat <<EOF | kubectl apply -f -
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rtf-premium-storage
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+provisioner: disk.csi.azure.com
+parameters:
+  storageaccounttype: Premium_LRS
+  kind: managed
+  cachingmode: ReadOnly
+  diskIopsReadWrite: "3000"
+  diskMbpsReadWrite: "125"
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+mountOptions:
+  - debug
+EOF
+
+# Create standard storage class for general use
+cat <<EOF | kubectl apply -f -
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rtf-standard-storage
+provisioner: disk.csi.azure.com
+parameters:
+  storageaccounttype: Standard_LRS
+  kind: managed
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+EOF
+
+# Verify storage classes
+kubectl get storageclass
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔧 Runtime Fabric Installation</h2>
+            
+            <ol class="step-list">
+                <li>
+                    <strong>📥 Download RTF Installation Package</strong>
+                    <div class="info">Access the latest RTF installer from Anypoint Platform or use the direct download method below.</div>
+                    <div class="code-block">
+# Create installation directory
+mkdir -p ~/rtf-installation && cd ~/rtf-installation
+
+# Download the latest RTF installer (replace with your org-specific URL)
+curl -L "https://anypoint.mulesoft.com/runtimefabric/api/download/installer/latest" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -o rtf-install-package.tar.gz
+
+# Extract the installation package
+tar -xzf rtf-install-package.tar.gz
+cd rtf-install-package
+
+# Verify contents
+ls -la
+                    </div>
+                </li>
+
+                <li>
+                    <strong>📝 Create Runtime Fabric Configuration</strong>
+                    <div class="code-block">
+# Create RTF namespace
+kubectl create namespace rtf-system
+
+# Create RTF configuration file
+cat <<EOF > rtf-config.yaml
+apiVersion: install.runtime-fabric.mulesoft.com/v1beta1
+kind: RuntimeFabric
+metadata:
+  name: azure-rtf-cluster
+  namespace: rtf-system
+spec:
+  # Anypoint Platform connection details
+  anypoint:
+    organizationId: "YOUR_ORG_ID"
+    environment: "production"
+    region: "us-east-1"
+    
+  # Cluster configuration
+  cluster:
+    name: "azure-rtf-production"
+    region: "eastus2"
+    provider: "azure"
+    
+  # Storage configuration
+  storage:
+    storageClass: "rtf-premium-storage"
+    capacity: "100Gi"
+    
+  # Networking configuration
+  ingress:
+    class: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    tls:
+      enabled: true
+      secretName: "rtf-tls-secret"
+      
+  # Resource allocation for RTF components
+  resources:
+    replicas: 3
+    requests:
+      cpu: "1000m"
+      memory: "2Gi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+      
+  # Auto-scaling configuration
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  # Security settings
+  security:
+    podSecurityPolicy:
+      enabled: true
+    networkPolicy:
+      enabled: true
+    rbac:
+      enabled: true
+      
+  # Monitoring and observability
+  monitoring:
+    prometheus:
+      enabled: true
+    grafana:
+      enabled: true
+    logging:
+      level: "INFO"
+EOF
+                    </div>
+                </li>
+
+                <li>
+                    <strong>🎯 Install Runtime Fabric Components</strong>
+                    <div class="code-block">
+# Install RTF using the installer script
+./install-rtf.sh --config rtf-config.yaml --namespace rtf-system
+
+# Alternative: Manual Helm installation
+helm repo add mulesoft https://repository.mulesoft.org/nexus/content/repositories/public-helm/
+helm repo update
+
+# Install RTF with custom values
+helm install rtf-azure mulesoft/runtime-fabric \
+  --namespace rtf-system \
+  --values rtf-config.yaml \
+  --wait \
+  --timeout 30m \
+  --set global.provider=azure \
+  --set global.region=eastus2
+
+# Monitor installation progress
+kubectl get pods -n rtf-system -w
+                    </div>
+                </li>
+
+                <li>
+                    <strong>✅ Verify RTF Installation</strong>
+                    <div class="code-block">
+# Check all RTF pods are running
+kubectl get pods -n rtf-system -o wide
+
+# Verify RTF services
+kubectl get services -n rtf-system
+
+# Check RTF ingress configuration
+kubectl get ingress -n rtf-system
+
+# Verify RTF agent connection to Anypoint Platform
+kubectl logs -n rtf-system -l app=rtf-agent --tail=50
+
+# Check cluster status from RTF perspective
+kubectl get rtf -n rtf-system
+
+# Verify storage claims
+kubectl get pvc -n rtf-system
+
+# Check node resources and allocations
+kubectl top nodes
+kubectl top pods -n rtf-system
+                    </div>
+                </li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h2>🌐 Load Balancer and Ingress Configuration</h2>
+            
+            <h3>🔧 Step 1: Install NGINX Ingress Controller</h3>
+            <div class="code-block">
+# Add NGINX ingress Helm repository
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+
+# Create namespace for ingress
+kubectl create namespace ingress-nginx
+
+# Install NGINX ingress controller with Azure-specific settings
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx \
+  --set controller.service.type=LoadBalancer \
+  --set controller.service.loadBalancerSourceRanges="{0.0.0.0/0}" \
+  --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz \
+  --set controller.metrics.enabled=true \
+  --set controller.podSecurityContext.runAsUser=101 \
+  --set controller.image.allowPrivilegeEscalation=false
+
+# Wait for LoadBalancer to get external IP
+kubectl get service -n ingress-nginx ingress-nginx-controller --watch
+
+# Get the external IP address
+EXTERNAL_IP=$(kubectl get service -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+echo "External IP: $EXTERNAL_IP"
+            </div>
+
+            <h3>🔐 Step 2: SSL/TLS Certificate Configuration</h3>
+            <div class="code-block">
+# Option 1: Use cert-manager for automatic SSL certificates
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+
+# Install cert-manager
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.crds.yaml
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.13.0
+
+# Create Let's Encrypt cluster issuer
+cat <<EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: your-email@company.com
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOF
+
+# Option 2: Manual certificate (if you have your own SSL cert)
+kubectl create secret tls rtf-tls-secret \
+  --cert=path/to/your/certificate.crt \
+  --key=path/to/your/private.key \
+  --namespace rtf-system
+            </div>
+
+            <h3>📡 Step 3: Configure RTF Ingress Rules</h3>
+            <div class="code-block">
+# Create ingress configuration for RTF
+cat <<EOF | kubectl apply -f -
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rtf-ingress
+  namespace: rtf-system
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - rtf-azure.yourdomain.com
+    secretName: rtf-tls-secret
+  rules:
+  - host: rtf-azure.yourdomain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: rtf-service
+            port:
+              number: 443
+      - path: /console
+        pathType: Prefix
+        backend:
+          service:
+            name: rtf-console-service
+            port:
+              number: 443
+EOF
+
+# Verify ingress is created and has an IP
+kubectl get ingress -n rtf-system
+kubectl describe ingress rtf-ingress -n rtf-system
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Monitoring and Observability Setup</h2>
+            
+            <h3>📈 Azure Monitor Integration</h3>
+            <div class="code-block">
+# Enable Azure Monitor for containers if not already enabled
+az aks enable-addons \
+  --resource-group $RESOURCE_GROUP \
+  --name $CLUSTER_NAME \
+  --addons monitoring
+
+# Create dedicated Log Analytics workspace for RTF
+az monitor log-analytics workspace create \
+  --resource-group $RESOURCE_GROUP \
+  --workspace-name rtf-log-analytics \
+  --location $LOCATION \
+  --sku pergb2018
+
+# Get workspace ID for configuration
+WORKSPACE_ID=$(az monitor log-analytics workspace show \
+  --resource-group $RESOURCE_GROUP \
+  --workspace-name rtf-log-analytics \
+  --query customerId -o tsv)
+
+echo "Log Analytics Workspace ID: $WORKSPACE_ID"
+            </div>
+
+            <h3>🎯 Prometheus and Grafana Setup</h3>
+            <div class="code-block">
+# Add Prometheus community Helm repository
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+
+# Create monitoring namespace
+kubectl create namespace monitoring
+
+# Install Prometheus stack with custom values
+helm install kube-prometheus prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --set grafana.service.type=LoadBalancer \
+  --set grafana.persistence.enabled=true \
+  --set grafana.persistence.size=10Gi \
+  --set graf

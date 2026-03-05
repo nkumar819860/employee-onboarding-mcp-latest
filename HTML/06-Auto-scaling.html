@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-scaling Configuration (80% Threshold) - MuleSoft RTF Architecture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-top: 80px;
+        }
+
+        /* Enhanced Menu Bar Navigation */
+        .menu-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 20, 40, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border-bottom: 3px solid #FC7300;
+        }
+
+        .menu-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .logo {
+            color: #00D4FF;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            padding: 15px 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-item {
+            position: relative;
+        }
+
+        .nav-link {
+            color: #fff;
+            text-decoration: none;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+        }
+
+        .nav-icon {
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        .nav-link:hover {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00D4FF;
+            transform: translateY(-2px);
+        }
+
+        .nav-link.active {
+            background: rgba(252, 115, 0, 0.3);
+            color: #FC7300;
+            font-weight: 600;
+        }
+
+        .dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: rgba(0, 20, 40, 0.98);
+            min-width: 280px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .nav-item:hover .dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: block;
+            color: #fff;
+            text-decoration: none;
+            padding: 15px 20px;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-family: 'Poppins', sans-serif;
+            font-size: 13px;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(252, 115, 0, 0.2);
+            color: #FC7300;
+            padding-left: 25px;
+        }
+
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: rgba(0, 20, 40, 0.98);
+                flex-direction: column;
+                padding: 20px 0;
+            }
+
+            .nav-menu.active {
+                display: flex;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .dropdown {
+                position: static;
+                opacity: 1;
+                visibility: visible;
+                transform: none;
+                box-shadow: none;
+                background: rgba(0, 0, 0, 0.3);
+                margin: 0 20px;
+                border-radius: 5px;
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        header {
+            background: linear-gradient(135deg, #2C5282 0%, #2A4A6B 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 15px 15px 0 0;
+            margin: -20px -20px 30px -20px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 400;
+        }
+
+        .toc {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 5px solid #2C5282;
+        }
+
+        .toc h3 {
+            color: #2C5282;
+            margin-bottom: 15px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        .toc ul {
+            list-style: none;
+        }
+
+        .toc li {
+            padding: 5px 0;
+        }
+
+        .toc a {
+            color: #2C5282;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .toc a:hover {
+            color: #1a365d;
+            padding-left: 10px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 30px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-left: 5px solid #2C5282;
+        }
+
+        h2 {
+            color: #2C5282;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #e2e8f0;
+            padding-bottom: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        h3 {
+            color: #2A4A6B;
+            margin: 25px 0 15px 0;
+            font-size: 1.4em;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        h4 {
+            color: #4A5568;
+            margin: 20px 0 10px 0;
+            font-size: 1.2em;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        h5 {
+            color: #2D3748;
+            margin: 15px 0 8px 0;
+            font-size: 1.1em;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        p {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 400;
+            font-size: 16px;
+            line-height: 1.7;
+            margin-bottom: 15px;
+        }
+
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .component-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .component-card h4, .component-card h5, .component-card h6 {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        .component-card ul {
+            list-style: none;
+        }
+
+        .component-card li {
+            padding: 3px 0;
+            padding-left: 20px;
+            position: relative;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 400;
+        }
+
+        .component-card li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #68d391;
+            font-weight: bold;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .critical-box {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .code-block {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 1px solid #2d3748;
+        }
+
+        .code-block pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+        }
+
+        .footer {
+            background: #2d3748;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 0 0 15px 15px;
+            margin: 30px -20px -20px -20px;
+        }
+
+        .footer h3 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .footer p {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 400;
+        }
+
+        /* Scaling Animation */
+        .scaling-demo {
+            background: #f7fafc;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+            border: 2px dashed #cbd5e0;
+        }
+
+        .scaling-visualization {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .scaling-pod {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            animation: pulse 2s infinite;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .scaling-pod.inactive {
+            background: #e2e8f0;
+            color: #718096;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .threshold-indicator {
+            margin: 20px 0;
+            padding: 15px;
+            background: linear-gradient(90deg, #48bb78 0%, #48bb78 80%, #ed8936 80%, #e53e3e 100%);
+            border-radius: 25px;
+            position: relative;
+            height: 40px;
+        }
+
+        .threshold-marker {
+            position: absolute;
+            top: 50%;
+            left: 80%;
+            transform: translate(-50%, -50%);
+            background: white;
+            color: #2d3748;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        /* Mobile responsive design */
+        @media (max-width: 768px) {
+            body {
+                padding-top: 70px;
+            }
+            
+            .component-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Enhanced Menu Bar Navigation -->
+    <nav class="menu-bar">
+        <div class="menu-container">
+            <a href="index.html" class="logo">📈 Auto-scaling</a>
+            <ul class="nav-menu" id="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">
+                        <span class="nav-icon">🏠</span>
+                        Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="01-Overview.html" class="nav-link">
+                        <span class="nav-icon">🎯</span>
+                        Overview
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="02-Enhanced-Navigation.html" class="nav-link">
+                        <span class="nav-icon">🎨</span>
+                        Navigation
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="03-Flex-Gateway-Policies.html" class="nav-link">
+                        <span class="nav-icon">🛡️</span>
+                        Security Policies
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="04-RTF-EKS-Setup.html" class="nav-link">
+                        <span class="nav-icon">🏗️</span>
+                        RTF Setup
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="05-Anypoint-Platform.html" class="nav-link">
+                        <span class="nav-icon">☁️</span>
+                        Platform
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="06-Auto-scaling.html" class="nav-link active">
+                        <span class="nav-icon">📈</span>
+                        Auto-scaling
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="07-HIPAA-Compliance.html" class="nav-link">
+                        <span class="nav-icon">🏥</span>
+                        HIPAA
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="08-System-Validation.html" class="nav-link">
+                        <span class="nav-icon">🔍</span>
+                        Validation
+                    </a>
+                </li>
+            </ul>
+            <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                ☰
+            </button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header>
+            <h1>📈 Auto-scaling Configuration (80% Threshold)</h1>
+            <div class="subtitle">Intelligent Resource Management with Predictive Scaling</div>
+        </header>
+
+        <div class="toc">
+            <h3>📋 Table of Contents</h3>
+            <ul>
+                <li><a href="#overview">⚡ Auto-scaling Strategy Overview</a></li>
+                <li><a href="#hpa-configuration">📊 Horizontal Pod Autoscaler (HPA)</a></li>
+                <li><a href="#custom-metrics">🎯 Custom Metrics & Monitoring</a></li>
+                <li><a href="#predictive-scaling">🔮 Predictive Scaling</a></li>
+                <li><a href="#monitoring-alerts">🔔 Monitoring & Alerts</a></li>
+                <li><a href="#best-practices">💡 Best Practices</a></li>
+            </ul>
+        </div>
+
+        <section id="overview" class="section">
+            <h2>⚡ Multi-Tier Auto-scaling Strategy</h2>
+            
+            <div class="highlight-box">
+                <h4>🎯 Intelligent Auto-scaling System</h4>
+                <p>Advanced auto-scaling configuration with 80% CPU/Memory thresholds, custom metrics, predictive scaling, and HIPAA-compliant resource management for optimal performance and cost efficiency.</p>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">80%</div>
+                    <div class="metric-label">CPU/Memory Threshold</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">3-12</div>
+                    <div class="metric-label">Replica Range</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">60s</div>
+                    <div class="metric-label">Scale-up Time</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">300s</div>
+                    <div class="metric-label">Scale-down Delay</div>
+                </div>
+            </div>
+
+            <h3>🏗️ Multi-Tier Scaling Architecture</h3>
+            <div class="component-grid">
+                <div class="component-card">
+                    <h5>Pod-Level Scaling (HPA)</h5>
+                    <ul>
+                        <li>CPU: 80% threshold</li>
+                        <li>Memory: 80% threshold</li>
+                        <li>Custom Metrics: Response Time</li>
+                        <li>Scale Range: 3-12 replicas</li>
+                        <li>Business Hours Awareness</li>
+                    </ul>
+                </div>
+                <div class="component-card">
+                    <h5>Node-Level Scaling (CA)</h5>
+                    <ul>
+                        <li>Cluster Autoscaler</li>
+                        <li>Node Range: 3-15 nodes</li>
+                        <li>Scale-down: 10min delay</li>
+                        <li>Resource Optimization</li>
+                        <li>Cost-aware Scaling</li>
+                    </ul>
+                </div>
+                <div class="component-card">
+                    <h5>Application-Level Scaling</h5>
+                    <ul>
+                        <li>Vertical Pod Autoscaler (VPA)</li>
+                        <li>Resource Right-sizing</li>
+                        <li>Memory/CPU Recommendations</li>
+                        <li>Automatic Updates</li>
+                        <li>Performance Optimization</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="scaling-demo">
+                <h4>🎯 80% Threshold Visualization</h4>
+                <div class="threshold-indicator">
+                    <div class="threshold-marker">80%</div>
+                </div>
+                <p style="color: #2d3748; margin-top: 15px;">Scale-up triggers when CPU/Memory exceeds 80% utilization</p>
+            </div>
+        </section>
+
+        <section id="hpa-configuration" class="section">
+            <h2>📊 Horizontal Pod Autoscaler Configuration</h2>
+            
+            <h3>🔧 Enhanced HPA with 80% Thresholds</h3>
+            <div class="code-block">
+                <pre><code># Advanced HPA Configuration for Employee Onboarding Platform
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: employee-onboarding-hpa
+  namespace: employee-onboarding
+  annotations:
+    predictive.autoscaling/enabled: "true"
+    predictive.autoscaling/model: "time-series"
+    predictive.autoscaling/forecast-window: "30m"
+    hipaa.compliance/data-classification: "pii-sensitive"
+    hipaa.compliance/audit-enabled: "true"
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: employee-onboarding-mcp
+  minReplicas: 3
+  maxReplicas: 12
+  
+  # Resource Metrics with 80% Threshold
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+        
+  # Custom Business Metrics
+  - type: Pods
+    pods:
+      metric:
+        name: employee_onboarding_requests_per_second
+      target:
+        type: AverageValue
+        averageValue: "100"
+
+  # Advanced Scaling Behavior
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 3
+        periodSeconds: 60
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 20
+        periodSeconds: 60
+      - type: Pods
+        value: 1
+        periodSeconds: 300
+      selectPolicy: Min</code></pre>
+            </div>
+
+            <h3>📈 Scaling Behavior Visualization</h3>
+            <div class="scaling-demo">
+                <h4>Active Pods Simulation (80% Load)</h4>
+                <div class="scaling-visualization">
+                    <div class="scaling-pod">P1</div>
+                    <div class="scaling-pod">P2</div>
+                    <div class="scaling-pod">P3</div>
+                    <div class="scaling-pod">P4</div>
+                    <div class="scaling-pod">P5</div>
+                    <div class="scaling-pod">P6</div>
+                    <div class="scaling-pod inactive">P7</div>
+                    <div class="scaling-pod inactive">P8</div>
+                    <div class="scaling-pod inactive">P9</div>
+                </div>
+                <p style="color: #2d3748;">Real-time scaling: 6/12 pods active, ready to scale up when threshold is exceeded</p>
+            </div>
+        </section>
+
+        <section id="custom-metrics" class="section">
+            <h2>🎯 Custom Metrics & Advanced Monitoring</h2>
+            
+            <h3>📊 Business-Critical Metrics</h3>
+            <div class="code-block">
+                <pre><code># Custom Metrics Server Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: custom-metrics-config
+  namespace: monitoring
+data:
+  config.yaml: |
+    metrics:
+      - name: employee_onboarding_completion_rate
+        type: gauge
+        description: "Percentage of successful employee onboarding completions"
+        threshold: 95
+        alert_threshold: 90
+        
+      - name: asset_allocation_response_time
+        type: histogram
+        description: "Asset allocation API response time in milliseconds"
+        threshold: 2000
+        alert_threshold: 3000
+        
+      - name: pii_data_processing_latency
+        type: histogram
+        description: "PII data processing latency for HIPAA compliance"
+        threshold: 1000
+        alert_threshold: 1500</code></pre>
+            </div>
+        </section>
+
+        <section id="predictive-scaling" class="section">
+            <h2>🔮 Predictive Scaling</h2>
+            
+            <div class="highlight-box">
+                <h4>🤖 Machine Learning-Based Scaling</h4>
+                <p>Predictive auto-scaling uses historical data patterns to anticipate load increases and scale proactively, ensuring optimal performance during peak business hours.</p>
+            </div>
+
+            <div class="component-grid">
+                <div class="component-card">
+                    <h5>Time-Series Analysis</h5>
+                    <ul>
+                        <li>Historical Load Patterns</li>
+                        <li>Business Hour Predictions</li>
+                        <li>Seasonal Adjustments</li>
+                        <li>Event-based Scaling</li>
+                    </ul>
+                </div>
+                <div class="component-card">
+                    <h5>Proactive Scaling</h5>
+                    <ul>
+                        <li>30-minute Forecast Window</li>
+                        <li>Confidence-based Triggers</li>
+                        <li>Cost-aware Decisions</li>
+                        <li>Performance Optimization</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="monitoring-alerts" class="section">
+            <h2>🔔 Monitoring & Alerts</h2>
+            
+            <h3>📊 Prometheus Alerting Rules</h3>
+            <div class="code-block">
+                <pre><code># Prometheus AlertManager Rules
+groups:
+- name: employee-onboarding-autoscaling
+  rules:
+  - alert: HighCPUUtilization80Percent
+    expr: avg(rate(container_cpu_usage_seconds_total[5m])) by (pod) * 100 > 80
+    for: 2m
+    labels:
+      severity: warning
+      component: employee-onboarding
+      threshold: "80%"
+    annotations:
+      summary: "CPU usage exceeded 80% threshold"
+      description: "Pod {{ $labels.pod }} CPU: {{ $value }}%"</code></pre>
+            </div>
+        </section>
+
+        <section id="best-practices" class="section">
+            <h2>💡 Auto-scaling Best Practices</h2>
+            
+            <div class="warning-box">
+                <h4>⚠️ Important Considerations</h4>
+                <ul>
+                    <li><strong>Resource Limits:</strong> Always set appropriate resource limits to prevent resource starvation</li>
+                    <li><strong>Graceful Shutdown:</strong> Configure proper shutdown hooks for clean pod termination</li>
+                    <li><strong>Health Checks:</strong> Implement comprehensive readiness and liveness probes</li>
+                    <li><strong>Monitoring:</strong> Set up comprehensive monitoring and alerting</li>
+                    <li><strong>Testing:</strong> Regularly test scaling

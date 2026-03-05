@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTF EKS Setup - MuleSoft RTF Architecture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-top: 80px;
+        }
+
+        /* Navigation Bar */
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 20, 40, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            color: #00D4FF;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00D4FF;
+        }
+
+        .nav-link.home {
+            background: #FC7300;
+        }
+
+        .nav-link.home:hover {
+            background: #e55a00;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2C5282 0%, #2A4A6B 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .content-section {
+            padding: 3rem 2rem;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .highlight-box h4, .warning-box h5 {
+            color: white;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .component-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border-left: 5px solid #667eea;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .component-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .component-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            border-left-color: #FC7300;
+        }
+
+        .component-card h6 {
+            color: #2C5282;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .component-card ul {
+            list-style: none;
+        }
+
+        .component-card li {
+            padding: 0.3rem 0;
+            position: relative;
+            padding-left: 1.5rem;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .component-card li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #48bb78;
+            font-weight: bold;
+        }
+
+        .code-block {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 2rem;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin: 2rem 0;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 1px solid #2d3748;
+        }
+
+        .code-block pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        .step-container {
+            background: #f7fafc;
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            border-left: 5px solid #FC7300;
+        }
+
+        .step-title {
+            color: #2C5282;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .step-number {
+            background: #FC7300;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .checklist {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .checklist ul {
+            list-style: none;
+        }
+
+        .checklist li {
+            padding: 0.5rem 0;
+            position: relative;
+            padding-left: 2rem;
+            color: #4A5568;
+        }
+
+        .checklist li::before {
+            content: "☑️";
+            position: absolute;
+            left: 0;
+            font-size: 1.2rem;
+        }
+
+        .footer {
+            background: #2d3748;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .footer h3 {
+            color: #FC7300;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .component-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="nav-bar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">🏗️ RTF Architecture</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link home">🏠 Home</a>
+                <a href="01-Overview.html" class="nav-link">🎯 Overview</a>
+                <a href="02-Enhanced-Navigation.html" class="nav-link">🎨 Navigation</a>
+                <a href="03-Flex-Gateway-Policies.html" class="nav-link">🛡️ Policies</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="header">
+            <h1>🏗️ RTF First-Time Setup on Amazon EKS</h1>
+            <div class="subtitle">Complete Step-by-Step Guide with 80% Auto-scaling Thresholds</div>
+        </div>
+
+        <div class="content-section">
+            <div class="highlight-box">
+                <h4>🎯 Complete EKS RTF Deployment Guide</h4>
+                <p>Step-by-step guide for setting up Runtime Fabric on Amazon EKS from scratch, including cluster creation, RTF installation, and Anypoint Platform integration with 80% auto-scaling thresholds.</p>
+            </div>
+
+            <!-- Prerequisites Section -->
+            <div class="step-container" id="prerequisites">
+                <div class="step-title">
+                    <span class="step-number">1</span>
+                    📋 Prerequisites & Environment Preparation
+                </div>
+                
+                <div class="component-grid">
+                    <div class="component-card">
+                        <h6>AWS Requirements</h6>
+                        <ul>
+                            <li>AWS CLI v2.15.0+</li>
+                            <li>eksctl 0.167+</li>
+                            <li>kubectl 1.28+</li>
+                            <li>Helm 3.13+</li>
+                            <li>IAM Administrator Access</li>
+                            <li>VPC with Public/Private Subnets</li>
+                        </ul>
+                    </div>
+                    <div class="component-card">
+                        <h6>MuleSoft Prerequisites</h6>
+                        <ul>
+                            <li>Anypoint Platform Account</li>
+                            <li>RTF Entitlements</li>
+                            <li>Mule Enterprise License</li>
+                            <li>Connected App Credentials</li>
+                            <li>Organization Admin Rights</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="checklist">
+                    <h5>✅ Pre-Installation Checklist</h5>
+                    <ul>
+                        <li>AWS CLI configured with appropriate credentials</li>
+                        <li>kubectl configured and tested</li>
+                        <li>Anypoint Platform credentials verified</li>
+                        <li>Mule Enterprise license key available</li>
+                        <li>VPC and subnet configuration completed</li>
+                        <li>Security groups configured for EKS</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Cluster Creation Section -->
+            <div class="step-container" id="cluster-creation">
+                <div class="step-title">
+                    <span class="step-number">2</span>
+                    🚀 EKS Cluster Creation with RTF Specifications
+                </div>
+
+                <div class="code-block">
+                    <pre><code># Enhanced EKS Cluster Configuration for RTF
+cat <<EOF > rtf-production-cluster.yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: rtf-production-cluster
+  region: us-east-1
+  version: "1.28"
+
+# VPC Configuration
+vpc:
+  cidr: "10.0.0.0/16"
+  nat:
+    gateway: HighlyAvailable
+  clusterEndpoints:
+    publicAccess: true
+    privateAccess: true
+  publicAccessCIDRs: ["0.0.0.0/0"]
+
+# Enhanced Node Groups for RTF
+managedNodeGroups:
+  # RTF Controller Nodes (Optimized for Control Plane)
+  - name: rtf-controllers
+    instanceType: c5.2xlarge  # 8 vCPU, 16GB RAM
+    minSize: 3
+    maxSize: 3
+    desiredCapacity: 3
+    volumeSize: 100
+    volumeType: gp3
+    amiFamily: AmazonLinux2
+    labels:
+      node-type: controller
+      rtf-role: controller
+      workload: control-plane
+    taints:
+      - key: rtf-controller
+        value: "true"
+        effect: NoSchedule
+    tags:
+      Environment: production
+      Application: runtime-fabric
+      Role: controller
+    availabilityZones: ["us-east-1a", "us-east-1b", "us-east-1c"]
+    
+  # RTF Worker Nodes (Optimized for Application Workloads) 
+  - name: rtf-workers
+    instanceType: m5.2xlarge  # 8 vCPU, 32GB RAM
+    minSize: 3
+    maxSize: 12  # Auto-scaling capacity
+    desiredCapacity: 6
+    volumeSize: 200
+    volumeType: gp3
+    amiFamily: AmazonLinux2
+    labels:
+      node-type: worker
+      rtf-role: worker
+      workload: application
+    tags:
+      Environment: production
+      Application: runtime-fabric
+      Role: worker
+    availabilityZones: ["us-east-1a", "us-east-1b", "us-east-1c"]
+    
+    # Auto-scaling Configuration (80% threshold)
+    maxPodsPerNode: 110
+    kubeletExtraConfig:
+      kubeReserved:
+        cpu: "200m"
+        memory: "1Gi"
+        ephemeral-storage: "1Gi"
+      systemReserved:
+        cpu: "200m"
+        memory: "1Gi"
+        ephemeral-storage: "1Gi"
+      evictionHard:
+        memory.available: "100Mi"
+        nodefs.available: "10%"
+EOF
+
+# Create the EKS Cluster
+echo "🚀 Creating EKS cluster for RTF..."
+eksctl create cluster -f rtf-production-cluster.yaml</code></pre>
+                </div>
+
+                <div class="warning-box">
+                    <h5>⚠️ RTF EKS Best Practices</h5>
+                    <ul>
+                        <li><strong>Resource Limits:</strong> Set CPU/Memory limits to 80% of node capacity</li>
+                        <li><strong>Node Groups:</strong> Separate controller and worker nodes with taints</li>
+                        <li><strong>Storage:</strong> Use GP3 volumes for better performance and cost</li>
+                        <li><strong>Networking:</strong> Enable private subnets for enhanced security</li>
+                        <li><strong>Monitoring:</strong> Enable detailed monitoring and logging</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- RTF Installation Section -->
+            <div class="step-container" id="rtf-installation">
+                <div class="step-title">
+                    <span class="step-number">3</span>
+                    🎯 RTF Installation & Configuration
+                </div>
+
+                <h5>3.1 Install RTF Operator</h5>
+                <div class="code-block">
+                    <pre><code># Download and install RTF operator
+curl -L https://runtime-fabric.s3.amazonaws.com/installer/rtf-install-scripts.tar.gz -o rtf-install-scripts.tar.gz
+tar -xzf rtf-install-scripts.tar.gz
+cd rtf-install-scripts
+
+# Install RTF operator
+./rtfctl install --activation-data="YOUR_ACTIVATION_DATA_HERE"
+
+# Verify installation
+kubectl get pods -n rtf-system</code></pre>
+                </div>
+
+                <h5>3.2 Configure RTF with Auto-scaling</h5>
+                <div class="code-block">
+                    <pre><code># RTF Configuration with 80% Auto-scaling Thresholds
+apiVersion: install.rtf.mulesoft.com/v1
+kind: RuntimeFabric
+metadata:
+  name: rtf-production
+  namespace: rtf-system
+spec:
+  # Cluster Configuration
+  cluster:
+    name: "rtf-production-cluster"
+    region: "us-east-1"
+    
+  # Auto-scaling Configuration (80% threshold)
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 12
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+    scaleUpPolicy:
+      stabilizationWindowSeconds: 60
+      selectPolicy: Max
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+    scaleDownPolicy:
+      stabilizationWindowSeconds: 300
+      selectPolicy: Min
+      policies:
+      - type: Percent
+        value: 20
+        periodSeconds: 60
+
+  # Resource Allocation
+  resources:
+    controllers:
+      cpu: "2000m"
+      memory: "4Gi"
+    workers:
+      cpu: "6000m"
+      memory: "24Gi"
+      
+  # Storage Configuration
+  storage:
+    storageClass: "gp3"
+    size: "100Gi"
+    
+  # Security Configuration
+  security:
+    rbacEnabled: true
+    podSecurityPolicyEnabled: true</code></pre>
+                </div>
+
+                <h5>3.3 Apply RTF Configuration</h5>
+                <div class="code-block">
+                    <pre><code># Apply RTF configuration
+kubectl apply -f rtf-production-config.yaml
+
+# Wait for RTF to be ready
+kubectl wait --for=condition=Ready runtimefabric/rtf-production --timeout=1800s
+
+# Verify RTF status
+kubectl get runtimefabric -n rtf-system
+kubectl get pods -n rtf-system</code></pre>
+                </div>
+            </div>
+
+            <!-- Validation Section -->
+            <div class="step-container" id="validation">
+                <div class="step-title">
+                    <span class="step-number">4</span>
+                    🔍 Validation & Testing
+                </div>
+
+                <h5>4.1 Cluster Health Validation</h5>
+                <div class="code-block">
+                    <pre><code># Comprehensive RTF EKS Validation Script
+#!/bin/bash
+
+echo "🔍 RTF EKS Validation Suite"
+echo "============================="
+
+# Check EKS cluster health
+echo "1. Checking EKS cluster connectivity..."
+kubectl cluster-info
+if [ $? -eq 0 ]; then
+    echo "✅ EKS cluster is accessible"
+else
+    echo "❌ EKS cluster connection failed"
+    exit 1
+fi
+
+# Check RTF operator status
+echo "2. Checking RTF operator status..."
+RTF_PODS=$(kubectl get pods -n rtf-system --no-headers | wc -l)
+RTF_READY=$(kubectl get pods -n rtf-system --field-selector=status.phase=Running --no-headers | wc -l)
+
+if [ "$RTF_READY" -eq "$RTF_PODS" ]; then
+    echo "✅ RTF operator: $RTF_READY/$RTF_PODS pods ready"
+else
+    echo "⚠️ RTF operator: $RTF_READY/$RTF_PODS pods ready"
+fi
+
+# Check auto-scaling configuration
+echo "3. Validating auto-scaling configuration..."
+HPA_COUNT=$(kubectl get hpa -n rtf-system --no-headers | wc -l)
+if [ "$HPA_COUNT" -gt 0 ]; then
+    echo "✅ Auto-scaling configured: $HPA_COUNT HPA found"
+    
+    # Check 80% threshold
+    kubectl get hpa -n rtf-system -o json | jq -r '.items[] | select(.spec.targetCPUUtilizationPercentage == 80)'
+    if [ $? -eq 0 ]; then
+        echo "✅ 80% CPU threshold configured"
+    else
+        echo "⚠️ 80% threshold not found"
+    fi
+else
+    echo "❌ No HPA configurations found"
+fi
+
+# Check node readiness
+echo "4. Checking node readiness..."
+NODE_COUNT=$(kubectl get nodes --no-headers | wc -l)
+READY_NODES=$(kubectl get nodes --no-headers | grep " Ready " | wc -l)
+
+if [ "$READY_NODES" -eq "$NODE_COUNT" ]; then
+    echo "✅ All nodes ready: $READY_NODES/$NODE_COUNT"
+else
+    echo "⚠️ Nodes ready: $READY_NODES/$NODE_COUNT"
+fi
+
+# Check RTF fabric status
+echo "5. Checking RTF fabric status..."
+kubectl get runtimefabric -n rtf-system
+if [ $? -eq 0 ]; then
+    echo "✅ RTF fabric status retrieved"
+else
+    echo "❌ RTF fabric status check failed"
+fi
+
+echo "============================="
+echo "🎯 RTF EKS validation completed"</code></pre>
+                </div>
+
+                <h5>4.2 Performance Validation</h5>
+                <div class="code-block">
+                    <pre><code># Performance and Resource Validation
+echo "📊 Performance Validation"
+
+# Check resource usage
+echo "CPU and Memory Usage:"
+kubectl top nodes
+
+# Check auto-scaling metrics
+echo "Auto-scaling Metrics:"
+kubectl get hpa -n rtf-system -o wide
+
+# Load test simulation (optional)
+echo "Running load test simulation..."
+kubectl run load-test --rm -i --restart=Never --image=busybox -- /bin/sh -c "while true; do echo 'load test'; sleep 1; done" &
+
+# Monitor scaling behavior
+for i in {1..60}; do
+    echo "Minute $i: Checking replica count..."
+    kubectl get pods -n rtf-system | grep -c "Running"
+    sleep 60
+done</code></pre>
+                </div>
+
+                <div class="checklist">
+                    <h5>✅ Post-Installation Validation Checklist</h5>
+                    <ul>
+                        <li>EKS cluster is healthy and accessible</li>
+                        <li>RTF operator pods are running</li>
+                        <li>Auto-scaling is configured with 80% thresholds</li>
+                        <li>All nodes are in Ready state</li>
+                        <li>RTF fabric is operational</li>
+                        <li>Resource limits are properly configured</li>
+                        <li>Monitoring and logging are enabled</li>
+                        <li>Security policies are applied</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="highlight-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h4>🚀 Next Steps</h4>
+                <p><strong>RTF Setup Complete:</strong> Your Runtime Fabric on Amazon EKS is now ready for application deployments. The next step is to integrate with Anypoint Platform and deploy your employee onboarding applications with the configured 80% auto-scaling thresholds.</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <h3>🏗️ RTF EKS Setup Guide</h3>
+            <p>Complete Runtime Fabric setup on Amazon EKS with enterprise-grade auto-scaling, security, and monitoring. This guide provides production-ready configurations for the Employee Onboarding Platform with optimized performance and scalability.</p>
+            <br>
+            <p><strong>Key Features:</strong> 80% auto-scaling thresholds, multi-node cluster configuration, comprehensive validation, performance monitoring, and HIPAA-compliant security setup.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -173,7 +173,55 @@ echo ========================================
 echo DEPLOYING ALL MCP SERVERS TO CLOUDHUB
 echo ========================================
 
-REM Deploy Employee Onboarding MCP Server
+REM First, build and install all MCP servers locally to resolve dependencies
+echo [Phase 1] Building and Installing all MCP servers locally...
+
+echo [Build 1/4] Employee Onboarding MCP Server...
+cd "mcp-servers\employee-onboarding-mcp-server"
+call mvn clean install -DskipTests -B
+if !ERRORLEVEL! NEQ 0 (
+    echo ERROR: Employee Onboarding MCP build failed
+    cd "..\\.."
+    exit /b 1
+)
+cd "..\\.."
+
+echo [Build 2/4] Asset Allocation MCP Server...
+cd "mcp-servers\assets-allocation-mcp-server"
+call mvn clean install -DskipTests -B
+if !ERRORLEVEL! NEQ 0 (
+    echo ERROR: Asset Allocation MCP build failed
+    cd "..\\.."
+    exit /b 1
+)
+cd "..\\.."
+
+echo [Build 3/4] Email Notification MCP Server...
+cd "mcp-servers\email-notification-mcp-server"
+call mvn clean install -DskipTests -B
+if !ERRORLEVEL! NEQ 0 (
+    echo ERROR: Email Notification MCP build failed
+    cd "..\\.."
+    exit /b 1
+)
+cd "..\\.."
+
+echo [Build 4/4] Employee Onboarding Agent Broker...
+cd "mcp-servers\employee-onboarding-agent-broker"
+call mvn clean install -DskipTests -B
+if !ERRORLEVEL! NEQ 0 (
+    echo ERROR: Agent Broker MCP build failed
+    cd "..\\.."
+    exit /b 1
+)
+cd "..\\.."
+
+echo ✓ All MCP servers built and installed successfully
+echo.
+
+REM Now deploy each MCP server to CloudHub
+echo [Phase 2] Deploying to CloudHub...
+
 echo [MCP 1/4] Deploying Employee Onboarding MCP Server...
 cd "mcp-servers\employee-onboarding-mcp-server"
 call mvn mule:deploy ^
@@ -196,7 +244,6 @@ if !ERRORLEVEL! NEQ 0 (
 )
 cd "..\\.."
 
-REM Deploy Asset Allocation MCP Server
 echo [MCP 2/4] Deploying Asset Allocation MCP Server...
 cd "mcp-servers\assets-allocation-mcp-server"
 call mvn mule:deploy ^
@@ -219,7 +266,6 @@ if !ERRORLEVEL! NEQ 0 (
 )
 cd "..\\.."
 
-REM Deploy Email Notification MCP Server
 echo [MCP 3/4] Deploying Email Notification MCP Server...
 cd "mcp-servers\email-notification-mcp-server"
 call mvn mule:deploy ^
@@ -242,7 +288,6 @@ if !ERRORLEVEL! NEQ 0 (
 )
 cd "..\\.."
 
-REM Deploy Employee Onboarding Agent Broker
 echo [MCP 4/4] Deploying Employee Onboarding Agent Broker...
 cd "mcp-servers\employee-onboarding-agent-broker"
 call mvn mule:deploy ^

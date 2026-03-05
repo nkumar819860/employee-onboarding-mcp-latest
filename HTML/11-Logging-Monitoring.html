@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTF Logging & Monitoring with ELK and Grafana</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%);
+            color: white;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="a" cx="50%" cy="40%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0.1"/><stop offset="100%" stop-color="%23ffffff" stop-opacity="0.05"/></radialGradient></defs><rect width="100" height="20" fill="url(%23a)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+        }
+
+        .nav {
+            margin: 30px 0;
+            text-align: center;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .nav a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3);
+        }
+
+        .nav a:hover {
+            background: linear-gradient(135deg, #e67e22 0%, #f39c12 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(230, 126, 34, 0.4);
+        }
+
+        .section {
+            margin: 40px 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-left: 5px solid #8e44ad;
+            border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            position: relative;
+        }
+
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #8e44ad, #3498db);
+            border-radius: 10px 10px 0 0;
+        }
+
+        .section h2 {
+            color: #8e44ad;
+            margin-bottom: 20px;
+            font-size: 2.2rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section h3 {
+            color: #3498db;
+            margin: 25px 0 15px 0;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .code-block {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: #3498db;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+            position: relative;
+            border-left: 4px solid #8e44ad;
+        }
+
+        .code-block::before {
+            content: 'Monitoring';
+            position: absolute;
+            top: 8px;
+            right: 15px;
+            font-size: 0.8rem;
+            color: #3498db;
+            font-family: 'Poppins', sans-serif;
+            opacity: 0.7;
+        }
+
+        .warning {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #f39c12;
+            position: relative;
+        }
+
+        .warning::before {
+            content: '⚠️';
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+
+        .info {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #17a2b8;
+            position: relative;
+        }
+
+        .info::before {
+            content: 'ℹ️';
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+
+        .monitoring-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .monitoring-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            border-top: 4px solid #8e44ad;
+            transition: all 0.3s ease;
+        }
+
+        .monitoring-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+            border-top-color: #3498db;
+        }
+
+        .monitoring-card h4 {
+            color: #8e44ad;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feature-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: auto;
+        }
+
+        .badge-elk {
+            background: #ffd32a;
+            color: #212529;
+        }
+
+        .badge-grafana {
+            background: #f46800;
+            color: white;
+        }
+
+        .badge-prometheus {
+            background: #e6522c;
+            color: white;
+        }
+
+        .badge-kibana {
+            background: #00bfb3;
+            color: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        tr:hover {
+            background: #e8f4fd;
+            transition: background 0.3s ease;
+        }
+
+        .dashboard-preview {
+            text-align: center;
+            margin: 30px 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 10px;
+            border: 2px dashed #8e44ad;
+            position: relative;
+        }
+
+        .dashboard-preview::before {
+            content: '📊 Dashboard Preview';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0 15px;
+            color: #8e44ad;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .nav {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .monitoring-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 RTF Logging & Monitoring with ELK and Grafana</h1>
+            <p>Complete observability stack for Runtime Fabric with Elasticsearch, Logstash, Kibana, and Grafana integration</p>
+        </div>
+
+        <div class="nav">
+            <a href="index.html">🏠 Home</a>
+            <a href="08-RTF-Azure-Installation.html">🌐 Azure Setup</a>
+            <a href="09-RTF-AWS-Installation.html">☁️ AWS Setup</a>
+            <a href="10-RTF-Security.html">🔐 Security</a>
+        </div>
+
+        <div class="section">
+            <h2>📈 Monitoring Stack Overview</h2>
+            <p>A comprehensive monitoring and logging solution for Runtime Fabric that provides real-time insights, alerting, and observability across your entire MuleSoft infrastructure.</p>
+            
+            <div class="monitoring-grid">
+                <div class="monitoring-card">
+                    <h4>🔍 Elasticsearch <span class="feature-badge badge-elk">ELK</span></h4>
+                    <ul>
+                        <li>Distributed search and analytics engine</li>
+                        <li>Log aggregation and indexing</li>
+                        <li>Real-time search capabilities</li>
+                        <li>Scalable data storage</li>
+                    </ul>
+                </div>
+                <div class="monitoring-card">
+                    <h4>🚰 Logstash <span class="feature-badge badge-elk">ELK</span></h4>
+                    <ul>
+                        <li>Log processing and transformation</li>
+                        <li>Multiple input sources support</li>
+                        <li>Data parsing and enrichment</li>
+                        <li>Output to multiple destinations</li>
+                    </ul>
+                </div>
+                <div class="monitoring-card">
+                    <h4>📊 Kibana <span class="feature-badge badge-kibana">ELK</span></h4>
+                    <ul>
+                        <li>Data visualization and dashboards</li>
+                        <li>Interactive log exploration</li>
+                        <li>Custom dashboard creation</li>
+                        <li>Alert management interface</li>
+                    </ul>
+                </div>
+                <div class="monitoring-card">
+                    <h4>📈 Grafana <span class="feature-badge badge-grafana">Grafana</span></h4>
+                    <ul>
+                        <li>Multi-source data visualization</li>
+                        <li>Advanced alerting system</li>
+                        <li>Custom dashboard templates</li>
+                        <li>Prometheus integration</li>
+                    </ul>
+                </div>
+                <div class="monitoring-card">
+                    <h4>⏱️ Prometheus <span class="feature-badge badge-prometheus">Metrics</span></h4>
+                    <ul>
+                        <li>Time-series metrics collection</li>
+                        <li>PromQL query language</li>
+                        <li>Service discovery</li>
+                        <li>High-performance storage</li>
+                    </ul>
+                </div>
+                <div class="monitoring-card">
+                    <h4>🚨 AlertManager <span class="feature-badge badge-prometheus">Alerts</span></h4>
+                    <ul>
+                        <li>Intelligent alert routing</li>
+                        <li>Alert grouping and silencing</li>
+                        <li>Multi-channel notifications</li>
+                        <li>Escalation policies</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔍 ELK Stack Deployment</h2>
+            
+            <h3>📦 Step 1: Deploy Elasticsearch Cluster</h3>
+            <div class="info">
+                <strong>💡 Production Setup:</strong> Deploy a 3-node Elasticsearch cluster for high availability and data redundancy.
+            </div>
+            
+            <div class="code-block">
+# Add Elastic Helm repository
+helm repo add elastic https://helm.elastic.co
+helm repo update
+
+# Create namespace for ELK stack
+kubectl create namespace logging
+
+# Deploy Elasticsearch with production configuration
+cat << EOF > elasticsearch-values.yaml
+clusterName: "rtf-elasticsearch"
+nodeGroup: "master"
+
+# Master-eligible nodes
+master:
+  enabled: true
+  replicas: 3
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "2Gi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+
+# Data nodes
+data:
+  enabled: true
+  replicas: 3
+  resources:
+    requests:
+      cpu: "1500m"
+      memory: "4Gi"
+    limits:
+      cpu: "3000m"
+      memory: "8Gi"
+
+# Storage configuration
+volumeClaimTemplate:
+  accessModes: [ "ReadWriteOnce" ]
+  storageClassName: "rtf-premium-storage"
+  resources:
+    requests:
+      storage: 100Gi
+
+# Security settings
+esConfig:
+  elasticsearch.yml: |
+    xpack.security.enabled: true
+    xpack.security.transport.ssl.enabled: true
+    xpack.security.transport.ssl.verification_mode: certificate
+    xpack.security.transport.ssl.keystore.path: /usr/share/elasticsearch/config/certs/elastic-keystore.p12
+    xpack.security.transport.ssl.truststore.path: /usr/share/elasticsearch/config/certs/elastic-keystore.p12
+    xpack.security.http.ssl.enabled: true
+    xpack.security.http.ssl.keystore.path: /usr/share/elasticsearch/config/certs/elastic-keystore.p12
+    
+# JVM settings for optimal performance
+esJavaOpts: "-Xms2g -Xmx2g"
+
+# Service configuration
+service:
+  type: ClusterIP
+  ports:
+    - port: 9200
+      name: http
+    - port: 9300
+      name: transport
+EOF
+
+# Install Elasticsearch
+helm install elasticsearch elastic/elasticsearch \
+  --namespace logging \
+  --values elasticsearch-values.yaml \
+  --wait \
+  --timeout 10m
+
+# Verify Elasticsearch deployment
+kubectl get pods -n logging -l app=elasticsearch-master
+kubectl get svc -n logging elasticsearch-master
+            </div>
+
+            <h3>🚰 Step 2: Deploy Logstash</h3>
+            <div class="code-block">
+# Create Logstash configuration
+cat << EOF > logstash-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-config
+  namespace: logging
+data:
+  logstash.yml: |
+    http.host: "0.0.0.0"
+    xpack.monitoring.elasticsearch.hosts: ["http://elasticsearch-master:9200"]
+    
+  pipelines.yml: |
+    - pipeline.id: rtf-logs
+      path.config: "/usr/share/logstash/pipeline/rtf-logs.conf"
+    - pipeline.id: kubernetes-logs
+      path.config: "/usr/share/logstash/pipeline/k8s-logs.conf"
+      
+  rtf-logs.conf: |
+    input {
+      beats {
+        port => 5044
+      }
+      tcp {
+        port => 5000
+        codec => json_lines
+      }
+    }
+    
+    filter {
+      if [kubernetes] {
+        mutate {
+          add_field => { "cluster_name" => "rtf-cluster" }
+        }
+        
+        if [kubernetes][container_name] == "runtime-fabric" {
+          grok {
+            match => { "message" => "%{TIMESTAMP_ISO8601:timestamp} %{LOGLEVEL:level} \[%{DATA:thread}\] %{DATA:logger}: %{GREEDYDATA:message}" }
+          }
+          
+          date {
+            match => [ "timestamp", "ISO8601" ]
+          }
+        }
+        
+        if [kubernetes][container_name] =~ /mule-/ {
+          grok {
+            match => { "message" => "%{TIMESTAMP_ISO8601:timestamp} %{LOGLEVEL:level} \[%{DATA:thread}\] %{DATA:flow}: %{GREEDYDATA:message}" }
+          }
+        }
+      }
+      
+      # Add GeoIP information for external IPs
+      if [remote_addr] and [remote_addr] !~ /^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/ {
+        geoip {
+          source => "remote_addr"
+          target => "geoip"
+        }
+      }
+    }
+    
+    output {
+      elasticsearch {
+        hosts => ["http://elasticsearch-master:9200"]
+        index => "rtf-logs-%{+YYYY.MM.dd}"
+        template_name => "rtf-logs"
+        template_pattern => "rtf-logs-*"
+        template_overwrite => true
+      }
+      
+      # Debug output (remove in production)
+      stdout {
+        codec => rubydebug
+      }
+    }
+    
+  k8s-logs.conf: |
+    input {
+      beats {
+        port => 5045
+      }
+    }
+    
+    filter {
+      json {
+        source => "message"
+      }
+      
+      mutate {
+        add_field => { "cluster_name" => "rtf-cluster" }
+      }
+    }
+    
+    output {
+      elasticsearch {
+        hosts => ["http://elasticsearch-master:9200"]
+        index => "kubernetes-logs-%{+YYYY.MM.dd}"
+      }
+    }
+EOF
+
+kubectl apply -f logstash-config.yaml
+
+# Deploy Logstash
+cat << EOF > logstash-values.yaml
+replicas: 3
+
+logstashConfig:
+  logstash.yml: |
+    http.host: 0.0.0.0
+    xpack.monitoring.elasticsearch.hosts: ["http://elasticsearch-master:9200"]
+
+logstashPipeline:
+  rtf-logs.conf: |
+    input {
+      beats {
+        port => 5044
+      }
+    }
+    filter {
+      # RTF-specific log parsing
+      if [kubernetes][container_name] == "runtime-fabric" {
+        grok {
+          match => { "message" => "%{TIMESTAMP_ISO8601:timestamp} %{LOGLEVEL:level} \[%{DATA:thread}\] %{DATA:logger}: %{GREEDYDATA:log_message}" }
+        }
+      }
+    }
+    output {
+      elasticsearch {
+        hosts => ["http://elasticsearch-master:9200"]
+        index => "rtf-logs-%{+YYYY.MM.dd}"
+      }
+    }
+
+resources:
+  requests:
+    cpu: "1000m"
+    memory: "2Gi"
+  limits:
+    cpu: "2000m"
+    memory: "4Gi"
+
+service:
+  type: ClusterIP
+  ports:
+    - port: 5044
+      name: beats
+    - port: 5000
+      name: tcp
+    - port: 9600
+      name: http
+EOF
+
+helm install logstash elastic/logstash \
+  --namespace logging \
+  --values logstash-values.yaml \
+  --wait
+            </div>
+
+            <h3>📊 Step 3: Deploy Kibana</h3>
+            <div class="code-block">
+# Create Kibana configuration
+cat << EOF > kibana-values.yaml
+elasticsearchHosts: "http://elasticsearch-master:9200"
+
+replicas: 2
+
+resources:
+  requests:
+    cpu: "1000m"
+    memory: "2Gi"
+  limits:
+    cpu: "2000m"
+    memory: "4Gi"
+
+kibanaConfig:
+  kibana.yml: |
+    server.host: 0.0.0.0
+    elasticsearch.hosts: ["http://elasticsearch-master:9200"]
+    xpack.security.enabled: true
+    xpack.encryptedSavedObjects.encryptionKey: "something_at_least_32_characters"
+    
+# Service configuration
+service:
+  type: LoadBalancer
+  ports:
+    - port: 5601
+      name: http
+      
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: kibana.yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: kibana-tls
+      hosts:
+        - kibana.yourdomain.com
+EOF
+
+# Install Kibana
+helm install kibana elastic/kibana \
+  --namespace logging \
+  --values kibana-values.yaml \
+  --wait
+
+# Create Kibana dashboards and index patterns
+kubectl exec -n logging deployment/kibana-kibana -- curl -X POST "localhost:5601/api/saved_objects/index-pattern/rtf-logs" \
+  -H "Content-Type: application/json" \
+  -H "kbn-xsrf: true" \
+  -d '{
+    "attributes": {
+      "title": "rtf-logs-*",
+      "timeFieldName": "@timestamp"
+    }
+  }'
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📈 Grafana & Prometheus Setup</h2>
+            
+            <h3>⏱️ Step 1: Deploy Prometheus Stack</h3>
+            <div class="code-block">
+# Add Prometheus community Helm repository
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+# Create monitoring namespace
+kubectl create namespace monitoring
+
+# Create comprehensive Prometheus values
+cat << EOF > prometheus-values.yaml
+# Prometheus server configuration
+prometheus:
+  prometheusSpec:
+    retention: 30d
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: rtf-premium-storage
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+    
+    # Resource allocation
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: 2000m
+        memory: 8Gi
+    
+    # Service monitor selector
+    serviceMonitorSelector:
+      matchLabels:
+        release: prometheus
+    
+    # Rule selector
+    ruleSelector:
+      matchLabels:
+        release: prometheus
+        
+    # Additional scrape configs for RTF
+    additionalScrapeConfigs:
+      - job_name: 'rtf-applications'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - rtf-system
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+
+# Grafana configuration
+grafana:
+  enabled: true
+  adminPassword: "admin123"
+  
+  persistence:
+    enabled: true
+    storageClassName: rtf-premium-storage
+    size: 10Gi
+    
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+      
+  service:
+    type: LoadBalancer
+    
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    hosts:
+      - grafana.yourdomain.com
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.yourdomain.com
+  
+  # Pre-configured data sources
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://prometheus-kube-prometheus-prometheus:9090
+          access: proxy
+          isDefault: true
+        - name: Elasticsearch
+          type: elasticsearch
+          url: http://elasticsearch-master.logging:9200
+          access: proxy
+          database: "rtf-logs-*"
+          timeField: "@timestamp"
+          
+  # Dashboard providers
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: 'rtf-dashboards'
+          orgId: 1
+          folder: 'RTF Monitoring'
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/rtf
+
+# AlertManager configuration
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: rtf-premium-storage
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+    
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+# Node exporter for system metrics
+nodeExporter:
+  enabled: true
+  
+# kube-state-metrics for Kubernetes metrics
+kubeStateMetrics:
+  enabled: true
+EOF
+
+# Install Prometheus stack
+helm install prometheus prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --values prometheus-values.yaml \
+  --wait \
+  --timeout 15m
+            </div>
+
+            <h3>📊 Step 2: Configure RTF Custom Dashboards</h3>
+            <div class="code-block">
+# Create RTF-specific Grafana dashboard
+cat << EOF > rtf-dashboard.json
+{
+  "dashboard": {
+    "id": null,
+    "title": "Runtime Fabric Monitoring",
+    "tags": ["rtf", "mulesoft"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "RTF Application Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(up{job=\"rtf-applications\"})",
+            "legendFormat": "Active Applications"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 1},
+                {"color": "green", "value": 3}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0}
+      },
+      {
+        "title": "CPU Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(container_cpu_usage_seconds_total{namespace=\"rtf-system\"}[5m]) * 100",
+            "legendFormat": "{{pod}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "CPU %",
+            "min": 0,
+            "max": 100
+          }
+        ],
+        "gridPos": {"h": 8, "w": 18, "x": 6, "y": 0}
+      },
+      {
+        "title": "Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "container_memory_usage_bytes{namespace=\"rtf-system\"} / 1024 / 1024",
+            "legendFormat": "{{pod}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Memory (MB)",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "title": "Network I/O",
+        "type": "graph",
+        "targets": [
+          {

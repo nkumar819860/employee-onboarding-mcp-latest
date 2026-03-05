@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flex Gateway Policies - MuleSoft RTF Architecture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-top: 80px;
+        }
+
+        /* Navigation Bar */
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 20, 40, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            color: #00D4FF;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00D4FF;
+        }
+
+        .nav-link.home {
+            background: #FC7300;
+        }
+
+        .nav-link.home:hover {
+            background: #e55a00;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2C5282 0%, #2A4A6B 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .content-section {
+            padding: 3rem 2rem;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .highlight-box h4 {
+            color: white;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+
+        .policy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .policy-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border-left: 5px solid #667eea;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .policy-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .policy-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            border-left-color: #FC7300;
+        }
+
+        .policy-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #667eea;
+            transition: color 0.3s ease;
+        }
+
+        .policy-card:hover .policy-icon {
+            color: #FC7300;
+        }
+
+        .policy-card h3 {
+            color: #2C5282;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .policy-card p {
+            color: #4A5568;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .policy-features {
+            list-style: none;
+            margin: 1rem 0;
+        }
+
+        .policy-features li {
+            padding: 0.3rem 0;
+            position: relative;
+            padding-left: 1.5rem;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .policy-features li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #48bb78;
+            font-weight: bold;
+        }
+
+        .security-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        .metric-value {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .architecture-diagram {
+            background: #f7fafc;
+            padding: 3rem;
+            border-radius: 15px;
+            margin: 3rem 0;
+            border: 2px solid #e2e8f0;
+            text-align: center;
+        }
+
+        .diagram-flow {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .diagram-step {
+            background: #2C5282;
+            color: white;
+            padding: 1.5rem 2rem;
+            border-radius: 25px;
+            text-align: center;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            position: relative;
+            min-width: 150px;
+        }
+
+        .diagram-step:not(:last-child)::after {
+            content: "→";
+            position: absolute;
+            right: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #2C5282;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .code-example {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .footer {
+            background: #2d3748;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .footer h3 {
+            color: #FC7300;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .policy-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .diagram-flow {
+                flex-direction: column;
+            }
+            
+            .diagram-step:not(:last-child)::after {
+                content: "↓";
+                right: 50%;
+                top: 100%;
+                transform: translateX(50%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="nav-bar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">🏗️ RTF Architecture</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link home">🏠 Home</a>
+                <a href="01-Overview.html" class="nav-link">🎯 Overview</a>
+                <a href="02-Enhanced-Navigation.html" class="nav-link">🎨 Navigation</a>
+                <a href="04-RTF-EKS-Setup.html" class="nav-link">🏗️ Setup</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ Flex Gateway Policies</h1>
+            <div class="subtitle">Advanced API Security with JWT, Rate Limiting & HIPAA Compliance</div>
+        </div>
+
+        <div class="content-section">
+            <div class="highlight-box">
+                <h4>🛡️ Advanced API Security Implementation</h4>
+                <p>Comprehensive API protection with multi-provider JWT validation, intelligent rate limiting at 80% capacity threshold, PII data protection, and full HIPAA compliance measures for the Employee Onboarding Platform.</p>
+            </div>
+
+            <div class="security-metrics">
+                <div class="metric-card">
+                    <div class="metric-value">100%</div>
+                    <div class="metric-label">JWT Protected</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">80%</div>
+                    <div class="metric-label">Rate Limit Threshold</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">AES-256</div>
+                    <div class="metric-label">Data Encryption</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">HIPAA</div>
+                    <div class="metric-label">Compliant</div>
+                </div>
+            </div>
+
+            <h2 style="color: #2C5282; margin: 3rem 0 2rem 0;">🔐 Security Policy Architecture</h2>
+            <div class="architecture-diagram">
+                <div class="diagram-flow">
+                    <div class="diagram-step">🌐 Client Request</div>
+                    <div class="diagram-step">🔐 JWT Validation</div>
+                    <div class="diagram-step">⚡ Rate Limiting</div>
+                    <div class="diagram-step">🛡️ PII Protection</div>
+                    <div class="diagram-step">🎯 RTF Services</div>
+                </div>
+            </div>
+
+            <div class="policy-grid">
+                <div class="policy-card">
+                    <div class="policy-icon">🔑</div>
+                    <h3>Multi-Provider JWT Validation</h3>
+                    <p>Advanced JWT token validation supporting multiple identity providers including Auth0, Okta, and Azure AD with automatic key rotation and claim validation.</p>
+                    <ul class="policy-features">
+                        <li>Multiple Identity Provider Support</li>
+                        <li>Automatic Key Rotation</li>
+                        <li>Custom Claim Validation</li>
+                        <li>Token Blacklisting</li>
+                        <li>Audience & Issuer Verification</li>
+                    </ul>
+                </div>
+
+                <div class="policy-card">
+                    <div class="policy-icon">⚡</div>
+                    <h3>Intelligent Rate Limiting</h3>
+                    <p>Smart rate limiting with 80% threshold management, burst handling, and client-specific quotas to ensure optimal performance for employee onboarding workflows.</p>
+                    <ul class="policy-features">
+                        <li>80% Capacity Threshold</li>
+                        <li>Burst Traffic Handling</li>
+                        <li>Client-Specific Quotas</li>
+                        <li>Sliding Window Algorithm</li>
+                        <li>Real-time Monitoring</li>
+                    </ul>
+                </div>
+
+                <div class="policy-card">
+                    <div class="policy-icon">🛡️</div>
+                    <h3>PII Data Protection</h3>
+                    <p>Comprehensive personally identifiable information protection with field-level encryption, data masking, and audit logging for HIPAA compliance.</p>
+                    <ul class="policy-features">
+                        <li>Field-Level Encryption (AES-256)</li>
+                        <li>Dynamic Data Masking</li>
+                        <li>PII Detection & Classification</li>
+                        <li>Access Control & Auditing</li>
+                        <li>Data Loss Prevention</li>
+                    </ul>
+                </div>
+
+                <div class="policy-card">
+                    <div class="policy-icon">🏥</div>
+                    <h3>HIPAA Compliance</h3>
+                    <p>Full Health Insurance Portability and Accountability Act compliance with secure data transmission, access controls, and comprehensive audit logging.</p>
+                    <ul class="policy-features">
+                        <li>End-to-End Encryption</li>
+                        <li>Access Control Lists</li>
+                        <li>Comprehensive Audit Trails</li>
+                        <li>Data Breach Detection</li>
+                        <li>Compliance Reporting</li>
+                    </ul>
+                </div>
+
+                <div class="policy-card">
+                    <div class="policy-icon">🔍</div>
+                    <h3>Security Monitoring</h3>
+                    <p>Real-time security monitoring with threat detection, anomaly identification, and automated incident response for the employee onboarding platform.</p>
+                    <ul class="policy-features">
+                        <li>Real-time Threat Detection</li>
+                        <li>Behavioral Analysis</li>
+                        <li>Automated Alerting</li>
+                        <li>Security Dashboard</li>
+                        <li>Incident Response</li>
+                    </ul>
+                </div>
+
+                <div class="policy-card">
+                    <div class="policy-icon">📊</div>
+                    <h3>Performance Analytics</h3>
+                    <p>Advanced analytics and reporting for security policy effectiveness, performance metrics, and compliance validation across all API endpoints.</p>
+                    <ul class="policy-features">
+                        <li>Policy Performance Metrics</li>
+                        <li>Security Event Analytics</li>
+                        <li>Compliance Reporting</li>
+                        <li>Real-time Dashboards</li>
+                        <li>Custom Alert Rules</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 style="color: #2C5282; margin: 2rem 0;">🔧 JWT Validation Configuration Example</h3>
+            <div class="code-example">
+# Flex Gateway JWT Validation Policy
+apiVersion: gateway.mulesoft.com/v1alpha1
+kind: ApiInstance
+metadata:
+  name: employee-onboarding-api
+spec:
+  address: https://api.employee-onboarding.com
+  services:
+    employee-service:
+      address: https://employees.cloudhub.io:443
+      routes:
+        - rules:
+          - path: /api/employees/*
+          - path: /api/onboarding/*
+  policies:
+    - policyRef:
+        name: jwt-validation-flex
+      config:
+        jwtKeyOrigin: jwks
+        jwksUrl: "https://auth.employee-portal.com/.well-known/jwks.json"
+        jwksServiceTimeToLive: 60
+        audience: "employee-onboarding-api"
+        issuer: "https://auth.employee-portal.com/"
+        validateAudience: true
+        validateIssuer: true
+        mandatoryClaims:
+          - "sub"
+          - "iat" 
+          - "exp"
+          - "employee_role"
+    - policyRef:
+        name: rate-limiting-flex
+      config:
+        rateLimits:
+          - maximumRequests: 1000
+            timePeriod: 1
+            timePeriodTimeUnit: MINUTE
+            identifier: "#[attributes.headers['client-id']]"
+        quotas:
+          - maximumRequests: 10000
+            timePeriod: 1
+            timePeriodTimeUnit: HOUR
+            identifier: "#[attributes.headers['client-id']]"
+    - policyRef:
+        name: pii-protection-flex
+      config:
+        encryptionKey: "${secure::pii.encryption.key}"
+        protectedFields:
+          - "ssn"
+          - "email"
+          - "phone"
+          - "address"
+        auditEnabled: true
+        hipaaCompliance: true
+</div>
+
+            <div class="highlight-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h4>🚀 Advanced Security Features</h4>
+                <p><strong>Zero Trust Architecture:</strong> Every request is validated and authenticated before reaching employee onboarding services, ensuring complete protection of sensitive HR data and maintaining HIPAA compliance throughout the entire platform.</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <h3>🛡️ Advanced API Security</h3>
+            <p>Comprehensive Flex Gateway security policies provide enterprise-grade protection for the Employee Onboarding Platform, ensuring HIPAA compliance, optimal performance, and robust threat protection across all API endpoints.</p>
+            <br>
+            <p><strong>Security Standards:</strong> OWASP Top 10, HIPAA, SOC 2, ISO 27001 compliance with advanced threat detection and automated incident response.</p>
+        </div>
+    </div>
+</body>
+</html>
