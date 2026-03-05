@@ -1,138 +1,77 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Navigation Interface - Employee Onboarding Platform</title>
-    <link rel="stylesheet" href="common-styles.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="index.html" class="nav-brand">
-                <span>🚀</span> Employee Onboarding Platform
-            </a>
-            <div class="nav-toggle" onclick="toggleMobileMenu()">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-            <ul class="nav-menu" id="navMenu">
-                <li><a href="index.html" class="nav-link">Overview</a></li>
-                <li><a href="02-Enhanced-Navigation.html" class="nav-link active">Navigation</a></li>
-                <li><a href="03-Flex-Gateway-Policies.html" class="nav-link">Flex Gateway</a></li>
-                <li><a href="04-RTF-EKS-Setup.html" class="nav-link">RTF EKS</a></li>
-                <li><a href="05-Anypoint-Platform.html" class="nav-link">Anypoint</a></li>
-                <li><a href="06-Auto-scaling.html" class="nav-link">Auto-scaling</a></li>
-                <li><a href="07-HIPAA-Compliance.html" class="nav-link">HIPAA</a></li>
-                <li><a href="08-RTF-Azure-Installation.html" class="nav-link">RTF Azure</a></li>
-                <li><a href="09-RTF-AWS-Installation.html" class="nav-link">RTF AWS</a></li>
-                <li><a href="10-RTF-Security.html" class="nav-link">Security</a></li>
-                <li><a href="11-Logging-Monitoring.html" class="nav-link">Monitoring</a></li>
-                <li><a href="12-Capacity-Planning.html" class="nav-link">Capacity Planning</a></li>
-                <li><a href="13-MuleSoft-Capacity-Planning.html" class="nav-link">MuleSoft Planning</a></li>
-                <li><a href="14-Azure-AWS-RTF-Capacity-Planning.html" class="nav-link">Cloud RTF Planning</a></li>
-            </ul>
+<!-- Tabbed Navigation Interface -->
+<div class="card">
+    <div class="policy-tabs">
+        <div class="tab-btn active" onclick="openTab(event, 'employee-mgmt')" id="employee-tab">
+            <span style="display: block; font-size: 24px; margin-bottom: 8px;">👥</span>
+            <span>Employee Management</span>
         </div>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="container">
-        <!-- Back Button -->
-        <a href="index.html" class="back-button">
-            <span class="back-button-icon">←</span>
-            Back to Overview
-        </a>
-
-        <div class="header">
-            <h1>🎨 Enhanced Navigation Interface</h1>
-            <div class="subtitle">Professional Tabbed Interface for Employee Onboarding Platform</div>
+        <div class="tab-btn" onclick="openTab(event, 'asset-mgmt')" id="asset-tab">
+            <span style="display: block; font-size: 24px; margin-bottom: 8px;">📦</span>
+            <span>Asset Management</span>
         </div>
+        <div class="tab-btn" onclick="openTab(event, 'communication')" id="comm-tab">
+            <span style="display: block; font-size: 24px; margin-bottom: 8px;">💬</span>
+            <span>Communication Hub</span>
+        </div>
+        <div class="tab-btn" onclick="openTab(event, 'administration')" id="admin-tab">
+            <span style="display: block; font-size: 24px; margin-bottom: 8px;">⚙️</span>
+            <span>System Administration</span>
+        </div>
+    </div>
 
-        <div class="content">
-            <div class="alert alert-info">
-                <strong>🎨 Professional Navigation with Poppins Font:</strong> Advanced tabbed interface with separate navigation menus for different functional areas, featuring HIPAA-compliant design and responsive layout optimized for employee onboarding workflows.
-            </div>
-
-            <!-- Tabbed Navigation Interface -->
-            <div class="card">
-                <div class="policy-tabs">
-                    <div class="tab-btn active" onclick="openTab(event, 'employee-mgmt')" id="employee-tab">
-                        <span style="display: block; font-size: 24px; margin-bottom: 8px;">👥</span>
-                        <span>Employee Management</span>
+    <!-- Employee Management Tab Content -->
+    <div id="employee-mgmt" class="policy-content active">
+        <div style="display: flex; min-height: 400px;">
+            <div style="width: 300px; padding: 30px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: var(--radius-lg) 0 0 var(--radius-lg);">
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="sub-nav-item active" onclick="showSubContent('emp-dashboard')" style="display: flex; align-items: center; padding: 15px 20px; border-radius: 10px; cursor: pointer; background: rgba(255,255,255,0.25); font-weight: 600;">
+                        <span style="font-size: 20px; margin-right: 12px;">📊</span>
+                        <span>Dashboard Overview</span>
+                        <div style="margin-left: auto; padding: 4px 10px; border-radius: 12px; font-size: 11px; background: #48bb78; color: white;">Live</div>
                     </div>
-                    <div class="tab-btn" onclick="openTab(event, 'asset-mgmt')" id="asset-tab">
-                        <span style="display: block; font-size: 24px; margin-bottom: 8px;">📦</span>
-                        <span>Asset Management</span>
+                    <div class="sub-nav-item" onclick="showSubContent('emp-onboarding')" style="display: flex; align-items: center; padding: 15px 20px; border-radius: 10px; cursor: pointer; background: rgba(255,255,255,0.1);">
+                        <span style="font-size: 20px; margin-right: 12px;">👤</span>
+                        <span>Onboarding Process</span>
+                        <div style="margin-left: auto; padding: 4px 10px; border-radius: 12px; font-size: 11px; background: #4299e1; color: white;">Active</div>
                     </div>
-                    <div class="tab-btn" onclick="openTab(event, 'communication')" id="comm-tab">
-                        <span style="display: block; font-size: 24px; margin-bottom: 8px;">💬</span>
-                        <span>Communication Hub</span>
+                    <div class="sub-nav-item" onclick="showSubContent('emp-analytics')" style="display: flex; align-items: center; padding: 15px 20px; border-radius: 10px; cursor: pointer; background: rgba(255,255,255,0.1);">
+                        <span style="font-size: 20px; margin-right: 12px;">📈</span>
+                        <span>HR Analytics</span>
+                        <div style="margin-left: auto; padding: 4px 10px; border-radius: 12px; font-size: 11px; background: #ed8936; color: white;">Sync</div>
                     </div>
-                    <div class="tab-btn" onclick="openTab(event, 'administration')" id="admin-tab">
-                        <span style="display: block; font-size: 24px; margin-bottom: 8px;">⚙️</span>
-                        <span>System Administration</span>
+                    <div class="sub-nav-item" onclick="showSubContent('emp-compliance')" style="display: flex; align-items: center; padding: 15px 20px; border-radius: 10px; cursor: pointer; background: rgba(255,255,255,0.1);">
+                        <span style="font-size: 20px; margin-right: 12px;">🛡️</span>
+                        <span>HIPAA Compliance</span>
+                        <div style="margin-left: auto; padding: 4px 10px; border-radius: 12px; font-size: 11px; background: #48bb78; color: white;">Secured</div>
                     </div>
                 </div>
-
-                <!-- Employee Management Tab Content -->
-                <div id="employee-mgmt" class="policy-content active">
-                    <div style="display: flex; min-height: 400px;">
-                        <div style="width: 300px; padding: 30px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: var(--radius-lg) 0 0 var(--radius-lg);">
-                            <h3 style="color: white; text-align: center; padding-bottom: 15px; border-bottom: 2px solid rgba(255,255,255,0.2); margin-bottom: 25px;">👥 Employee Management</h3>
-                            <div style="display: flex; flex-direction: column; gap: 12px;">
-                                <div class="sub-nav-item active" onclick="showSubContent('emp-dashboard')" style="display: flex; align-items: center; padding: 15px 20px; border-radius: 10px; cursor: pointer; background: rgba(255,255,255,0.25); font-weight: 600;">
-                                    <span style="font-size: 20px; margin-right: 12px;">📊</span>
-                                    <span>Dashboard Overview</span>
-                                    <div style="margin-left: auto; padding: 4px 10px; border-radius: 12px; font-size: 11px; background: #48bb78; color: white;">Live</div>
-                                </div>
-                                <div class="sub-nav-item" onclick="showSubContent('emp-onboarding')" style="display: flex; align-items: center; padding: 15px 20px; border-radius: 10px; cursor: pointer; background: rgba(255,255,255,0.1);">
-                                    <span style="font-size: 20px; margin-right: 12px;">👤</span>
-                                    <span>Onboarding Process</span>
-                                    <div style="margin-left: auto; padding: 4px 10px; border-radius: 12px; font-size: 11px; background: #4299e1; color: white;">Active</div>
-                                </div>
-                                <div class="sub-nav-item" onclick="showSubContent('emp-analytics')" style="display: flex; align-items: center; padding: 15px 20px; border-radius: 10px; cursor: pointer; background: rgba(255,255,255,0.1);">
-                                    <span style="font-size: 20px; margin-right: 12px;">📈</span>
-                                    <span>HR Analytics</span>
-                                    <div style="margin-left: auto; padding: 4px 10px; border-radius: 12px; font-size: 11px; background: #ed8936; color: white;">Sync</div>
-                                </div>
-                                <div class="sub-nav-item" onclick="showSubContent('emp-compliance')" style="display: flex; align-items: center; padding: 15px 20px; border-radius: 10px; cursor: pointer; background: rgba(255,255,255,0.1);">
-                                    <span style="font-size: 20px; margin-right: 12px;">🛡️</span>
-                                    <span>HIPAA Compliance</span>
-                                    <div style="margin-left: auto; padding: 4px 10px; border-radius: 12px; font-size: 11px; background: #48bb78; color: white;">Secured</div>
-                                </div>
-                            </div>
+            </div>
+            <div style="flex: 1; padding: 30px;">
+                <div id="emp-dashboard" class="sub-content active">
+                    <p>Real-time overview of employee onboarding status, pending tasks, and system health metrics with HIPAA-compliant data handling.</p>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">156</div>
+                            <div class="metric-label">Active Employees</div>
                         </div>
-                        <div style="flex: 1; padding: 30px;">
-                            <div id="emp-dashboard" class="sub-content active">
-                                <h4>📊 Employee Management Dashboard</h4>
-                                <p>Real-time overview of employee onboarding status, pending tasks, and system health metrics with HIPAA-compliant data handling.</p>
-                                <div class="metrics-grid">
-                                    <div class="metric-card">
-                                        <div class="metric-value">156</div>
-                                        <div class="metric-label">Active Employees</div>
-                                    </div>
-                                    <div class="metric-card">
-                                        <div class="metric-value">23</div>
-                                        <div class="metric-label">Pending Onboarding</div>
-                                    </div>
-                                    <div class="metric-card">
-                                        <div class="metric-value">98.5%</div>
-                                        <div class="metric-label">Completion Rate</div>
-                                    </div>
-                                    <div class="metric-card">
-                                        <div class="metric-value">4.2 days</div>
-                                        <div class="metric-label">Average Process Time</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="emp-onboarding" class="sub-content">
-                                <h4>👤 Employee Onboarding Workflow</h4>
-                                <p>Comprehensive onboarding process management with automated task assignment, document verification, and progress tracking.</p>
-                                <div class="yaml-block">
-apiVersion: v1
+                        <div class="metric-card">
+                            <div class="metric-value">23</div>
+                            <div class="metric-label">Pending Onboarding</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">98.5%</div>
+                            <div class="metric-label">Completion Rate</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">4.2 days</div>
+                            <div class="metric-label">Average Process Time</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="emp-onboarding" class="sub-content">
+                    <p>Comprehensive onboarding process management with automated task assignment, document verification, and progress tracking.</p>
+                    <div class="yaml-block">
+<pre><code class="language-yaml">apiVersion: v1
 kind: ConfigMap
 metadata:
   name: onboarding-workflow-config
@@ -163,113 +102,37 @@ data:
           - role-specific-training
       - name: completion-verification
         type: final-review
-        approver: hr-manager</div>
-                            </div>
-                            <div id="emp-analytics" class="sub-content">
-                                <h4>📈 HR Analytics & Reporting</h4>
-                                <p>Advanced analytics dashboard providing insights into onboarding efficiency, employee satisfaction, and process optimization opportunities.</p>
-                            </div>
-                            <div id="emp-compliance" class="sub-content">
-                                <h4>🛡️ HIPAA Compliance & Security</h4>
-                                <p>Comprehensive security measures ensuring HIPAA compliance for employee PII data handling, access controls, and audit logging.</p>
-                            </div>
-                        </div>
+        approver: hr-manager</code></pre>
                     </div>
                 </div>
-
-                <!-- Other tab contents would go here with similar structure -->
-                <div id="asset-mgmt" class="policy-content">
-                    <div class="card">
-                        <h4>📦 Asset Management System</h4>
-                        <p>Comprehensive asset management with automated allocation, inventory tracking, and lifecycle management.</p>
-                    </div>
+                <div id="emp-analytics" class="sub-content">
+                    <p>Advanced analytics dashboard providing insights into onboarding efficiency, employee satisfaction, and process optimization opportunities.</p>
                 </div>
-
-                <div id="communication" class="policy-content">
-                    <div class="card">
-                        <h4>💬 Communication Hub</h4>
-                        <p>AI-powered communication center with NLP chat, notifications, and support systems.</p>
-                    </div>
-                </div>
-
-                <div id="administration" class="policy-content">
-                    <div class="card">
-                        <h4>⚙️ System Administration</h4>
-                        <p>Centralized administration panel for user management, system settings, and monitoring.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>🎨 Key Navigation Features</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 2rem;">
-                    <div class="alert alert-success">
-                        <h4>Responsive Design</h4>
-                        <p>Mobile-first approach with adaptive layouts for all screen sizes and touch-friendly interactions.</p>
-                    </div>
-                    <div class="alert alert-info">
-                        <h4>HIPAA Compliance</h4>
-                        <p>Security-focused design patterns ensuring data protection and regulatory compliance.</p>
-                    </div>
-                    <div class="alert alert-warning">
-                        <h4>Accessibility</h4>
-                        <p>WCAG 2.1 compliant interface with keyboard navigation and screen reader support.</p>
-                    </div>
+                <div id="emp-compliance" class="sub-content">
+                    <p>Comprehensive security measures ensuring HIPAA compliance for employee PII data handling, access controls, and audit logging.</p>
                 </div>
             </div>
         </div>
-
-        <!-- Footer -->
-        <footer class="footer">
-            <div class="container">
-                <div class="footer-content">
-                    <div class="footer-section">
-                        <h4>🎨 Enhanced Navigation Interface</h4>
-                        <p>This professional tabbed interface provides seamless navigation across all functional areas of the Employee Onboarding Platform, featuring responsive design, accessibility support, and HIPAA-compliant user experience patterns.</p>
-                    </div>
-                    <div class="footer-section">
-                        <h4>📞 Navigation Support</h4>
-                        <ul>
-                            <li>UI/UX Team: design@company.com</li>
-                            <li>Frontend Support: frontend@company.com</li>
-                            <li>Accessibility Team: accessibility@company.com</li>
-                            <li>24/7 Support: support@company.com</li>
-                        </ul>
-                    </div>
-                    <div class="footer-section">
-                        <h4>🔗 Related Guides</h4>
-                        <ul>
-                            <li><a href="index.html">Platform Overview</a></li>
-                            <li><a href="01-Overview.html">Architecture Overview</a></li>
-                            <li><a href="07-HIPAA-Compliance.html">HIPAA Compliance</a></li>
-                            <li><a href="11-Logging-Monitoring.html">Monitoring</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-section">
-                        <h4>📊 Interface Status</h4>
-                        <div class="status-indicator">
-                            <span class="status-dot status-operational"></span>
-                            <span>Interface: Active</span>
-                        </div>
-                        <div class="status-indicator">
-                            <span class="status-dot status-operational"></span>
-                            <span>Navigation: Responsive</span>
-                        </div>
-                        <div class="status-indicator">
-                            <span class="status-dot status-operational"></span>
-                            <span>Accessibility: WCAG 2.1</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="footer-bottom">
-                    <p>&copy; 2026 Employee Onboarding Platform. All rights reserved. | 
-                       <a href="#privacy">Privacy Policy</a> | 
-                       <a href="#terms">Terms of Service</a> | 
-                       <a href="#security">Security Statement</a></p>
-                </div>
-            </div>
-        </footer>
     </div>
+
+    <div id="asset-mgmt" class="policy-content">
+        <div class="card">
+            <p>Comprehensive asset management with automated allocation, inventory tracking, and lifecycle management.</p>
+        </div>
+    </div>
+
+    <div id="communication" class="policy-content">
+        <div class="card">
+            <p>AI-powered communication center with NLP chat, notifications, and support systems.</p>
+        </div>
+    </div>
+
+    <div id="administration" class="policy-content">
+        <div class="card">
+            <p>Centralized administration panel for user management, system settings, and monitoring.</p>
+        </div>
+    </div>
+</div>
 
     <script src="common-scripts.js"></script>
     <script>

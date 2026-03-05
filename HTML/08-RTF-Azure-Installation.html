@@ -98,7 +98,7 @@
                 
                 <h4>🌐 Step 1: Resource Group Creation</h4>
                 <div class="code-block">
-# Set variables for consistent naming
+                    <pre><code class="bash"># Set variables for consistent naming
 export RESOURCE_GROUP="rtf-production-rg"
 export LOCATION="eastus2"
 export CLUSTER_NAME="rtf-aks-cluster"
@@ -110,12 +110,12 @@ az group create \
   --tags environment=production project=runtime-fabric
 
 # Verify creation
-az group show --name $RESOURCE_GROUP --output table
+az group show --name $RESOURCE_GROUP --output table</code></pre>
                 </div>
 
                 <h4>🔗 Step 2: Virtual Network Configuration</h4>
                 <div class="code-block">
-# Create virtual network with proper CIDR blocks
+                    <pre><code class="bash"># Create virtual network with proper CIDR blocks
 az network vnet create \
   --resource-group $RESOURCE_GROUP \
   --name rtf-vnet \
@@ -144,7 +144,7 @@ SUBNET_ID=$(az network vnet subnet show \
   --name rtf-subnet \
   --query id -o tsv)
 
-echo "Subnet ID: $SUBNET_ID"
+echo "Subnet ID: $SUBNET_ID"</code></pre>
                 </div>
 
                 <h4>🛡️ Step 3: Network Security Configuration</h4>

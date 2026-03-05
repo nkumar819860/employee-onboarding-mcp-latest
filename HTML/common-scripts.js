@@ -47,23 +47,299 @@ function initSmoothScrolling() {
     });
 }
 
-// Add syntax highlighting to code blocks
+// Advanced YAML Parser and Formatter
+class YamlProcessor {
+    constructor() {
+        this.errors = [];
+        this.warnings = [];
+    }
+
+    // Basic YAML parser for validation
+    parseYaml(content) {
+        this.errors = [];
+        this.warnings = [];
+        const lines = content.split('\n');
+        let inMultiline = false;
+        let indentStack = [0];
+        
+        lines.forEach((line, index) => {
+            const lineNum = index + 1;
+            const trimmed = line.trim();
+            
+            // Skip empty lines and comments
+            if (!trimmed || trimmed.startsWith('#')) return;
+            
+            // Check indentation
+            const indent = line.length - line.trimStart().length;
+            
+            // Validate indentation consistency
+            if (indent % 2 !== 0 && indent !== 0) {
+                this.errors.push({
+                    line: lineNum,
+                    message: 'Inconsistent indentation (should be multiples of 2)',
+                    type: 'indentation'
+                });
+            }
+            
+            // Check for tabs
+            if (line.includes('\t')) {
+                this.errors.push({
+                    line: lineNum,
+                    message: 'Use spaces instead of tabs for indentation',
+                    type: 'indentation'
+                });
+            }
+            
+            // Check for trailing spaces
+            if (line.endsWith(' ')) {
+                this.warnings.push({
+                    line: lineNum,
+                    message: 'Trailing whitespace detected',
+                    type: 'formatting'
+                });
+            }
+            
+            // Validate key-value pairs
+            if (line.includes(':')) {
+                const colonIndex = line.indexOf(':');
+                const key = line.substring(0, colonIndex).trim();
+                const value = line.substring(colonIndex + 1).trim();
+                
+                // Check for space after colon
+                if (line[colonIndex + 1] !== ' ' && line[colonIndex + 1] !== '\n' && line[colonIndex + 1] !== undefined) {
+                    this.errors.push({
+                        line: lineNum,
+                        message: 'Missing space after colon',
+                        type: 'syntax'
+                    });
+                }
+                
+                // Check for valid key format
+                if (!/^[a-zA-Z_][a-zA-Z0-9_-]*$/.test(key) && !key.match(/^['"][^'"]*['"]$/)) {
+                    this.warnings.push({
+                        line: lineNum,
+                        message: 'Key should be alphanumeric or quoted',
+                        type: 'syntax'
+                    });
+                }
+            }
+            
+            // Check for proper list formatting
+            if (trimmed.startsWith('- ')) {
+                if (!line.match(/^\s*- /)) {
+                    this.errors.push({
+                        line: lineNum,
+                        message: 'List items should have space after dash',
+                        type: 'syntax'
+                    });
+                }
+            }
+        });
+        
+        return {
+            errors: this.errors,
+            warnings: this.warnings,
+            isValid: this.errors.length === 0
+        };
+    }
+
+    // Format YAML content
+    formatYaml(content) {
+        const lines = content.split('\n');
+        const formatted = [];
+        let currentIndent = 0;
+        
+        lines.forEach(line => {
+            const trimmed = line.trim();
+            
+            // Skip empty lines but preserve them
+            if (!trimmed) {
+                formatted.push('');
+                return;
+            }
+            
+            // Preserve comments
+            if (trimmed.startsWith('#')) {
+                formatted.push(' '.repeat(currentIndent) + trimmed);
+                return;
+            }
+            
+            // Handle list items
+            if (trimmed.startsWith('-')) {
+                const content = trimmed.substring(1).trim();
+                formatted.push(' '.repeat(currentIndent) + '- ' + content);
+                return;
+            }
+            
+            // Handle key-value pairs
+            if (line.includes(':')) {
+                const colonIndex = line.indexOf(':');
+                const key = line.substring(0, colonIndex).trim();
+                const value = line.substring(colonIndex + 1).trim();
+                
+                if (value) {
+                    formatted.push(' '.repeat(currentIndent) + key + ': ' + value);
+                } else {
+                    formatted.push(' '.repeat(currentIndent) + key + ':');
+                    currentIndent += 2;
+                }
+            } else {
+                formatted.push(' '.repeat(currentIndent) + trimmed);
+            }
+        });
+        
+        return formatted.join('\n');
+    }
+
+    // Advanced syntax highlighting
+    highlightYaml(content) {
+        let highlighted = content
+            // Highlight comments
+            .replace(/(#.*$)/gm, '<span class="comment">$1</span>')
+            // Highlight string values in quotes
+            .replace(/(['"])((?:\\.|(?!\1)[^\\])*?)\1/g, '<span class="string">$1$2$1</span>')
+            // Highlight numbers
+            .replace(/:\s*(-?\d*\.?\d+([eE][-+]?\d+)?)/g, ': <span class="number">$1</span>')
+            // Highlight booleans
+            .replace(/:\s*(true|false|yes|no|on|off)/gi, ': <span class="boolean">$1</span>')
+            // Highlight null values
+            .replace(/:\s*(null|~)/gi, ': <span class="null">$1</span>')
+            // Highlight keys
+            .replace(/^(\s*)([a-zA-Z_][a-zA-Z0-9_-]*)\s*:/gm, '$1<span class="key">$2</span>:')
+            // Highlight operators and special characters
+            .replace(/([:\[\]{}|>-])/g, '<span class="operator">$1</span>')
+            // Highlight list indicators
+            .replace(/^(\s*)(-)\s+/gm, '$1<span class="operator">$2</span> ');
+            
+        return highlighted;
+    }
+}
+
+// Enhanced code block highlighting and processing
 function highlightCodeBlocks() {
+    const yamlProcessor = new YamlProcessor();
     const codeBlocks = document.querySelectorAll('pre code, .yaml-block, .config-block, .code-block');
     
     codeBlocks.forEach(block => {
         let content = block.textContent || block.innerText;
         
-        // Basic YAML syntax highlighting
-        content = content
-            .replace(/^(\s*[a-zA-Z_][a-zA-Z0-9_]*)\s*:/gm, '<span class="key">$1</span>:')
-            .replace(/:\s*([^#\r\n]+)/g, ': <span class="string">$1</span>')
-            .replace(/:\s*(\d+)/g, ': <span class="number">$1</span>')
-            .replace(/#.*$/gm, '<span class="comment">$&</span>');
-        
         if (block.classList.contains('yaml-block') || block.classList.contains('config-block')) {
-            block.innerHTML = content;
+            // Add YAML validation and highlighting
+            const validation = yamlProcessor.parseYaml(content);
+            const highlighted = yamlProcessor.highlightYaml(content);
+            
+            block.innerHTML = highlighted;
+            
+            // Add validation indicators
+            addValidationIndicators(block, validation);
+            
+            // Add format button
+            addFormatButton(block, content, yamlProcessor);
+        } else {
+            // Basic syntax highlighting for other code blocks
+            const highlighted = content
+                .replace(/(['"])((?:\\.|(?!\1)[^\\])*?)\1/g, '<span class="string">$1$2$1</span>')
+                .replace(/\b(\d+\.?\d*)\b/g, '<span class="number">$1</span>')
+                .replace(/(\/\/.*$|\/\*[\s\S]*?\*\/)/gm, '<span class="comment">$1</span>');
+            
+            block.innerHTML = highlighted;
         }
+    });
+}
+
+// Add validation indicators to YAML blocks
+function addValidationIndicators(block, validation) {
+    // Remove existing indicators
+    const existingIndicator = block.parentNode.querySelector('.yaml-validation');
+    if (existingIndicator) {
+        existingIndicator.remove();
+    }
+    
+    if (validation.errors.length > 0 || validation.warnings.length > 0) {
+        const indicator = document.createElement('div');
+        indicator.className = 'yaml-validation';
+        indicator.style.cssText = `
+            position: absolute;
+            top: 2.5rem;
+            right: 1rem;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            max-width: 300px;
+            z-index: 10;
+            box-shadow: var(--shadow-md);
+        `;
+        
+        let content = '';
+        if (validation.errors.length > 0) {
+            indicator.style.background = 'var(--danger-color)';
+            indicator.style.color = 'white';
+            content += `<strong>❌ ${validation.errors.length} Error(s):</strong><br>`;
+            validation.errors.forEach(error => {
+                content += `Line ${error.line}: ${error.message}<br>`;
+            });
+        } else if (validation.warnings.length > 0) {
+            indicator.style.background = 'var(--warning-color)';
+            indicator.style.color = 'white';
+            content += `<strong>⚠️ ${validation.warnings.length} Warning(s):</strong><br>`;
+            validation.warnings.forEach(warning => {
+                content += `Line ${warning.line}: ${warning.message}<br>`;
+            });
+        }
+        
+        if (validation.isValid && validation.warnings.length === 0) {
+            indicator.style.background = 'var(--success-color)';
+            indicator.style.color = 'white';
+            content = '✅ Valid YAML';
+        }
+        
+        indicator.innerHTML = content;
+        block.parentNode.appendChild(indicator);
+    }
+}
+
+// Add format button to YAML blocks
+function addFormatButton(block, originalContent, yamlProcessor) {
+    const formatButton = document.createElement('button');
+    formatButton.className = 'format-btn';
+    formatButton.innerHTML = '🔧 Format';
+    formatButton.style.cssText = `
+        position: absolute;
+        top: 0.5rem;
+        right: 5rem;
+        background: var(--info-color);
+        color: white;
+        border: none;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    `;
+    
+    block.parentNode.appendChild(formatButton);
+    
+    block.parentNode.addEventListener('mouseenter', () => {
+        formatButton.style.opacity = '1';
+    });
+    
+    block.parentNode.addEventListener('mouseleave', () => {
+        formatButton.style.opacity = '0';
+    });
+    
+    formatButton.addEventListener('click', () => {
+        const formatted = yamlProcessor.formatYaml(originalContent);
+        const validation = yamlProcessor.parseYaml(formatted);
+        const highlighted = yamlProcessor.highlightYaml(formatted);
+        
+        block.innerHTML = highlighted;
+        addValidationIndicators(block, validation);
+        
+        formatButton.innerHTML = '✅ Formatted!';
+        setTimeout(() => {
+            formatButton.innerHTML = '🔧 Format';
+        }, 2000);
     });
 }
 
