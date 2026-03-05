@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Rotation and Renewal</title>
+    <link rel="stylesheet" href="common-styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">🔄 Certificate Management</a>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="17-Secrets-Properties-Runtime.html" class="nav-link">Secrets Management</a>
+                <a href="19-Code-Scanning-Tools.html" class="nav-link">Code Scanning</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="header">
+            <h1>Certificate Rotation and Renewal</h1>
+            <p class="subtitle">Comprehensive guide to managing SSL/TLS certificates, rotation strategies, and automated renewal processes in MuleSoft environments</p>
+        </div>
+
+        <div class="content">
+            <div class="card">
+                <h2>1. Certificate Management Overview</h2>
+                <div class="sub-header">
+                    <h3>Importance of Certificate Management</h3>
+                    <p class="subtitle">Ensuring secure communications and avoiding service disruptions</p>
+                </div>
+
+                <div class="navigation-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔒</div>
+                        <h3>Security</h3>
+                        <p>Maintain secure encrypted communications</p>
+                        <ul class="nav-card-features">
+                            <li>TLS/SSL encryption</li>
+                            <li>Identity verification</li>
+                            <li>Data integrity</li>
+                            <li>Non-repudiation</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">⏰</div>
+                        <h3>Continuity</h3>
+                        <p>Prevent service disruptions from expired certificates</p>
+                        <ul class="nav-card-features">
+                            <li>Zero-downtime renewal</li>
+                            <li>Automated monitoring</li>
+                            <li>Expiration alerts</li>
+                            <li>Rollback capabilities</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📋</div>
+                        <h3>Compliance</h3>
+                        <p>Meet regulatory and organizational requirements</p>
+                        <ul class="nav-card-features">
+                            <li>Certificate authority policies</li>
+                            <li>Audit trails</li>
+                            <li>Compliance reporting</li>
+                            <li>Security standards</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning">
+                    <strong>Certificate Lifecycle Management:</strong>
+                    <ul>
+                        <li><strong>Request:</strong> Generate certificate signing request (CSR)</li>
+                        <li><strong>Issue:</strong> Obtain signed certificate from Certificate Authority</li>
+                        <li><strong>Deploy:</strong> Install certificate in MuleSoft environments</li>
+                        <li><strong>Monitor:</strong> Track expiration dates and validity</li>
+                        <li><strong>Renew:</strong> Update certificates before expiration</li>
+                        <li><strong>Revoke:</strong> Handle compromised or invalid certificates</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>2. Certificate Types in MuleSoft</h2>
+                <div class="sub-header-secondary">
+                    <h3>Certificate Usage Scenarios</h3>
+                    <p class="subtitle">Different certificate types and their applications</p>
+                </div>
+
+                <div class="navigation-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🌐</div>
+                        <h3>HTTP Listener Certificates</h3>
+                        <p>TLS certificates for incoming API requests</p>
+                        <ul class="nav-card-features">
+                            <li>HTTPS endpoints</li>
+                            <li>API gateway TLS</li>
+                            <li>Load balancer certificates</li>
+                            <li>Domain validation</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔗</div>
+                        <h3>HTTP Request Certificates</h3>
+                        <p>Client certificates for outbound connections</p>
+                        <ul class="nav-card-features">
+                            <li>Mutual TLS (mTLS)</li>
+                            <li>Client authentication</li>
+                            <li>Backend service calls</li>
+                            <li>Certificate-based auth</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🏢</div>
+                        <h3>JVM Trust Store</h3>
+                        <p>Certificates for trusted certificate authorities</p>
+                        <ul class="nav-card-features">
+                            <li>CA root certificates</li>
+                            <li>Intermediate certificates</li>
+                            <li>Self-signed certificates</li>
+                            <li>Custom trust chains</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="code-block">
+<!-- HTTP Listener TLS Configuration -->
+<http:listener-config name="https-listener-config">
+    <http:listener-connection host="0.0.0.0" port="${https.port}" protocol="HTTPS">
+        <tls:context>
+            <tls:key-store type="jks" 
+                          path="${keystore.path}" 
+                          keyPassword="${secure::keystore.key.password}" 
+                          password="${secure::keystore.password}"/>
+        </tls:context>
+    </http:listener-connection>
+</http:listener-config>
+
+<!-- HTTP Request Client TLS Configuration -->
+<http:request-config name="secure-request-config">
+    <http:request-connection host="${backend.host}" 
+                            port="${backend.port}" 
+                            protocol="HTTPS">
+        <tls:context>
+            <tls:trust-store path="${truststore.path}" 
+                            password="${secure::truststore.password}"/>
+            <tls:key-store type="pkcs12" 
+                          path="${client.keystore.path}" 
+                          keyPassword="${secure::client.key.password}" 
+                          password="${secure::client.keystore.password}"/>
+        </tls:context>
+    </http:request-connection>
+</http:request-config>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>3. Certificate Monitoring and Alerts</h2>
+                <div class="sub-header-success">
+                    <h3>Proactive Certificate Management</h3>
+                    <p class="subtitle">Monitor certificate health and expiration dates</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>Certificate Monitoring Strategy:</strong>
+                    <ul>
+                        <li><strong>Expiration Monitoring:</strong> Track certificates approaching expiration</li>
+                        <li><strong>Health Checks:</strong> Validate certificate chain integrity</li>
+                        <li><strong>Automated Alerts:</strong> Notify teams of certificate issues</li>
+                        <li><strong>Dashboard Reporting:</strong> Centralized certificate status view</li>
+                    </ul>
+                </div>
+
+                <div class="code-block">
+<flow name="certificate-monitoring-flow">
+    <scheduler>
+        <scheduling-strategy>
+            <fixed-frequency frequency="86400000"/> <!-- Daily check -->
+        </scheduling-strategy>
+    </scheduler>
+    
+    <foreach collection="#[vars.certificateList]">
+        <try>
+            <java:invoke-static class="java.security.cert.X509Certificate" 
+                               method="checkValidity">
+                <java:args>
+                    #[java!java::time::Instant::now().plusSeconds(30*24*3600)] <!-- 30 days -->
+                </java:args>
+            </java:invoke-static>
+            
+            <logger message="Certificate #[item.subject] is valid"/>
+            
+            <error-handler>
+                <on-error-continue type="JAVA:CERTIFICATE">
+                    <set-variable variableName="expiringCert" 
+                                  value="#[{subject: item.subject, expiryDate: item.notAfter, daysRemaining: item.daysUntilExpiry}]"/>
+                    
+                    <flow-ref name="send-expiration-alert"/>
+                </on-error-continue>
+            </error-handler>
+        </try>
+    </foreach>
+</flow>
+
+<flow name="send-expiration-alert">
+    <choice>
+        <when expression="#[vars.expiringCert.daysRemaining < 7]">
+            <set-variable variableName="alertLevel" value="CRITICAL"/>
+        </when>
+        <when expression="#[vars.expiringCert.daysRemaining < 30]">
+            <set-variable variableName="alertLevel" value="WARNING"/>
+        </when>
+        <otherwise>
+            <set-variable variableName="alertLevel" value="INFO"/>
+        </otherwise>
+    </choice>
+    
+    <http:request config-ref="notification-service-config" 
+                  path="/alerts" method="POST">
+        <http:body><![CDATA[
+            {
+                "level": "#[vars.alertLevel]",
+                "message": "Certificate #[vars.expiringCert.subject] expires in #[vars.expiringCert.daysRemaining] days",
+                "certificate": "#[vars.expiringCert]",
+                "timestamp": "#[now()]"
+            }
+        ]]></http:body>
+    </http:request>
+</flow>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>4. Automated Certificate Renewal</h2>
+                <div class="sub-header">
+                    <h3>Zero-Downtime Certificate Updates</h3>
+                    <p class="subtitle">Implement automated renewal processes</p>
+                </div>
+
+                <div class="navigation-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🤖</div>
+                        <h3>ACME Protocol</h3>
+                        <p>Automated Certificate Management Environment</p>
+                        <ul class="nav-card-features">
+                            <li>Let's Encrypt integration</li>
+                            <li>Automatic validation</li>
+                            <li>Domain verification</li>
+                            <li>Renewal scheduling</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔄</div>
+                        <h3>Certificate Rotation</h3>
+                        <p>Seamless certificate replacement</p>
+                        <ul class="nav-card-features">
+                            <li>Blue-green deployment</li>
+                            <li>Rolling updates</li>
+                            <li>Gradual rollout</li>
+                            <li>Rollback capability</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">✅</div>
+                        <h3>Validation Testing</h3>
+                        <p>Verify certificate functionality</p>
+                        <ul class="nav-card-features">
+                            <li>TLS handshake tests</li>
+                            <li>Certificate chain validation</li>
+                            <li>Endpoint accessibility</li>
+                            <li>Performance impact</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="code-block">
+<flow name="certificate-renewal-orchestrator">
+    <http:listener config-ref="certificate-mgmt-config" 
+                   path="/certificates/renew/{certificateId}" 
+                   allowedMethods="POST"/>
+    
+    <set-variable variableName="certificateId" value="#[attributes.uriParams.certificateId]"/>
+    
+    <!-- Retrieve certificate details -->
+    <flow-ref name="get-certificate-details"/>
+    
+    <!-- Generate new CSR -->
+    <flow-ref name="generate-certificate-request"/>
+    
+    <!-- Submit to Certificate Authority -->
+    <flow-ref name="submit-renewal-request"/>
+    
+    <!-- Wait for certificate issuance -->
+    <flow-ref name="poll-certificate-status"/>
+    
+    <!-- Validate new certificate -->
+    <flow-ref name="validate-new-certificate"/>
+    
+    <!-- Deploy certificate -->
+    <flow-ref name="deploy-certificate"/>
+    
+    <!-- Update configurations -->
+    <flow-ref name="update-certificate-references"/>
+    
+    <!-- Verify deployment -->
+    <flow-ref name="verify-certificate-deployment"/>
+    
+    <set-payload value='#[{
+        "status": "SUCCESS",
+        "certificateId": vars.certificateId,
+        "newExpiryDate": vars.newCertificate.expiryDate,
+        "deploymentTime": now()
+    }]'/>
+</flow>
+
+<flow name="validate-new-certificate">
+    <try>
+        <!-- Test TLS handshake -->
+        <http:request config-ref="certificate-test-config" 
+                      path="/health" 
+                      method="GET"
+                      target="healthCheckResponse"/>
+        
+        <!-- Validate certificate chain -->
+        <java:invoke-static class="javax.net.ssl.SSLContext" 
+                           method="getDefault">
+        </java:invoke-static>
+        
+        <set-variable variableName="certificateValid" value="true"/>
+        
+        <error-handler>
+            <on-error-propagate>
+                <set-variable variableName="certificateValid" value="false"/>
+                <logger level="ERROR" 
+                        message="Certificate validation failed: #[error.description]"/>
+                <raise-error type="CERTIFICATE:VALIDATION_FAILED"/>
+            </on-error-propagate>
+        </error-handler>
+    </try>
+</flow>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>5. CloudHub Certificate Management</h2>
+                <div class="sub-header-info">
+                    <h3>CloudHub TLS Configuration</h3>
+                    <p class="subtitle">Managing certificates in CloudHub environment</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>CloudHub Certificate Features:</strong>
+                    <ul>
+                        <li><strong>Dedicated Load Balancer:</strong> Custom domain certificates</li>
+                        <li><strong>SSL Endpoints:</strong> CloudHub-provided SSL termination</li>
+                        <li><strong>Certificate Upload:</strong> Custom certificate deployment</li>
+                        <li><strong>Automatic Renewal:</strong> Let's Encrypt integration</li>
+                    </ul>
+                </div>
+
+                <div class="config-block">
+# CloudHub Certificate Configuration
+
+# Dedicated Load Balancer Certificate
+cloudhub.dlb.certificate.path=/secure/certificates/api.company.com.crt
+cloudhub.dlb.private.key.path=/secure/certificates/api.company.com.key
+cloudhub.dlb.certificate.chain.path=/secure/certificates/chain.crt
+
+# SSL Endpoint Configuration
+cloudhub.ssl.endpoint.enabled=true
+cloudhub.ssl.endpoint.domain=api.company.com
+cloudhub.ssl.endpoint.certificate.type=custom
+
+# Certificate Monitoring
+certificate.expiry.warning.days=30
+certificate.renewal.automation.enabled=true
+certificate.validation.interval.hours=24
+                </div>
+
+                <div class="navigation-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">⚖️</div>
+                        <h3>Dedicated Load Balancer</h3>
+                        <p>Enterprise-grade load balancing with custom certificates</p>
+                        <ul class="nav-card-features">
+                            <li>Custom domain support</li>
+                            <li>SSL termination</li>
+                            <li>Certificate management</li>
+                            <li>High availability</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔗</div>
+                        <h3>SSL Endpoints</h3>
+                        <p>CloudHub-managed SSL for applications</p>
+                        <ul class="nav-card-features">
+                            <li>Automatic SSL certificates</li>
+                            <li>Shared load balancer</li>
+                            <li>Default SSL termination</li>
+                            <li>Easy configuration</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📤</div>
+                        <h3>Certificate Upload</h3>
+                        <p>Deploy custom certificates to CloudHub</p>
+                        <ul class="nav-card-features">
+                            <li>PEM format support</li>
+                            <li>Certificate chain validation</li>
+                            <li>Private key security</li>
+                            <li>Deployment verification</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>6. Runtime Fabric Certificate Management</h2>
+                <div class="sub-header-secondary">
+                    <h3>RTF Certificate Configuration</h3>
+                    <p class="subtitle">Managing certificates in Runtime Fabric deployments</p>
+                </div>
+
+                <div class="config-block">
+# Runtime Fabric Certificate Configuration
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-tls-secret
+  namespace: mule-apps
+type: kubernetes.io/tls
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t...  # Base64 encoded certificate
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0t...  # Base64 encoded private key
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-ingress
+  namespace: mule-apps
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - api.company.com
+    secretName: api-tls-secret
+  rules:
+  - host: api.company.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: employee-onboarding-api
+            port:
+              number: 8080
+                </div>
+
+                <div class="code-block">
+# Certificate Manager Integration for RTF
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: api-company-com
+  namespace: mule-apps
+spec:
+  secretName: api-tls-secret
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+  - api.company.com
+  - www.api.company.com
+  duration: 2160h # 90 days
+  renewBefore: 360h # 15 days before expiry
+  
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: certificates@company.com
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+                </code>
+            </div>
+
+            <div class="card">
+                <h2>7. Certificate Rotation Strategies</h2>
+                <div class="sub-header">
+                    <h3>Deployment Patterns</h3>
+                    <p class="subtitle">Safe certificate rotation methodologies</p>
+                </div>
+
+                <div class="navigation-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔵</div>
+                        <h3>Blue-Green Rotation</h3>
+                        <p>Deploy new certificates to parallel environment</p>
+                        <ul class="nav-card-features">
+                            <li>Zero-downtime deployment</li>
+                            <li>Full environment switch</li>
+                            <li>Easy rollback</li>
+                            <li>Complete validation</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🎯</div>
+                        <h3>Rolling Updates</h3>
+                        <p>Gradual certificate replacement across instances</p>
+                        <ul class="nav-card-features">
+                            <li>Instance-by-instance updates</li>
+                            <li>Continuous availability</li>
+                            <li>Controlled rollout</li>
+                            <li>Progressive validation</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🕐</div>
+                        <h3>Scheduled Maintenance</h3>
+                        <p>Planned certificate updates during maintenance windows</p>
+                        <ul class="nav-card-features">
+                            <li>Coordinated updates</li>
+                            <li>Maintenance window</li>
+                            <li>Batch processing</li>
+                            <li>Comprehensive testing</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>Rotation Best Practices:</strong>
+                    <ul>
+                        <li>✅ Test certificates in staging environment first</li>
+                        <li>✅ Maintain certificate inventory and expiration tracking</li>
+                        <li>✅ Implement automated validation after deployment</li>
+                        <li>✅ Keep backup certificates for emergency rollback</li>
+                        <li>✅ Document rotation procedures and rollback plans</li>
+                        <li>✅ Monitor certificate health post-deployment</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>8. Certificate Security Best Practices</h2>
+                <div class="sub-header-success">
+                    <h3>Security Guidelines</h3>
+                    <p class="subtitle">Implement comprehensive certificate security measures</p>
+                </div>
+
+                <div class="navigation-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔐</div>
+                        <h3>Private Key Protection</h3>
+                        <p>Secure private key storage and handling</p>
+                        <ul class="nav-card-features">
+                            <li>Hardware security modules (HSM)</li>
+                            <li>Encrypted key storage</li>
+                            <li>Access controls</li>
+                            <li>Key rotation policies</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📊</div>
+                        <h3>Certificate Validation</h3>
+                        <p>Comprehensive certificate verification</p>
+                        <ul class="nav-card-features">
+                            <li>Certificate chain validation</li>
+                            <li>Revocation checking (OCSP/CRL)</li>
+                            <li>Hostname verification</li>
+                            <li>Algorithm strength validation</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🚨</div>
+                        <h3>Incident Response</h3>
+                        <p>Certificate compromise and emergency procedures</p>
+                        <ul class="nav-card-features">
+                            <li>Compromise detection</li>
+                            <li>Emergency revocation</li>
+                            <li>Rapid re-issuance</li>
+                            <li>Impact assessment</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="alert alert-danger">
+                    <strong>Security Checklist:</strong>
+                    <ul>
+                        <li>🔒 Use strong cryptographic algorithms (RSA 2048+ or ECC 256+)</li>
+                        <li>🔒 Implement proper certificate chain validation</li>
+                        <li>🔒 Enable certificate revocation checking</li>
+                        <li>🔒 Protect private keys with appropriate access controls</li>
+                        <li>🔒 Monitor for certificate compromise indicators</li>
+                        <li>🔒 Maintain certificate backup and recovery procedures</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>9. Troubleshooting Certificate Issues</h2>
+                <div class="sub-header">
+                    <h3>Common Certificate Problems</h3>
+                    <p class="subtitle">Diagnose and resolve certificate-related issues</p>
+                </div>
+
+                <div class="alert alert-warning">
+                    <strong>Common Certificate Issues:</strong>
+                    <ul>
+                        <li><strong>Certificate Expired:</strong> Certificate has passed its validity period</li>
+                        <li><strong>Hostname Mismatch:</strong> Certificate doesn't match the requested hostname</li>
+                        <li><strong>Untrusted CA:</strong> Certificate authority not in trust store</li>
+                        <li><strong>Chain Incomplete:</strong> Missing intermediate certificates</li>
+                        <li><strong>Private Key Mismatch:</strong> Certificate and private key don't match</li>
+                    </ul>
+                </div>
+
+                <div class="config-block">
+# Certificate Debugging Commands
+
+# Check certificate details
+openssl x509 -in certificate.crt -text -noout
+
+# Verify certificate chain
+openssl verify -CAfile ca-bundle.crt certificate.crt
+
+# Test TLS connection
+openssl s_client -connect api.company.com:443 -servername api.company.com
+
+# Check certificate expiration
+openssl x509 -in certificate.crt -noout -enddate
+
+# Verify certificate and private key match
+openssl x509 -noout -modulus -in certificate.crt | openssl md5
+openssl rsa -noout -modulus -in private.key | openssl md5
+
+# Test certificate with specific protocol
+curl -v --cert client.crt --key client.key https://api.company.com/health
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="common-scripts.js"></script>
+</body>
+</html>

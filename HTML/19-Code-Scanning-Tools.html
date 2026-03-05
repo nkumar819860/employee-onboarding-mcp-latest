@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Scanning and Static Analysis Tools</title>
+    <link rel="stylesheet" href="common-styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">🔍 Code Scanning Tools</a>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="18-Certificate-Rotation-Renewal.html" class="nav-link">Certificate Management</a>
+                <a href="20-BlackDuck-Security.html" class="nav-link">BlackDuck</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="header">
+            <h1>Code Scanning and Static Analysis Tools</h1>
+            <p class="subtitle">Comprehensive guide to implementing code quality, security scanning, and static analysis tools in MuleSoft development pipelines</p>
+        </div>
+
+        <div class="content">
+            <div class="card">
+                <h2>1. Code Quality and Security Overview</h2>
+                <div class="sub-header">
+                    <h3>Importance of Code Analysis</h3>
+                    <p class="subtitle">Building secure, maintainable, and high-quality MuleSoft applications</p>
+                </div>
+
+                <div class="navigation-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔍</div>
+                        <h3>Static Analysis</h3>
+                        <p>Analyze code without executing it to find issues</p>
+                        <ul class="nav-card-features">
+                            <li>Code quality assessment</li>
+                            <li>Security vulnerability detection</li>
+                            <li>Coding standards compliance</li>
+                            <li>Technical debt analysis</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🛡️</div>
+                        <h3>Security Scanning</h3>
+                        <p>Identify security vulnerabilities and threats</p>
+                        <ul class="nav-card-features">
+                            <li>OWASP vulnerability detection</li>
+                            <li>Dependency scanning</li>
+                            <li>Secrets detection</li>
+                            <li>Configuration analysis</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📊</div>
+                        <h3>Quality Metrics</h3>
+                        <p>Measure and track code quality over time</p>
+                        <ul class="nav-card-features">
+                            <li>Code coverage reporting</li>
+                            <li>Complexity analysis</li>
+                            <li>Duplication detection</li>
+                            <li>Performance insights</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>Code Analysis Benefits:</strong>
+                    <ul>
+                        <li><strong>Early Issue Detection:</strong> Find problems before they reach production</li>
+                        <li><strong>Security Hardening:</strong> Identify and fix security vulnerabilities</li>
+                        <li><strong>Code Quality:</strong> Maintain consistent coding standards</li>
+                        <li><strong>Technical Debt Reduction:</strong> Track and manage technical debt</li>
+                        <li><strong>Compliance:</strong> Meet regulatory and organizational requirements</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>2. SonarQube Integration</h2>
+                <div class="sub-header-secondary">
+                    <h3>Comprehensive Code Quality Analysis</h3>
+                    <p class="subtitle">SonarQube for MuleSoft projects</p>
+                </div>
+
+                <div class="navigation-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🏗️</div>
+                        <h3>Setup & Configuration</h3>
+                        <p>Configure SonarQube for MuleSoft projects</p>
+                        <ul class="nav-card-features">
+                            <li>SonarQube server setup</li>
+                            <li>MuleSoft plugin installation</li>
+                            <li>Project configuration</li>
+                            <li>Quality gates definition</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📏</div>
+                        <h3>Quality Rules</h3>
+                        <p>Define and enforce coding standards</p>
+                        <ul class="nav-card-features">
+                            <li>Custom rule definitions</li>
+                            <li>MuleSoft-specific rules</li>
+                            <li>Severity levels</li>
+                            <li>Quality profiles</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📈</div>
+                        <h3>Reporting & Analytics</h3>
+                        <p>Track code quality metrics and trends</p>
+                        <ul class="nav-card-features">
+                            <li>Quality dashboards</li>
+                            <li>Historical trends</li>
+                            <li>Technical debt tracking</li>
+                            <li>Team performance metrics</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="config-block">
+# SonarQube Properties Configuration (sonar-project.properties)
+
+# Project Information
+sonar.projectKey=employee-onboarding-mulesoft
+sonar.projectName=Employee Onboarding MuleSoft APIs
+sonar.projectVersion=1.0.0
+
+# Source Code Configuration
+sonar.sources=src/main/mule,src/main/resources
+sonar.tests=src/test/munit
+sonar.language=xml
+
+# MuleSoft Specific Settings
+sonar.mule.file.suffixes=.xml
+sonar.inclusions=**/*.xml,**/*.dwl,**/*.raml,**/*.json
+sonar.exclusions=**/target/**,**/pom.xml
+
+# Code Coverage
+sonar.coverage.exclusions=**/test/**,**/global.xml
+sonar.munit.coverage.reportPath=target/site/munit/coverage/munit-coverage.json
+
+# Quality Gates
+sonar.qualitygate.wait=true
+sonar.qualitygate.timeout=300
+                </div>
+
+                <div class="code-block">
+<!-- Maven Integration with SonarQube -->
+<plugin>
+    <groupId>org.sonarsource.scanner.maven</groupId>
+    <artifactId>sonar-maven-plugin</artifactId>
+    <version>3.9.1.2184</version>
+    <configuration>
+        <sonarHostUrl>${sonar.host.url}</sonarHostUrl>
+        <sonarLogin>${sonar.login}</sonarLogin>
+    </configuration>
+</plugin>
+
+<!-- MUnit Coverage Plugin -->
+<plugin>
+    <groupId>com.mulesoft.munit.tools</groupId>
+    <artifactId>munit-maven-plugin</artifactId>
+    <version>${munit.version}</version>
+    <executions>
+        <execution>
+            <id>test</id>
+            <phase>test</phase>
+            <goals>
+                <goal>test</goal>
+                <goal>coverage-report</goal>
+            </goals>
+        </execution>
+    </executions>
+    <configuration>
+        <coverage>
+            <runCoverage>true</runCoverage>
+            <failBuild>true</failBuild>
+            <requiredApplicationCoverage>80</requiredApplicationCoverage>
+            <requiredResourceCoverage>75</requiredResourceCoverage>
+            <requiredFlowCoverage>85</requiredFlowCoverage>
+            <formats>
+                <format>html</format>
+                <format>json</format>
+            </formats>
+        </coverage>
+    </configuration>
+</plugin>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>3. OWASP Dependency Check</h2>
+                <div class="sub-header-success">
+                    <h3>Vulnerability Scanning for Dependencies</h3>
+                    <p class="subtitle">Identify known vulnerabilities in project dependencies</p>
+                </div>
+
+                <div class="alert alert-warning">
+                    <strong>OWASP Dependency Check Features:</strong>
+                    <ul>
+                        <li><strong>CVE Database:</strong> Check against National Vulnerability Database</li>
+                        <li><strong>Multiple Formats:</strong> Support for Maven, NPM, .NET, and more</li>
+                        <li><strong>CI/CD Integration:</strong> Automated scanning in build pipelines</li>
+                        <li><strong>Reporting:</strong> HTML, XML, JSON, and CSV reports</li>
+                    </ul>
+                </div>
+
+                <div class="code-block">
+<!-- OWASP Dependency Check Maven Plugin -->
+<plugin>
+    <groupId>org.owasp</groupId>
+    <artifactId>dependency-check-maven</artifactId>
+    <version>8.4.0</version>
+    <configuration>
+        <failBuildOnCVSS>7.0</failBuildOnCVSS>
+        <suppressionFiles>
+            <suppressionFile>owasp-suppressions.xml</suppressionFile>
+        </suppressionFiles>
+        <formats>
+            <format>HTML</format>
+            <format>JSON</format>
+            <format>XML</format>
+        </formats>
+        <outputDirectory>${project.build.directory}/dependency-check</outputDirectory>
+    </configuration>
+    <executions>
+        <execution>
+            <goals>
+                <goal>check</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+
+<!-- Vulnerability Suppression Example -->
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <suppress>
+        <notes>False positive - internal library</notes>
+        <packageUrl regex="true">^pkg:maven/com\.company\.internal/.*$</packageUrl>
+        <vulnerabilityName>CVE-2023-12345</vulnerabilityName>
+    </suppress>
+</suppressions>
+                </div>
+
+                <div class="config-block">
+# OWASP Dependency Check Configuration
+
+# Database Settings
+dependency-check.data.directory=~/.dependency-check-data
+dependency-check.database.connection.timeout=120000
+
+# Scan Configuration
+dependency-check.timeout.update=3600000
+dependency-check.timeout.scan=1800000
+
+# Reporting
+dependency-check.report.format=HTML,JSON,XML
+dependency-check.report.output.directory=target/dependency-check-report
+
+# Suppression Rules
+dependency-check.suppression.file=owasp-suppressions.xml
+
+# CVE Thresholds
+dependency-check.fail.build.on.cvss=7.0
+dependency-check.cvss.version=3
+                </config-block>
+            </div>
+
+            <div class="card">
+                <h2>4. SpotBugs Static Analysis</h2>
+                <div class="sub-header">
+                    <h3>Java Bytecode Analysis</h3>
+                    <p class="subtitle">Find bugs and potential issues in Java code</p>
+                </div>
+
+                <div class="navigation-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🐛</div>
+                        <h3>Bug Detection</h3>
+                        <p>Identify common programming errors</p>
+                        <ul class="nav-card-features">
+                            <li>Null pointer dereferences</li>
+                            <li>Resource leaks</li>
+                            <li>Infinite loops</li>
+                            <li>Performance issues</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔒</div>
+                        <h3>Security Issues</h3>
+                        <p>Security-related bug patterns</p>
+                        <ul class="nav-card-features">
+                            <li>SQL injection vulnerabilities</li>
+                            <li>Cross-site scripting (XSS)</li>
+                            <li>Insecure random generators</li>
+                            <li>Hardcoded passwords</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">⚡</div>
+                        <h3>Performance</h3>
+                        <p>Performance and efficiency issues</p>
+                        <ul class="nav-card-features">
+                            <li>Inefficient string operations</li>
+                            <li>Unused variables/methods</li>
+                            <li>Inefficient collections usage</li>
+                            <li>Memory leak patterns</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="code-block">
+<!-- SpotBugs Maven Plugin Configuration -->
+<plugin>
+    <groupId>com.github.spotbugs</groupId>
+    <artifactId>spotbugs-maven-plugin</artifactId>
+    <version>4.7.3.6</version>
+    <configuration>
+        <effort>Max</effort>
+        <threshold>Low</threshold>
+        <failOnError>true</failOnError>
+        <includeFilterFile>spotbugs-include.xml</includeFilterFile>
+        <excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
+        <plugins>
+            <plugin>
+                <groupId>com.h3xstream.findsecbugs</groupId>
+                <artifactId>findsecbugs-plugin</artifactId>
+                <version>1.12.0</version>
+            </plugin>
+        </plugins>
+    </configuration>
+    <executions>
+        <execution>
+            <id>spotbugs-check</id>
+            <phase>verify</phase>
+            <goals>
+                <goal>check</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+
+<!-- SpotBugs Security Plugin for Enhanced Security Scanning -->
+<dependency>
+    <groupId>com.h3xstream.findsecbugs</groupId>
+    <artifactId>findsecbugs-plugin</artifactId>
+    <version>1.12.0</version>
+</dependency>
+                </code>
+            </div>
+
+            <div class="card">
+                <h2>5. ESLint for DataWeave and JavaScript</h2>
+                <div class="sub-header-info">
+                    <h3>DataWeave and Frontend Code Analysis</h3>
+                    <p class="subtitle">Linting for DataWeave transformations and JavaScript code</p>
+                </div>
+
+                <div class="config-block">
+# ESLint Configuration for DataWeave (.eslintrc.js)
+module.exports = {
+  extends: [
+    'eslint:recommended',
+    '@typescript-eslint/recommended'
+  ],
+  parser: '@typescript-eslint/parser',
+  plugins: ['@typescript-eslint'],
+  rules: {
+    // DataWeave specific rules
+    'no-unused-vars': 'error',
+    'no-console': 'warn',
+    'prefer-const': 'error',
+    'no-var': 'error',
+    
+    // Security rules
+    'no-eval': 'error',
+    'no-implied-eval': 'error',
+    'no-new-func': 'error',
+    
+    // Best practices
+    'complexity': ['error', 10],
+    'max-lines-per-function': ['error', 50],
+    'max-depth': ['error', 4]
+  },
+  overrides: [
+    {
+      files: ['**/*.dwl'],
+      rules: {
+        // DataWeave specific overrides
+        'no-unused-expressions': 'off'
+      }
+    }
+  ]
+};
+
+# Package.json Scripts
+{
+  "scripts": {
+    "lint": "eslint src/**/*.{js,ts,dwl}",
+    "lint:fix": "eslint src/**/*.{js,ts,dwl} --fix",
+    "lint:report": "eslint src/**/*.{js,ts,dwl} -f json -o eslint-report.json"
+  },
+  "devDependencies": {
+    "eslint": "^8.50.0",
+    "@typescript-eslint/eslint-plugin": "^6.7.0",
+    "@typescript-eslint/parser": "^6.7.0"
+  }
+}
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>6. GitHub Advanced Security</h2>
+                <div class="sub-header-secondary">
+                    <h3>Integrated Security Scanning</h3>
+                    <p class="subtitle">GitHub's native security scanning features</p>
+                </div>
+
+                <div class="navigation-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔍</div>
+                        <h3>CodeQL Analysis</h3>
+                        <p>Semantic code analysis for security vulnerabilities</p>
+                        <ul class="nav-card-features">
+                            <li>Static application security testing</li>
+                            <li>Custom query development</li>
+                            <li>Multi-language support</li>
+                            <li>CI/CD integration</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔐</div>
+                        <h3>Secret Scanning</h3>
+                        <p>Detect secrets and credentials in code</p>
+                        <ul class="nav-card-features">
+                            <li>API key detection</li>
+                            <li>Token identification</li>
+                            <li>Certificate discovery</li>
+                            <li>Custom pattern matching</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📦</div>
+                        <h3>Dependency Review</h3>
+                        <p>Monitor and review dependency changes</p>
+                        <ul class="nav-card-features">
+                            <li>Vulnerability alerts</li>
+                            <li>License compliance</li>
+                            <li>Dependency graph</li>
+                            <li>Automated updates</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="code-block">
+# GitHub Actions Workflow for Security Scanning
+name: Security Analysis
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  codeql-analysis:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'java', 'javascript' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: ${{ matrix.language }}
+        queries: +security-and-quality
+
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+
+    - name: Build with Maven
+      run: |
+        mvn clean compile -DskipTests
+        mvn dependency:copy-dependencies
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+      with:
+        category: "/language:${{matrix.language}}"
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Dependency Review
+      uses: actions/dependency-review-action@v3
+      with:
+        fail-on-severity: moderate
+                </code>
+            </div>
+
+            <div class="card">
+                <h2>7. CI/CD Pipeline Integration</h2>
+                <div class="sub-header">
+                    <h3>Automated Code Analysis in Pipelines</h3>
+                    <p class="subtitle">Integrate scanning tools into your CI/CD workflows</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>Pipeline Integration Benefits:</strong>
+                    <ul>
+                        <li><strong>Shift Left Security:</strong> Find issues early in development</li>
+                        <li><strong>Automated Enforcement:</strong> Fail builds on quality gate violations</li>
+                        <li><strong>Continuous Monitoring:</strong> Track quality metrics over time</li>
+                        <li><strong>Developer Feedback:</strong> Immediate feedback on code quality</li>
+                    </ul>
+                </div>
+
+                <div class="code-block">
+# Jenkins Pipeline Example
+pipeline {
+    agent any
+    
+    tools {
+        maven 'Maven-3.8.6'
+        jdk 'JDK-11'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                sh 'mvn clean compile'
+            }
+        }
+        
+        stage('Unit Tests') {
+            steps {
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'target/site/munit/coverage',
+                        reportFiles: 'summary.html',
+                        reportName: 'MUnit Coverage Report'
+                    ])
+                }
+            }
+        }
+        
+        stage('Static Code Analysis') {
+            parallel {
+                stage('SonarQube Analysis') {
+                    steps {
+                        withSonarQubeEnv('SonarQube') {
+                            sh 'mvn sonar:sonar'
+                        }
+                    }
+                }
+                
+                stage('OWASP Dependency Check') {
+                    steps {
+                        sh 'mvn org.owasp:dependency-check-maven:check'
+                    }
+                    post {
+                        always {
+                            publishHTML([
+                                allowMissing: false,
+                                alwaysLinkToLastBuild: true,
+                                keepAll: true,
+                                reportDir: 'target/dependency-check-report',
+                                reportFiles: 'dependency-check-report.html',
+                                reportName: 'OWASP Dependency Check Report'
+                            ])
+                        }
+                    }
+                }
+                
+                stage('SpotBugs Analysis') {
+                    steps {
+                        sh 'mvn spotbugs:check'
+                    }
+                    post {
+                        always {
+                            recordIssues enabledForFailure: true, tools: [spotBugs()]
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 10, unit: 'MINUTES') {
+                    script {
+                        def qg = waitForQualityGate()
+                        if (qg.status != 'OK') {
+                            error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Security Scan') {
+            steps {
+                script {
+                    // Custom security scanning script
+                    sh '''
+                        # Run additional security checks
+                        echo "Running custom security scans..."
+                        
+                        # Check for hardcoded secrets
+                        if grep -r "password\\s*=" src/ --include="*.xml" --include="*.properties"; then
+                            echo "WARNING: Potential hardcoded passwords found"
+                            exit 1
+                        fi
+                        
+                        # Check for insecure HTTP endpoints
+                        if grep -r "http://" src/ --include="*.xml" | grep -v "localhost"; then
+                            echo "WARNING: Insecure HTTP endpoints found"
+                            exit 1
+                        fi
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            // Cleanup
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+            // Send notification
+        }
+        failure {
+            echo 'Pipeline failed!'
+            // Send alert
+        }
+    }
+}
+                </code>
+            </div>
+
+            <div class="card">
+                <h2>8. Custom Security Rules</h2>
+                <div class="sub-header-success">
+                    <h3>Organization-Specific Security Policies</h3>
+                    <p class="subtitle">Define custom rules for MuleSoft applications</p>
+                </div>
+
+                <div class="config-block">
+# Custom SonarQube Rules for MuleSoft
+
+# Rule 1: Enforce HTTPS for external HTTP requests
+# Description: All HTTP requests to external systems must use HTTPS
+Pattern: <http:request.*protocol="HTTP".*host="(?!localhost|127\.0\.0\.1)"
+Severity: BLOCKER
+Message: External HTTP requests must use HTTPS protocol for security
+
+# Rule 2: Require error handling in all flows
+# Description: Every flow should have proper error handling
+Pattern: <flow.*>(?!.*<error-handler>).*</flow>
+Severity: MAJOR
+Message: Flow must include error handling mechanism
+
+# Rule 3: Sensitive data logging prevention
+# Description: Prevent logging of sensitive data
+Pattern: <logger.*message=".*(?:password|secret|key|token).*"
+Severity: CRITICAL  
+Message: Avoid logging sensitive information like passwords or secrets
+
+# Rule 4: Database connection pooling requirement
+# Description: Database connections should use connection pooling
+Pattern: <db:config.*(?!.*pooling-profile)
+Severity: MAJOR
+Message: Database configuration should include connection pooling
+
+# Rule 5: API endpoint security validation
+# Description: All API endpoints should have authentication
+Pattern: <http:listener.*path="/api/.*"(?!.*allowedMethods)
+Severity: MAJOR
+Message: API endpoints should specify allowed HTTP methods
+                </config-block>
+
+                <div class="code-block">
+<!-- Custom Security Validation Flow -->
+<flow name="security-validation-flow">
+    <scheduler>
+        <scheduling-strategy>
+            <fixed-frequency frequency="3600000"/> <!-- Hourly check -->
+        </scheduling-strategy>
+    </scheduler>
+    
+    <!-- Validate HTTPS Usage -->
+    <flow-ref name="validate-https-usage"/>
+    
+    <!-- Check for Hardcoded Secrets -->
+    <flow-ref name="scan-hardcoded-secrets"/>
+    
+    <!-- Verify Error Handling -->
+    <flow-ref name="validate-error-handling"/>
+    
+    <!-- Security Configuration Check -->
+    <flow-ref name="validate-security-config"/>
+    
+    <!-- Generate Security Report -->
+    <flow-ref name="generate-security-report"/>
+</flow>
+
+<flow name="validate-https-usage">
+    <java:invoke-static class="java.nio.file.Files" method="readAllLines">
+        <java:args>
+            #[java!java::nio::file::Paths::get("src/main/mule")]
+        </java:args>
+    </java:invoke-static>
+    
+    <foreach collection="#[payload]">
+        <choice>
+            <when expression="#[item contains 'protocol=\"HTTP\"' and not (item contains 'localhost')]">
+                <logger level="ERROR" 
+                        message="Security violation: Insecure HTTP protocol used in #[item]"/>
+                <set-variable variableName="securityViolations" 
+                              value="#[vars.securityViolations default [] ++ [item]]"/>
+            </when>
+        </choice>
+    </foreach>
+</flow>
+
+<flow name="scan-hardcoded-secrets">
+    <set-variable variableName="secretPatterns" 
+                  value="#[['password\\s*=', 'secret\\s*=', 'key\\s*=', 'token\\s*=']]"/>
+    
+    <foreach collection="#[vars.secretPatterns]">
+        <java:invoke-static class="java.util.regex.Pattern" method="compile">
+            <java:args>#[item]</java:args>
+        </java:invoke-static>
+        
+        <!-- Scan source files for secret patterns -->
+        <logger level="INFO" message="Scanning for pattern: #[item]"/>
+    </foreach>
+</flow>
+                </code>
+            </div>
+
+            <div class="card">
+                <h2>9. Report Generation and Monitoring</h2>
+                <div class="sub-header">
+                    <h3>Centralized Security and Quality Reporting</h3>
+                    <p class="subtitle">Aggregate and visualize scan results</p>
+                </div>
+
+                <div class="navigation-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📊</div>
+                        <h3>Dashboard Creation</h3>
+                        <p>Centralized view of code quality metrics</p>
+                        <ul class="nav-card-features">
+                            <li>Quality trend analysis</li>
+                            <li>Security vulnerability tracking</li>
+                            <li>Team performance metrics</li>
+                            <li>Compliance reporting</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🚨</div>
+                        <h3>Alert Configuration</h3>
+                        <p>Automated notifications for quality issues</p>
+                        <ul class="nav-card-features">
+                            <li>Threshold-based alerts</li>
+                            <li>Slack/Teams integration</li>
+                            <li>Email notifications</li>
+                            <li>JIRA ticket creation</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📈</div>
+                        <h3>Metrics Tracking</h3>
+                        <p>Long-term quality and security trends</p>
+                        <ul class="nav-card-features">
+                            <li>Historical data analysis</li>
+                            <li>Regression detection</li>
+                            <li>Performance benchmarking</li>
+                            <li>ROI measurement</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>Key Metrics to Track:</strong>
+                    <ul>
+                        <li><strong>Security Metrics:</strong> Vulnerability count, severity distribution, remediation time</li>
+                        <li><strong>Quality Metrics:</strong> Code coverage, cyclomatic complexity, duplication ratio</li>
+                        <li><strong>Process Metrics:</strong> Scan execution time, false positive rate, developer adoption</li>
+                        <li><strong>Business Metrics:</strong> Time to market, defect escape rate, compliance score</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>10. Best Practices and Implementation</h2>
+                <div class="sub-header-success">
+                    <h3>Implementation Guidelines</h3>
+                    <p class="subtitle">Effective strategies for code scanning adoption</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>Implementation Best Practices:</strong>
+                    <ul>
+                        <li><strong>Start Small:</strong> Begin with one tool and gradually expand</li>
+                        <li><strong>Set Realistic Goals:</strong> Define achievable quality gates</li>
+                        <li><strong>Train Teams:</strong> Ensure developers understand scan results</li>
+                        <li><strong>Automate Everything:</strong> Integrate scans into CI/CD pipelines</li>
+                        <li><strong>Monitor Progress:</strong> Track metrics and improvement over time</li>
+                        <li><strong>Handle False Positives:</strong> Regularly review and suppress false alarms</li>
+                    </ul>
+                </div>
+
+                <div class="config-block">
+# Code Scanning Maturity Roadmap
+
+# Phase 1: Foundation (Months 1-2)
+- Install and configure SonarQube
+- Set up OWASP Dependency Check
+- Establish basic quality gates
+- Train development teams
+
+# Phase 2: Integration (Months 3-4)
+- Integrate tools with CI/CD pipelines
+- Configure automated notifications
+- Establish security scanning workflows
+- Create custom rules and policies
+
+# Phase 3: Optimization (Months 5-6)
+- Fine-tune quality gates and thresholds
+- Implement advanced security scanning
+- Create comprehensive dashboards
+- Establish governance processes
+
+# Phase 4: Advanced (Months 7-12)
+- Deploy advanced static analysis tools
+- Implement custom security rules
+- Integrate with external security platforms
+- Establish center of excellence
+                </config-block>
+            </div>
+        </div>
+    </div>
+
+    <script src="common-scripts.js"></script>
+</body>
+</html>

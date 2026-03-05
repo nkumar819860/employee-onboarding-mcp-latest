@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlackDuck Security and License Compliance</title>
+    <link rel="stylesheet" href="common-styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">🦆 BlackDuck Security</a>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="19-Code-Scanning-Tools.html" class="nav-link">Code Scanning</a>
+                <a href="21-Vulnerability-Scanning.html" class="nav-link">Vulnerability Scanning</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="header">
+            <h1>BlackDuck Security and License Compliance</h1>
+            <p class="subtitle">Comprehensive guide to implementing BlackDuck for open source security, license compliance, and supply chain risk management in MuleSoft projects</p>
+        </div>
+
+        <div class="content">
+            <div class="card">
+                <h2>1. BlackDuck Overview</h2>
+                <div class="sub-header">
+                    <h3>Enterprise Open Source Security</h3>
+                    <p class="subtitle">Comprehensive open source governance and security platform</p>
+                </div>
+
+                <div class="navigation-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🛡️</div>
+                        <h3>Security Scanning</h3>
+                        <p>Identify vulnerabilities in open source components</p>
+                        <ul class="nav-card-features">
+                            <li>Known vulnerability detection</li>
+                            <li>Real-time threat intelligence</li>
+                            <li>Zero-day vulnerability alerts</li>
+                            <li>Risk assessment and scoring</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">⚖️</div>
+                        <h3>License Compliance</h3>
+                        <p>Manage open source license obligations</p>
+                        <ul class="nav-card-features">
+                            <li>License identification</li>
+                            <li>Compliance policy enforcement</li>
+                            <li>Legal risk assessment</li>
+                            <li>Attribution reporting</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔗</div>
+                        <h3>Supply Chain Security</h3>
+                        <p>End-to-end software composition analysis</p>
+                        <ul class="nav-card-features">
+                            <li>Component inventory</li>
+                            <li>Dependency mapping</li>
+                            <li>Supply chain visibility</li>
+                            <li>Risk mitigation strategies</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>BlackDuck Benefits for MuleSoft:</strong>
+                    <ul>
+                        <li><strong>Comprehensive Coverage:</strong> Scans Maven dependencies, Docker images, and source code</li>
+                        <li><strong>Policy Enforcement:</strong> Automated blocking of non-compliant components</li>
+                        <li><strong>Integration Ready:</strong> Native integration with CI/CD pipelines</li>
+                        <li><strong>Executive Reporting:</strong> Risk dashboards and compliance reports</li>
+                        <li><strong>Remediation Guidance:</strong> Actionable recommendations for vulnerability fixes</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>2. BlackDuck Installation and Setup</h2>
+                <div class="sub-header-secondary">
+                    <h3>Environment Configuration</h3>
+                    <p class="subtitle">Setting up BlackDuck for MuleSoft projects</p>
+                </div>
+
+                <div class="navigation-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🏗️</div>
+                        <h3>Server Setup</h3>
+                        <p>BlackDuck Hub server installation</p>
+                        <ul class="nav-card-features">
+                            <li>Docker deployment</li>
+                            <li>Kubernetes installation</li>
+                            <li>Database configuration</li>
+                            <li>SSL/TLS setup</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔧</div>
+                        <h3>CLI Tools</h3>
+                        <p>Command-line scanning tools</p>
+                        <ul class="nav-card-features">
+                            <li>Detect script installation</li>
+                            <li>Scanner configuration</li>
+                            <li>Environment variables</li>
+                            <li>Proxy settings</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔌</div>
+                        <h3>IDE Integration</h3>
+                        <p>Developer IDE plugins</p>
+                        <ul class="nav-card-features">
+                            <li>Visual Studio Code plugin</li>
+                            <li>IntelliJ IDEA integration</li>
+                            <li>Eclipse plugin</li>
+                            <li>Real-time vulnerability alerts</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="config-block">
+# BlackDuck Environment Configuration
+
+# Server Configuration
+BLACKDUCK_URL=https://blackduck.company.com
+BLACKDUCK_API_TOKEN=your-api-token-here
+BLACKDUCK_TRUST_CERT=true
+
+# Scan Configuration  
+DETECT_PROJECT_NAME=employee-onboarding-mulesoft
+DETECT_PROJECT_VERSION_NAME=1.0.0
+DETECT_CODE_LOCATION_NAME=employee-onboarding-scan
+
+# Maven Settings
+DETECT_MAVEN_BUILD_COMMAND="mvn clean compile"
+DETECT_MAVEN_SCOPE=compile,runtime,test
+
+# Exclusions
+DETECT_EXCLUDED_DIRECTORIES=target,node_modules,.git
+DETECT_EXCLUDED_FILES=*.log,*.tmp
+
+# Timeout Settings
+DETECT_TIMEOUT=600
+DETECT_API_TIMEOUT=120
+
+# Policy Settings
+DETECT_POLICY_CHECK=true
+DETECT_POLICY_CHECK_FAIL_ON_SEVERITIES=BLOCKER,CRITICAL
+                </div>
+
+                <div class="code-block">
+#!/bin/bash
+# BlackDuck Detect Installation Script
+
+# Download and install Detect script
+curl -s -L https://detect.synopsys.com/detect7.sh > detect.sh
+chmod +x detect.sh
+
+# Set environment variables
+export BLACKDUCK_URL="https://blackduck.company.com"
+export BLACKDUCK_API_TOKEN="your-api-token"
+export BLACKDUCK_TRUST_CERT=true
+
+# Configure project settings
+export DETECT_PROJECT_NAME="employee-onboarding-mulesoft"
+export DETECT_PROJECT_VERSION_NAME="1.0.0"
+export DETECT_CODE_LOCATION_NAME="mulesoft-api-scan"
+
+# Run scan
+./detect.sh \
+    --detect.source.path=. \
+    --detect.maven.build.command="mvn clean compile" \
+    --detect.policy.check=true \
+    --detect.policy.check.fail.on.severities=BLOCKER,CRITICAL \
+    --detect.excluded.directories=target,node_modules \
+    --detect.output.path=blackduck-output \
+    --detect.cleanup=false
+                </code>
+            </div>
+
+            <div class="card">
+                <h2>3. MuleSoft Project Scanning</h2>
+                <div class="sub-header-success">
+                    <h3>Comprehensive Component Analysis</h3>
+                    <p class="subtitle">Scanning MuleSoft applications for security and compliance</p>
+                </div>
+
+                <div class="alert alert-warning">
+                    <strong>MuleSoft-Specific Scanning Considerations:</strong>
+                    <ul>
+                        <li><strong>Maven Dependencies:</strong> Analyze both direct and transitive dependencies</li>
+                        <li><strong>Mule Connectors:</strong> Scan third-party connectors for vulnerabilities</li>
+                        <li><strong>Docker Images:</strong> Analyze container images used in deployment</li>
+                        <li><strong>Source Code:</strong> Identify open source code snippets and libraries</li>
+                    </ul>
+                </div>
+
+                <div class="code-block">
+<!-- Maven Integration with BlackDuck -->
+<plugin>
+    <groupId>com.synopsys.integration</groupId>
+    <artifactId>synopsys-detect-maven-plugin</artifactId>
+    <version>0.4.0</version>
+    <configuration>
+        <blackDuckUrl>${blackduck.url}</blackDuckUrl>
+        <blackDuckApiToken>${blackduck.api.token}</blackDuckApiToken>
+        <projectName>${project.name}</projectName>
+        <projectVersionName>${project.version}</projectVersionName>
+        <codeLocationName>${project.name}-${project.version}</codeLocationName>
+        <detectTrustCert>true</detectTrustCert>
+        <detectPolicyCheck>true</detectPolicyCheck>
+        <detectPolicyCheckFailOnSeverities>BLOCKER,CRITICAL</detectPolicyCheckFailOnSeverities>
+        <detectMavenScope>compile,runtime</detectMavenScope>
+        <detectExcludedDirectories>target</detectExcludedDirectories>
+    </configuration>
+    <executions>
+        <execution>
+            <id>blackduck-scan</id>
+            <phase>verify</phase>
+            <goals>
+                <goal>run-detect</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+
+<!-- Integration with build lifecycle -->
+<profile>
+    <id>security-scan</id>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.synopsys.integration</groupId>
+                <artifactId>synopsys-detect-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run-detect</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</profile>
+                </code>
+
+                <div class="config-block">
+# Advanced Scan Configuration for MuleSoft
+
+# Project Identification
+DETECT_PROJECT_NAME=employee-onboarding-apis
+DETECT_PROJECT_VERSION_NAME=1.2.0
+
+# MuleSoft Specific Detectors
+DETECT_MAVEN_ENABLED=true
+DETECT_DOCKER_ENABLED=true
+DETECT_SIGNATURE_ENABLED=true
+
+# Dependency Analysis
+DETECT_MAVEN_DEPENDENCY_TYPES_EXCLUDED=test
+DETECT_MAVEN_SCOPE=compile,runtime,provided
+
+# Docker Image Scanning
+DETECT_DOCKER_IMAGES_TO_SCAN=mulesoft/mule-runtime:4.9.6-ee
+
+# Source Code Analysis
+DETECT_SOURCE_SCANNER_ENABLED=true
+DETECT_SNIPPET_MATCHING_ENABLED=true
+
+# Reporting Configuration
+DETECT_RISK_REPORT_PDF=true
+DETECT_NOTICES_REPORT=true
+DETECT_POLICY_CHECK=true
+                </config-block>
+            </div>
+
+            <div class="card">
+                <h2>4. License Compliance Management</h2>
+                <div class="sub-header">
+                    <h3>Open Source License Governance</h3>
+                    <p class="subtitle">Manage legal and compliance risks</p>
+                </div>
+
+                <div class="navigation-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📋</div>
+                        <h3>License Detection</h3>
+                        <p>Identify all open source licenses in your codebase</p>
+                        <ul class="nav-card-features">
+                            <li>Automatic license identification</li>
+                            <li>Multi-license component handling</li>
+                            <li>License conflict detection</li>
+                            <li>Custom license recognition</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🚫</div>
+                        <h3>Policy Enforcement</h3>
+                        <p>Enforce organizational license policies</p>
+                        <ul class="nav-card-features">
+                            <li>Approved license whitelist</li>
+                            <li>Prohibited license blacklist</li>
+                            <li>Conditional approval rules</li>
+                            <li>Automatic policy violations</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📄</div>
+                        <h3>Compliance Reporting</h3>
+                        <p>Generate compliance documentation</p>
+                        <ul class="nav-card-features">
+                            <li>Attribution notices</li>
+                            <li>License obligation summaries</li>
+                            <li>Legal review reports</li>
+                            <li>Compliance certificates</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>Common License Categories:</strong>
+                    <ul>
+                        <li><strong>Permissive:</strong> MIT, Apache 2.0, BSD - Generally safe for commercial use</li>
+                        <li><strong>Copyleft:</strong> GPL, LGPL - May require source disclosure</li>
+                        <li><strong>Restrictive:</strong> Commercial licenses - May have usage limitations</li>
+                        <li><strong>Custom:</strong> Organization-specific licenses - Require legal review</li>
+                    </ul>
+                </div>
+
+                <div class="config-block">
+# License Policy Configuration
+
+# Approved Licenses (Whitelist)
+APPROVED_LICENSES=(
+    "MIT License"
+    "Apache License 2.0"
+    "BSD 3-Clause License"
+    "BSD 2-Clause License"
+    "ISC License"
+    "Mozilla Public License 2.0"
+)
+
+# Prohibited Licenses (Blacklist)
+PROHIBITED_LICENSES=(
+    "GNU General Public License v2.0"
+    "GNU General Public License v3.0"
+    "GNU Affero General Public License v3.0"
+    "Eclipse Public License 1.0"
+)
+
+# Conditional Approval (Requires Review)
+CONDITIONAL_LICENSES=(
+    "GNU Lesser General Public License v2.1"
+    "GNU Lesser General Public License v3.0"
+    "Common Development and Distribution License 1.0"
+)
+
+# Custom License Patterns
+CUSTOM_LICENSE_PATTERNS=(
+    "Commercial-*"
+    "Proprietary-*"
+    "Enterprise-*"
+)
+                </config-block>
+            </div>
+
+            <div class="card">
+                <h2>5. Vulnerability Management</h2>
+                <div class="sub-header-info">
+                    <h3>Comprehensive Security Risk Assessment</h3>
+                    <p class="subtitle">Identify and prioritize security vulnerabilities</p>
+                </div>
+
+                <div class="navigation-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔍</div>
+                        <h3>Vulnerability Detection</h3>
+                        <p>Comprehensive security scanning capabilities</p>
+                        <ul class="nav-card-features">
+                            <li>CVE database matching</li>
+                            <li>NVD integration</li>
+                            <li>Proprietary research data</li>
+                            <li>Zero-day notifications</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📊</div>
+                        <h3>Risk Scoring</h3>
+                        <p>Prioritize vulnerabilities by business impact</p>
+                        <ul class="nav-card-features">
+                            <li>CVSS scoring</li>
+                            <li>Business context analysis</li>
+                            <li>Exploitability assessment</li>
+                            <li>Remediation prioritization</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔧</div>
+                        <h3>Remediation Guidance</h3>
+                        <p>Actionable steps to address vulnerabilities</p>
+                        <ul class="nav-card-features">
+                            <li>Upgrade recommendations</li>
+                            <li>Patch availability</li>
+                            <li>Workaround suggestions</li>
+                            <li>Alternative components</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="code-block">
+# Vulnerability Assessment Report Example
+
+PROJECT: employee-onboarding-mulesoft
+VERSION: 1.0.0
+SCAN DATE: 2024-01-15T10:30:00Z
+
+SUMMARY:
+- Total Components: 127
+- Vulnerable Components: 8
+- High Risk Vulnerabilities: 3
+- Medium Risk Vulnerabilities: 12
+- Low Risk Vulnerabilities: 18
+
+HIGH RISK VULNERABILITIES:
+1. Apache Commons Collections 3.2.1
+   CVE-2015-7501: Remote Code Execution
+   CVSS Score: 9.8 (Critical)
+   Recommendation: Upgrade to version 3.2.2 or later
+
+2. Spring Framework 4.3.7
+   CVE-2018-1270: Remote Code Execution  
+   CVSS Score: 9.8 (Critical)
+   Recommendation: Upgrade to version 5.0.5 or later
+
+3. Jackson Databind 2.8.5
+   CVE-2017-7525: Deserialization Vulnerability
+   CVSS Score: 8.1 (High)
+   Recommendation: Upgrade to version 2.8.11 or later
+
+REMEDIATION SUMMARY:
+- Critical: 2 vulnerabilities require immediate attention
+- High: 1 vulnerability should be addressed within 30 days
+- Medium: 12 vulnerabilities should be addressed within 90 days
+                </code>
+            </div>
+
+            <div class="card">
+                <h2>6. CI/CD Pipeline Integration</h2>
+                <div class="sub-header-secondary">
+                    <h3>Automated Security and Compliance Scanning</h3>
+                    <p class="subtitle">Integrate BlackDuck into your DevOps workflow</p>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>Pipeline Integration Benefits:</strong>
+                    <ul>
+                        <li><strong>Shift Left Security:</strong> Early detection in development cycle</li>
+                        <li><strong>Policy Enforcement:</strong> Automated compliance checking</li>
+                        <li><strong>Fast Feedback:</strong> Immediate vulnerability notifications</li>
+                        <li><strong>Risk Gate:</strong> Block deployment of non-compliant code</li>
+                    </ul>
+                </div>
+
+                <div class="code-block">
+# Jenkins Pipeline with BlackDuck Integration
+
+pipeline {
+    agent any
+    
+    environment {
+        BLACKDUCK_URL = credentials('blackduck-url')
+        BLACKDUCK_API_TOKEN = credentials('blackduck-api-token')
+        DETECT_PROJECT_NAME = 'employee-onboarding-mulesoft'
+        DETECT_PROJECT_VERSION_NAME = "${env.BUILD_NUMBER}"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                sh 'mvn clean compile'
+            }
+        }
+        
+        stage('Unit Tests') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+        
+        stage('BlackDuck Security Scan') {
+            steps {
+                script {
+                    // Download and run BlackDuck Detect
+                    sh '''
+                        curl -s -L https://detect.synopsys.com/detect7.sh > detect.sh
+                        chmod +x detect.sh
+                        
+                        ./detect.sh \
+                            --detect.source.path=. \
+                            --detect.maven.build.command="mvn clean compile" \
+                            --detect.policy.check=true \
+                            --detect.policy.check.fail.on.severities=BLOCKER,CRITICAL \
+                            --detect.risk.report.pdf=true \
+                            --detect.notices.report=true \
+                            --detect.output.path=blackduck-output
+                    '''
+                }
+            }
+            post {
+                always {
+                    // Archive BlackDuck reports
+                    archiveArtifacts artifacts: 'blackduck-output/**/*', allowEmptyArchive: true
+                    
+                    // Publish HTML reports
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'blackduck-output',
+                        reportFiles: 'BlackDuck_RiskReport.pdf',
+                        reportName: 'BlackDuck Security Report'
+                    ])
+                }
+                failure {
+                    // Send notification on policy violation
+                    emailext(
+                        subject: "BlackDuck Policy Violation - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                        body: "BlackDuck scan failed due to policy violations. Check the reports for details.",
+                        to: "${env.CHANGE_AUTHOR_EMAIL}"
+                    )
+                }
+            }
+        }
+        
+        stage('Package') {
+            when {
+                expression { 
+                    // Only proceed if BlackDuck scan passed
+                    currentBuild.result == null || currentBuild.result == 'SUCCESS'
+                }
+            }
+            steps {
+                sh 'mvn package'
+            }
+        }
+    }
+}
+                </code>
+
+                <div class="config-block">
+# GitHub Actions Workflow for BlackDuck
+
+name: BlackDuck Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  blackduck-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+    
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+    
+    - name: Build project
+      run: mvn clean compile
+    
+    - name: Run BlackDuck Detect
+      env:
+        BLACKDUCK_URL: ${{ secrets.BLACKDUCK_URL }}
+        BLACKDUCK_API_TOKEN: ${{ secrets.BLACKDUCK_API_TOKEN }}
+      run: |
+        curl -s -L https://detect.synopsys.com/detect7.sh > detect.sh
+        chmod +x detect.sh
+        
+        ./detect.sh \
+          --detect.project.name="employee-onboarding-mulesoft" \
+          --detect.project.version.name="${GITHUB_SHA:0:8}" \
+          --detect.source.path=. \
+          --detect.maven.build.command="mvn clean compile" \
+          --detect.policy.check=true \
+          --detect.policy.check.fail.on.severities=BLOCKER,CRITICAL \
+          --detect.cleanup=false
+    
+    - name: Upload BlackDuck Results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: blackduck-results
+        path: |
+          **/BlackDuck_RiskReport.pdf
+          **/notices_report.txt
+                </config-block>
+            </div>
+
+            <div class="card">
+                <h2>7. Policy Management and Governance</h2>
+                <div class="sub-header">
+                    <h3>Enterprise Security Policies</h3>
+                    <p class="subtitle">Define and enforce organizational security standards</p>
+                </div>
+
+                <div class="navigation-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📜</div>
+                        <h3>Security Policies</h3>
+                        <p>Define vulnerability acceptance criteria</p>
+                        <ul class="nav-card-features">
+                            <li>CVSS score thresholds</li>
+                            <li>Vulnerability age limits</li>
+                            <li>Critical component policies</li>
+                            <li>Exception management</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">⚖️</div>
+                        <h3>License Policies</h3>
+                        <p>Enforce open source license compliance</p>
+                        <ul class="nav-card-features">
+                            <li>Approved license lists</li>
+                            <li>Prohibited licenses</li>
+                            <li>Attribution requirements</li>
+                            <li>Commercial use restrictions</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🎯</div>
+                        <h3>Operational Policies</h3>
+                        <p>Define scan and compliance procedures</p>
+                        <ul class="nav-card-features">
+                            <li>Scan frequency requirements</li>
+                            <li>Remediation timeframes</li>
+                            <li>Approval workflows</li>
+                            <li>Escalation procedures</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning">
+                    <strong>Sample Security Policy Rules:</strong>
+                    <ul>
+                        <li><strong>Critical Vulnerabilities:</strong> Must be remediated within 7 days</li>
+                        <li><strong>High Vulnerabilities:</strong> Must be remediated within 30 days</li>
+                        <li><strong>GPL Licenses:</strong> Prohibited in commercial applications</li>
+                        <li><strong>Unknown Components:</strong> Require security review before approval</li>
+                        <li><strong>Outdated Components:</strong> Components older than 2 years flagged for review</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>8. Reporting and Analytics</h2>
+                <div class="sub-header-success">
+                    <h3>Comprehensive Security Dashboards</h3>
+                    <p class="subtitle">Track security posture and compliance metrics</p>
+                </div>
+
+                <div class="navigation-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📊</div>
+                        <h3>Executive Dashboards</h3>
+                        <p>High-level security and compliance metrics</p>
+                        <ul class="nav-card-features">
+                            <li>Security risk trends</li>
+                            <li>License compliance status</li>
+                            <li>Vulnerability aging reports</li>
+                            <li>Policy violation summaries</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔍</div>
+                        <h3>Detailed Reports</h3>
+                        <p>Comprehensive technical analysis</p>
+                        <ul class="nav-card-features">
+                            <li>Component inventory</li>
+                            <li>Vulnerability details</li>
+                            <li>License obligations</li>
+                            <li>Remediation recommendations</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📈</div>
+                        <h3>Trend Analysis</h3>
+                        <p>Historical security and compliance trends</p>
+                        <ul class="nav-card-features">
+                            <li>Risk reduction over time</li>
+                            <li>Policy compliance trends</li>
+                            <li>Remediation effectiveness</li>
+                            <li>Component usage patterns</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="config-block">
+# Key Metrics to Track
+
+# Security Metrics
+- Total Components Scanned: 1,247
+- Components with Vulnerabilities: 89 (7.1%)
+- Critical/High Vulnerabilities: 23
+- Average Time to Remediation: 18 days
+- Policy Violations: 12
+
+# License Compliance Metrics  
+- Components with Known Licenses: 1,198 (96.1%)
+- Approved Licenses: 1,156 (96.5%)
+- Policy Violations: 42 (3.5%)
+- Components Requiring Legal Review: 8
+
+# Operational Metrics
+- Scan Frequency: Daily
+- False Positive Rate: 2.3%
+- Developer Adoption Rate: 87%
+- Average Scan Duration: 12 minutes
+
+# Business Impact Metrics
+- Security-Related Deployment Blocks: 3
+- License-Related Deployment Blocks: 1  
+- Time Saved Through Automation: 120 hours/month
+- Risk Reduction: 78% over 6 months
+                </config-block>
+            </div>
+
+            <div class="card">
+                <h2>9. Best Practices and Implementation</h2>
+                <div class="sub-header">
+                    <h3>Successful BlackDuck Deployment</h3>
+                    <p class="subtitle">Guidelines for effective implementation and adoption</p>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>Implementation Best Practices:</strong>
+                    <ul>
+                        <li><strong>Start with Policies:</strong> Define clear security and license policies before deployment</li>
+                        <li><strong>Phased Rollout:</strong> Begin with critical projects and expand gradually</li>
+                        <li><strong>Developer Training:</strong> Ensure teams understand scan results and remediation steps</li>
+                        <li><strong>Integration Focus:</strong> Embed scanning into existing CI/CD workflows</li>
+                        <li><strong>False Positive Management:</strong> Establish processes for handling and reviewing false positives</li>
+                        <li><strong>Regular Reviews:</strong> Schedule periodic policy and threshold reviews</li>
+                    </ul>
+                </div>
+
+                <div class="config-block">
+# BlackDuck Implementation Roadmap
+
+# Phase 1: Foundation (Weeks 1-4)
+- Install and configure BlackDuck Hub
+- Define initial security and license policies
+- Set up basic scanning for pilot projects
+- Train security and development teams
+
+# Phase 2: Integration (Weeks 5-8) 
+- Integrate with CI/CD pipelines
+- Configure automated notifications
+- Establish exception management process
+- Create initial dashboards and reports
+
+# Phase 3: Scaling (Weeks 9-12)
+- Roll out to additional projects
+- Implement advanced policy rules
+- Configure automated remediation workflows
+- Establish governance and reporting processes
+
+# Phase 4: Optimization (Weeks 13-16)
+- Fine-tune policies based on real usage
+- Implement advanced integrations
+- Expand coverage to all business units
