@@ -3,412 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anypoint Platform Integration - MuleSoft RTF Architecture</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding-top: 80px;
-        }
-
-        /* Navigation Bar */
-        .nav-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 20, 40, 0.95);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            padding: 15px 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        }
-
-        .nav-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .nav-brand {
-            color: #00D4FF;
-            font-size: 1.5rem;
-            font-weight: 700;
-            text-decoration: none;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-        }
-
-        .nav-link {
-            color: white;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: 25px;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-
-        .nav-link:hover {
-            background: rgba(0, 212, 255, 0.2);
-            color: #00D4FF;
-        }
-
-        .nav-link.home {
-            background: #FC7300;
-        }
-
-        .nav-link.home:hover {
-            background: #e55a00;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            margin-top: 20px;
-            margin-bottom: 20px;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #2C5282 0%, #2A4A6B 100%);
-            color: white;
-            padding: 3rem 2rem;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .header .subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-
-        .content-section {
-            padding: 3rem 2rem;
-        }
-
-        .highlight-box {
-            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-            color: white;
-            padding: 2rem;
-            border-radius: 12px;
-            margin: 2rem 0;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-
-        .critical-box {
-            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
-            color: white;
-            padding: 2rem;
-            border-radius: 12px;
-            margin: 2rem 0;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-
-        .highlight-box h4, .critical-box h5 {
-            color: white;
-            margin-bottom: 1rem;
-            font-size: 1.4rem;
-        }
-
-        .step-container {
-            background: #f7fafc;
-            padding: 2rem;
-            border-radius: 12px;
-            margin: 2rem 0;
-            border-left: 5px solid #FC7300;
-        }
-
-        .step-title {
-            color: #2C5282;
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .step-number {
-            background: #FC7300;
-            color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-
-        .code-block {
-            background: #1a202c;
-            color: #e2e8f0;
-            padding: 2rem;
-            border-radius: 12px;
-            overflow-x: auto;
-            margin: 2rem 0;
-            font-family: 'Courier New', monospace;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            border: 1px solid #2d3748;
-        }
-
-        .code-block pre {
-            margin: 0;
-            white-space: pre-wrap;
-        }
-
-        .component-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
-            margin: 3rem 0;
-        }
-
-        .component-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-        }
-
-        .component-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-        }
-
-        .component-card h6 {
-            color: white;
-            margin-bottom: 1rem;
-            font-size: 1.3rem;
-            font-weight: 600;
-        }
-
-        .component-card ul {
-            list-style: none;
-        }
-
-        .component-card li {
-            padding: 0.3rem 0;
-            position: relative;
-            padding-left: 1.5rem;
-            color: rgba(255,255,255,0.9);
-            font-size: 0.9rem;
-        }
-
-        .component-card li::before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #68d391;
-            font-weight: bold;
-        }
-
-        .workflow-diagram {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            background: #f7fafc;
-            padding: 3rem;
-            border-radius: 15px;
-            margin: 3rem 0;
-            border: 2px solid #e2e8f0;
-            flex-wrap: wrap;
-            gap: 2rem;
-        }
-
-        .workflow-step {
-            background: #2C5282;
-            color: white;
-            padding: 1.5rem 2rem;
-            border-radius: 25px;
-            text-align: center;
-            font-weight: 600;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            position: relative;
-            min-width: 150px;
-            font-size: 0.9rem;
-        }
-
-        .workflow-step:not(:last-child)::after {
-            content: "→";
-            position: absolute;
-            right: -30px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #2C5282;
-            font-size: 2rem;
-            font-weight: bold;
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
-            margin: 2rem 0;
-        }
-
-        .metric-card {
-            background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
-            color: white;
-            padding: 2rem;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-        }
-
-        .metric-value {
-            font-size: 3rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-
-        .metric-label {
-            font-size: 0.9rem;
-            opacity: 0.9;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .checklist {
-            background: #fff;
-            padding: 1.5rem;
-            border-radius: 8px;
-            margin: 1rem 0;
-            border: 1px solid #e2e8f0;
-        }
-
-        .checklist ul {
-            list-style: none;
-        }
-
-        .checklist li {
-            padding: 0.5rem 0;
-            position: relative;
-            padding-left: 2rem;
-            color: #4A5568;
-        }
-
-        .checklist li::before {
-            content: "☑️";
-            position: absolute;
-            left: 0;
-            font-size: 1.2rem;
-        }
-
-        .footer {
-            background: #2d3748;
-            color: white;
-            padding: 2rem;
-            text-align: center;
-        }
-
-        .footer h3 {
-            color: #FC7300;
-            margin-bottom: 1rem;
-        }
-
-        @media (max-width: 768px) {
-            .component-grid {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-            
-            .workflow-diagram {
-                flex-direction: column;
-            }
-            
-            .workflow-step:not(:last-child)::after {
-                content: "↓";
-                right: 50%;
-                top: 100%;
-                transform: translateX(50%);
-            }
-        }
-    </style>
+    <title>Anypoint Platform Integration - Employee Onboarding Platform</title>
+    <link rel="stylesheet" href="common-styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☁️</text></svg>">
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="nav-bar">
+    <!-- Navigation -->
+    <nav class="navbar">
         <div class="nav-container">
-            <a href="index.html" class="nav-brand">🏗️ RTF Architecture</a>
-            <div class="nav-links">
-                <a href="index.html" class="nav-link home">🏠 Home</a>
-                <a href="01-Overview.html" class="nav-link">🎯 Overview</a>
-                <a href="02-Enhanced-Navigation.html" class="nav-link">🎨 Navigation</a>
-                <a href="03-Flex-Gateway-Policies.html" class="nav-link">🛡️ Policies</a>
-                <a href="04-RTF-EKS-Setup.html" class="nav-link">🏗️ Setup</a>
+            <a href="index.html" class="nav-brand">
+                <span>🚀</span> Employee Onboarding Platform
+            </a>
+            <div class="nav-toggle" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
             </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Overview</a></li>
+                <li><a href="02-Enhanced-Navigation.html" class="nav-link">Navigation</a></li>
+                <li><a href="03-Flex-Gateway-Policies.html" class="nav-link">Flex Gateway</a></li>
+                <li><a href="04-RTF-EKS-Setup.html" class="nav-link">RTF EKS</a></li>
+                <li><a href="05-Anypoint-Platform.html" class="nav-link active">Anypoint</a></li>
+                <li><a href="06-Auto-scaling.html" class="nav-link">Auto-scaling</a></li>
+                <li><a href="07-HIPAA-Compliance.html" class="nav-link">HIPAA</a></li>
+                <li><a href="08-RTF-Azure-Installation.html" class="nav-link">RTF Azure</a></li>
+                <li><a href="09-RTF-AWS-Installation.html" class="nav-link">RTF AWS</a></li>
+                <li><a href="10-RTF-Security.html" class="nav-link">Security</a></li>
+                <li><a href="11-Logging-Monitoring.html" class="nav-link">Monitoring</a></li>
+                <li><a href="12-Capacity-Planning.html" class="nav-link">Capacity Planning</a></li>
+                <li><a href="13-MuleSoft-Capacity-Planning.html" class="nav-link">MuleSoft Planning</a></li>
+                <li><a href="14-Azure-AWS-RTF-Capacity-Planning.html" class="nav-link">Cloud RTF Planning</a></li>
+            </ul>
         </div>
     </nav>
 
+    <!-- Main Content -->
     <div class="container">
-        <div class="header">
-            <h1>☁️ Anypoint Platform Integration</h1>
-            <div class="subtitle">Complete Platform Integration with Organization Setup & Application Deployment</div>
-        </div>
+        <!-- Back Button -->
+        <a href="index.html" class="back-button">
+            <span class="back-button-icon">←</span>
+            Back to Overview
+        </a>
 
-        <div class="content-section">
-            <div class="highlight-box">
-                <h4>🎯 Platform Integration Overview</h4>
-                <p>Complete integration guide for connecting RTF with Anypoint Platform, including organization setup, environment configuration, and application deployment workflows with automated scaling for the Employee Onboarding Platform.</p>
-            </div>
-
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-value">24</div>
-                    <div class="metric-label">Assigned Cores</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">96Gi</div>
-                    <div class="metric-label">Assigned Memory</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">100</div>
-                    <div class="metric-label">Max APIs</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">4</div>
-                    <div class="metric-label">Environments</div>
+        <div class="content">
+            <div class="card">
+                <h2>☁️ Anypoint Platform Integration</h2>
+                <p>Complete Platform Integration with Organization Setup & Application Deployment</p>
+                
+                <div class="alert alert-info">
+                    <strong>🎯 Platform Integration Overview:</strong> Complete integration guide for connecting RTF with Anypoint Platform, including organization setup, environment configuration, and application deployment workflows with automated scaling for the Employee Onboarding Platform.
                 </div>
             </div>
 
-            <!-- Organization Setup -->
-            <div class="step-container" id="organization-setup">
-                <div class="step-title">
-                    <span class="step-number">1</span>
-                    🏢 Organization & Business Group Setup
+            <div class="card">
+                <h3>📊 Platform Metrics Overview</h3>
+                
+                <div class="deployment-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🎯</div>
+                        <h4>24 Assigned Cores</h4>
+                        <p>Total CPU cores allocated for RTF deployment with auto-scaling capabilities</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">💾</div>
+                        <h4>96Gi Assigned Memory</h4>
+                        <p>Total memory allocated across all RTF nodes with intelligent distribution</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔗</div>
+                        <h4>100 Max APIs</h4>
+                        <p>Maximum API instances supported in the platform configuration</p>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🌍</div>
+                        <h4>4 Environments</h4>
+                        <p>Development, Testing, Staging, and Production environment setup</p>
+                    </div>
                 </div>
+            </div>
 
-                <h5>1.1 Create Business Group for Employee Onboarding</h5>
+            <div class="card">
+                <h3>🏢 Organization & Business Group Setup</h3>
+                
+                <h4>📋 Step 1: Create Business Group for Employee Onboarding</h4>
                 <div class="code-block">
-                    <pre><code># Anypoint Platform Organization Configuration
+# Anypoint Platform Organization Configuration
 #!/bin/bash
 
 # Step 1: Access Management Setup
@@ -429,12 +109,12 @@ curl -X POST "https://anypoint.mulesoft.com/accounts/api/organizations/${MASTER_
         "maxCount": 100
       }
     }
-  }'</code></pre>
+  }'
                 </div>
 
-                <h5>1.2 Configure User Roles and Permissions</h5>
+                <h4>👥 Step 2: Configure User Roles and Permissions</h4>
                 <div class="code-block">
-                    <pre><code># Setup user roles for Employee Onboarding
+# Setup user roles for Employee Onboarding
 # Admin role for platform management
 curl -X POST "https://anypoint.mulesoft.com/accounts/api/organizations/${ORG_ID}/rolegroups" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
@@ -468,20 +148,16 @@ curl -X POST "https://anypoint.mulesoft.com/accounts/api/organizations/${ORG_ID}
         "role_id": "exchange_contributor"
       }
     ]
-  }'</code></pre>
+  }'
                 </div>
             </div>
 
-            <!-- Environment Configuration -->
-            <div class="step-container" id="environment-config">
-                <div class="step-title">
-                    <span class="step-number">2</span>
-                    🌍 Environment Configuration & Setup
-                </div>
-
-                <h5>2.1 Create Multi-Environment Setup</h5>
+            <div class="card">
+                <h3>🌍 Environment Configuration & Setup</h3>
+                
+                <h4>🏗️ Multi-Environment Setup</h4>
                 <div class="code-block">
-                    <pre><code># Step 2: Create Environments with Enhanced Configuration
+# Step 2: Create Environments with Enhanced Configuration
 environments=("development" "testing" "staging" "production")
 environment_types=("SANDBOX" "SANDBOX" "SANDBOX" "PRODUCTION")
 
@@ -499,13 +175,14 @@ for i in "${!environments[@]}"; do
       "isProduction": '$([ "$env" = "production" ] && echo "true" || echo "false")',
       "clientId": "'${CONNECTED_APP_CLIENT_ID}'"
     }'
-done</code></pre>
+done
                 </div>
 
-                <div class="component-grid">
-                    <div class="component-card">
-                        <h6>Development Environment</h6>
-                        <ul>
+                <div class="deployment-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔧</div>
+                        <h4>Development Environment</h4>
+                        <ul class="nav-card-features">
                             <li>Sandbox environment type</li>
                             <li>2 vCores allocated</li>
                             <li>8Gi memory limit</li>
@@ -513,9 +190,10 @@ done</code></pre>
                             <li>Debug logging enabled</li>
                         </ul>
                     </div>
-                    <div class="component-card">
-                        <h6>Production Environment</h6>
-                        <ul>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🚀</div>
+                        <h4>Production Environment</h4>
+                        <ul class="nav-card-features">
                             <li>Production environment type</li>
                             <li>8 vCores allocated</li>
                             <li>32Gi memory limit</li>
@@ -526,16 +204,12 @@ done</code></pre>
                 </div>
             </div>
 
-            <!-- RTF Target Association -->
-            <div class="step-container" id="rtf-association">
-                <div class="step-title">
-                    <span class="step-number">3</span>
-                    🎯 RTF Target Configuration & Association
-                </div>
-
-                <h5>3.1 Associate RTF with Environments</h5>
+            <div class="card">
+                <h3>🎯 RTF Target Configuration & Association</h3>
+                
+                <h4>🔗 Associate RTF with Environments</h4>
                 <div class="code-block">
-                    <pre><code># Associate RTF with Environment
+# Associate RTF with Environment
 curl -X POST "https://anypoint.mulesoft.com/hybrid/api/v1/organizations/${ORG_ID}/environments/${ENV_NAME}/deploymentTargets" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
@@ -574,12 +248,12 @@ curl -X POST "https://anypoint.mulesoft.com/hybrid/api/v1/organizations/${ORG_ID
         }
       }
     }
-  }'</code></pre>
+  }'
                 </div>
 
-                <h5>3.2 Configure RTF Properties</h5>
+                <h4>⚙️ Configure RTF Properties</h4>
                 <div class="code-block">
-                    <pre><code># Configure RTF-specific properties
+# Configure RTF-specific properties
 curl -X PUT "https://anypoint.mulesoft.com/hybrid/api/v1/organizations/${ORG_ID}/targets/${RTF_TARGET_ID}" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
@@ -616,28 +290,20 @@ curl -X PUT "https://anypoint.mulesoft.com/hybrid/api/v1/organizations/${ORG_ID}
         "secure": false
       }
     ]
-  }'</code></pre>
+  }'
                 </div>
             </div>
 
-            <!-- Application Deployment -->
-            <div class="step-container" id="app-deployment">
-                <div class="step-title">
-                    <span class="step-number">4</span>
-                    🚀 Application Deployment Workflow
+            <div class="card">
+                <h3>🚀 Application Deployment Workflow</h3>
+                
+                <div class="alert alert-info">
+                    <strong>📋 Employee Onboarding Platform Deployment Process:</strong>
+                    Build Application → Upload to Exchange → Deploy to RTF → Configure Scaling → Validate Deployment
                 </div>
 
-                <h5>4.1 Employee Onboarding Platform Deployment</h5>
-                <div class="workflow-diagram">
-                    <div class="workflow-step">Build Application</div>
-                    <div class="workflow-step">Upload to Exchange</div>
-                    <div class="workflow-step">Deploy to RTF</div>
-                    <div class="workflow-step">Configure Scaling</div>
-                    <div class="workflow-step">Validate Deployment</div>
-                </div>
-
+                <h4>📦 Deploy Employee Onboarding MCP Services</h4>
                 <div class="code-block">
-                    <pre><code># Deploy Employee Onboarding MCP Services
 #!/bin/bash
 
 # Array of MCP services to deploy
@@ -705,12 +371,12 @@ for service in "${services[@]}"; do
   echo "Deployment request submitted for $app_name"
   echo "Waiting for deployment to complete..."
   sleep 30
-done</code></pre>
+done
                 </div>
 
-                <h5>4.2 Deployment Status Monitoring</h5>
+                <h4>📊 Deployment Status Monitoring</h4>
                 <div class="code-block">
-                    <pre><code># Monitor deployment status
+# Monitor deployment status
 monitor_deployment_status() {
   local app_name=$1
   local max_attempts=20
@@ -752,20 +418,16 @@ for service in "${services[@]}"; do
   IFS=':' read -ra ADDR <<< "$service"
   app_name="${ADDR[0]}"
   monitor_deployment_status "$app_name"
-done</code></pre>
+done
                 </div>
             </div>
 
-            <!-- Monitoring & Management -->
-            <div class="step-container" id="monitoring">
-                <div class="step-title">
-                    <span class="step-number">5</span>
-                    📊 Monitoring & Management Setup
-                </div>
-
-                <h5>5.1 Configure Anypoint Monitoring</h5>
+            <div class="card">
+                <h3>📊 Monitoring & Management Setup</h3>
+                
+                <h4>📈 Configure Anypoint Monitoring</h4>
                 <div class="code-block">
-                    <pre><code># Enable Anypoint Monitoring for Employee Onboarding Platform
+# Enable Anypoint Monitoring for Employee Onboarding Platform
 curl -X PUT "https://anypoint.mulesoft.com/monitoring/api/v1/organizations/${ORG_ID}/environments/${ENV_ID}/targets/${RTF_TARGET_ID}/settings" \
   -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   -H "Content-Type: application/json" \
@@ -802,13 +464,14 @@ curl -X PUT "https://anypoint.mulesoft.com/monitoring/api/v1/organizations/${ORG
         "phone": "+1234567890"
       }
     ]
-  }'</code></pre>
+  }'
                 </div>
 
-                <div class="component-grid">
-                    <div class="component-card">
-                        <h6>Monitoring Features</h6>
-                        <ul>
+                <div class="deployment-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📊</div>
+                        <h4>Monitoring Features</h4>
+                        <ul class="nav-card-features">
                             <li>Real-time Performance Metrics</li>
                             <li>Application Health Dashboard</li>
                             <li>Custom Business Events</li>
@@ -816,9 +479,10 @@ curl -X PUT "https://anypoint.mulesoft.com/monitoring/api/v1/organizations/${ORG
                             <li>Error Rate Monitoring</li>
                         </ul>
                     </div>
-                    <div class="component-card">
-                        <h6>Alert Configuration</h6>
-                        <ul>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🚨</div>
+                        <h4>Alert Configuration</h4>
+                        <ul class="nav-card-features">
                             <li>CPU Usage > 80% Threshold</li>
                             <li>Memory Usage > 80% Threshold</li>
                             <li>Application Status Changes</li>
@@ -829,35 +493,127 @@ curl -X PUT "https://anypoint.mulesoft.com/monitoring/api/v1/organizations/${ORG
                 </div>
             </div>
 
-            <!-- Validation Checklist -->
-            <div class="critical-box">
-                <h5>🚨 Post-Integration Checklist</h5>
-                <div class="checklist">
-                    <ul>
-                        <li>Platform Connectivity: Verify RTF can communicate with Anypoint Platform</li>
-                        <li>Application Health: All applications show "STARTED" status</li>
-                        <li>Auto-scaling: HPA and VPA configurations are active</li>
-                        <li>Load Testing: Validate scaling triggers at 80% thresholds</li>
-                        <li>Monitoring: Grafana dashboards showing metrics</li>
-                        <li>Security: HIPAA compliance validation passed</li>
-                        <li>Alerts: Email and webhook notifications configured</li>
-                        <li>Business Groups: Proper user roles and permissions assigned</li>
-                    </ul>
+            <div class="card">
+                <h3>✅ Post-Integration Validation</h3>
+                
+                <div class="alert alert-warning">
+                    <strong>🚨 Critical Validation Checklist:</strong> Ensure all components are properly configured and operational before proceeding with production deployments.
+                </div>
+
+                <div class="deployment-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔗</div>
+                        <h4>Platform Connectivity</h4>
+                        <ul class="nav-card-features">
+                            <li>RTF communicates with Anypoint Platform</li>
+                            <li>All applications show "STARTED" status</li>
+                            <li>Network connectivity validated</li>
+                            <li>API endpoints accessible</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📈</div>
+                        <h4>Auto-scaling & Performance</h4>
+                        <ul class="nav-card-features">
+                            <li>HPA and VPA configurations active</li>
+                            <li>Load testing validates 80% thresholds</li>
+                            <li>Scaling triggers working correctly</li>
+                            <li>Resource allocation optimized</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🛡️</div>
+                        <h4>Security & Compliance</h4>
+                        <ul class="nav-card-features">
+                            <li>HIPAA compliance validation passed</li>
+                            <li>Security policies applied</li>
+                            <li>Access controls configured</li>
+                            <li>Encryption in place</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">👥</div>
+                        <h4>Monitoring & Management</h4>
+                        <ul class="nav-card-features">
+                            <li>Grafana dashboards showing metrics</li>
+                            <li>Email and webhook notifications</li>
+                            <li>Business groups and permissions</li>
+                            <li>User roles properly assigned</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>🚀 Integration Complete!</strong> Your Runtime Fabric is now fully integrated with Anypoint Platform. The Employee Onboarding applications are deployed with auto-scaling enabled and comprehensive monitoring in place.
                 </div>
             </div>
+        </div>
 
-            <div class="highlight-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <h4>🚀 Integration Complete</h4>
-                <p><strong>Anypoint Platform Connected:</strong> Your Runtime Fabric is now fully integrated with Anypoint Platform. The Employee Onboarding applications are deployed with auto-scaling enabled and comprehensive monitoring in place.</p>
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-section">
+                        <h4>☁️ Anypoint Platform Integration</h4>
+                        <p>Complete integration between Runtime Fabric and Anypoint Platform with enterprise-grade organization setup, environment configuration, and application deployment workflows. The Employee Onboarding Platform is now fully operational with 80% auto-scaling thresholds and comprehensive monitoring.</p>
+                    </div>
+                    <div class="footer-section">
+                        <h4>📞 Platform Support</h4>
+                        <ul>
+                            <li>Anypoint Platform: platform-support@company.com</li>
+                            <li>RTF Team: rtf@company.com</li>
+                            <li>Cloud Operations: cloudops@company.com</li>
+                            <li>24/7 Support: support@company.com</li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h4>🔗 Related Guides</h4>
+                        <ul>
+                            <li><a href="index.html">Platform Overview</a></li>
+                            <li><a href="04-RTF-EKS-Setup.html">RTF EKS Setup</a></li>
+                            <li><a href="06-Auto-scaling.html">Auto-scaling Guide</a></li>
+                            <li><a href="11-Logging-Monitoring.html">Monitoring Setup</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h4>📊 Platform Status</h4>
+                        <div class="status-indicator">
+                            <span class="status-dot status-operational"></span>
+                            <span>Guide: Current</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-dot status-operational"></span>
+                            <span>Anypoint: Operational</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-dot status-operational"></span>
+                            <span>Integration: Active</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>&copy; 2026 Employee Onboarding Platform. All rights reserved. | 
+                       <a href="#privacy">Privacy Policy</a> | 
+                       <a href="#terms">Terms of Service</a> | 
+                       <a href="#security">Security Statement</a></p>
+                </div>
             </div>
-        </div>
-
-        <div class="footer">
-            <h3>☁️ Anypoint Platform Integration</h3>
-            <p>Complete integration between Runtime Fabric and Anypoint Platform with enterprise-grade organization setup, environment configuration, and application deployment workflows. The Employee Onboarding Platform is now fully operational with 80% auto-scaling thresholds and comprehensive monitoring.</p>
-            <br>
-            <p><strong>Key Components:</strong> Business groups, multi-environment setup, RTF target configuration, automated deployments, monitoring & alerts, HIPAA compliance, and role-based access control.</p>
-        </div>
+        </footer>
     </div>
+
+    <script src="common-scripts.js"></script>
+    <script>
+        // Set active navigation link for this page
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPage = '05-Anypoint-Platform.html';
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPage) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

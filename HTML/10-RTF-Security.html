@@ -3,415 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Self-Managed RTF Security Configuration</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            margin-top: 20px;
-            margin-bottom: 20px;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding: 40px 20px;
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-            color: white;
-            border-radius: 15px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="a" cx="50%" cy="40%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0.1"/><stop offset="100%" stop-color="%23ffffff" stop-opacity="0.05"/></radialGradient></defs><rect width="100" height="20" fill="url(%23a)"/></svg>');
-            opacity: 0.3;
-        }
-
-        .header h1 {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            position: relative;
-        }
-
-        .header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            position: relative;
-        }
-
-        .nav {
-            margin: 30px 0;
-            text-align: center;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .nav a {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 25px;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
-        }
-
-        .nav a:hover {
-            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
-        }
-
-        .section {
-            margin: 40px 0;
-            padding: 30px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-            border-left: 5px solid #e74c3c;
-            border-radius: 10px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-            position: relative;
-        }
-
-        .section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #e74c3c, #c0392b);
-            border-radius: 10px 10px 0 0;
-        }
-
-        .section h2 {
-            color: #c0392b;
-            margin-bottom: 20px;
-            font-size: 2.2rem;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .section h3 {
-            color: #e74c3c;
-            margin: 25px 0 15px 0;
-            font-size: 1.6rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .code-block {
-            background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
-            color: #e74c3c;
-            padding: 20px;
-            border-radius: 8px;
-            font-family: 'Fira Code', 'Courier New', monospace;
-            overflow-x: auto;
-            margin: 15px 0;
-            position: relative;
-            border-left: 4px solid #e74c3c;
-        }
-
-        .code-block::before {
-            content: 'Security';
-            position: absolute;
-            top: 8px;
-            right: 15px;
-            font-size: 0.8rem;
-            color: #e74c3c;
-            font-family: 'Poppins', sans-serif;
-            opacity: 0.7;
-        }
-
-        .warning {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            border: 1px solid #ffeaa7;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            border-left: 5px solid #f39c12;
-            position: relative;
-        }
-
-        .warning::before {
-            content: '⚠️';
-            font-size: 1.5rem;
-            margin-right: 10px;
-        }
-
-        .critical {
-            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-            border: 1px solid #f5c6cb;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            border-left: 5px solid #dc3545;
-            position: relative;
-        }
-
-        .critical::before {
-            content: '🚨';
-            font-size: 1.5rem;
-            margin-right: 10px;
-        }
-
-        .info {
-            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
-            border: 1px solid #bee5eb;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            border-left: 5px solid #17a2b8;
-            position: relative;
-        }
-
-        .info::before {
-            content: 'ℹ️';
-            font-size: 1.5rem;
-            margin-right: 10px;
-        }
-
-        .security-checklist {
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            border: 1px solid #c3e6cb;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            border-left: 5px solid #28a745;
-        }
-
-        .security-checklist h4 {
-            color: #155724;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .security-checklist h4::before {
-            content: '✅';
-            font-size: 1.2rem;
-        }
-
-        .security-matrix {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 25px;
-            margin: 30px 0;
-        }
-
-        .security-card {
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-            border-top: 4px solid #e74c3c;
-            transition: all 0.3s ease;
-        }
-
-        .security-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
-            border-top-color: #27ae60;
-        }
-
-        .security-card h4 {
-            color: #c0392b;
-            margin-bottom: 15px;
-            font-size: 1.3rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .security-level {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-left: auto;
-        }
-
-        .level-critical {
-            background: #dc3545;
-            color: white;
-        }
-
-        .level-high {
-            background: #fd7e14;
-            color: white;
-        }
-
-        .level-medium {
-            background: #ffc107;
-            color: #212529;
-        }
-
-        .level-low {
-            background: #28a745;
-            color: white;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        }
-
-        th, td {
-            padding: 15px 20px;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        th {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-            color: white;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 0.9rem;
-        }
-
-        tr:nth-child(even) {
-            background: #f8f9fa;
-        }
-
-        tr:hover {
-            background: #fff5f5;
-            transition: background 0.3s ease;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-                padding: 15px;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .nav {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .security-matrix {
-                grid-template-columns: 1fr;
-            }
-            
-            .section {
-                padding: 20px;
-            }
-        }
-    </style>
+    <title>RTF Security Configuration - MuleSoft RTF Architecture</title>
+    <link rel="stylesheet" href="common-styles.css">
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🔐 Self-Managed Runtime Fabric Security Configuration</h1>
-            <p>Comprehensive security hardening and configuration guide for self-managed Runtime Fabric deployments</p>
+        <div class="toc">
+            <h3>📋 Table of Contents</h3>
+            <ul>
+                <li><a href="#overview">🛡️ Security Overview</a></li>
+                <li><a href="#authentication">🔐 Authentication & Authorization</a></li>
+                <li><a href="#network-security">🌐 Network Security</a></li>
+                <li><a href="#secret-management">🔑 Secret Management</a></li>
+                <li><a href="#data-protection">🛡️ Data Protection & Encryption</a></li>
+                <li><a href="#monitoring">📊 Security Monitoring</a></li>
+            </ul>
         </div>
 
-        <div class="nav">
-            <a href="index.html">🏠 Home</a>
-            <a href="08-RTF-Azure-Installation.html">🌐 Azure Setup</a>
-            <a href="09-RTF-AWS-Installation.html">☁️ AWS Setup</a>
-            <a href="11-Logging-Monitoring.html">📊 Monitoring</a>
-        </div>
-
-        <div class="section">
-            <h2>🛡️ Security Overview</h2>
-            <p>Self-managed Runtime Fabric deployments require comprehensive security configurations to protect against threats, ensure data integrity, and maintain compliance standards. This guide covers all security aspects from infrastructure to application-level protection.</p>
+        <section id="overview" class="section">
+            <h2>🛡️ Runtime Fabric Security Overview</h2>
             
-            <div class="security-matrix">
-                <div class="security-card">
-                    <h4>🔒 Infrastructure Security <span class="security-level level-critical">Critical</span></h4>
+            <div class="highlight-box">
+                <h4>🔐 Comprehensive Security Framework</h4>
+                <p>Self-managed Runtime Fabric deployments require comprehensive security configurations to protect against threats, ensure data integrity, and maintain compliance standards across all infrastructure layers.</p>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">Zero</div>
+                    <div class="metric-label">Trust Architecture</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">AES-256</div>
+                    <div class="metric-label">Encryption Standard</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">RBAC</div>
+                    <div class="metric-label">Access Control</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">24/7</div>
+                    <div class="metric-label">Security Monitoring</div>
+                </div>
+            </div>
+
+            <h3>🏗️ Multi-Layer Security Architecture</h3>
+            <div class="component-grid">
+                <div class="component-card">
+                    <h5>Infrastructure Security</h5>
                     <ul>
                         <li>Network segmentation and isolation</li>
                         <li>Firewall configuration and rules</li>
                         <li>VPN/Private network access</li>
                         <li>OS-level hardening</li>
+                        <li>Container security scanning</li>
                     </ul>
                 </div>
-                <div class="security-card">
-                    <h4>🔑 Identity & Access Management <span class="security-level level-critical">Critical</span></h4>
+                <div class="component-card">
+                    <h5>Identity & Access Management</h5>
                     <ul>
                         <li>RBAC implementation</li>
                         <li>Multi-factor authentication</li>
                         <li>Service account management</li>
                         <li>API key rotation</li>
+                        <li>SSO integration</li>
                     </ul>
                 </div>
-                <div class="security-card">
-                    <h4>🛡️ Data Protection <span class="security-level level-high">High</span></h4>
+                <div class="component-card">
+                    <h5>Data Protection</h5>
                     <ul>
                         <li>Encryption at rest and in transit</li>
                         <li>TLS/SSL configuration</li>
                         <li>Secret management</li>
                         <li>Key management systems</li>
-                    </ul>
-                </div>
-                <div class="security-card">
-                    <h4>📊 Monitoring & Auditing <span class="security-level level-high">High</span></h4>
-                    <ul>
-                        <li>Security event logging</li>
-                        <li>Intrusion detection</li>
-                        <li>Compliance monitoring</li>
-                        <li>Threat intelligence</li>
+                        <li>Data loss prevention</li>
                     </ul>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="section">
+        <section id="authentication" class="section">
             <h2>🔐 Authentication & Authorization</h2>
             
             <h3>🎯 RBAC Implementation</h3>
             <div class="code-block">
-# Create RTF security namespace
+                <pre><code># Create RTF security namespace
 kubectl create namespace rtf-security
 
 # Create service accounts with minimal permissions
@@ -464,53 +140,12 @@ subjects:
 - kind: ServiceAccount
   name: rtf-operator
   namespace: rtf-system
-EOF
+EOF</code></pre>
             </div>
 
             <h3>🔑 Multi-Factor Authentication Setup</h3>
             <div class="code-block">
-# Install and configure Keycloak for identity management
-helm repo add codecentric https://codecentric.github.io/helm-charts
-helm repo update
-
-# Deploy Keycloak with RTF-specific configuration
-helm install keycloak codecentric/keycloak \
-  --namespace rtf-security \
-  --create-namespace \
-  --set auth.adminUser=rtf-admin \
-  --set auth.adminPassword=CHANGE_THIS_PASSWORD \
-  --set postgresql.auth.password=POSTGRES_PASSWORD \
-  --set service.type=LoadBalancer \
-  --set ingress.enabled=true \
-  --set ingress.hostname=keycloak.yourdomain.com
-
-# Configure LDAP/AD integration
-cat << EOF | kubectl apply -f -
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: keycloak-ldap-config
-  namespace: rtf-security
-data:
-  ldap-config.json: |
-    {
-      "realm": "rtf-realm",
-      "ldap": {
-        "connectionUrl": "ldaps://your-ldap-server:636",
-        "usersDn": "ou=users,dc=company,dc=com",
-        "bindDn": "cn=admin,dc=company,dc=com",
-        "bindCredential": "LDAP_BIND_PASSWORD",
-        "userObjectClasses": ["person", "organizationalPerson", "user"],
-        "usernameLDAPAttribute": "sAMAccountName",
-        "emailAttribute": "mail"
-      }
-    }
-EOF
-            </div>
-
-            <h3>🔐 API Security Configuration</h3>
-            <div class="code-block">
-# Create OAuth2/JWT configuration for RTF APIs
+                <pre><code># Configure OAuth2/JWT for RTF APIs
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: Secret
@@ -531,24 +166,25 @@ metadata:
 data:
   oauth.yml: |
     oauth2:
-      issuer: https://keycloak.yourdomain.com/auth/realms/rtf-realm
+      issuer: https://auth.yourdomain.com/auth/realms/rtf-realm
       audience: rtf-client
-      jwks-uri: https://keycloak.yourdomain.com/auth/realms/rtf-realm/protocol/openid_connect/certs
-      token-endpoint: https://keycloak.yourdomain.com/auth/realms/rtf-realm/protocol/openid_connect/token
-EOF
+      jwks-uri: https://auth.yourdomain.com/auth/realms/rtf-realm/protocol/openid_connect/certs
+      token-endpoint: https://auth.yourdomain.com/auth/realms/rtf-realm/protocol/openid_connect/token
+EOF</code></pre>
             </div>
-        </div>
+        </section>
 
-        <div class="section">
-            <h2>🛡️ Network Security</h2>
+        <section id="network-security" class="section">
+            <h2>🌐 Network Security Configuration</h2>
             
-            <h3>🔥 Firewall Configuration</h3>
-            <div class="critical">
-                <strong>🚨 Critical Security Requirement:</strong> Implement strict firewall rules to control access to RTF components. Only allow necessary traffic and block all other connections.
+            <h3>🔥 Network Policies & Firewall Rules</h3>
+            <div class="warning-box">
+                <h4>⚠️ Critical Security Requirement</h4>
+                <p>Implement strict firewall rules to control access to RTF components. Only allow necessary traffic and block all other connections.</p>
             </div>
             
             <div class="code-block">
-# Create NetworkPolicy to restrict pod-to-pod communication
+                <pre><code># Create NetworkPolicy to restrict pod-to-pod communication
 cat << EOF | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -584,7 +220,7 @@ spec:
       port: 53   # DNS
 EOF
 
-# Configure Kubernetes native firewall rules
+# Configure deny-all default policy
 cat << EOF | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -615,45 +251,12 @@ spec:
     ports:
     - protocol: TCP
       port: 8080
-EOF
-            </div>
-
-            <h3>🌐 VPN and Private Network Setup</h3>
-            <div class="code-block">
-# Install WireGuard VPN for secure access
-# For Ubuntu/Debian systems
-sudo apt update && sudo apt install -y wireguard
-
-# Generate server keys
-wg genkey | tee /etc/wireguard/server_private.key | wg pubkey > /etc/wireguard/server_public.key
-
-# Create WireGuard server configuration
-cat << EOF > /etc/wireguard/wg0.conf
-[Interface]
-Address = 10.100.0.1/24
-ListenPort = 51820
-PrivateKey = $(cat /etc/wireguard/server_private.key)
-PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
-
-# Client configurations will be added here
-[Peer]
-PublicKey = CLIENT_PUBLIC_KEY
-AllowedIPs = 10.100.0.2/32
-EOF
-
-# Enable IP forwarding
-echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.conf
-sysctl -p
-
-# Start WireGuard service
-systemctl enable wg-quick@wg0
-systemctl start wg-quick@wg0
+EOF</code></pre>
             </div>
 
             <h3>🔒 TLS/SSL Configuration</h3>
             <div class="code-block">
-# Create comprehensive TLS configuration for RTF
+                <pre><code># Create comprehensive TLS configuration for RTF
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: Secret
@@ -673,7 +276,7 @@ metadata:
 data:
   tls.conf: |
     ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
+    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512;
     ssl_ecdh_curve secp384r1;
     ssl_session_timeout 10m;
     ssl_session_cache shared:SSL:10m;
@@ -684,20 +287,21 @@ data:
     add_header X-Content-Type-Options nosniff;
     add_header X-Frame-Options DENY;
     add_header X-XSS-Protection "1; mode=block";
-EOF
+EOF</code></pre>
             </div>
-        </div>
+        </section>
 
-        <div class="section">
-            <h2>🔑 Secret Management</h2>
+        <section id="secret-management" class="section">
+            <h2>🔑 Secret Management & Key Rotation</h2>
             
             <h3>🗝️ HashiCorp Vault Integration</h3>
-            <div class="info">
-                <strong>💡 Best Practice:</strong> Use HashiCorp Vault for centralized secret management, automatic rotation, and audit trails.
+            <div class="info-box">
+                <h4>💡 Best Practice</h4>
+                <p>Use HashiCorp Vault for centralized secret management, automatic rotation, and comprehensive audit trails.</p>
             </div>
             
             <div class="code-block">
-# Install HashiCorp Vault using Helm
+                <pre><code># Install HashiCorp Vault using Helm
 helm repo add hashicorp https://helm.releases.hashicorp.com
 helm repo update
 
@@ -712,10 +316,8 @@ helm install vault hashicorp/vault \
   --set ui.enabled=true \
   --set ui.serviceType=LoadBalancer
 
-# Initialize Vault (run this once)
+# Initialize and configure Vault
 kubectl exec -ti vault-0 -n rtf-security -- vault operator init
-
-# Unseal Vault on all replicas
 kubectl exec -ti vault-0 -n rtf-security -- vault operator unseal UNSEAL_KEY_1
 kubectl exec -ti vault-0 -n rtf-security -- vault operator unseal UNSEAL_KEY_2
 kubectl exec -ti vault-0 -n rtf-security -- vault operator unseal UNSEAL_KEY_3
@@ -726,47 +328,12 @@ vault auth enable kubernetes
 vault write auth/kubernetes/config \
     token_reviewer_jwt="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" \
     kubernetes_host="https://$KUBERNETES_PORT_443_TCP_ADDR:443" \
-    kubernetes_ca_cert=@/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    kubernetes_ca_cert=@/var/run/secrets/kubernetes.io/serviceaccount/ca.crt</code></pre>
             </div>
 
-            <h3>🔐 Secret Rotation Policy</h3>
+            <h3>🔄 Automatic Secret Rotation</h3>
             <div class="code-block">
-# Create secret rotation policy for RTF components
-cat << EOF | kubectl apply -f -
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: secret-rotation-policy
-  namespace: rtf-system
-data:
-  policy.json: |
-    {
-      "rotation_policies": {
-        "database_passwords": {
-          "rotation_interval": "30d",
-          "backup_count": 3,
-          "notification_before": "7d"
-        },
-        "api_keys": {
-          "rotation_interval": "90d",
-          "backup_count": 5,
-          "notification_before": "14d"
-        },
-        "tls_certificates": {
-          "rotation_interval": "365d",
-          "backup_count": 2,
-          "notification_before": "30d"
-        },
-        "jwt_secrets": {
-          "rotation_interval": "60d",
-          "backup_count": 3,
-          "notification_before": "7d"
-        }
-      }
-    }
-EOF
-
-# Create CronJob for automatic secret rotation
+                <pre><code># Create CronJob for automatic secret rotation
 cat << EOF | kubectl apply -f -
 apiVersion: batch/v1
 kind: CronJob
@@ -789,7 +356,8 @@ spec:
               # Rotate secrets based on policy
               vault kv put secret/rtf/db-password password=$(openssl rand -base64 32)
               vault kv put secret/rtf/api-key key=$(uuidgen)
-              # Add more rotation logic here
+              # Notify systems of rotation
+              echo "Secrets rotated successfully at $(date)"
             env:
             - name: VAULT_ADDR
               value: "http://vault.rtf-security.svc.cluster.local:8200"
@@ -799,72 +367,16 @@ spec:
                   name: vault-token
                   key: token
           restartPolicy: OnFailure
-EOF
+EOF</code></pre>
             </div>
+        </section>
 
-            <h3>🔒 External Secret Management</h3>
-            <div class="code-block">
-# Install External Secrets Operator
-helm repo add external-secrets https://charts.external-secrets.io
-helm repo update
-
-helm install external-secrets external-secrets/external-secrets \
-  --namespace external-secrets-system \
-  --create-namespace
-
-# Configure Vault as external secret store
-cat << EOF | kubectl apply -f -
-apiVersion: external-secrets.io/v1beta1
-kind: SecretStore
-metadata:
-  name: vault-secret-store
-  namespace: rtf-system
-spec:
-  provider:
-    vault:
-      server: "http://vault.rtf-security.svc.cluster.local:8200"
-      path: "secret"
-      version: "v2"
-      auth:
-        kubernetes:
-          mountPath: "kubernetes"
-          role: "rtf-role"
-          serviceAccountRef:
-            name: "external-secrets-sa"
----
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: rtf-database-secret
-  namespace: rtf-system
-spec:
-  refreshInterval: 1h
-  secretStoreRef:
-    name: vault-secret-store
-    kind: SecretStore
-  target:
-    name: rtf-db-credentials
-    creationPolicy: Owner
-  data:
-  - secretKey: username
-    remoteRef:
-      key: rtf/database
-      property: username
-  - secretKey: password
-    remoteRef:
-      key: rtf/database
-      property: password
-EOF
-            </div>
-        </div>
-
-        <div class="section">
+        <section id="data-protection" class="section">
             <h2>🛡️ Data Protection & Encryption</h2>
             
-            <h3>🔐 Encryption at Rest</h3>
+            <h3>🔐 Encryption at Rest Configuration</h3>
             <div class="code-block">
-# Configure etcd encryption for Kubernetes secrets
-# Create encryption configuration
+                <pre><code># Configure etcd encryption for Kubernetes secrets
 cat << EOF > encryption-config.yaml
 apiVersion: apiserver.config.k8s.io/v1
 kind: EncryptionConfiguration
@@ -879,8 +391,172 @@ resources:
     - identity: {}
 EOF
 
-# Apply encryption configuration (requires API server restart)
-# For managed Kubernetes, this is typically handled by the provider
-# For self-managed clusters:
-sudo cp encryption-config.yaml /etc/kubernetes/
-sudo systemctl restart kube-
+# Database encryption configuration
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: database-encryption-config
+  namespace: rtf-system
+data:
+  encryption.conf: |
+    # PostgreSQL encryption settings
+    ssl = on
+    ssl_ciphers = 'ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384'
+    ssl_prefer_server_ciphers = on
+    ssl_ecdh_curve = 'secp256r1'
+    
+    # Enable transparent data encryption
+    shared_preload_libraries = 'pg_tde'
+    pg_tde.keyring_configuration_file = '/etc/postgresql/keyring.conf'
+EOF</code></pre>
+            </div>
+
+            <h3>🔒 Application-Level Encryption</h3>
+            <div class="code-block">
+                <pre><code># Configure application-level encryption for RTF
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rtf-encryption-config
+  namespace: rtf-system
+data:
+  encryption.properties: |
+    # Field-level encryption settings
+    encryption.algorithm=AES/GCM/NoPadding
+    encryption.key.length=256
+    encryption.provider=SunJCE
+    
+    # Sensitive data fields to encrypt
+    encryption.fields=ssn,creditCardNumber,bankAccount
+    
+    # Key management
+    encryption.key.rotation.interval=90d
+    encryption.key.retention.period=7y
+    
+    # Audit settings
+    encryption.audit.enabled=true
+    encryption.audit.log.sensitive.data=false
+EOF</code></pre>
+            </div>
+        </section>
+
+        <section id="monitoring" class="section">
+            <h2>📊 Security Monitoring & Incident Response</h2>
+            
+            <h3>🔍 Security Event Monitoring</h3>
+            <div class="code-block">
+                <pre><code># Deploy Falco for runtime security monitoring
+helm repo add falcosecurity https://falcosecurity.github.io/charts
+helm repo update
+
+helm install falco falcosecurity/falco \
+  --namespace falco-system \
+  --create-namespace \
+  --set driver.kind=ebpf \
+  --set falco.grpc.enabled=true \
+  --set falco.grpcOutput.enabled=true
+
+# Configure custom security rules
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: falco-custom-rules
+  namespace: falco-system
+data:
+  custom_rules.yaml: |
+    - rule: RTF Unauthorized API Access
+      desc: Detect unauthorized access to RTF APIs
+      condition: >
+        k8s_audit and
+        ka.uri.path startswith "/api/v1/namespaces/rtf-system" and
+        ka.user.name != "rtf-admin" and
+        ka.user.name != "rtf-operator"
+      output: >
+        Unauthorized RTF API access
+        (user=%ka.user.name verb=%ka.verb uri=%ka.uri.path)
+      priority: WARNING
+      tags: [rtf, security, api]
+    
+    - rule: RTF Secret Access
+      desc: Monitor access to RTF secrets
+      condition: >
+        k8s_audit and
+        ka.verb in (get, list, watch) and
+        ka.uri.path contains "/secrets/" and
+        ka.uri.path contains "rtf-system"
+      output: >
+        RTF secret accessed
+        (user=%ka.user.name secret=%ka.target.resource verb=%ka.verb)
+      priority: INFO
+      tags: [rtf, secrets, audit]
+EOF</code></pre>
+            </div>
+
+            <h3>🚨 Incident Response Automation</h3>
+            <div class="critical-box">
+                <h4>🚨 Automated Response System</h4>
+                <p>Configure automated incident response for critical security events including unauthorized access attempts, privilege escalation, and data exfiltration attempts.</p>
+            </div>
+
+            <div class="code-block">
+                <pre><code># Create incident response automation
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: incident-response-config
+  namespace: rtf-system
+data:
+  response-rules.json: |
+    {
+      "rules": [
+        {
+          "trigger": "unauthorized_api_access",
+          "severity": "high",
+          "actions": [
+            "block_user_access",
+            "send_alert_to_security_team",
+            "create_incident_ticket"
+          ],
+          "cooldown": "5m"
+        },
+        {
+          "trigger": "privilege_escalation",
+          "severity": "critical",
+          "actions": [
+            "revoke_all_permissions",
+            "isolate_affected_pods",
+            "trigger_security_audit",
+            "notify_incident_commander"
+          ],
+          "cooldown": "1m"
+        },
+        {
+          "trigger": "data_exfiltration",
+          "severity": "critical",
+          "actions": [
+            "block_network_traffic",
+            "capture_network_forensics",
+            "alert_compliance_team",
+            "initiate_breach_protocol"
+          ],
+          "cooldown": "0s"
+        }
+      ]
+    }
+EOF</code></pre>
+            </div>
+        </section>
+
+        <div class="nav-buttons">
+            <a href="09-RTF-AWS-Installation.html" class="nav-button prev">← Previous: RTF AWS Setup</a>
+            <a href="11-Logging-Monitoring.html" class="nav-button next">Next: Logging & Monitoring →</a>
+        </div>
+    </div>
+
+    <script src="common-scripts.js"></script>
+</body>
+</html>

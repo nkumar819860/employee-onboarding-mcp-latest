@@ -4,419 +4,130 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RTF Logging & Monitoring with ELK and Grafana</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%);
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            margin-top: 20px;
-            margin-bottom: 20px;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding: 40px 20px;
-            background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%);
-            color: white;
-            border-radius: 15px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="a" cx="50%" cy="40%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0.1"/><stop offset="100%" stop-color="%23ffffff" stop-opacity="0.05"/></radialGradient></defs><rect width="100" height="20" fill="url(%23a)"/></svg>');
-            opacity: 0.3;
-        }
-
-        .header h1 {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            position: relative;
-        }
-
-        .header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            position: relative;
-        }
-
-        .nav {
-            margin: 30px 0;
-            text-align: center;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .nav a {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 25px;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3);
-        }
-
-        .nav a:hover {
-            background: linear-gradient(135deg, #e67e22 0%, #f39c12 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(230, 126, 34, 0.4);
-        }
-
-        .section {
-            margin: 40px 0;
-            padding: 30px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-            border-left: 5px solid #8e44ad;
-            border-radius: 10px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-            position: relative;
-        }
-
-        .section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #8e44ad, #3498db);
-            border-radius: 10px 10px 0 0;
-        }
-
-        .section h2 {
-            color: #8e44ad;
-            margin-bottom: 20px;
-            font-size: 2.2rem;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .section h3 {
-            color: #3498db;
-            margin: 25px 0 15px 0;
-            font-size: 1.6rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .code-block {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            color: #3498db;
-            padding: 20px;
-            border-radius: 8px;
-            font-family: 'Fira Code', 'Courier New', monospace;
-            overflow-x: auto;
-            margin: 15px 0;
-            position: relative;
-            border-left: 4px solid #8e44ad;
-        }
-
-        .code-block::before {
-            content: 'Monitoring';
-            position: absolute;
-            top: 8px;
-            right: 15px;
-            font-size: 0.8rem;
-            color: #3498db;
-            font-family: 'Poppins', sans-serif;
-            opacity: 0.7;
-        }
-
-        .warning {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            border: 1px solid #ffeaa7;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            border-left: 5px solid #f39c12;
-            position: relative;
-        }
-
-        .warning::before {
-            content: '⚠️';
-            font-size: 1.5rem;
-            margin-right: 10px;
-        }
-
-        .info {
-            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
-            border: 1px solid #bee5eb;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            border-left: 5px solid #17a2b8;
-            position: relative;
-        }
-
-        .info::before {
-            content: 'ℹ️';
-            font-size: 1.5rem;
-            margin-right: 10px;
-        }
-
-        .monitoring-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin: 30px 0;
-        }
-
-        .monitoring-card {
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-            border-top: 4px solid #8e44ad;
-            transition: all 0.3s ease;
-        }
-
-        .monitoring-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
-            border-top-color: #3498db;
-        }
-
-        .monitoring-card h4 {
-            color: #8e44ad;
-            margin-bottom: 15px;
-            font-size: 1.3rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .feature-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-left: auto;
-        }
-
-        .badge-elk {
-            background: #ffd32a;
-            color: #212529;
-        }
-
-        .badge-grafana {
-            background: #f46800;
-            color: white;
-        }
-
-        .badge-prometheus {
-            background: #e6522c;
-            color: white;
-        }
-
-        .badge-kibana {
-            background: #00bfb3;
-            color: white;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        }
-
-        th, td {
-            padding: 15px 20px;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        th {
-            background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%);
-            color: white;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 0.9rem;
-        }
-
-        tr:nth-child(even) {
-            background: #f8f9fa;
-        }
-
-        tr:hover {
-            background: #e8f4fd;
-            transition: background 0.3s ease;
-        }
-
-        .dashboard-preview {
-            text-align: center;
-            margin: 30px 0;
-            padding: 30px;
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            border-radius: 10px;
-            border: 2px dashed #8e44ad;
-            position: relative;
-        }
-
-        .dashboard-preview::before {
-            content: '📊 Dashboard Preview';
-            position: absolute;
-            top: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            padding: 0 15px;
-            color: #8e44ad;
-            font-weight: 600;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-                padding: 15px;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .nav {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .monitoring-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .section {
-                padding: 20px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="common-styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
 </head>
 <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <span>🚀</span> Employee Onboarding Platform
+            </a>
+            <div class="nav-toggle" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Overview</a></li>
+                <li><a href="02-Enhanced-Navigation.html" class="nav-link">Navigation</a></li>
+                <li><a href="03-Flex-Gateway-Policies.html" class="nav-link">Flex Gateway</a></li>
+                <li><a href="04-RTF-EKS-Setup.html" class="nav-link">RTF EKS</a></li>
+                <li><a href="05-Anypoint-Platform.html" class="nav-link">Anypoint</a></li>
+                <li><a href="06-Auto-scaling.html" class="nav-link">Auto-scaling</a></li>
+                <li><a href="07-HIPAA-Compliance.html" class="nav-link">HIPAA</a></li>
+                <li><a href="08-RTF-Azure-Installation.html" class="nav-link">RTF Azure</a></li>
+                <li><a href="09-RTF-AWS-Installation.html" class="nav-link">RTF AWS</a></li>
+                <li><a href="10-RTF-Security.html" class="nav-link">Security</a></li>
+                <li><a href="11-Logging-Monitoring.html" class="nav-link active">Monitoring</a></li>
+                <li><a href="12-Capacity-Planning.html" class="nav-link">Capacity Planning</a></li>
+                <li><a href="13-Cost-Estimation.html" class="nav-link">Cost Estimation</a></li>
+                <li><a href="15-Action-Plan.html" class="nav-link">Action Plans</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
     <div class="container">
         <div class="header">
             <h1>📊 RTF Logging & Monitoring with ELK and Grafana</h1>
-            <p>Complete observability stack for Runtime Fabric with Elasticsearch, Logstash, Kibana, and Grafana integration</p>
+            <div class="subtitle">Complete observability stack for Runtime Fabric with Elasticsearch, Logstash, Kibana, and Grafana integration</div>
         </div>
 
-        <div class="nav">
-            <a href="index.html">🏠 Home</a>
-            <a href="08-RTF-Azure-Installation.html">🌐 Azure Setup</a>
-            <a href="09-RTF-AWS-Installation.html">☁️ AWS Setup</a>
-            <a href="10-RTF-Security.html">🔐 Security</a>
-        </div>
+        <div class="content">
+            <div class="alert alert-info">
+                <strong>📊 Monitoring Overview:</strong> A comprehensive monitoring and logging solution for Runtime Fabric that provides real-time insights, alerting, and observability across your entire MuleSoft infrastructure.
+            </div>
 
-        <div class="section">
-            <h2>📈 Monitoring Stack Overview</h2>
-            <p>A comprehensive monitoring and logging solution for Runtime Fabric that provides real-time insights, alerting, and observability across your entire MuleSoft infrastructure.</p>
-            
-            <div class="monitoring-grid">
-                <div class="monitoring-card">
-                    <h4>🔍 Elasticsearch <span class="feature-badge badge-elk">ELK</span></h4>
-                    <ul>
-                        <li>Distributed search and analytics engine</li>
-                        <li>Log aggregation and indexing</li>
-                        <li>Real-time search capabilities</li>
-                        <li>Scalable data storage</li>
-                    </ul>
-                </div>
-                <div class="monitoring-card">
-                    <h4>🚰 Logstash <span class="feature-badge badge-elk">ELK</span></h4>
-                    <ul>
-                        <li>Log processing and transformation</li>
-                        <li>Multiple input sources support</li>
-                        <li>Data parsing and enrichment</li>
-                        <li>Output to multiple destinations</li>
-                    </ul>
-                </div>
-                <div class="monitoring-card">
-                    <h4>📊 Kibana <span class="feature-badge badge-kibana">ELK</span></h4>
-                    <ul>
-                        <li>Data visualization and dashboards</li>
-                        <li>Interactive log exploration</li>
-                        <li>Custom dashboard creation</li>
-                        <li>Alert management interface</li>
-                    </ul>
-                </div>
-                <div class="monitoring-card">
-                    <h4>📈 Grafana <span class="feature-badge badge-grafana">Grafana</span></h4>
-                    <ul>
-                        <li>Multi-source data visualization</li>
-                        <li>Advanced alerting system</li>
-                        <li>Custom dashboard templates</li>
-                        <li>Prometheus integration</li>
-                    </ul>
-                </div>
-                <div class="monitoring-card">
-                    <h4>⏱️ Prometheus <span class="feature-badge badge-prometheus">Metrics</span></h4>
-                    <ul>
-                        <li>Time-series metrics collection</li>
-                        <li>PromQL query language</li>
-                        <li>Service discovery</li>
-                        <li>High-performance storage</li>
-                    </ul>
-                </div>
-                <div class="monitoring-card">
-                    <h4>🚨 AlertManager <span class="feature-badge badge-prometheus">Alerts</span></h4>
-                    <ul>
-                        <li>Intelligent alert routing</li>
-                        <li>Alert grouping and silencing</li>
-                        <li>Multi-channel notifications</li>
-                        <li>Escalation policies</li>
-                    </ul>
+            <!-- Monitoring Stack Overview -->
+            <div class="card">
+                <h2>📈 Monitoring Stack Overview</h2>
+                <p>A comprehensive monitoring and logging solution for Runtime Fabric that provides real-time insights, alerting, and observability across your entire MuleSoft infrastructure.</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin: 2rem 0;">
+                    <div class="alert alert-success">
+                        <h4>🔍 Elasticsearch</h4>
+                        <ul>
+                            <li>Distributed search and analytics engine</li>
+                            <li>Log aggregation and indexing</li>
+                            <li>Real-time search capabilities</li>
+                            <li>Scalable data storage</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h4>🚰 Logstash</h4>
+                        <ul>
+                            <li>Log processing and transformation</li>
+                            <li>Multiple input sources support</li>
+                            <li>Data parsing and enrichment</li>
+                            <li>Output to multiple destinations</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <h4>📊 Kibana</h4>
+                        <ul>
+                            <li>Data visualization and dashboards</li>
+                            <li>Interactive log exploration</li>
+                            <li>Custom dashboard creation</li>
+                            <li>Alert management interface</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <h4>📈 Grafana</h4>
+                        <ul>
+                            <li>Multi-source data visualization</li>
+                            <li>Advanced alerting system</li>
+                            <li>Custom dashboard templates</li>
+                            <li>Prometheus integration</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-success">
+                        <h4>⏱️ Prometheus</h4>
+                        <ul>
+                            <li>Time-series metrics collection</li>
+                            <li>PromQL query language</li>
+                            <li>Service discovery</li>
+                            <li>High-performance storage</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <h4>🚨 AlertManager</h4>
+                        <ul>
+                            <li>Intelligent alert routing</li>
+                            <li>Alert grouping and silencing</li>
+                            <li>Multi-channel notifications</li>
+                            <li>Escalation policies</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="section">
-            <h2>🔍 ELK Stack Deployment</h2>
-            
-            <h3>📦 Step 1: Deploy Elasticsearch Cluster</h3>
-            <div class="info">
-                <strong>💡 Production Setup:</strong> Deploy a 3-node Elasticsearch cluster for high availability and data redundancy.
-            </div>
-            
-            <div class="code-block">
+            <!-- ELK Stack Deployment -->
+            <div class="card">
+                <h2>🔍 ELK Stack Deployment</h2>
+                
+                <h3>📦 Step 1: Deploy Elasticsearch Cluster</h3>
+                <div class="alert alert-info">
+                    <strong>💡 Production Setup:</strong> Deploy a 3-node Elasticsearch cluster for high availability and data redundancy.
+                </div>
+                
+                <div class="code-block">
 # Add Elastic Helm repository
 helm repo add elastic https://helm.elastic.co
 helm repo update
@@ -494,11 +205,10 @@ helm install elasticsearch elastic/elasticsearch \
 
 # Verify Elasticsearch deployment
 kubectl get pods -n logging -l app=elasticsearch-master
-kubectl get svc -n logging elasticsearch-master
-            </div>
+kubectl get svc -n logging elasticsearch-master</div>
 
-            <h3>🚰 Step 2: Deploy Logstash</h3>
-            <div class="code-block">
+                <h3>🚰 Step 2: Deploy Logstash</h3>
+                <div class="code-block">
 # Create Logstash configuration
 cat << EOF > logstash-config.yaml
 apiVersion: v1
@@ -655,11 +365,10 @@ EOF
 helm install logstash elastic/logstash \
   --namespace logging \
   --values logstash-values.yaml \
-  --wait
-            </div>
+  --wait</div>
 
-            <h3>📊 Step 3: Deploy Kibana</h3>
-            <div class="code-block">
+                <h3>📊 Step 3: Deploy Kibana</h3>
+                <div class="code-block">
 # Create Kibana configuration
 cat << EOF > kibana-values.yaml
 elasticsearchHosts: "http://elasticsearch-master:9200"
@@ -721,15 +430,15 @@ kubectl exec -n logging deployment/kibana-kibana -- curl -X POST "localhost:5601
       "title": "rtf-logs-*",
       "timeFieldName": "@timestamp"
     }
-  }'
+  }'</div>
             </div>
-        </div>
 
-        <div class="section">
-            <h2>📈 Grafana & Prometheus Setup</h2>
-            
-            <h3>⏱️ Step 1: Deploy Prometheus Stack</h3>
-            <div class="code-block">
+            <!-- Grafana & Prometheus Setup -->
+            <div class="card">
+                <h2>📈 Grafana & Prometheus Setup</h2>
+                
+                <h3>⏱️ Step 1: Deploy Prometheus Stack</h3>
+                <div class="code-block">
 # Add Prometheus community Helm repository
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
@@ -887,11 +596,10 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
   --namespace monitoring \
   --values prometheus-values.yaml \
   --wait \
-  --timeout 15m
-            </div>
+  --timeout 15m</div>
 
-            <h3>📊 Step 2: Configure RTF Custom Dashboards</h3>
-            <div class="code-block">
+                <h3>📊 Step 2: Configure RTF Custom Dashboards</h3>
+                <div class="code-block">
 # Create RTF-specific Grafana dashboard
 cat << EOF > rtf-dashboard.json
 {
@@ -966,3 +674,220 @@ cat << EOF > rtf-dashboard.json
         "type": "graph",
         "targets": [
           {
+            "expr": "rate(container_network_receive_bytes_total{namespace=\"rtf-system\"}[5m])",
+            "legendFormat": "Receive {{pod}}"
+          },
+          {
+            "expr": "rate(container_network_transmit_bytes_total{namespace=\"rtf-system\"}[5m])",
+            "legendFormat": "Transmit {{pod}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Bytes/sec",
+            "min": 0
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s"
+  }
+}
+EOF
+
+# Apply the dashboard
+kubectl create configmap rtf-dashboard \
+  --from-file=rtf-dashboard.json \
+  --namespace monitoring</div>
+            </div>
+
+            <!-- Security Monitoring -->
+            <div class="card">
+                <h2>🔐 Security Monitoring & Alerting</h2>
+                
+                <h3>🚨 Critical Alert Configuration</h3>
+                <div class="alert alert-warning">
+                    <strong>⚠️ Security Alerts:</strong> Configure immediate alerts for security incidents, unauthorized access, and system anomalies.
+                </div>
+
+                <div class="code-block">
+# Configure AlertManager for security incidents
+cat << EOF > alertmanager-security-config.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: alertmanager-security-config
+  namespace: monitoring
+type: Opaque
+stringData:
+  alertmanager.yml: |
+    global:
+      smtp_smarthost: 'localhost:587'
+      smtp_from: 'alerts@yourdomain.com'
+      
+    route:
+      group_by: ['alertname']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 1h
+      receiver: 'security-team'
+      routes:
+      - match:
+          severity: critical
+        receiver: 'critical-alerts'
+        group_wait: 0s
+        
+    receivers:
+    - name: 'security-team'
+      email_configs:
+      - to: 'security@yourdomain.com'
+        subject: 'RTF Security Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Instance: {{ .Labels.instance }}
+          Severity: {{ .Labels.severity }}
+          {{ end }}
+          
+    - name: 'critical-alerts'
+      email_configs:
+      - to: 'security@yourdomain.com,oncall@yourdomain.com'
+        subject: 'CRITICAL RTF Security Alert: {{ .GroupLabels.alertname }}'
+      slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#security-alerts'
+        title: 'RTF Critical Security Alert'
+        text: 'Critical security issue detected in RTF cluster'
+EOF
+
+kubectl apply -f alertmanager-security-config.yaml</div>
+
+                <h3>📊 Performance Monitoring Dashboard</h3>
+                <div class="alert alert-info">
+                    <strong>📈 Performance Metrics:</strong> Monitor key performance indicators and system health metrics for optimal RTF operation.
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Target</th>
+                            <th>Warning Threshold</th>
+                            <th>Critical Threshold</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>API Response Time</strong></td>
+                            <td>< 2 seconds</td>
+                            <td>> 3 seconds</td>
+                            <td>> 5 seconds</td>
+                            <td>Average API response time</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CPU Utilization</strong></td>
+                            <td>< 70%</td>
+                            <td>> 80%</td>
+                            <td>> 90%</td>
+                            <td>System CPU usage across nodes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Memory Usage</strong></td>
+                            <td>< 75%</td>
+                            <td>> 85%</td>
+                            <td>> 95%</td>
+                            <td>Memory utilization across pods</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Error Rate</strong></td>
+                            <td>< 1%</td>
+                            <td>> 2%</td>
+                            <td>> 5%</td>
+                            <td>Application error percentage</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Pod Restarts</strong></td>
+                            <td>0 per hour</td>
+                            <td>> 2 per hour</td>
+                            <td>> 5 per hour</td>
+                            <td>Kubernetes pod restart frequency</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Log Management -->
+            <div class="card">
+                <h2>📝 Log Management & Retention</h2>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                    <div class="alert alert-success">
+                        <h4>📚 Log Categories</h4>
+                        <ul>
+                            <li><strong>Application Logs:</strong> Mule application events</li>
+                            <li><strong>System Logs:</strong> RTF infrastructure events</li>
+                            <li><strong>Audit Logs:</strong> Security and compliance events</li>
+                            <li><strong>Performance Logs:</strong> Metrics and monitoring data</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h4>🗓️ Retention Policies</h4>
+                        <ul>
+                            <li><strong>Critical Logs:</strong> 2 years retention</li>
+                            <li><strong>Application Logs:</strong> 90 days retention</li>
+                            <li><strong>Debug Logs:</strong> 30 days retention</li>
+                            <li><strong>Archived Logs:</strong> 7 years cold storage</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="config-block">
+# Log retention policy configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: log-retention-policy
+  namespace: logging
+data:
+  retention-config.yaml: |
+    policies:
+      critical_logs:
+        retention_days: 730
+        storage_tier: "hot"
+        backup_enabled: true
+        
+      application_logs:
+        retention_days: 90
+        storage_tier: "warm"
+        compression_enabled: true
+        
+      debug_logs:
+        retention_days: 30
+        storage_tier: "hot"
+        auto_delete: true
+        
+      audit_logs:
+        retention_days: 2555  # 7 years
+        storage_tier: "cold"
+        encryption_required: true
+        compliance_mode: true</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <h3>📊 Monitoring Excellence</h3>
+            <p>This comprehensive monitoring and logging solution ensures complete observability of your MuleSoft Runtime Fabric deployment, providing the insights needed for optimal performance, security, and operational efficiency.</p>
+        </div>
+    </div>
+
+    <script src="common-scripts.js"></script>
+</body>
+</html>

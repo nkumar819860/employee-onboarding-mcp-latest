@@ -115,6 +115,8 @@ if /i "!PUBLISH_EXCHANGE!"=="Y" (
         -DskipTests ^
         -B ^
         -Dmule.deploymentType=CLOUDHUB
+	    -DdeploymentTimeout=1200000
+
     
     if !ERRORLEVEL! NEQ 0 (
         echo WARNING: Main application deployment failed, continuing with MCP servers...
@@ -235,7 +237,6 @@ call mvn mule:deploy ^
     -DworkerSize=0.1 ^
     -DskipTests ^
     -B ^
-    -Dmule.deploymentType=CLOUDHUB
 
 if !ERRORLEVEL! NEQ 0 (
     echo WARNING: Employee Onboarding MCP deployment failed
@@ -257,7 +258,6 @@ call mvn mule:deploy ^
     -DworkerSize=0.1 ^
     -DskipTests ^
     -B ^
-    -Dmule.deploymentType=CLOUDHUB
 
 if !ERRORLEVEL! NEQ 0 (
     echo WARNING: Asset Allocation MCP deployment failed
@@ -279,7 +279,6 @@ call mvn mule:deploy ^
     -DworkerSize=0.1 ^
     -DskipTests ^
     -B ^
-    -Dmule.deploymentType=CLOUDHUB
 
 if !ERRORLEVEL! NEQ 0 (
     echo WARNING: Email Notification MCP deployment failed
@@ -301,7 +300,6 @@ call mvn mule:deploy ^
     -DworkerSize=0.1 ^
     -DskipTests ^
     -B ^
-    -Dmule.deploymentType=CLOUDHUB
 
 if !ERRORLEVEL! NEQ 0 (
     echo WARNING: Agent Broker MCP deployment failed

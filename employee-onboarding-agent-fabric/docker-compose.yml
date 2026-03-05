@@ -8,8 +8,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: postgres
-      POSTGRES_USER: ${DB_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${DB_POSTGRES_PASSWORD}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     env_file:
       - .env
     ports:
@@ -38,9 +38,9 @@ services:
     environment:
       - http.host=0.0.0.0
       - http.port=8081
-      - db.url=jdbc:postgresql://postgres:5432/${EMPLOYEE_DB_NAME}
-      - db.username=${EMPLOYEE_DB_USER}
-      - db.password=${EMPLOYEE_DB_PASSWORD}
+      - db.url=jdbc:postgresql://postgres:5432/employee-onboarding
+      - db.username=postgres
+      - db.password=postgres
       - db.driverClassName=org.postgresql.Driver
     env_file:
       - .env
@@ -70,9 +70,9 @@ services:
     environment:
       - http.host=0.0.0.0
       - http.port=8082
-      - db.url=jdbc:postgresql://postgres:5432/${ASSET_DB_NAME}
-      - db.username=${ASSET_DB_USER}
-      - db.password=${ASSET_DB_PASSWORD}
+      - db.url=jdbc:postgresql://postgres:5432/assets-allocation
+      - db.username=postgres
+      - db.password=postgres
       - db.driverClassName=org.postgresql.Driver
     env_file:
       - .env

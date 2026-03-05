@@ -3,396 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Runtime Fabric Installation on Azure</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            margin-top: 20px;
-            margin-bottom: 20px;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding: 40px 20px;
-            background: linear-gradient(135deg, #2C5282 0%, #2A4A6B 100%);
-            color: white;
-            border-radius: 15px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="a" cx="50%" cy="40%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0.1"/><stop offset="100%" stop-color="%23ffffff" stop-opacity="0.05"/></radialGradient></defs><rect width="100" height="20" fill="url(%23a)"/></svg>');
-            opacity: 0.3;
-        }
-
-        .header h1 {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            position: relative;
-        }
-
-        .header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            position: relative;
-        }
-
-        .nav {
-            margin: 30px 0;
-            text-align: center;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .nav a {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 25px;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .nav a:hover {
-            background: linear-gradient(135deg, #FC7300 0%, #FF8C42 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(252, 115, 0, 0.4);
-        }
-
-        .section {
-            margin: 40px 0;
-            padding: 30px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-            border-left: 5px solid #667eea;
-            border-radius: 10px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-            position: relative;
-        }
-
-        .section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            border-radius: 10px 10px 0 0;
-        }
-
-        .section h2 {
-            color: #2C5282;
-            margin-bottom: 20px;
-            font-size: 2.2rem;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .section h3 {
-            color: #0056b3;
-            margin: 25px 0 15px 0;
-            font-size: 1.6rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .code-block {
-            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
-            color: #e2e8f0;
-            padding: 20px;
-            border-radius: 8px;
-            font-family: 'Fira Code', 'Courier New', monospace;
-            overflow-x: auto;
-            margin: 15px 0;
-            position: relative;
-            border-left: 4px solid #FC7300;
-        }
-
-        .code-block::before {
-            content: 'Terminal';
-            position: absolute;
-            top: 8px;
-            right: 15px;
-            font-size: 0.8rem;
-            color: #718096;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .warning {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            border: 1px solid #ffeaa7;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            border-left: 5px solid #f39c12;
-            position: relative;
-        }
-
-        .warning::before {
-            content: '⚠️';
-            font-size: 1.5rem;
-            margin-right: 10px;
-        }
-
-        .info {
-            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
-            border: 1px solid #bee5eb;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            border-left: 5px solid #17a2b8;
-            position: relative;
-        }
-
-        .info::before {
-            content: 'ℹ️';
-            font-size: 1.5rem;
-            margin-right: 10px;
-        }
-
-        .step-list {
-            counter-reset: step-counter;
-            list-style: none;
-        }
-
-        .step-list li {
-            counter-increment: step-counter;
-            margin: 25px 0;
-            padding: 25px;
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            border-left: 5px solid #667eea;
-            position: relative;
-        }
-
-        .step-list li::before {
-            content: counter(step-counter);
-            position: absolute;
-            left: -15px;
-            top: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-
-        .step-list li strong {
-            color: #2C5282;
-            font-size: 1.2rem;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        .architecture-diagram {
-            text-align: center;
-            margin: 30px 0;
-            padding: 30px;
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            border-radius: 10px;
-            border: 2px dashed #667eea;
-            position: relative;
-        }
-
-        .architecture-diagram::before {
-            content: '🏗️ Architecture Overview';
-            position: absolute;
-            top: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            padding: 0 15px;
-            color: #667eea;
-            font-weight: 600;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        }
-
-        th, td {
-            padding: 15px 20px;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        th {
-            background: linear-gradient(135deg, #2C5282 0%, #2A4A6B 100%);
-            color: white;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 0.9rem;
-        }
-
-        tr:nth-child(even) {
-            background: #f8f9fa;
-        }
-
-        tr:hover {
-            background: #e8f4fd;
-            transition: background 0.3s ease;
-        }
-
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin: 30px 0;
-        }
-
-        .feature-card {
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-            border-top: 4px solid #667eea;
-            transition: all 0.3s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
-            border-top-color: #FC7300;
-        }
-
-        .feature-card h4 {
-            color: #2C5282;
-            margin-bottom: 15px;
-            font-size: 1.3rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-                padding: 15px;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .nav {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .feature-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .section {
-                padding: 20px;
-            }
-        }
-    </style>
+    <title>Runtime Fabric Installation on Azure - Employee Onboarding Platform</title>
+    <link rel="stylesheet" href="common-styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
 </head>
 <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <span>🚀</span> Employee Onboarding Platform
+            </a>
+            <div class="nav-toggle" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Overview</a></li>
+                <li><a href="02-Enhanced-Navigation.html" class="nav-link">Navigation</a></li>
+                <li><a href="03-Flex-Gateway-Policies.html" class="nav-link">Flex Gateway</a></li>
+                <li><a href="04-RTF-EKS-Setup.html" class="nav-link">RTF EKS</a></li>
+                <li><a href="05-Anypoint-Platform.html" class="nav-link">Anypoint</a></li>
+                <li><a href="06-Auto-scaling.html" class="nav-link">Auto-scaling</a></li>
+                <li><a href="07-HIPAA-Compliance.html" class="nav-link">HIPAA</a></li>
+                <li><a href="08-RTF-Azure-Installation.html" class="nav-link active">RTF Azure</a></li>
+                <li><a href="09-RTF-AWS-Installation.html" class="nav-link">RTF AWS</a></li>
+                <li><a href="10-RTF-Security.html" class="nav-link">Security</a></li>
+                <li><a href="11-Logging-Monitoring.html" class="nav-link">Monitoring</a></li>
+                <li><a href="12-Capacity-Planning.html" class="nav-link">Capacity Planning</a></li>
+                <li><a href="13-MuleSoft-Capacity-Planning.html" class="nav-link">MuleSoft Planning</a></li>
+                <li><a href="14-Azure-AWS-RTF-Capacity-Planning.html" class="nav-link">Cloud RTF Planning</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
     <div class="container">
-        <div class="header">
-            <h1>🌐 Runtime Fabric Installation on Microsoft Azure</h1>
-            <p>Complete step-by-step guide for deploying MuleSoft Runtime Fabric on Azure Kubernetes Service (AKS)</p>
-        </div>
+        <!-- Back Button -->
+        <a href="index.html" class="back-button">
+            <span class="back-button-icon">←</span>
+            Back to Overview
+        </a>
 
-        <div class="nav">
-            <a href="index.html">🏠 Home</a>
-            <a href="09-RTF-AWS-Installation.html">☁️ AWS Setup</a>
-            <a href="10-RTF-Security.html">🔐 Security</a>
-            <a href="11-Logging-Monitoring.html">📊 Monitoring</a>
-        </div>
-
-        <div class="section">
-            <h2>📋 Prerequisites & Requirements</h2>
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <h4>🔑 Azure Requirements</h4>
-                    <ul>
-                        <li>Azure Subscription with sufficient credits</li>
-                        <li>Contributor or Owner role permissions</li>
-                        <li>Resource quota for AKS cluster</li>
-                        <li>Azure CLI 2.30+ installed</li>
-                    </ul>
-                </div>
-                <div class="feature-card">
-                    <h4>🛠️ Tools & Software</h4>
-                    <ul>
-                        <li>kubectl 1.24+ command-line tool</li>
-                        <li>Helm 3.8+ for package management</li>
-                        <li>Docker Desktop (for local testing)</li>
-                        <li>Git for version control</li>
-                    </ul>
-                </div>
-                <div class="feature-card">
-                    <h4>🎯 MuleSoft Requirements</h4>
-                    <ul>
-                        <li>Anypoint Platform organization access</li>
-                        <li>Runtime Fabric license from MuleSoft</li>
-                        <li>Environment administrator permissions</li>
-                        <li>Connected App for API access</li>
-                    </ul>
+        <div class="content">
+            <div class="card">
+                <h2>🌐 Runtime Fabric Installation on Microsoft Azure</h2>
+                <p>Complete step-by-step guide for deploying MuleSoft Runtime Fabric on Azure Kubernetes Service (AKS)</p>
+                
+                <div class="alert alert-info">
+                    <strong>📋 Prerequisites Overview:</strong> Before starting this installation, ensure you have Azure subscription access, appropriate permissions, and the necessary tools installed (Azure CLI, kubectl, Helm).
                 </div>
             </div>
-        </div>
 
-        <div class="section">
-            <h2>🏗️ Azure Infrastructure Setup</h2>
-            
-            <h3>🌐 Step 1: Resource Group Creation</h3>
-            <div class="code-block">
+            <div class="card">
+                <h3>📋 Prerequisites & Requirements</h3>
+                
+                <div class="deployment-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔑</div>
+                        <h4>Azure Requirements</h4>
+                        <ul class="nav-card-features">
+                            <li>Azure Subscription with sufficient credits</li>
+                            <li>Contributor or Owner role permissions</li>
+                            <li>Resource quota for AKS cluster</li>
+                            <li>Azure CLI 2.30+ installed</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🛠️</div>
+                        <h4>Tools & Software</h4>
+                        <ul class="nav-card-features">
+                            <li>kubectl 1.24+ command-line tool</li>
+                            <li>Helm 3.8+ for package management</li>
+                            <li>Docker Desktop (for local testing)</li>
+                            <li>Git for version control</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🎯</div>
+                        <h4>MuleSoft Requirements</h4>
+                        <ul class="nav-card-features">
+                            <li>Anypoint Platform organization access</li>
+                            <li>Runtime Fabric license from MuleSoft</li>
+                            <li>Environment administrator permissions</li>
+                            <li>Connected App for API access</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🏗️ Azure Infrastructure Setup</h3>
+                
+                <h4>🌐 Step 1: Resource Group Creation</h4>
+                <div class="code-block">
 # Set variables for consistent naming
 export RESOURCE_GROUP="rtf-production-rg"
 export LOCATION="eastus2"
@@ -406,10 +111,10 @@ az group create \
 
 # Verify creation
 az group show --name $RESOURCE_GROUP --output table
-            </div>
+                </div>
 
-            <h3>🔗 Step 2: Virtual Network Configuration</h3>
-            <div class="code-block">
+                <h4>🔗 Step 2: Virtual Network Configuration</h4>
+                <div class="code-block">
 # Create virtual network with proper CIDR blocks
 az network vnet create \
   --resource-group $RESOURCE_GROUP \
@@ -440,10 +145,10 @@ SUBNET_ID=$(az network vnet subnet show \
   --query id -o tsv)
 
 echo "Subnet ID: $SUBNET_ID"
-            </div>
+                </div>
 
-            <h3>🛡️ Step 3: Network Security Configuration</h3>
-            <div class="code-block">
+                <h4>🛡️ Step 3: Network Security Configuration</h4>
+                <div class="code-block">
 # Create Network Security Group
 az network nsg create \
   --resource-group $RESOURCE_GROUP \
@@ -481,18 +186,18 @@ az network vnet subnet update \
   --vnet-name rtf-vnet \
   --name rtf-subnet \
   --network-security-group rtf-nsg
+                </div>
             </div>
-        </div>
 
-        <div class="section">
-            <h2>☸️ Azure Kubernetes Service (AKS) Setup</h2>
-            
-            <h3>🚀 Step 1: Create AKS Cluster</h3>
-            <div class="info">
-                <strong>💡 Recommended Configuration:</strong> This setup creates a production-ready AKS cluster with auto-scaling, monitoring, and proper networking configuration.
-            </div>
-            
-            <div class="code-block">
+            <div class="card">
+                <h3>☸️ Azure Kubernetes Service (AKS) Setup</h3>
+                
+                <h4>🚀 Step 1: Create AKS Cluster</h4>
+                <div class="alert alert-info">
+                    <strong>💡 Recommended Configuration:</strong> This setup creates a production-ready AKS cluster with auto-scaling, monitoring, and proper networking configuration.
+                </div>
+                
+                <div class="code-block">
 # Create AKS cluster with production settings
 az aks create \
   --resource-group $RESOURCE_GROUP \
@@ -515,10 +220,10 @@ az aks create \
 
 # This will take 10-15 minutes to complete
 echo "AKS cluster creation in progress..."
-            </div>
+                </div>
 
-            <h3>⚙️ Step 2: Configure kubectl Access</h3>
-            <div class="code-block">
+                <h4>⚙️ Step 2: Configure kubectl Access</h4>
+                <div class="code-block">
 # Get AKS credentials and merge with local kubeconfig
 az aks get-credentials \
   --resource-group $RESOURCE_GROUP \
@@ -532,10 +237,10 @@ kubectl get namespaces
 
 # Check node resource capacity
 kubectl describe nodes | grep -A 5 "Capacity:\|Allocatable:"
-            </div>
+                </div>
 
-            <h3>💾 Step 3: Storage Configuration</h3>
-            <div class="code-block">
+                <h4>💾 Step 3: Storage Configuration</h4>
+                <div class="yaml-block">
 # Create high-performance storage class for RTF
 cat <<EOF | kubectl apply -f -
 apiVersion: storage.k8s.io/v1
@@ -575,16 +280,15 @@ EOF
 
 # Verify storage classes
 kubectl get storageclass
+                </div>
             </div>
-        </div>
 
-        <div class="section">
-            <h2>🔧 Runtime Fabric Installation</h2>
-            
-            <ol class="step-list">
-                <li>
-                    <strong>📥 Download RTF Installation Package</strong>
-                    <div class="info">Access the latest RTF installer from Anypoint Platform or use the direct download method below.</div>
+            <div class="card">
+                <h3>🔧 Runtime Fabric Installation</h3>
+                
+                <div class="policy-card">
+                    <h4>📥 Step 1: Download RTF Installation Package</h4>
+                    <div class="alert alert-info">Access the latest RTF installer from Anypoint Platform or use the direct download method below.</div>
                     <div class="code-block">
 # Create installation directory
 mkdir -p ~/rtf-installation && cd ~/rtf-installation
@@ -601,11 +305,11 @@ cd rtf-install-package
 # Verify contents
 ls -la
                     </div>
-                </li>
+                </div>
 
-                <li>
-                    <strong>📝 Create Runtime Fabric Configuration</strong>
-                    <div class="code-block">
+                <div class="policy-card">
+                    <h4>📝 Step 2: Create Runtime Fabric Configuration</h4>
+                    <div class="yaml-block">
 # Create RTF namespace
 kubectl create namespace rtf-system
 
@@ -681,10 +385,10 @@ spec:
       level: "INFO"
 EOF
                     </div>
-                </li>
+                </div>
 
-                <li>
-                    <strong>🎯 Install Runtime Fabric Components</strong>
+                <div class="policy-card">
+                    <h4>🎯 Step 3: Install Runtime Fabric Components</h4>
                     <div class="code-block">
 # Install RTF using the installer script
 ./install-rtf.sh --config rtf-config.yaml --namespace rtf-system
@@ -705,10 +409,10 @@ helm install rtf-azure mulesoft/runtime-fabric \
 # Monitor installation progress
 kubectl get pods -n rtf-system -w
                     </div>
-                </li>
+                </div>
 
-                <li>
-                    <strong>✅ Verify RTF Installation</strong>
+                <div class="policy-card">
+                    <h4>✅ Step 4: Verify RTF Installation</h4>
                     <div class="code-block">
 # Check all RTF pods are running
 kubectl get pods -n rtf-system -o wide
@@ -732,15 +436,14 @@ kubectl get pvc -n rtf-system
 kubectl top nodes
 kubectl top pods -n rtf-system
                     </div>
-                </li>
-            </ol>
-        </div>
+                </div>
+            </div>
 
-        <div class="section">
-            <h2>🌐 Load Balancer and Ingress Configuration</h2>
-            
-            <h3>🔧 Step 1: Install NGINX Ingress Controller</h3>
-            <div class="code-block">
+            <div class="card">
+                <h3>🌐 Load Balancer and Ingress Configuration</h3>
+                
+                <h4>🔧 Step 1: Install NGINX Ingress Controller</h4>
+                <div class="code-block">
 # Add NGINX ingress Helm repository
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
@@ -764,10 +467,10 @@ kubectl get service -n ingress-nginx ingress-nginx-controller --watch
 # Get the external IP address
 EXTERNAL_IP=$(kubectl get service -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 echo "External IP: $EXTERNAL_IP"
-            </div>
+                </div>
 
-            <h3>🔐 Step 2: SSL/TLS Certificate Configuration</h3>
-            <div class="code-block">
+                <h4>🔐 Step 2: SSL/TLS Certificate Configuration</h4>
+                <div class="yaml-block">
 # Option 1: Use cert-manager for automatic SSL certificates
 helm repo add jetstack https://charts.jetstack.io
 helm repo update
@@ -802,10 +505,10 @@ kubectl create secret tls rtf-tls-secret \
   --cert=path/to/your/certificate.crt \
   --key=path/to/your/private.key \
   --namespace rtf-system
-            </div>
+                </div>
 
-            <h3>📡 Step 3: Configure RTF Ingress Rules</h3>
-            <div class="code-block">
+                <h4>📡 Step 3: Configure RTF Ingress Rules</h4>
+                <div class="yaml-block">
 # Create ingress configuration for RTF
 cat <<EOF | kubectl apply -f -
 apiVersion: networking.k8s.io/v1
@@ -848,14 +551,14 @@ EOF
 # Verify ingress is created and has an IP
 kubectl get ingress -n rtf-system
 kubectl describe ingress rtf-ingress -n rtf-system
+                </div>
             </div>
-        </div>
 
-        <div class="section">
-            <h2>📊 Monitoring and Observability Setup</h2>
-            
-            <h3>📈 Azure Monitor Integration</h3>
-            <div class="code-block">
+            <div class="card">
+                <h3>📊 Monitoring and Observability Setup</h3>
+                
+                <h4>📈 Azure Monitor Integration</h4>
+                <div class="code-block">
 # Enable Azure Monitor for containers if not already enabled
 az aks enable-addons \
   --resource-group $RESOURCE_GROUP \
@@ -876,10 +579,10 @@ WORKSPACE_ID=$(az monitor log-analytics workspace show \
   --query customerId -o tsv)
 
 echo "Log Analytics Workspace ID: $WORKSPACE_ID"
-            </div>
+                </div>
 
-            <h3>🎯 Prometheus and Grafana Setup</h3>
-            <div class="code-block">
+                <h4>🎯 Prometheus and Grafana Setup</h4>
+                <div class="code-block">
 # Add Prometheus community Helm repository
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo add grafana https://grafana.github.io/helm-charts
@@ -894,4 +597,117 @@ helm install kube-prometheus prometheus-community/kube-prometheus-stack \
   --set grafana.service.type=LoadBalancer \
   --set grafana.persistence.enabled=true \
   --set grafana.persistence.size=10Gi \
-  --set graf
+  --set prometheus.prometheusSpec.retention=30d \
+  --set prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage=50Gi
+
+# Get Grafana admin password
+kubectl get secret --namespace monitoring kube-prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 --decode
+                </div>
+
+                <div class="deployment-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">✅</div>
+                        <h4>Post-Installation Validation</h4>
+                        <ul class="nav-card-features">
+                            <li>RTF pods running successfully</li>
+                            <li>Load balancer endpoint accessible</li>
+                            <li>SSL certificate properly configured</li>
+                            <li>Auto-scaling policies active</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔍</div>
+                        <h4>Performance Validation</h4>
+                        <ul class="nav-card-features">
+                            <li>API response time validation</li>
+                            <li>Load testing under traffic</li>
+                            <li>Auto-scaling trigger validation</li>
+                            <li>Failover testing</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📊</div>
+                        <h4>Monitoring Validation</h4>
+                        <ul class="nav-card-features">
+                            <li>Azure Monitor metrics collection</li>
+                            <li>Grafana dashboard configuration</li>
+                            <li>Alert rules activation</li>
+                            <li>Log aggregation verification</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>🎉 Installation Complete!</strong> Your Runtime Fabric is now successfully deployed on Azure AKS. You can proceed with application deployment and configuration through the Anypoint Platform.
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-section">
+                        <h4>🌐 RTF Azure Installation</h4>
+                        <p>Complete guide for deploying MuleSoft Runtime Fabric on Microsoft Azure with AKS, designed for production workloads with high availability and security.</p>
+                    </div>
+                    <div class="footer-section">
+                        <h4>📞 Azure Support</h4>
+                        <ul>
+                            <li>Azure Technical Support: azure-support@company.com</li>
+                            <li>RTF Team: rtf@company.com</li>
+                            <li>Platform Support: platform@company.com</li>
+                            <li>24/7 Support: support@company.com</li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h4>🔗 Related Guides</h4>
+                        <ul>
+                            <li><a href="index.html">Platform Overview</a></li>
+                            <li><a href="09-RTF-AWS-Installation.html">RTF AWS Installation</a></li>
+                            <li><a href="10-RTF-Security.html">RTF Security Guide</a></li>
+                            <li><a href="11-Logging-Monitoring.html">Monitoring Setup</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h4>📊 Installation Status</h4>
+                        <div class="status-indicator">
+                            <span class="status-dot status-operational"></span>
+                            <span>Guide: Current</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-dot status-operational"></span>
+                            <span>Azure AKS: Supported</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-dot status-operational"></span>
+                            <span>RTF Version: Latest</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>&copy; 2026 Employee Onboarding Platform. All rights reserved. | 
+                       <a href="#privacy">Privacy Policy</a> | 
+                       <a href="#terms">Terms of Service</a> | 
+                       <a href="#security">Security Statement</a></p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="common-scripts.js"></script>
+    <script>
+        // Set active navigation link for this page
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPage = '08-RTF-Azure-Installation.html';
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPage) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
