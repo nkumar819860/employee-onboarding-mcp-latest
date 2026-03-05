@@ -621,7 +621,7 @@ output application/java
 		</scheduler>
 		
 		<choice doc:name="Database Initialization Enabled?">
-			<when expression="${db.initialization.enabled}">
+			<when expression='#["${db.initialization.enabled}" == "true"]'>
 				<flow-ref name="smart-database-setup" doc:name="Initialize Database"/>
 			</when>
 			<otherwise>

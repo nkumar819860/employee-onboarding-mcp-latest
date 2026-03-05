@@ -177,7 +177,7 @@ output application/json
 	<!-- OPERATIONAL FLOWS FOR PRODUCTION READINESS -->
 	<!-- ================================================================== -->
 
-	<!-- Database Health Check Flow -->
+	<!-- Database Health Check Flow - Environment Aware -->
 	<flow name="database-health-check" doc:name="Database Health Monitor">
 		<scheduler doc:name="Health Check Scheduler">
 			<scheduling-strategy>
@@ -187,45 +187,105 @@ output application/json
 		
 		<choice doc:name="Health Check Enabled?">
 			<when expression="${db.healthcheck.enabled}">
-				<try doc:name="Test Database Connections">
-					<!-- Test Primary Database -->
-					<db:select config-ref="PostgreSQL_Database_Config">
-						<db:sql>SELECT 1 as health_check, CURRENT_TIMESTAMP as check_time</db:sql>
-					</db:select>
-					<set-variable variableName="primaryDbHealthy" value="true"/>
-					
-					<error-handler>
-						<on-error-continue type="DB:*">
-							<set-variable variableName="primaryDbHealthy" value="false"/>
-							<logger level="WARN" message="Primary database health check failed: #[error.description]"/>
-						</on-error-continue>
-					</error-handler>
-				</try>
+				<logger level="INFO" message="Database health check - Strategy: ${db.strategy} | Environment: ${env}"/>
 				
-				<!-- Test Fallback Database if Primary Failed -->
-				<choice doc:name="Test Fallback if Needed">
-					<when expression="#[vars.primaryDbHealthy == false]">
-						<try doc:name="Test Fallback Database">
+				<!-- Environment-Aware Database Selection -->
+				<choice doc:name="Select Database Based on Strategy">
+					<!-- H2 Strategy: Cloud/Local environments -->
+					<when expression='#["h2" == "${db.strategy}"]'>
+						<try doc:name="Test H2 Database">
 							<db:select config-ref="H2_Database_Config">
 								<db:sql>SELECT 1 as health_check, CURRENT_TIMESTAMP as check_time</db:sql>
 							</db:select>
-							<set-variable variableName="fallbackDbHealthy" value="true"/>
+							<set-variable variableName="databaseHealthy" value="true"/>
+							<logger level="DEBUG" message="H2 database health check: PASSED"/>
 							
 							<error-handler>
 								<on-error-continue type="DB:*">
-									<set-variable variableName="fallbackDbHealthy" value="false"/>
-									<logger level="ERROR" message="Both primary and fallback databases failed health check!"/>
+									<set-variable variableName="databaseHealthy" value="false"/>
+									<logger level="ERROR" message="H2 database health check FAILED: #[error.description]"/>
 								</on-error-continue>
 							</error-handler>
 						</try>
 					</when>
+					
+					<!-- PostgreSQL Strategy: Docker environments -->
+					<when expression='#["postgresql" == "${db.strategy}"]'>
+						<try doc:name="Test PostgreSQL Database">
+							<db:select config-ref="PostgreSQL_Database_Config">
+								<db:sql>SELECT 1 as health_check, CURRENT_TIMESTAMP as check_time</db:sql>
+							</db:select>
+							<set-variable variableName="databaseHealthy" value="true"/>
+							<logger level="DEBUG" message="PostgreSQL database health check: PASSED"/>
+							
+							<error-handler>
+								<on-error-continue type="DB:*">
+									<set-variable variableName="databaseHealthy" value="false"/>
+									<logger level="ERROR" message="PostgreSQL database health check FAILED: #[error.description]"/>
+								</on-error-continue>
+							</error-handler>
+						</try>
+					</when>
+					
+					<!-- Auto Strategy: Try appropriate database based on environment -->
+					<when expression='#["auto" == "${db.strategy}"]'>
+						<choice doc:name="Auto-detect Database">
+							<when expression='#["Docker" == "${env}"]'>
+								<!-- Docker environment: Use PostgreSQL -->
+								<try doc:name="Test PostgreSQL Database (Auto)">
+									<db:select config-ref="PostgreSQL_Database_Config">
+										<db:sql>SELECT 1 as health_check, CURRENT_TIMESTAMP as check_time</db:sql>
+									</db:select>
+									<set-variable variableName="databaseHealthy" value="true"/>
+									<logger level="DEBUG" message="PostgreSQL database health check (auto): PASSED"/>
+									
+									<error-handler>
+										<on-error-continue type="DB:*">
+											<set-variable variableName="databaseHealthy" value="false"/>
+											<logger level="WARN" message="PostgreSQL health check failed, falling back to H2: #[error.description]"/>
+											
+											<!-- Fallback to H2 -->
+											<try doc:name="Fallback to H2">
+												<db:select config-ref="H2_Database_Config">
+													<db:sql>SELECT 1 as health_check, CURRENT_TIMESTAMP as check_time</db:sql>
+												</db:select>
+												<set-variable variableName="databaseHealthy" value="true"/>
+												<logger level="INFO" message="Fallback to H2 database: SUCCESSFUL"/>
+											</try>
+										</on-error-continue>
+									</error-handler>
+								</try>
+							</when>
+							<otherwise>
+								<!-- Cloud/Local environment: Use H2 -->
+								<try doc:name="Test H2 Database (Auto)">
+									<db:select config-ref="H2_Database_Config">
+										<db:sql>SELECT 1 as health_check, CURRENT_TIMESTAMP as check_time</db:sql>
+									</db:select>
+									<set-variable variableName="databaseHealthy" value="true"/>
+									<logger level="DEBUG" message="H2 database health check (auto): PASSED"/>
+									
+									<error-handler>
+										<on-error-continue type="DB:*">
+											<set-variable variableName="databaseHealthy" value="false"/>
+											<logger level="ERROR" message="H2 database health check failed: #[error.description]"/>
+										</on-error-continue>
+									</error-handler>
+								</try>
+							</otherwise>
+						</choice>
+					</when>
+					
+					<!-- Unknown strategy -->
 					<otherwise>
-						<set-variable variableName="fallbackDbHealthy" value="true"/>
+						<logger level="WARN" message='Unknown database strategy: ${db.strategy}. Skipping health check.'/>
+						<set-variable variableName="databaseHealthy" value="false"/>
 					</otherwise>
 				</choice>
 			</when>
 			<otherwise>
 				<logger level="DEBUG" message="Database health check disabled"/>
+				<set-variable variableName="databaseHealthy" value="true"/>
 			</otherwise>
 		</choice>
 	</flow>

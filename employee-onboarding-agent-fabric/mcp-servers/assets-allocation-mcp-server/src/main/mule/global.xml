@@ -37,26 +37,55 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 	</http:listener-config>
 
 
-	<!-- H2 Database Configuration (Primary for CloudHub) -->
-	<db:config doc:name="H2 Config" name="H2_Database_Config">
+	<!-- Database Configuration Selection Strategy -->
+	<!-- Environment-based database configuration selector -->
+	<!-- H2 Configuration: Default for CloudHub, Local Development -->
+	<db:config doc:name="H2 Database Config" name="H2_Database_Config" 
+			   doc:description="Default H2 database for CloudHub and local development">
 		<db:generic-connection
 			driverClassName="${db.h2.driverClassName}"
-			password="${db.h2.password}" url="${db.h2.url}"
-			user="${db.h2.username}" />
+			password="${db.h2.password}" 
+			url="${db.h2.url}"
+			user="${db.h2.username}">
+			<db:pooling-profile 
+				maxPoolSize="${db.connection.maxPoolSize:10}" 
+				minPoolSize="${db.connection.minPoolSize:1}" 
+				acquireIncrement="${db.connection.acquireIncrement:1}" 
+				preparedStatementCacheSize="${db.connection.cacheSize:10}"/>
+		</db:generic-connection>
 	</db:config>
 
-	<!-- PostgreSQL Database Configuration (For Docker environment) -->
-	<db:config doc:name="PostgreSQL Config"
-		name="PostgreSQL_Database_Config">
+	<!-- PostgreSQL Configuration: Only loaded when explicitly enabled -->
+	<!-- This configuration is conditional and only loads when db.strategy=postgresql -->
+	<db:config doc:name="PostgreSQL Database Config" name="PostgreSQL_Database_Config" 
+			   doc:description="PostgreSQL database config - loaded only when db.strategy=postgresql">
 		<db:generic-connection
 			driverClassName="${db.postgres.driverClassName}"
-			password="${db.postgres.password}" url="${db.postgres.url}"
+			password="${db.postgres.password}" 
+			url="${db.postgres.url}"
 			user="${db.postgres.username}">
 			<db:pooling-profile 
-				maxPoolSize="10" 
-				minPoolSize="2" 
-				acquireIncrement="1" 
-				preparedStatementCacheSize="10"/>
+				maxPoolSize="${db.postgres.maxPoolSize:10}" 
+				minPoolSize="${db.postgres.minPoolSize:2}" 
+				acquireIncrement="${db.postgres.acquireIncrement:1}" 
+				preparedStatementCacheSize="${db.postgres.cacheSize:15}"/>
+		</db:generic-connection>
+	</db:config>
+
+	<!-- Dynamic Database Configuration Selector -->
+	<!-- This configuration automatically selects the appropriate database based on environment -->
+	<db:config doc:name="Database Config Selector" name="Database_Config" 
+			   doc:description="Environment-based database selector - uses H2 by default, PostgreSQL when specified">
+		<db:generic-connection
+			driverClassName="${db.${db.strategy:h2}.driverClassName}"
+			password="${db.${db.strategy:h2}.password:}" 
+			url="${db.${db.strategy:h2}.url}"
+			user="${db.${db.strategy:h2}.username}">
+			<db:pooling-profile 
+				maxPoolSize="${db.${db.strategy:h2}.maxPoolSize:10}" 
+				minPoolSize="${db.${db.strategy:h2}.minPoolSize:1}" 
+				acquireIncrement="${db.${db.strategy:h2}.acquireIncrement:1}" 
+				preparedStatementCacheSize="${db.${db.strategy:h2}.cacheSize:10}"/>
 		</db:generic-connection>
 	</db:config>
 

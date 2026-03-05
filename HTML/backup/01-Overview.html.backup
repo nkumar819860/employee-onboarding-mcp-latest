@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture Overview - Employee Onboarding Platform</title>
+    <link rel="stylesheet" href="common-styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <span>🚀</span> Employee Onboarding Platform
+            </a>
+            <div class="nav-toggle" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Overview</a></li>
+                <li><a href="02-Enhanced-Navigation.html" class="nav-link">Navigation</a></li>
+                <li><a href="03-Flex-Gateway-Policies.html" class="nav-link">Flex Gateway</a></li>
+                <li><a href="04-RTF-EKS-Setup.html" class="nav-link">RTF EKS</a></li>
+                <li><a href="05-Anypoint-Platform.html" class="nav-link">Anypoint</a></li>
+                <li><a href="06-Auto-scaling.html" class="nav-link">Auto-scaling</a></li>
+                <li><a href="07-HIPAA-Compliance.html" class="nav-link">HIPAA</a></li>
+                <li><a href="08-RTF-Azure-Installation.html" class="nav-link">RTF Azure</a></li>
+                <li><a href="09-RTF-AWS-Installation.html" class="nav-link">RTF AWS</a></li>
+                <li><a href="10-RTF-Security.html" class="nav-link">Security</a></li>
+                <li><a href="11-Logging-Monitoring.html" class="nav-link">Monitoring</a></li>
+                <li><a href="12-Capacity-Planning.html" class="nav-link">Capacity Planning</a></li>
+                <li><a href="13-MuleSoft-Capacity-Planning.html" class="nav-link">MuleSoft Planning</a></li>
+                <li><a href="14-Azure-AWS-RTF-Capacity-Planning.html" class="nav-link">Cloud RTF Planning</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Back Button -->
+        <a href="index.html" class="back-button">
+            <span class="back-button-icon">←</span>
+            Back to Overview
+        </a>
+
+
+        <div class="content">
+            <!-- Platform Goals -->
+            <div class="card">
+                <div class="alert alert-success">
+                    <h4>🚀 Employee Onboarding Platform Goals</h4>
+                    <p>Strategic objectives for building a comprehensive, secure, and scalable employee onboarding solution with enterprise-grade reliability.</p>
+                    <ul style="list-style: none; font-size: 1.1em; margin-top: 1rem;">
+                        <li>✅ <strong>Zero Downtime</strong> - 99.99% availability with seamless failover</li>
+                        <li>✅ <strong>HIPAA Compliance</strong> - Secure handling of employee PII data</li>
+                        <li>✅ <strong>Flex Gateway Policies</strong> - Advanced API security and rate limiting</li>
+                        <li>✅ <strong>Auto-scaling</strong> - 80% CPU/Memory threshold with intelligent scaling</li>
+                        <li>✅ <strong>Multi-Region DR</strong> - Active-active deployment across regions</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Architecture Flow -->
+            <div class="card">
+                <h2>🏗️ Employee Onboarding High-Level Architecture</h2>
+                <p>Comprehensive architecture overview showing the complete flow from employee portal through to backend services and data storage.</p>
+                
+                <div class="code-block">
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                      EMPLOYEE ONBOARDING PLATFORM ARCHITECTURE                          │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                              USER INTERFACE LAYER                                  │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ │ │
+│ │ │  EMPLOYEE   │ │    HR       │ │   MANAGER   │ │   ADMIN     │ │   MOBILE    │ │ │
+│ │ │   PORTAL    │ │  DASHBOARD  │ │  INTERFACE  │ │   PANEL     │ │    APP      │ │ │
+│ │ │ React SPA   │ │ Analytics   │ │ Approvals   │ │ User Mgmt   │ │ Native/PWA  │ │ │
+│ │ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘ │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                           ▼                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                             API SECURITY LAYER                                     │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │                              🔐 FLEX GATEWAY                                       │ │
+│ │ • JWT Authentication & Authorization  • Advanced Rate Limiting (80% threshold)     │ │
+│ │ • PII Data Protection & Encryption   • HIPAA Compliance Enforcement               │ │
+│ │ • API Versioning & Lifecycle Mgmt    • Request/Response Transformation            │ │
+│ │ • Security Policy Enforcement       • Circuit Breaker & Fault Tolerance          │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                           ▼                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                       RUNTIME FABRIC ORCHESTRATION                                 │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │                         ☸️ KUBERNETES RTF CLUSTER                                 │ │
+│ │ • Multi-Region Active-Active Setup   • Auto-scaling HPA (1-12 replicas)          │ │
+│ │ • Zero-downtime Deployments         • Health Monitoring & Self-healing            │ │
+│ │ • Load Balancing & Traffic Mgmt     • Resource Optimization                       │ │
+│ │ • Disaster Recovery < 30s RTO       • Performance Monitoring                      │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                           ▼                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                          MCP MICROSERVICES LAYER                                   │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ │ │
+│ │ │  EMPLOYEE       │ │  ASSET          │ │  NOTIFICATION   │ │  AGENT          │ │ │
+│ │ │  ONBOARDING     │ │  ALLOCATION     │ │  SERVICE        │ │  BROKER         │ │ │
+│ │ │ • Profile Mgmt  │ │ • Laptop Assign │ │ • Email/SMS     │ │ • AI/NLP        │ │ │
+│ │ │ • Workflow Orch │ │ • Phone Assign  │ │ • Slack/Teams   │ │ • Orchestration │ │ │
+│ │ │ • Status Track  │ │ • ID Card Gen   │ │ • Push Notif    │ │ • Data Insights │ │ │
+│ │ │ • Compliance    │ │ • Inventory Mgmt│ │ • Template Mgmt │ │ • Automation    │ │ │
+│ │ └─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘ │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                           ▼                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────────────────┐ │
+│ │                           DATA PERSISTENCE LAYER                                   │ │
+│ ├─────────────────────────────────────────────────────────────────────────────────────┤ │
+│ │ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ │ │
+│ │ │  PRIMARY DB     │ │  CACHE LAYER    │ │  FILE STORAGE   │ │  ANALYTICS DB   │ │ │
+│ │ │ PostgreSQL      │ │ Redis Cluster   │ │ AWS S3/Blob     │ │ ClickHouse      │ │ │
+│ │ │ • Employee Data │ │ • Session Cache │ │ • Documents     │ │ • Metrics       │ │ │
+│ │ │ • Asset Records │ │ • API Cache     │ │ • Images        │ │ • Audit Logs    │ │ │
+│ │ │ • Audit Trail   │ │ • Config Cache  │ │ • Templates     │ │ • Reports       │ │ │
+│ │ │ • HIPAA Encrypt │ │ • Rate Limits   │ │ • Backups       │ │ • Dashboards    │ │ │
+│ │ └─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘ │ │
+│ └─────────────────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">99.99%</div>
+                        <div class="stat-label">Platform Availability</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value"><2s</div>
+                        <div class="stat-label">API Response Time</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">HIPAA</div>
+                        <div class="stat-label">Compliant</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">Auto-Scale</div>
+                        <div class="stat-label">80% Threshold</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Core Components -->
+            <div class="card">
+                <h2>🧩 Core Platform Components</h2>
+                <p>Essential components that power the employee onboarding platform, providing seamless integration and robust functionality.</p>
+
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">👥</div>
+                        <h3>Employee Management</h3>
+                        <p>Comprehensive employee lifecycle management with onboarding workflows, profile management, and status tracking.</p>
+                        <ul class="nav-card-features">
+                            <li>Automated onboarding workflows</li>
+                            <li>Profile creation and validation</li>
+                            <li>Document management system</li>
+                            <li>Status tracking and notifications</li>
+                            <li>HIPAA-compliant data handling</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📦</div>
+                        <h3>Asset Allocation</h3>
+                        <p>Intelligent asset management system for automatic allocation of laptops, phones, ID cards, and other company resources.</p>
+                        <ul class="nav-card-features">
+                            <li>Automated asset assignment</li>
+                            <li>Inventory management integration</li>
+                            <li>Asset tracking and monitoring</li>
+                            <li>Return and replacement workflows</li>
+                            <li>Cost optimization algorithms</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔐</div>
+                        <h3>Security & Compliance</h3>
+                        <p>Enterprise-grade security with Flex Gateway policies, HIPAA compliance, and comprehensive audit capabilities.</p>
+                        <ul class="nav-card-features">
+                            <li>JWT-based authentication</li>
+                            <li>API rate limiting and throttling</li>
+                            <li>PII data protection</li>
+                            <li>Comprehensive audit logging</li>
+                            <li>HIPAA compliance enforcement</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🤖</div>
+                        <h3>AI-Powered Automation</h3>
+                        <p>Intelligent agent broker with NLP capabilities for automated decision making and process optimization.</p>
+                        <ul class="nav-card-features">
+                            <li>Natural language processing</li>
+                            <li>Automated decision engines</li>
+                            <li>Workflow orchestration</li>
+                            <li>Predictive analytics</li>
+                            <li>Process optimization</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Technology Stack -->
+            <div class="card">
+                <h2>⚙️ Technology Stack & Infrastructure</h2>
+                
+                <div class="component-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon">☸️</div>
+                        <h3>Container Orchestration</h3>
+                        <ul class="nav-card-features">
+                            <li>Kubernetes (EKS/AKS)</li>
+                            <li>MuleSoft Runtime Fabric</li>
+                            <li>Docker Containerization</li>
+                            <li>Helm Chart Management</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🔗</div>
+                        <h3>Integration Platform</h3>
+                        <ul class="nav-card-features">
+                            <li>MuleSoft Anypoint Platform</li>
+                            <li>API-Led Connectivity</li>
+                            <li>Event-Driven Architecture</li>
+                            <li>Microservices Pattern</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">🗄️</div>
+                        <h3>Data Management</h3>
+                        <ul class="nav-card-features">
+                            <li>PostgreSQL (Primary Database)</li>
+                            <li>Redis (Caching Layer)</li>
+                            <li>ClickHouse (Analytics)</li>
+                            <li>S3/Blob Storage (Files)</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon">📊</div>
+                        <h3>Monitoring & Observability</h3>
+                        <ul class="nav-card-features">
+                            <li>Prometheus & Grafana</li>
+                            <li>ELK Stack (Logging)</li>
+                            <li>Jaeger (Tracing)</li>
+                            <li>CloudWatch/Monitor</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Implementation Phases -->
+            <div class="card">
+                <h2>🚀 Implementation Roadmap</h2>
+                
+                <div class="alert alert-info">
+                    <h4>📋 Phased Delivery Approach</h4>
+                    <p>Strategic implementation plan designed to deliver value incrementally while building toward the complete platform vision.</p>
+                </div>
+
+                <div class="deployment-grid">
+                    <div class="nav-card">
+                        <div class="nav-card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">Phase 1</div>
+                        <h3>Foundation (Weeks 1-4)</h3>
+                        <ul class="nav-card-features">
+                            <li>Infrastructure setup (RTF clusters)</li>
+                            <li>Basic employee onboarding service</li>
+                            <li>Core security implementation</li>
+                            <li>Database schema and connections</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">Phase 2</div>
+                        <h3>Core Features (Weeks 5-8)</h3>
+                        <ul class="nav-card-features">
+                            <li>Asset allocation system</li>
+                            <li>Notification services</li>
+                            <li>User interfaces (React)</li>
+                            <li>Workflow orchestration</li>
+                        </ul>
+                    </div>
+                    <div class="nav-card">
+                        <div class="nav-card-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">Phase 3</div>
+                        <h3>Intelligence (Weeks 9-12)</h3>
+                        <ul class="nav-card-features">
+                            <li>AI-powered agent broker</li>
+                            <li>Advanced analytics</li>
+                            <li>Predictive capabilities</li>
+                            <li>Process optimization</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-section">
+                        <h4>🎯 Architecture Overview</h4>
+                        <p>Comprehensive overview of the Employee Onboarding Platform architecture, designed for enterprise-scale deployment with high availability and HIPAA compliance.</p>
+                    </div>
+                    <div class="footer-section">
+                        <h4>📞 Architecture Support</h4>
+                        <ul>
+                            <li>Architecture Team: architects@company.com</li>
+                            <li>Platform Support: platform@company.com</li>
+                            <li>Technical Documentation: docs@company.com</li>
+                            <li>24/7 Support: support@company.com</li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h4>🔗 Quick Links</h4>
+                        <ul>
+                            <li><a href="index.html">Platform Overview</a></li>
+                            <li><a href="03-Flex-Gateway-Policies.html">Security Policies</a></li>
+                            <li><a href="07-HIPAA-Compliance.html">Compliance</a></li>
+                            <li><a href="12-Capacity-Planning.html">Capacity Planning</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h4>📊 Architecture Status</h4>
+                        <div class="status-indicator">
+                            <span class="status-dot status-operational"></span>
+                            <span>Architecture: Current</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-dot status-operational"></span>
+                            <span>Components: Validated</span>
+                        </div>
+                        <div class="status-indicator">
+                            <span class="status-dot status-operational"></span>
+                            <span>Documentation: Complete</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>&copy; 2026 Employee Onboarding Platform. All rights reserved. | 
+                       <a href="#privacy">Privacy Policy</a> | 
+                       <a href="#terms">Terms of Service</a> | 
+                       <a href="#security">Security Statement</a></p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="common-scripts.js"></script>
+    <script>
+        // Set active navigation link for this page
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPage = '01-Overview.html';
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPage || 
+                    (link.getAttribute('href') === 'index.html' && currentPage.includes('Overview'))) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
